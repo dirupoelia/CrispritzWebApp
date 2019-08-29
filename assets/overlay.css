@@ -11,7 +11,24 @@
   z-index: 2;
   cursor: pointer;
 }
-._dash-loading-callback{
+/* *[data-dash-is-loading="true"]{
+  visibility: hidden;
+}
+*[data-dash-is-loading="true"]::before{
+  content: "Loading...";
+  display: inline-block;
+  color: magenta;
+  visibility: visible;
+} */
+
+
+
+/* ._dash-loading-callback{
+  position: fixed;
+  z-index: 100;
+}
+
+._dash-loading-callback::after{
     position: fixed;
     display: block;
     width: 100%;
@@ -23,31 +40,8 @@
     background-color: rgba(0,0,0,0.5);
     z-index: 2;
     cursor: pointer;
-}
-/* ._dash-loading-callback {
-    font-family: sans-serif;
-    padding-top: 50px;
-    color: rgb(90, 90, 90);
-  
-    /* The banner */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    text-align: center;
-    cursor: progress;
-  
-    opacity: 0;
-    background-color: rgb(250, 250, 250);
-    /* Delay animation by 1s to prevent flashing 
-       and smoothly transition the animation over 0.5s 
-     */
-    -moz-animation: fadein 0.5s ease-in 1s forwards; /* Firefox */
-    -webkit-animation: fadein 0.5s ease-in 1s forwards; /* Safari and Chrome */
-    -o-animation: fadein 0.5s ease-in 1s forwards; /* Opera */
-      animation: fadein 0.5s ease-in 1s forwards;
-  } */
+} */
+
 .overlay_on{
     position: fixed;
     display: block;
@@ -70,4 +64,39 @@
   color: white;
   transform: translate(-50%,-50%);
   -ms-transform: translate(-50%,-50%);
+}
+
+
+@keyframes fadein {
+  0% {
+      opacity: 0;
+  }
+  100% {
+      opacity: 0.5;
+  }
+}
+
+._dash-loading-callback {
+font-family: sans-serif;
+padding-top: 50px;
+color: rgb(90, 90, 90);
+
+/* The banner */
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+text-align: center;
+cursor: progress;
+
+opacity: 0;
+background-color: rgb(250, 250, 250);
+/* Delay animation by 1s to prevent flashing 
+   and smoothly transition the animation over 0.5s 
+ */
+-moz-animation: fadein 0.5s ease-in 1s forwards; /* Firefox */
+-webkit-animation: fadein 0.5s ease-in 1s forwards; /* Safari and Chrome */
+-o-animation: fadein 0.5s ease-in 1s forwards; /* Opera */
+  animation: fadein 0.5s ease-in 1s forwards;
 }

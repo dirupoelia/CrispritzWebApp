@@ -55,6 +55,7 @@ def render_content(tab):
         final_list.append(html.Button('Submit', id='submit-index-genome'))
         final_list.append(html.Div(id = "executing-index-genome"))
         final_list.append(html.Div([html.P("test", id = "overlay-text", className = "text"), html.Button('Continue', id = 'continue-button', disabled = True)], id = "executing2-index-genome", className = "overlay")) #Hidden on css
+        #final_list.append(dcc.Loading(id="loading-1",  children=[html.Div(id="loading-output-1")], type="default", fullscreen = False))
         return final_list
     elif tab == 'search':
         return 'search'
@@ -64,26 +65,35 @@ def render_content(tab):
         return 'gen rep'
 
 #Eseguo il programma
-@app.callback([Output('executing-index-genome', 'children'),
-            Output('continue-button', 'disabled')],
+# @app.callback([Output('executing-index-genome', 'children'),
+#             Output('continue-button', 'disabled')],
+#             [Input('submit-index-genome', 'n_clicks')],
+#             [State('max-bulges', 'value')])
+# def executeIndex(n_clicks, max_bulges):
+#     if n_clicks is None:
+#         return '', True
+#     subprocess.call(["sleep", "5s"])
+#     html.Script('off()', type = 'text/javascript')
+#     html.Script('document.getElementById("executing2-index-genome").style.display = "none"')
+#     return '', False
+@app.callback(Output("executing-index-genome", "children"),
             [Input('submit-index-genome', 'n_clicks')],
             [State('max-bulges', 'value')])
 def executeIndex(n_clicks, max_bulges):
     if n_clicks is None:
-        return '', True
-    subprocess.call(["sleep", "2s"])
-    html.Script('off()', type = 'text/javascript')
-    html.Script('document.getElementById("executing2-index-genome").style.display = "none"')
-    return '', False
+        return ''
+    subprocess.call(["ls", "l"])
+    subprocess.call(["sleep", "5s"])
+    return ''
 
 #Creo overlay
-@app.callback(Output('executing2-index-genome', 'className'),
-            [Input('submit-index-genome', 'n_clicks')],
-            [State('max-bulges', 'value')])
-def executeOverlayIndex(n_clicks, max_bulges):
-    if n_clicks is None:
-        raise PreventUpdate
-    return "overlay_on"
+# @app.callback(Output('executing2-index-genome', 'className'),
+#             [Input('submit-index-genome', 'n_clicks')],
+#             [State('max-bulges', 'value')])
+# def executeOverlayIndex(n_clicks, max_bulges):
+#     if n_clicks is None:
+#         raise PreventUpdate
+#     return "overlay_on"
 
 @app.callback(Output('overlay-text', 'children'),
             [Input('continue-button','n_clicks')])
