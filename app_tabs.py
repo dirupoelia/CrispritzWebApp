@@ -2,12 +2,16 @@ import dash
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.exceptions import PreventUpdate
 import subprocess
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.config['suppress_callback_exceptions'] = True       #necessary if update element in a callback generated in another callback
+app.css.config.serve_locally = True
+app.scripts.config.serve_locally = True
+
 app.layout = html.Div([
     html.H1('CRISPRitz Web Application'),
     html.Div(children='''
@@ -50,8 +54,7 @@ def render_content(tab):
         final_list.append(html.P())
         final_list.append(html.Button('Submit', id='submit-index-genome'))
         final_list.append(html.Div(id = "executing-index-genome"))
-        final_list.append(html.Div(id = "executing2-index-genome"))
-
+        final_list.append(html.Div([html.P("test", id = "overlay-text", className = "text"), html.Button('Continue', id = 'continue-button', disabled = True)], id = "executing2-index-genome", className = "overlay")) #Hidden on css
         return final_list
     elif tab == 'search':
         return 'search'
@@ -61,24 +64,35 @@ def render_content(tab):
         return 'gen rep'
 
 #Eseguo il programma
-@app.callback(Output('executing-index-genome', 'children'),
+@app.callback([Output('executing-index-genome', 'children'),
+            Output('continue-button', 'disabled')],
             [Input('submit-index-genome', 'n_clicks')],
             [State('max-bulges', 'value')])
 def executeIndex(n_clicks, max_bulges):
     if n_clicks is None:
-        return ''
-    subprocess.call(["sleep", "10s"])
-    return max_bulges
+        return '', True
+    subprocess.call(["sleep", "2s"])
+    html.Script('off()', type = 'text/javascript')
+    html.Script('document.getElementById("executing2-index-genome").style.display = "none"')
+    return '', False
 
 #Creo overlay
-@app.callback(Output('executing2-index-genome', 'children'),
+@app.callback(Output('executing2-index-genome', 'className'),
             [Input('submit-index-genome', 'n_clicks')],
             [State('max-bulges', 'value')])
 def executeOverlayIndex(n_clicks, max_bulges):
-    #subprocess.call(["sleep", "10s"])
-    if max_bulges is None:
-        return 'none'
-    return max_bulges+10
+    if n_clicks is None:
+        raise PreventUpdate
+    return "overlay_on"
+
+@app.callback(Output('overlay-text', 'children'),
+            [Input('continue-button','n_clicks')])
+def endJob(n_clicks):
+    if n_clicks is None:
+        return ''
+    
+    html.Script('document.getElementById("executing2-index-genome").style.display = "none"', type = 'text/javascript')
+    return 'overlay_off'
 
 
 if __name__ == '__main__':
