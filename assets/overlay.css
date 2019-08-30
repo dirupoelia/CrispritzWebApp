@@ -84,7 +84,7 @@
 ._dash-loading-callback::after {
   content: 'Loading';
   font-family: sans-serif;
-  padding-top: 50px;
+  padding-top: 50%;
   color: #000;
 
   -webkit-animation: fadein 0.5s ease-in 1s forwards; /* Safari, Chrome and Opera > 12.1 */
@@ -141,4 +141,22 @@
 @-o-keyframes fadein {
     from { opacity: 0; }
     to   { opacity: 1; }
+}
+
+
+
+.flex-container {
+  /* We first create a flex layout context */
+  display: flex;
+  
+  /* Then we define the flow direction 
+     and if we allow the items to wrap 
+   * Remember this is the same as:
+   * flex-direction: row;
+   * flex-wrap: wrap;
+   */
+  flex-flow: row wrap;
+  
+  /* Then we define how is distributed the remaining space */
+  justify-content: space-around;
 }
