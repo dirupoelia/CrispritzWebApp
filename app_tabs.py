@@ -3,6 +3,8 @@ from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.exceptions import PreventUpdate
+from os import listdir #for getting directories
+from os.path import isfile, isdir,join #for getting directories
 import subprocess
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -48,14 +50,33 @@ def render_content(tab):
         ])
     elif tab == 'index-genome':
         final_list = []
+
+        #Genome name
         final_list.append(html.P('Tool to find the candidate targets in a genome starting from a PAM. The ouput is a set of files, containing all the sequences of candidate targets extracted from the genome.'))
         final_list.extend([html.Label('Insert the name for the Genome'), dcc.Input(id = 'name-genome', placeholder='Example: hg19_ref', type='text')])
+
+        #Dropdown available genomes
+        onlydir = [f for f in listdir('Genomes') if isdir(join('Genomes', f))]
+        gen_dir = []
+        for dir in onlydir:
+            gen_dir.append({'label': dir, 'value' : dir})
+        final_list.append(html.P(["Select an available Genome ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your directory containing the fasta file(s) into the Genomes directory"))]))
+        final_list.append(dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genomes"))
+
+        #Dropdown available PAM
+        onlyfile = [f for f in listdir('pam') if isfile(join('pam', f))]
+        pam_file = []
+        for pam_name in onlyfile:
+            pam_file.append({'label': pam_name, 'value' : pam_name})
+        final_list.append(html.P(["Select an available PAM ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your PAM text file into the pam directory"))]))
+        final_list.append(dcc.Dropdown(options = pam_file, clearable = False, id = "available-pams"))
+
+
+
         final_list.extend([html.Label('Insert # of max allowed bulges'), dcc.Input(id = 'max-bulges', placeholder='Example: 2', type='number', min = 0)])
         final_list.append(html.P())
         final_list.append(html.Button('Submit', id='submit-index-genome'))
         final_list.append(html.Div(id = "executing-index-genome"))
-        final_list.append(html.Div([html.P("test", id = "overlay-text", className = "text"), html.Button('Continue', id = 'continue-button', disabled = True)], id = "executing2-index-genome", className = "overlay")) #Hidden on css
-        #final_list.append(dcc.Loading(id="loading-1",  children=[html.Div(id="loading-output-1")], type="default", fullscreen = False))
         return final_list
     elif tab == 'search':
         return 'search'
@@ -65,44 +86,29 @@ def render_content(tab):
         return 'gen rep'
 
 #Eseguo il programma
-# @app.callback([Output('executing-index-genome', 'children'),
-#             Output('continue-button', 'disabled')],
-#             [Input('submit-index-genome', 'n_clicks')],
-#             [State('max-bulges', 'value')])
-# def executeIndex(n_clicks, max_bulges):
-#     if n_clicks is None:
-#         return '', True
-#     subprocess.call(["sleep", "5s"])
-#     html.Script('off()', type = 'text/javascript')
-#     html.Script('document.getElementById("executing2-index-genome").style.display = "none"')
-#     return '', False
-@app.callback(Output("executing-index-genome", "children"),
+@app.callback([Output("executing-index-genome", "children"),
+            Output('name-genome', 'required'),
+            Output('max-bulges', 'required')],
             [Input('submit-index-genome', 'n_clicks')],
-            [State('max-bulges', 'value')])
-def executeIndex(n_clicks, max_bulges):
+            [State('max-bulges', 'value'),
+            State('name-genome', 'value'),
+            State('available-genomes', 'value'),
+            State('available-pams', 'value')])
+def executeIndex(n_clicks, max_bulges, name, gen, pam):
     if n_clicks is None:
-        return ''
-    subprocess.call(["ls", "l"])
-    subprocess.call(["sleep", "5s"])
-    return ''
-
-#Creo overlay
-# @app.callback(Output('executing2-index-genome', 'className'),
-#             [Input('submit-index-genome', 'n_clicks')],
-#             [State('max-bulges', 'value')])
-# def executeOverlayIndex(n_clicks, max_bulges):
-#     if n_clicks is None:
-#         raise PreventUpdate
-#     return "overlay_on"
-
-@app.callback(Output('overlay-text', 'children'),
-            [Input('continue-button','n_clicks')])
-def endJob(n_clicks):
-    if n_clicks is None:
-        return ''
+        return '', False, False
     
-    html.Script('document.getElementById("executing2-index-genome").style.display = "none"', type = 'text/javascript')
-    return 'overlay_off'
+    #Check if all elements are valid for input
+    if name is None or name is '' or max_bulges is None:        #max bulges is none when not set or is not a number
+        return '', True, True
+    if gen is None or gen is '':
+        return PreventUpdate        #TODO find better way to signal to provide a value from both dropdown list
+    if pam is None or pam is '':
+        return PreventUpdate        #TODO find better way to signal to provide a value from both dropdown list
+    
+    subprocess.call(["ls", "-l"])
+    subprocess.call(["sleep", "5s"])
+    return '', False, False
 
 
 if __name__ == '__main__':
