@@ -62,7 +62,7 @@ def render_content(tab):
         for dir in onlydir:
             gen_dir.append({'label': dir, 'value' : dir})
         final_list.append(html.P(["Select an available Genome ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your directory containing the fasta file(s) into the Genomes directory"))]))
-        final_list.append(dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genomes"))
+        final_list.append(html.Div(dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genomes"), id = 'div-available-genomes'))
 
         #Dropdown available PAM
         onlyfile = [f for f in listdir('pam') if isfile(join('pam', f))]
@@ -70,8 +70,8 @@ def render_content(tab):
         for pam_name in onlyfile:
             pam_file.append({'label': pam_name, 'value' : pam_name})
         final_list.append(html.P(["Select an available PAM ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your PAM text file into the pam directory"))]))
-        final_list.append(dcc.Dropdown(options = pam_file, clearable = False, id = "available-pams"))
-
+        final_list.append(html.Div(dcc.Dropdown(options = pam_file, clearable = False, id = "available-pams"), id = 'div-available-pams'))
+        #TODO se lascio il rosso nel div, se metto un elemento rimane il rosso, sistemare o lasciare così
         #Number of max bulges
         final_list.extend([html.Label('Insert # of max allowed bulges'), dcc.Input(id = 'max-bulges', placeholder='Example: 2', type='number', min = 0)])
         final_list.append(html.P())
@@ -215,7 +215,9 @@ def render_content(tab):
 #Execute Indexing of a genome
 @app.callback([Output("executing-index-genome", "children"),
             Output('name-genome', 'required'),
-            Output('max-bulges', 'required')],
+            Output('max-bulges', 'required'),
+            Output('div-available-genomes', 'style'),
+            Output('div-available-pams', 'style')],
             [Input('submit-index-genome', 'n_clicks')],
             [State('max-bulges', 'value'),
             State('name-genome', 'value'),
@@ -223,19 +225,25 @@ def render_content(tab):
             State('available-pams', 'value')])
 def executeIndex(n_clicks, max_bulges, name, gen, pam):
     if n_clicks is None:
-        return '', False, False
-    
+        return '', False, False, None, None
+    drop_red = {'border': '3px solid red'}
     #Check if all elements are valid for input
-    if name is None or name is '' or max_bulges is None:        #max bulges is none when not set or is not a number
-        return '', True, True
+    gen_update = None
+    pam_update = None
+    drop_update = False
     if gen is None or gen is '':
-        return PreventUpdate        #TODO find better way to signal to provide a value from both dropdown list -> modify style = {'border': '3px solid red'}
+        gen_update = drop_red
+        drop_update = True      
     if pam is None or pam is '':
-        return PreventUpdate        #TODO find better way to signal to provide a value from both dropdown list
+        pam_update = drop_red
+        drop_update = True
+    if name is None or name is '' or max_bulges is None or drop_update:        #max bulges is none when not set or is not a number
+        return '', True, True, gen_update, pam_update
+         
     
     subprocess.call(["ls", "-l"])
     subprocess.call(["sleep", "5s"])            #TODO find better positioning of Loading and loading gif
-    return '', False, False
+    return '', False, False, None, None
 
 ########################
 # Callbacks for search #
@@ -311,5 +319,12 @@ def executeSearch(n_clicks, index, genome, pam, guide, res_name, mm, dna, rna, r
     
     subprocess.call(["sleep", "5s"])
     return '', False, False, False, False
+
+##########################
+# Callbacks for Annotate #
+##########################
+
+
+
 if __name__ == '__main__':
     app.run_server(debug=True)
