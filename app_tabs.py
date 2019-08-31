@@ -102,10 +102,16 @@ def render_content(tab):
         for pam_name in onlyfile:
             pam_file.append({'label': pam_name, 'value' : pam_name})
         final_list.append(html.P(["Select an available PAM ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your PAM text file into the pam directory"))]))
-        final_list.append(dcc.Dropdown(options = pam_file, clearable = False, id = "available-pams-search"))
+        final_list.append(html.Div(dcc.Dropdown(options = pam_file, clearable = False, id = "available-pams-search"), style = {'border': '3px solid red'}))
 
         #Dropdown/File select guide file
-        #TODO  do
+        onlyfile = [f for f in listdir('guides') if isfile(join('guides', f))]
+        guide_file = []
+        for guide_name in onlyfile:
+            guide_file.append({'label': guide_name, 'value' : guide_name})
+        final_list.append(html.P(["Select an available Guide file ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your Guide text file into the guides directory"))]))
+        final_list.append(html.Div(dcc.Dropdown(options = guide_file, clearable = False, id = "available-guides-search")))
+
 
         #Genome name
         final_list.extend([html.Label('Insert the name for the  output result files'), dcc.Input(id = 'name-result-file', placeholder='Example: emx1.hg19', type='text')])
@@ -154,13 +160,16 @@ def render_content(tab):
                 className = "flex-container"
             )
         )
-
+        #TODO add number thread selector
+        
         #Submit job
         final_list.append(html.Button('Submit', id='submit-search-genome'))
         final_list.append(html.Div(id = "executing-search-genome"))
         return final_list
     elif tab == 'annotate-results':
-        return 'annotate'
+        final_list = []
+        final_list.append(html.P('Tool to annotate results found during search with functional annotations (promoter, chromatin accessibility, insulator, etc). The output is a set of files, one is the list of on/off-targets with the annotation type, the others are files containing counts for each guide, the counts are the total on/off-targets found with the specific mismatch threshold and the specific annotation.'))
+        return final_list
     elif tab == 'generate-report':
         return 'gen rep'
 
@@ -185,7 +194,7 @@ def executeIndex(n_clicks, max_bulges, name, gen, pam):
     if name is None or name is '' or max_bulges is None:        #max bulges is none when not set or is not a number
         return '', True, True
     if gen is None or gen is '':
-        return PreventUpdate        #TODO find better way to signal to provide a value from both dropdown list
+        return PreventUpdate        #TODO find better way to signal to provide a value from both dropdown list -> modify style = {'border': '3px solid red'}
     if pam is None or pam is '':
         return PreventUpdate        #TODO find better way to signal to provide a value from both dropdown list
     
@@ -237,7 +246,7 @@ def switchScore(on):
             [State('index-search', 'on'),
             State('available-genomes-search', 'value'),
             State('available-pams-search', 'value'),
-            #State( guide file),
+            State('available-guides-search', 'value'),
             State('name-result-file', 'value'),
             State('max-mms', 'value'),
             State('max-dna', 'value'),
@@ -246,24 +255,26 @@ def switchScore(on):
             State('score-switch', 'on'),
             State('scores-available-genomes-search', 'value')]
             )
-def executeSearch(n_clicks, index, genome, pam, res_name, mm, dna, rna, res_type, score, genome_score):
+def executeSearch(n_clicks, index, genome, pam, guide, res_name, mm, dna, rna, res_type, score, genome_score):
     if n_clicks is None:
         raise PreventUpdate
     
-    if index:           #Search with index parameters
-        raise PreventUpdate
-    else:               #Search without index parameters
-        #Check if elements are valid
-        if genome is None or genome is '' or pam is None or pam is '':
-            raise PreventUpdate        #TODO find better way to signal to provide a value from both dropdown list
-        if res_name is None or res_name is '' or mm is None:
-            return '', True, True, True, True
-        if not res_type:
-            raise PreventUpdate         #TODO find better way to signal, maybe modify execute search genome?
-        if score and (genome_score is None or genome_score is ''):
-            return 'Error, no directory for scores selected', True, True, True, True   #TODO found a way
+    
+    #Check if elements are valid
+    if genome is None or genome is '' or pam is None or pam is '' or guide is None or guide is '':
+        raise PreventUpdate        #TODO find better way to signal to provide a value from both dropdown list
+    if res_name is None or res_name is '' or mm is None or (index and (dna is None or rna is None)):
+        return '', True, True, True, True
+    if not res_type:
+        raise PreventUpdate         #TODO find better way to signal, maybe modify execute search genome?
+    if score and (genome_score is None or genome_score is ''):
+        return 'Error, no directory for scores selected', True, True, True, True   #TODO found a way
 
+    if index:
         subprocess.call(["sleep", "5s"])
         return '', False, False, False, False
+    
+    subprocess.call(["sleep", "5s"])
+    return '', False, False, False, False
 if __name__ == '__main__':
     app.run_server(debug=True)
