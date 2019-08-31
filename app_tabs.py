@@ -104,7 +104,7 @@ def render_content(tab):
         final_list.append(html.P(["Select an available PAM ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your PAM text file into the pam directory"))]))
         final_list.append(html.Div(dcc.Dropdown(options = pam_file, clearable = False, id = "available-pams-search"), style = {'border': '3px solid red'}))
 
-        #Dropdown/File select guide file
+        #Dropdown available guide file
         onlyfile = [f for f in listdir('guides') if isfile(join('guides', f))]
         guide_file = []
         for guide_name in onlyfile:
@@ -165,13 +165,48 @@ def render_content(tab):
         #Submit job
         final_list.append(html.Button('Submit', id='submit-search-genome'))
         final_list.append(html.Div(id = "executing-search-genome"))
+
+        #TODO quando il search finisce, i risultati sono salvati in una cartella Results col nome in input
         return final_list
     elif tab == 'annotate-results':
         final_list = []
         final_list.append(html.P('Tool to annotate results found during search with functional annotations (promoter, chromatin accessibility, insulator, etc). The output is a set of files, one is the list of on/off-targets with the annotation type, the others are files containing counts for each guide, the counts are the total on/off-targets found with the specific mismatch threshold and the specific annotation.'))
+        
+        #Dropdown available guide file
+        onlyfile = [f for f in listdir('guides') if isfile(join('guides', f))]
+        guide_file = []
+        for guide_name in onlyfile:
+            guide_file.append({'label': guide_name, 'value' : guide_name})
+        final_list.append(html.P(["Select an available Guide file ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your Guide text file into the guides directory"))]))
+        final_list.append(html.Div(dcc.Dropdown(options = guide_file, clearable = False, id = "available-guides-annotation"), id = 'div-available-guides-annotation'))
+
+        #Dropdown available result file
+        onlyfile = [f for f in listdir('Results') if isdir(join('Results', f))]
+        result_file = []
+        for result_name in onlyfile:
+            result_file.append({'label': result_name, 'value' : result_name})
+        final_list.append(html.P(["Select an available result file ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your directory containing the result file into the Results directory"))]))
+        final_list.append(html.Div(dcc.Dropdown(options = result_file, clearable = False, id = "available-results-annotation"), id = 'div-available-results-annotation')) #Note that we need the .targets.txt file inside the selected directory
+
+        #Genome name
+        final_list.extend([html.Label('Insert the name for the  output annotated result file'), dcc.Input(id = 'name-result-file-annotated', placeholder='Example: emx1.hg19.annotated', type='text')])
+        
+        #Upload text file with path
+        final_list.append(
+            html.Div(
+                [html.P('Select file containing path for annotation'),
+                dcc.Upload(html.Button('Upload File', id = 'button-upload-path-annotation'), id = 'upload-path-annotation')]
+            )  
+        )
+        
+        #Submit job
+        final_list.append(html.Button('Submit', id='submit-annotate-result'))
+        final_list.append(html.Div(id = "executing-annotate-result"))
+
         return final_list
     elif tab == 'generate-report':
         return 'gen rep'
+    
 
 ##########################
 # Callbacks for Indexing #
