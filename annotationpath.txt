@@ -1,0 +1,4 @@
+exon
+/user/etc
+intron
+/usr/desktop

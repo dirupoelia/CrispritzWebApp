@@ -7,7 +7,8 @@ from dash.exceptions import PreventUpdate
 from os import listdir #for getting directories
 from os.path import isfile, isdir,join #for getting directories
 import subprocess
-
+import base64 #for reading upload content
+import io
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -181,9 +182,9 @@ def render_content(tab):
         final_list.append(html.Div(dcc.Dropdown(options = guide_file, clearable = False, id = "available-guides-annotation"), id = 'div-available-guides-annotation'))
 
         #Dropdown available result file
-        onlyfile = [f for f in listdir('Results') if isdir(join('Results', f))]
+        onlydir = [f for f in listdir('Results') if isdir(join('Results', f))]
         result_file = []
-        for result_name in onlyfile:
+        for result_name in onlydir:
             result_file.append({'label': result_name, 'value' : result_name})
         final_list.append(html.P(["Select an available result file ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your directory containing the result file into the Results directory"))]))
         final_list.append(html.Div(dcc.Dropdown(options = result_file, clearable = False, id = "available-results-annotation"), id = 'div-available-results-annotation')) #Note that we need the .targets.txt file inside the selected directory
@@ -195,7 +196,8 @@ def render_content(tab):
         final_list.append(
             html.Div(
                 [html.P('Select file containing path for annotation'),
-                dcc.Upload(html.Button('Upload File', id = 'button-upload-path-annotation'), id = 'upload-path-annotation')]
+                dcc.Upload(html.Button('Upload File', id = 'button-upload-path-annotation'), id = 'upload-path-annotation'),
+                html.P('', id = 'name-upload-file-annotation')]
             )  
         )
         
@@ -205,8 +207,38 @@ def render_content(tab):
 
         return final_list
     elif tab == 'generate-report':
-        return 'gen rep'
+        final_list = []
+        final_list.append(html.P('Tool to generate a graphical report with annotated and overall mismatch and bulge profile for a given guide. The output is a graphical representation of the input guide behaviour.'))
+        
+        #Guide Sequence
+        final_list.extend([html.Label('Insert the Guide sequence'), dcc.Input(id = 'guide-sequence-report', placeholder='Example: GAGTCCGAGCAGAAGAAGAANNN', type='text')])
+        
+        #Number of mismatches
+        final_list.append(dcc.Input(id = 'max-mms-report', placeholder='Example: 2', type='number', min = 0))
+
+        #Dropdown available result file
+        onlydir = [f for f in listdir('Results') if isdir(join('Results', f))]
+        result_file = []
+        for result_name in onlydir:
+            result_file.append({'label': result_name, 'value' : result_name})
+        final_list.append(html.P(["Select an available result file ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your directory containing the result file into the Results directory"))]))
+        final_list.append(html.Div(dcc.Dropdown(options = result_file, clearable = False, id = "available-results-report"), id = 'div-available-results-report')) #Note that we need the .targets.txt file inside the selected directory
+        #From the dropdown, we could select and check if all files are available: profile, ext_profile, introns, exons etc...
+
+        #Gecko comparison
+        final_list.append(daq.BooleanSwitch(on = False, label = "Activate the gecko dataset comparison", labelPosition = "top", id = 'gecko-comparison-report')) #TODO sistemare posizione del bottone
+
+        #Submit job
+        final_list.append(html.Button('Submit', id='submit-generate-report'))
+        final_list.append(html.Div(id = "executing-generate-report"))
+
+        return final_list
     
+###################################################### CALLBACKS ######################################################
+
+#############################
+# Callbacks for Add variant #
+#############################
 
 ##########################
 # Callbacks for Indexing #
@@ -230,7 +262,7 @@ def executeIndex(n_clicks, max_bulges, name, gen, pam):
     #Check if all elements are valid for input
     gen_update = None
     pam_update = None
-    drop_update = False
+    drop_update = False             #Create red border only if one of the drop is None or ''
     if gen is None or gen is '':
         gen_update = drop_red
         drop_update = True      
@@ -324,7 +356,80 @@ def executeSearch(n_clicks, index, genome, pam, guide, res_name, mm, dna, rna, r
 # Callbacks for Annotate #
 ##########################
 
+#Show the uploaded filename
+@app.callback(Output('name-upload-file-annotation', 'children'),
+            [Input('upload-path-annotation', 'filename')]
+            )
+def showFileName(name):
+    if name is None:
+        return ''
+    return 'Uploaded ' + name
 
+#Read the uploaded file and converts into bit
+def parse_contents(contents):
+    content_type, content_string = contents.split(',')
+
+    decoded = base64.b64decode(content_string)
+    return decoded
+
+#Execute Annotation
+@app.callback([Output('executing-annotate-result', 'children'),
+            Output('div-available-guides-annotation', 'style'),
+            Output('div-available-results-annotation', 'style'),
+            Output('name-result-file-annotated', 'required')],
+            [Input('submit-annotate-result', 'n_clicks')],
+            [State('available-guides-annotation', 'value'),
+            State('available-results-annotation', 'value'),
+            State('name-result-file-annotated', 'value'),
+            State('upload-path-annotation', 'contents')]
+            )
+def executeAnnotation(n_clicks, guide, result_target, result_name, file_content):
+    if n_clicks is None:
+        raise PreventUpdate
+    
+    #Check if elements are valid
+    drop_red = {'border': '3px solid red'}
+    guide_update = None
+    res_update = None
+    drop_update = False
+    if guide is None or guide is '':
+        guide_update = drop_red
+        drop_update = True      
+    if result_target is None or result_target is '':
+        res_update = drop_red
+        drop_update = True
+    #TODO insert same thing for button and update the outputs
+    
+    if result_name is None or result_name is '' or file_content is None or (drop_update):
+        return '', guide_update, res_update, True
+    
+    paths = parse_contents(file_content).decode('utf-8')
+    file_tmp = open('test.txt', 'w')  #TODO choose better name for when multiple users
+    file_tmp.write(paths)       #use file_tmp as input for the bash call
+
+    #Note that we need the targets.txt file inside the result_target directory
+    subprocess.call(["sleep", "5s"])
+    return '', None, None, False
+
+#################################
+# Callbacks for Generate Report #
+#################################
+
+#Execute Generate Report
+@app.callback([Output('executing-generate-report', 'value'),
+            Output('guide-sequence-report', 'required'),
+            Output('max-mms-report', 'required'),
+            Output('available-results-report', 'style')],
+            [Input('submit-generate-report', 'n_clicks')],
+            [State('guide-sequence-report', 'value'),
+            State('max-mms-report', 'value'),
+            State('available-results-report', 'value')]
+)
+def executeReport(n_clicks, sequence, mms, result_file):
+    if n_clicks is None:
+        raise PreventUpdate
+    #TODO continuare la funzione
+    raise PreventUpdate
 
 if __name__ == '__main__':
     app.run_server(debug=True)
