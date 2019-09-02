@@ -3,12 +3,15 @@ from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_daq as daq
+import dash_table
 from dash.exceptions import PreventUpdate
-from os import listdir #for getting directories
-from os.path import isfile, isdir,join #for getting directories
+from os import listdir                      #for getting directories
+from os.path import isfile, isdir,join      #for getting directories
 import subprocess
-import base64 #for reading upload content
-import io
+import base64                               #for decoding upload content
+import io                                   #for decoding upload content
+import pandas as pd                         #for dash table
+
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -28,6 +31,7 @@ app.layout = html.Div([
         dcc.Tab(label='Search', value='search'),
         dcc.Tab(label='Annotate results', value='annotate-results'),
         dcc.Tab(label='Generate report', value='generate-report'),
+        dcc.Tab(label='View report', value='view-report')
     ]),
     html.Div(id='tab-content')
 ])
@@ -87,7 +91,7 @@ def render_content(tab):
         final_list.append(html.P('Tool to perform off-target search on a genome (with or without variants) or genome index (with or without variants). The ouput is a set of files, one is a list of all targets and off-targets found, the others are profile files containing detailed information for each guide , like bp/mismatches and on/off-targets count.'))
 
         #Boolean switch for Index search
-        final_list.append(daq.BooleanSwitch(on = False, label = "use Index Search", labelPosition = "top", id = 'index-search')) #TODO sistemare posizione del bottone
+        final_list.append(html.Div(daq.BooleanSwitch(on = False, label = "Use Index Search", labelPosition = "top", id = 'index-search')))
 
         #Dropdown available genomes
         onlydir = [f for f in listdir('Genomes') if isdir(join('Genomes', f))]
@@ -133,7 +137,8 @@ def render_content(tab):
                     dcc.Input(id = 'max-rna', placeholder='Example: 2', type='number', min = 0, disabled = True)]
                 )],
                 id = "container-m-d-r",
-                className = "flex-container"
+                className = "flex-container-mdr-search",
+                style = {'width' : '50%'}
             )
         )
 
@@ -154,11 +159,12 @@ def render_content(tab):
         #Boolean switch for Score calculation
         final_list.append(
             html.Div(
-                [daq.BooleanSwitch(on = False, label = "calculate Scores", labelPosition = "top", id = 'score-switch'),          #TODO sistemare posizione del bottone
-                dcc.Dropdown(options = gen_dir, clearable = False, id = "scores-available-genomes-search")
+                [daq.BooleanSwitch(on = False, label = "calculate Scores", labelPosition = "top", id = 'score-switch', style = {'align-items':'start'}),          #TODO sistemare posizione del bottone
+                dcc.Dropdown(options = gen_dir, clearable = False, id = "scores-available-genomes-search", style = {'width':'50%'})
                 ],
                 id = 'container-scores',
-                className = "flex-container"
+                className = "flex-container-score",
+                style = {'width' : '50%'}
             )
         )
         #TODO add number thread selector
@@ -232,6 +238,12 @@ def render_content(tab):
         final_list.append(html.Button('Submit', id='submit-generate-report'))
         final_list.append(html.Div(id = "executing-generate-report"))
 
+        return final_list
+    elif tab == 'view-report':
+        final_list = []
+        
+        df = pd.read_csv('emx1.scores.txt', sep = '\t')
+        final_list.append(dash_table.DataTable(id='table', columns=[{"name": i, "id": i} for i in df.columns], data=df.to_dict('records'), virtualization = True))
         return final_list
     
 ###################################################### CALLBACKS ######################################################
@@ -414,6 +426,8 @@ def executeAnnotation(n_clicks, guide, result_target, result_name, file_content)
 #################################
 # Callbacks for Generate Report #
 #################################
+
+#TODO creare funzione che quando scelgo il Result controllo subito che cisiano tutti i file e nel caso li faccio vedere?
 
 #Execute Generate Report
 @app.callback([Output('executing-generate-report', 'value'),

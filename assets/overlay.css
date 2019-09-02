@@ -145,7 +145,7 @@
 
 
 
-.flex-container {
+.flex-container-mdr-search {
   /* We first create a flex layout context */
   display: flex;
   
@@ -158,5 +158,21 @@
   flex-flow: row wrap;
   
   /* Then we define how is distributed the remaining space */
-  justify-content: space-around;
+  justify-content: space-between;
+}
+
+.flex-container-score {
+  /* We first create a flex layout context */
+  display: flex;
+  
+  /* Then we define the flow direction 
+     and if we allow the items to wrap 
+   * Remember this is the same as:
+   * flex-direction: row;
+   * flex-wrap: wrap;
+   */
+  flex-flow: row wrap;
+  
+  /* Then we define how is distributed the remaining space */
+  justify-content: space-between;    /*https://css-tricks.com/almanac/properties/j/justify-content/*/
 }
