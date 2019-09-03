@@ -161,7 +161,7 @@ def render_content(tab):
         #Boolean switch for Score calculation
         final_list.append(
             html.Div(
-                [daq.BooleanSwitch(on = False, label = "calculate Scores", labelPosition = "top", id = 'score-switch', style = {'align-items':'start'}),          #TODO sistemare posizione del bottone
+                [daq.BooleanSwitch(on = False, label = "Calculate Scores", labelPosition = "top", id = 'score-switch', style = {'align-items':'start'}),          #TODO sistemare posizione del bottone
                 dcc.Dropdown(options = gen_dir, clearable = False, id = "scores-available-genomes-search", style = {'width':'50%'})
                 ],
                 id = 'container-scores',
@@ -171,6 +171,8 @@ def render_content(tab):
         )
         #TODO add number thread selector
         
+        final_list.append(html.Br())
+
         #Submit job
         final_list.append(html.Button('Submit', id='submit-search-genome'))
         final_list.append(html.Div(id = "executing-search-genome"))
@@ -243,10 +245,6 @@ def render_content(tab):
         return final_list
     elif tab == 'view-report':
         final_list = []
-        
-        #Table for targets and score#TODO check if user has created only targets or also scores
-        df = pd.read_csv('emx1.scores.txt', sep = '\t')
-        final_list.append(dash_table.DataTable(id='table', columns=[{"name": i, "id": i} for i in df.columns], data=df.to_dict('records'), virtualization = True))
 
         #Images from the report #TODO modify the 3 call for .savefig to also create png images in radar_chart.py and radar_chart_docker.py
         onlydir = [f for f in listdir('Results') if isdir(join('Results', f))]
@@ -255,13 +253,19 @@ def render_content(tab):
             result_file.append({'label': result_name, 'value' : result_name})
         final_list.append(html.P(["Select an available result file ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your directory containing the result file into the Results directory"))]))
         final_list.append(html.Div(
-            [dcc.Dropdown(options = result_file, clearable = False, id = "available-results-view", style = {'widht':'50%'}), 
-            html.Img(id = 'selected-img')],
-            className = "flex-container-img-show",
+            dcc.Dropdown(options = result_file, clearable = False, id = "available-results-view", style = {'widht':'50%'}), 
             id = 'div-available-results-view')
         )
+        final_list.append(html.Br())
+
+        #Table for targets and score#TODO check if user has created only targets or also scores
+        df = pd.read_csv('emx1.scores.txt', sep = '\t')
+        final_list.append(dash_table.DataTable(id='table', columns=[{"name": i, "id": i} for i in df.columns], data=df.to_dict('records'), virtualization = True))
         
+        final_list.append(html.Img(id = 'selected-img'))
+        final_list.append(html.Br())
         final_list.append(html.Button('Submit-test', id = 'test-button'))
+        
 
         final_list.append(html.Div(id='intermediate-value', style={'display': 'none'})) #Hidden div to save data for img show (contains list of all images available in a result directory)
         return final_list
@@ -469,7 +473,7 @@ def executeReport(n_clicks, sequence, mms, result_file):
 # Callbacks for Generate Report #
 #################################
 
-#Given the selected result, save the list of images 
+#Given the selected result, save the list of available images in that directory
 @app.callback(
     [Output('intermediate-value', 'children'),
     Output('test-button', 'n_clicks')],
@@ -481,8 +485,9 @@ def loadImgList(value):
     
     onlyimg = [f for f in listdir('Results/' + value) if isfile(join('Results/' + value, f)) and f.endswith('.png')]
     json_str = json.dumps(onlyimg) 
-    return json_str, 0
+    return json_str, 0                  #Returning the n_clicks is needed to 'trick' the system to press the Next button, thus loading an image
 
+#When result is chosen, or when Next button is pressed, load the img list and go to next image
 @app.callback(
     Output('selected-img','src'),
     [Input('intermediate-value', 'children'),
@@ -493,12 +498,11 @@ def showImg(json_data, n_clicks, value):
     if json_data is None or json_data is '' or n_clicks is None:
         raise PreventUpdate
 
-    print (json_data)
     img_list = json.loads(json_data)
 
     img_pos = 0
     if n_clicks > 0 :
-        img_pos = n_clicks%2
+        img_pos = n_clicks%len(img_list)
     image_filename = 'Results/' + value + '/' + img_list[img_pos]
     encoded_image = base64.b64encode(open(image_filename, 'rb').read())
     return 'data:image/png;base64,{}'.format(encoded_image.decode())
