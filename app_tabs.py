@@ -13,6 +13,9 @@ import io                                   #for decoding upload content
 import pandas as pd                         #for dash table
 import json                                 #for getting and saving report images list
 from os import getcwd
+import time                                 #measure time for loading df table
+
+PAGE_SIZE = 10                     #number of entries in each page of the table in view report
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -37,7 +40,6 @@ app.layout = html.Div([
     ]),
     html.Div(id='tab-content')
 ])
-
 
 @app.callback(Output('tab-content', 'children'),
               [Input('main-menu', 'value')])
@@ -259,8 +261,23 @@ def render_content(tab):
         final_list.append(html.Br())
 
         #Table for targets and score#TODO check if user has created only targets or also scores
+        
         df = pd.read_csv('emx1.scores.txt', sep = '\t')
-        final_list.append(dash_table.DataTable(id='table', columns=[{"name": i, "id": i} for i in df.columns], data=df.to_dict('records'), virtualization = True))
+
+        final_list.append(dash_table.DataTable(
+            id='result-table', 
+            columns=[{"name": i, "id": i} for i in df.columns], 
+            data=df.to_dict('records'), 
+            virtualization = True,
+            fixed_rows={ 'headers': True, 'data': 0 },
+            style_cell={'width': '150px'},
+            page_current=0,
+            page_size=PAGE_SIZE,
+            page_action='custom'
+            )
+        )
+        
+
         
         final_list.append(html.Img(id = 'selected-img'))
         final_list.append(html.Br())
@@ -469,9 +486,22 @@ def executeReport(n_clicks, sequence, mms, result_file):
     #TODO continuare la funzione
     raise PreventUpdate
 
-#################################
-# Callbacks for Generate Report #
-#################################
+#############################
+# Callbacks for Show Report #
+#############################
+
+#Send the data when next or prev button is clicked on the result table
+# @app.callback(
+#     Output('result-table', 'data'),
+#     [Input('result-table', "page_current"),
+#      Input('result-table', "page_size")])
+# def update_table(page_current,page_size):
+#     df = pd.read_csv('../emx1big.scores.txt', sep = '\t')
+#     return df.iloc[
+#         page_current*page_size:(page_current+ 1)*page_size
+#     ].to_dict('records')
+
+
 
 #Given the selected result, save the list of available images in that directory
 @app.callback(
