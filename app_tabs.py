@@ -14,6 +14,7 @@ import pandas as pd                         #for dash table
 import json                                 #for getting and saving report images list
 from os import getcwd
 import time                                 #measure time for loading df table
+from flask_caching import Cache             #for cache of .targets or .scores
 
 PAGE_SIZE = 10                     #number of entries in each page of the table in view report
 
@@ -23,6 +24,14 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.config['suppress_callback_exceptions'] = True       #necessary if update element in a callback generated in another callback
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
+
+CACHE_CONFIG = {
+    # try 'filesystem' if you don't want to setup redis
+    'CACHE_TYPE': 'filesystem',
+    'CACHE_DIR': ('Cache')#os.environ.get('REDIS_URL', 'localhost:6379')
+}
+cache = Cache()
+cache.init_app(app.server, config=CACHE_CONFIG)
 
 app.layout = html.Div([
     html.H1('CRISPRitz Web Application'),
@@ -40,6 +49,14 @@ app.layout = html.Div([
     ]),
     html.Div(id='tab-content')
 ])
+
+operators = [['ge ', '>='],
+             ['le ', '<='],
+             ['lt ', '<'],
+             ['gt ', '>'],
+             ['ne ', '!='],
+             ['eq ', '='],
+             ['contains ']]     #for filtering
 
 @app.callback(Output('tab-content', 'children'),
               [Input('main-menu', 'value')])
@@ -255,33 +272,46 @@ def render_content(tab):
             result_file.append({'label': result_name, 'value' : result_name})
         final_list.append(html.P(["Select an available result file ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your directory containing the result file into the Results directory"))]))
         final_list.append(html.Div(
-            dcc.Dropdown(options = result_file, clearable = False, id = "available-results-view", style = {'widht':'50%'}), 
+            dcc.Dropdown(options = result_file, clearable = False, id = "available-results-view", style={'position':'relative', 'zIndex':'999', 'widht':'50%'}),     #position and zindex is for avoid being under column fixed
             id = 'div-available-results-view')
         )
         final_list.append(html.Br())
 
         #Table for targets and score#TODO check if user has created only targets or also scores
         
-        df = pd.read_csv('emx1.scores.txt', sep = '\t')
-
+        col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'CFD', 'Doench2016']
+        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric']
+        cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
         final_list.append(dash_table.DataTable(
             id='result-table', 
-            columns=[{"name": i, "id": i} for i in df.columns], 
-            data=df.to_dict('records'), 
+            columns=cols, 
             virtualization = True,
             fixed_rows={ 'headers': True, 'data': 0 },
             style_cell={'width': '150px'},
             page_current=0,
             page_size=PAGE_SIZE,
-            page_action='custom'
+            page_action='custom',
+            sort_action='custom',
+            sort_mode='multi',
+            sort_by=[],
+            filter_action='custom',
+            filter_query=''
             )
         )
         
-
+        # hidden signal value
+        final_list.append(html.Div(id='signal', style={'display': 'none'}))
         
-        final_list.append(html.Img(id = 'selected-img'))
-        final_list.append(html.Br())
-        final_list.append(html.Button('Submit-test', id = 'test-button'))
+        final_list.append(html.Div([
+                html.Img(id = 'selected-img', width="65%", height="65%"),
+                html.Div([html.Button('Submit-test', id = 'test-button'), html.P(id = 'filename-show')], id = 'container-button-filename-show', className = 'flex-container-button-filename-show')
+            ],
+            id = 'container-img-button-show',
+            className = "flex-container-img-button-show"
+            )
+        )
+        #final_list.append(html.Br())
+        #final_list.append(html.Button('Submit-test', id = 'test-button'))
         
 
         final_list.append(html.Div(id='intermediate-value', style={'display': 'none'})) #Hidden div to save data for img show (contains list of all images available in a result directory)
@@ -490,18 +520,93 @@ def executeReport(n_clicks, sequence, mms, result_file):
 # Callbacks for Show Report #
 #############################
 
+#Perform expensive loading of a dataframe and save result into 'global store'
+#Cache are in the Cache directory
+@cache.memoize()
+def global_store(value):
+    
+    target = [f for f in listdir('Results/' + value) if isfile(join('Results/'+value, f)) and f.endswith('scores.txt') ]
+    if not target:
+        target = [f for f in listdir('Results/' + value) if isfile(join('Results/'+value, f)) and f.endswith('targets.txt') ]
+    
+    df = pd.read_csv('Results/' +value + '/' + target[0], sep = '\t')
+    df.rename(columns = {"#Bulge type":'BulgeType', '#Bulge_type':'BulgeType','Bulge Size': 'BulgeSize', 'Bulge_Size': 'BulgeSize', 'Doench 2016':'Doench2016','Doench_2016':'Doench2016'}, inplace = True)
+    return df
+
+#Signal the loading is done and reset page_current and sorting_filter
+@app.callback([Output('signal', 'children'), Output('result-table', 'page_current'), Output('result-table', "sort_by"), Output('result-table','filter_query')], [Input('available-results-view', 'value')])
+def compute_value(value):
+    # compute value and send a signal when done
+    if value is None:
+        raise PreventUpdate
+    global_store(value)
+    return value, 0, [], ''
+
 #Send the data when next or prev button is clicked on the result table
-# @app.callback(
-#     Output('result-table', 'data'),
-#     [Input('result-table', "page_current"),
-#      Input('result-table', "page_size")])
-# def update_table(page_current,page_size):
-#     df = pd.read_csv('../emx1big.scores.txt', sep = '\t')
-#     return df.iloc[
-#         page_current*page_size:(page_current+ 1)*page_size
-#     ].to_dict('records')
+@app.callback(
+    Output('result-table', 'data'),
+    [Input('signal', 'children'),
+     Input('result-table', "page_current"),
+     Input('result-table', "page_size"),
+     Input('result-table', "sort_by"),
+     Input('result-table', 'filter_query')])
+def update_table(value, page_current,page_size, sort_by, filter):
+    if value is None:
+        raise PreventUpdate
 
+    filtering_expressions = filter.split(' && ')    
+    df = global_store(value)
+    dff = df
+    for filter_part in filtering_expressions:
+        col_name, operator, filter_value = split_filter_part(filter_part)
 
+        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+            # these operators match pandas series operator method names
+            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
+        elif operator == 'contains':
+            dff = dff.loc[dff[col_name].str.contains(filter_value)]
+        elif operator == 'datestartswith':
+            # this is a simplification of the front-end filtering logic,
+            # only works with complete fields in standard format
+            dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+
+    if len(sort_by):
+        dff = dff.sort_values(
+            [col['column_id'] for col in sort_by],
+            ascending=[
+                col['direction'] == 'asc'
+                for col in sort_by
+            ],
+            inplace=False
+        )
+    
+    return dff.iloc[
+        page_current*page_size:(page_current+ 1)*page_size
+    ].to_dict('records')
+
+#For filtering
+def split_filter_part(filter_part):
+    for operator_type in operators:
+        for operator in operator_type:
+            if operator in filter_part:
+                name_part, value_part = filter_part.split(operator, 1)
+                name = name_part[name_part.find('{') + 1: name_part.rfind('}')]
+
+                value_part = value_part.strip()
+                v0 = value_part[0]
+                if (v0 == value_part[-1] and v0 in ("'", '"', '`')):
+                    value = value_part[1: -1].replace('\\' + v0, v0)
+                else:
+                    try:
+                        value = float(value_part)
+                    except ValueError:
+                        value = value_part
+
+                # word operators need spaces after them in the filter string,
+                # but we don't want these later
+                return name, operator_type[0].strip(), value
+
+    return [None] * 3
 
 #Given the selected result, save the list of available images in that directory
 @app.callback(
@@ -519,7 +624,8 @@ def loadImgList(value):
 
 #When result is chosen, or when Next button is pressed, load the img list and go to next image
 @app.callback(
-    Output('selected-img','src'),
+    [Output('selected-img','src'),
+    Output('filename-show', 'children')],
     [Input('intermediate-value', 'children'),
     Input('test-button', 'n_clicks')],
     [State('available-results-view', 'value')]
@@ -535,7 +641,8 @@ def showImg(json_data, n_clicks, value):
         img_pos = n_clicks%len(img_list)
     image_filename = 'Results/' + value + '/' + img_list[img_pos]
     encoded_image = base64.b64encode(open(image_filename, 'rb').read())
-    return 'data:image/png;base64,{}'.format(encoded_image.decode())
+    return 'data:image/png;base64,{}'.format(encoded_image.decode()), 'Selected image: ' + image_filename.split('/')[-1] 
 
 if __name__ == '__main__':
     app.run_server(debug=True)
+    cache.clear()       #delete cache when server is closed

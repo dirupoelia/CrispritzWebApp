@@ -99,11 +99,13 @@ def render_content(tab):
         #     page_action='custom'
         #     )
         # )
-        col_list = ['#Bulge type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'CFD', 'Doench 2016']
+        col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'CFD', 'Doench2016']
+        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric']
+        
+        cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
         final_list.append(dash_table.DataTable(
             id='result-table', 
-            columns=[{"name": i, "id": i} for i in col_list], 
-            #data=[{'type':'1', 'rna':'1', 'dna':'1', 'chr':'1', 'pos':'1', 'strand':'1', 'mm':'1', 'bulge':'1', 'cfd':'1', 'doe':'1'}],
+            columns=cols, 
             virtualization = True,
             fixed_rows={ 'headers': True, 'data': 0 },
             style_cell={'width': '150px'},
@@ -132,9 +134,13 @@ def render_content(tab):
 @cache.memoize()
 def global_store(value):
     # simulate expensive query
-    target = [f for f in listdir('Results/' + value) if isfile(join('Results/'+value, f)) and f.endswith('scores.txt') ]    #TODO check if targets or scores exists and load the appropriate
+    
+    target = [f for f in listdir('Results/' + value) if isfile(join('Results/'+value, f)) and f.endswith('scores.txt') ]
+    if not target:
+        target = [f for f in listdir('Results/' + value) if isfile(join('Results/'+value, f)) and f.endswith('targets.txt') ]
     
     df = pd.read_csv('Results/' +value + '/' + target[0], sep = '\t')
+    df.rename(columns = {"#Bulge type":'BulgeType', '#Bulge_type':'BulgeType','Bulge Size': 'BulgeSize', 'Bulge_Size': 'BulgeSize', 'Doench 2016':'Doench2016','Doench_2016':'Doench2016'}, inplace = True)
     return df
 
 @app.callback([Output('signal', 'children'), Output('result-table', 'page_current'), Output('result-table', "sort_by"), Output('result-table','filter_query')], [Input('available-results-view', 'value')])
@@ -156,7 +162,6 @@ def compute_value(value):
 def update_table(value, page_current,page_size, sort_by, filter):
     if value is None:
         raise PreventUpdate
-    print(filter)
 
     filtering_expressions = filter.split(' && ')    
     df = global_store(value)
