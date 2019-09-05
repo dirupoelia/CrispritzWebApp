@@ -62,19 +62,15 @@ operators = [['ge ', '>='],
               [Input('main-menu', 'value')])
 def render_content(tab):
     if tab == 'add-variants':
-        return html.Div([
-            html.H3('Tab content 1'),
-            dcc.Graph(
-                id='graph-1-tabs',
-                figure={
-                    'data': [{
-                        'x': [1, 2, 3],
-                        'y': [3, 1, 2],
-                        'type': 'bar'
-                    }]
-                }
-            )
-        ])
+        #TODO https://community.plot.ly/t/dash-loading-states/5687/27
+        #TODO https://www.w3schools.com/howto/howto_css_loader.asp
+        #TODO https://community.plot.ly/t/in-a-plotly-dash-app-how-to-show-a-default-text-value-in-a-div-upon-each-click-on-a-dropdown-or-button-etc-until-the-div-is-populated/14588/4
+
+        final_list = []
+
+        final_list.append(html.Button('Long process', id = 'long-process-button'))
+        final_list.append(html.Div(id = 'long-process-div'))
+        return final_list
     elif tab == 'index-genome':
         final_list = []
         final_list.append(html.P('Tool to find the candidate targets in a genome starting from a PAM. The ouput is a set of files, containing all the sequences of candidate targets extracted from the genome.'))
@@ -304,14 +300,14 @@ def render_content(tab):
         
         final_list.append(html.Div([
                 html.Img(id = 'selected-img', width="65%", height="65%"),
-                html.Div([html.Button('Submit-test', id = 'test-button'), html.P(id = 'filename-show')], id = 'container-button-filename-show', className = 'flex-container-button-filename-show')
+                html.Div([html.Button('Next Image', id = 'next-image-button', style = {'display':'none','width': '150px'}), html.P(id = 'filename-show')], id = 'container-button-filename-show', className = 'flex-container-button-filename-show')
             ],
             id = 'container-img-button-show',
             className = "flex-container-img-button-show"
             )
         )
         #final_list.append(html.Br())
-        #final_list.append(html.Button('Submit-test', id = 'test-button'))
+        #final_list.append(html.Button('Submit-test', id = 'next-image-button'))
         
 
         final_list.append(html.Div(id='intermediate-value', style={'display': 'none'})) #Hidden div to save data for img show (contains list of all images available in a result directory)
@@ -534,7 +530,13 @@ def global_store(value):
     return df
 
 #Signal the loading is done and reset page_current and sorting_filter
-@app.callback([Output('signal', 'children'), Output('result-table', 'page_current'), Output('result-table', "sort_by"), Output('result-table','filter_query')], [Input('available-results-view', 'value')])
+@app.callback(
+    [Output('signal', 'children'), 
+    Output('result-table', 'page_current'), 
+    Output('result-table', "sort_by"), 
+    Output('result-table','filter_query')],
+    [Input('available-results-view', 'value')]
+)
 def compute_value(value):
     # compute value and send a signal when done
     if value is None:
@@ -549,7 +551,8 @@ def compute_value(value):
      Input('result-table', "page_current"),
      Input('result-table', "page_size"),
      Input('result-table', "sort_by"),
-     Input('result-table', 'filter_query')])
+     Input('result-table', 'filter_query')]
+)
 def update_table(value, page_current,page_size, sort_by, filter):
     if value is None:
         raise PreventUpdate
@@ -611,7 +614,7 @@ def split_filter_part(filter_part):
 #Given the selected result, save the list of available images in that directory
 @app.callback(
     [Output('intermediate-value', 'children'),
-    Output('test-button', 'n_clicks')],
+    Output('next-image-button', 'n_clicks')],
     [Input('available-results-view', 'value')]
 )
 def loadImgList(value):
@@ -620,14 +623,15 @@ def loadImgList(value):
     
     onlyimg = [f for f in listdir('Results/' + value) if isfile(join('Results/' + value, f)) and f.endswith('.png')]
     json_str = json.dumps(onlyimg) 
-    return json_str, 0                  #Returning the n_clicks is needed to 'trick' the system to press the Next button, thus loading an image
+    return json_str, 0                 #Returning the n_clicks is needed to 'trick' the system to press the Next button, thus loading an image
 
 #When result is chosen, or when Next button is pressed, load the img list and go to next image
 @app.callback(
     [Output('selected-img','src'),
-    Output('filename-show', 'children')],
+    Output('filename-show', 'children'),
+    Output('next-image-button', 'style')],
     [Input('intermediate-value', 'children'),
-    Input('test-button', 'n_clicks')],
+    Input('next-image-button', 'n_clicks')],
     [State('available-results-view', 'value')]
 )
 def showImg(json_data, n_clicks, value):
@@ -641,8 +645,20 @@ def showImg(json_data, n_clicks, value):
         img_pos = n_clicks%len(img_list)
     image_filename = 'Results/' + value + '/' + img_list[img_pos]
     encoded_image = base64.b64encode(open(image_filename, 'rb').read())
-    return 'data:image/png;base64,{}'.format(encoded_image.decode()), 'Selected image: ' + image_filename.split('/')[-1] 
+    return 'data:image/png;base64,{}'.format(encoded_image.decode()), 'Selected image: ' + image_filename.split('/')[-1] , {'width':'150px'} 
 
+######################TEST###################
+@app.callback(
+    Output('long-process-div', 'children'),
+    [Input('long-process-button', 'n_clicks')]
+)
+def testLongProcess(n):
+    if n is None:
+        raise PreventUpdate
+    subprocess.call(["sleep", "500s"])
+
+    return 'Done'
+    
 if __name__ == '__main__':
     app.run_server(debug=True)
     cache.clear()       #delete cache when server is closed
