@@ -100,6 +100,9 @@ def render_content(tab):
 
         #Submit job
         final_list.append(html.Button('Submit', id='submit-index-genome'))
+        final_list.append(html.Div(id='loop_breaker_container', children=[]))   #Needed for 'breaking' cicular dependency between button and div of spinner
+        final_list.append(html.Div('Creating Index', className = 'loader-name', id = 'id-loader-name',  style = {'visibility':'hidden'}))  
+        final_list.append(html.Div('',className = 'loader', id='spinner', style = {'visibility':'hidden'}))
         final_list.append(html.Div(id = "executing-index-genome"))
         return final_list
     
@@ -323,20 +326,34 @@ def render_content(tab):
 # Callbacks for Indexing #
 ##########################
 
-#Execute Indexing of a genome
-@app.callback([Output("executing-index-genome", "children"),
-            Output('name-genome', 'required'),
-            Output('max-bulges', 'required'),
-            Output('div-available-genomes', 'style'),
-            Output('div-available-pams', 'style')],
-            [Input('submit-index-genome', 'n_clicks')],
-            [State('max-bulges', 'value'),
-            State('name-genome', 'value'),
-            State('available-genomes', 'value'),
-            State('available-pams', 'value')])
-def executeIndex(n_clicks, max_bulges, name, gen, pam):
+#Modify spinner visibility when button is clicked
+@app.callback(
+    [Output('spinner', 'style'),
+    Output('id-loader-name', 'style'),
+    Output("executing-index-genome", "children"),
+    Output('name-genome', 'required'),
+    Output('max-bulges', 'required'),
+    Output('div-available-genomes', 'style'),
+    Output('div-available-pams', 'style')],
+    [Input('submit-index-genome', 'n_clicks')],
+    [State('max-bulges', 'value'),
+    State('name-genome', 'value'),
+    State('available-genomes', 'value'),
+    State('available-pams', 'value')]
+)
+def modifyVisibilitySpin(n_clicks,  max_bulges, name, gen, pam):
+    '''
+    The function is called when the button is pressed (n_clicks from None to 1..2..3) or when the n_clicks value is modified in another callback (resetButton() function, n_clicks goes from
+    it's value >0 to 0). It checks the validity of all input elements and if some input is missing, returns 'required = True' to the appropriate element and changes the style of the loading
+    spinner to remain hidden.
+
+    If all elements are correctly given in input, and the button is effectively pressed (NOT modified in another callback), it modifies the style of the loading spinner to be visible, and triggers
+    the executeIndex() function.
+
+    If the n_clicks value is modified in another callback (NOTE: set to 0), it instead modifies the loading spinner style to be hidden, again triggering th executeIndex() function.
+    '''
     if n_clicks is None:
-        return '', False, False, None, None
+        raise PreventUpdate
     drop_red = {'border': '3px solid red'}
     #Check if all elements are valid for input
     gen_update = None
@@ -349,13 +366,55 @@ def executeIndex(n_clicks, max_bulges, name, gen, pam):
         pam_update = drop_red
         drop_update = True
     if name is None or name is '' or max_bulges is None or drop_update:        #max bulges is none when not set or is not a number
-        return '', True, True, gen_update, pam_update
+        return {'visibility':'hidden'}, {'visibility':'hidden'}, '', True, True, gen_update, pam_update
          
-    
-    subprocess.call(["ls", "-l"])
-    subprocess.call(["sleep", "5s"])            #TODO find better positioning of Loading and loading gif
-    return '', False, False, None, None
+    if n_clicks > 0:
+        return {'visibility':'visible'}, {'visibility':'visible'}, '', False, False, None, None
+    else:
+        return {'visibility':'hidden'}, {'visibility':'hidden'}, '', False, False, None, None
 
+#Execute Indexing of a genome (when spinner is set Visible, otherwise just signal the nex Div to set n_clicks to None)
+@app.callback(Output('loop_breaker_container', 'children'),
+            [Input('spinner', 'style')],
+            [State('submit-index-genome', 'n_clicks'),
+            State('max-bulges', 'value'),
+            State('name-genome', 'value'),
+            State('available-genomes', 'value'),
+            State('available-pams', 'value')])
+def executeIndex(style, n_clicks, max_bulges, name, gen, pam):
+    '''
+    The function execute the bash call crispritz.py generate-index. It's triggered when the loading spinner style is modified (hidden to visible or visible to hidden).
+
+    If the current style is 'hidden', it raises a PreventUpdate, because it means that the style was modified from the button and it doesn't need to execute the bash function since
+    it's hidden (E.g.: when an input is missing and the button clicked, executeIndex() is still triggered but remains hidden and the crispritz function doesn't need to be executed) 
+    '''
+    if n_clicks is None:
+        raise PreventUpdate
+    if style['visibility'] == 'hidden':
+        raise PreventUpdate
+    if n_clicks > 0:
+        subprocess.call(["ls", "-l"])
+        subprocess.call(["sleep", "5s"])            #TODO find better positioning of Loading and loading gif
+        return [html.Div(id='loop_breaker', children=True)]
+    return [html.Div(id='loop_breaker', children=False)]
+
+#Loop breaker, if this callback was activated after doing a long process, signal the button callback to hide the spinner
+#If was activated in another way, simply signal the button to raise a prevent update
+@app.callback(
+    Output('submit-index-genome', 'n_clicks'),
+    [Input ('loop_breaker', 'children')]
+)
+def resetButton(val):
+    '''
+    The function resets the n_clicks value of the Submit button. If the value returned from the executeIndex function is True, it means that the crispritz call was executed and finished,
+    meaning that we need to hide the loading spinner. The n_clicks is put to 0, so that it triggers the modifyVisibilitySpin() function in order to hide the spinner
+    '''
+    if val is None or val is '':
+        raise PreventUpdate
+
+    if val:
+        return 0
+    return None
 ########################
 # Callbacks for search #
 ########################

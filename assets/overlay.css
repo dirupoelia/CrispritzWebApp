@@ -1,62 +1,5 @@
-.overlay{
-  position: fixed;
-  display: none;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0,0,0,0.5);
-  z-index: 2;
-  cursor: pointer;
-}
-/* *[data-dash-is-loading="true"]{
-  visibility: hidden;
-}
-*[data-dash-is-loading="true"]::before{
-  content: "Loading...";
-  display: inline-block;
-  color: magenta;
-  visibility: visible;
-} */
 
-
-
-/* ._dash-loading-callback{
-  position: fixed;
-  z-index: 100;
-}
-
-._dash-loading-callback::after{
-    position: fixed;
-    display: block;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0,0,0,0.5);
-    z-index: 2;
-    cursor: pointer;
-} */
-
-.overlay_on{
-    position: fixed;
-    display: block;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0,0,0,0.5);
-    z-index: 2;
-    cursor: pointer;
-  }
-
-.text{
+/* .text{
   position: absolute;
   top: 50%;
   left: 50%;
@@ -64,7 +7,7 @@
   color: white;
   transform: translate(-50%,-50%);
   -ms-transform: translate(-50%,-50%);
-}
+} */
 
 
 @keyframes fadein {
@@ -77,13 +20,11 @@
 }
 
 ._dash-loading-callback {
-  position: fixed;
+/*  position: fixed;
   z-index: 100;
 }
 
-._dash-loading-callback::after {
-  
-  content: 'Loading';
+._dash-loading-callback::after {*/
   font-family: sans-serif;
   padding-top: 0;
   color: #000;
@@ -110,7 +51,7 @@
   z-index: 100000;
 
   /*background-image: url(https://www.w3schools.com/html/programming.gif); */
-  background-image: url("loadingimage.gif");
+  /*background-image: url("loadingimage.gif");*/
   background-position: center center;
   background-repeat: no-repeat;
 
@@ -143,88 +84,4 @@
 @-o-keyframes fadein {
     from { opacity: 0; }
     to   { opacity: 1; }
-}
-
-
-
-.flex-container-mdr-search {
-  /* We first create a flex layout context */
-  display: flex;
-  
-  /* Then we define the flow direction 
-     and if we allow the items to wrap 
-   * Remember this is the same as:
-   * flex-direction: row;
-   * flex-wrap: wrap;
-   */
-  flex-flow: row wrap;
-  
-  /* Then we define how is distributed the remaining space */
-  justify-content: space-between;
-}
-
-.flex-container-score {
-  /* We first create a flex layout context */
-  display: flex;
-  
-  /* Then we define the flow direction 
-     and if we allow the items to wrap 
-   * Remember this is the same as:
-   * flex-direction: row;
-   * flex-wrap: wrap;
-   */
-  flex-flow: row wrap;
-  
-  /* Then we define how is distributed the remaining space */
-  justify-content: space-between;    /*https://css-tricks.com/almanac/properties/j/justify-content/*/
-}
-
-.flex-container-img-show{
-  /* We first create a flex layout context */
-  display: flex;
-  
-  /* Then we define the flow direction 
-     and if we allow the items to wrap 
-   * Remember this is the same as:
-   * flex-direction: row;
-   * flex-wrap: wrap;
-   */
-  flex-flow: row wrap;
-  
-  /* Then we define how is distributed the remaining space */
-  justify-content: space-between;
-
-}
-
-.flex-container-img-button-show{
-   /* We first create a flex layout context */
-   display: flex;
-  
-   /* Then we define the flow direction 
-      and if we allow the items to wrap 
-    * Remember this is the same as:
-    * flex-direction: row;
-    * flex-wrap: wrap;
-    */
-   flex-flow: row wrap;
-   
-   /* Then we define how is distributed the remaining space */
-   justify-content: flex-start;
-
-}
-
-.flex-container-button-filename-show{
-   /* We first create a flex layout context */
-   display: flex;
-  
-   /* Then we define the flow direction 
-      and if we allow the items to wrap 
-    * Remember this is the same as:
-    * flex-direction: row;
-    * flex-wrap: wrap;
-    */
-   flex-flow: row wrap;
-   flex-direction: column ;
-   /* Then we define how is distributed the remaining space */
-   justify-content: flex-start;
 }
