@@ -226,7 +226,7 @@ def render_content(tab):
         final_list.append(html.Div(dcc.Dropdown(options = result_file, clearable = False, id = "available-results-annotation"), id = 'div-available-results-annotation')) #Note that we need the .targets.txt file inside the selected directory
 
         #Genome name
-        final_list.extend([html.Label('Insert the name for the  output annotated result file'), dcc.Input(id = 'name-result-file-annotated', placeholder='Example: emx1.hg19.annotated', type='text')])
+        final_list.extend([html.Label('Insert the name for the  output annotated result file'), dcc.Input(id = 'name-result-file-annotated', placeholder='Example: emx1.hg19.annotated', type='text', style = {'width':'20%'})])
         
         #Upload text file with path
         final_list.append(
@@ -239,6 +239,9 @@ def render_content(tab):
         
         #Submit job
         final_list.append(html.Button('Submit', id='submit-annotate-result'))
+        final_list.append(html.Div(id='loop_breaker_container-annotate', children=[]))   #Needed for 'breaking' cicular dependency between button and div of spinner
+        final_list.append(html.Div('Annotating result', className = 'loader-name', id = 'id-loader-name-annotate',  style = {'visibility':'hidden'}))  
+        final_list.append(html.Div('',className = 'loader', id='spinner-annotate', style = {'visibility':'hidden'}))
         final_list.append(html.Div(id = "executing-annotate-result"))
 
         return final_list
@@ -599,10 +602,13 @@ def parse_contents(contents):
     decoded = base64.b64decode(content_string)
     return decoded
 
-#Execute Annotation
-@app.callback([Output('executing-annotate-result', 'children'),
+#Modify spinner visibility when bbutton is clicked
+@app.callback([Output('spinner-annotate', 'style'),
+            Output('id-loader-name-annotate', 'style'),
+            Output('executing-annotate-result', 'children'),
             Output('div-available-guides-annotation', 'style'),
             Output('div-available-results-annotation', 'style'),
+            Output('button-upload-path-annotation', 'style'),
             Output('name-result-file-annotated', 'required')],
             [Input('submit-annotate-result', 'n_clicks')],
             [State('available-guides-annotation', 'value'),
@@ -610,7 +616,7 @@ def parse_contents(contents):
             State('name-result-file-annotated', 'value'),
             State('upload-path-annotation', 'contents')]
             )
-def executeAnnotation(n_clicks, guide, result_target, result_name, file_content):
+def modifyVisibilitySpinAnnotate(n_clicks, guide, result_target, result_name, file_content):
     if n_clicks is None:
         raise PreventUpdate
     
@@ -618,6 +624,7 @@ def executeAnnotation(n_clicks, guide, result_target, result_name, file_content)
     drop_red = {'border': '3px solid red'}
     guide_update = None
     res_update = None
+    upload_btn_update = None
     drop_update = False
     if guide is None or guide is '':
         guide_update = drop_red
@@ -625,19 +632,60 @@ def executeAnnotation(n_clicks, guide, result_target, result_name, file_content)
     if result_target is None or result_target is '':
         res_update = drop_red
         drop_update = True
-    #TODO insert same thing for button and update the outputs
-    
-    if result_name is None or result_name is '' or file_content is None or (drop_update):
-        return '', guide_update, res_update, True
-    
-    paths = parse_contents(file_content).decode('utf-8')
-    file_tmp = open('test.txt', 'w')  #TODO choose better name for when multiple users
-    file_tmp.write(paths)       #use file_tmp as input for the bash call
+    if file_content is None:
+        upload_btn_update = drop_red
+        drop_update = True
 
-    #Note that we need the targets.txt file inside the result_target directory
-    subprocess.call(["sleep", "5s"])
-    return '', None, None, False
+    if result_name is None or result_name is '' or (drop_update):
+        return {'visibility':'hidden'}, {'visibility':'hidden'}, '', guide_update, res_update, upload_btn_update, True
+    
+    if n_clicks > 0:
+        return {'visibility':'visible'}, {'visibility':'visible'}, '', guide_update, res_update, upload_btn_update, False
+    return {'visibility':'hidden'}, {'visibility':'hidden'}, '', None, None, None, False
 
+#Execute Annotation of a result (when spinner is set Visible, otherwise just signal the nex Div to set n_clicks to None)
+@app.callback(Output('loop_breaker_container-annotate', 'children'),
+            [Input('spinner-annotate', 'style')],
+            [State('submit-annotate-result', 'n_clicks'),
+            State('available-guides-annotation', 'value'),
+            State('available-results-annotation', 'value'),
+            State('name-result-file-annotated', 'value'),
+            State('upload-path-annotation', 'contents')]
+)
+def executeAnnotation(style, n_clicks, guide, result_target, result_name, file_content):
+    if n_clicks is None:
+        raise PreventUpdate
+    if style['visibility'] == 'hidden':
+        raise PreventUpdate
+
+    if n_clicks > 0:
+        paths = parse_contents(file_content).decode('utf-8')
+        file_tmp = open('test.txt', 'w')  #TODO choose better name for when multiple users
+        file_tmp.write(paths)       #use file_tmp as input for the bash call
+
+        #Note that we need the targets.txt file inside the result_target directory
+        subprocess.call(["echo", "execute_annotate_result"])
+        subprocess.call(["sleep", "5s"])
+        return [html.Div(id='loop_breaker', children=True)]
+    return [html.Div(id='loop_breaker', children=False)]
+
+#Loop breaker, if this callback was activated after doing a long process, signal the button callback to hide the spinner
+#If was activated in another way, simply signal the button to raise a prevent update
+@app.callback(
+    Output('submit-annotate-result', 'n_clicks'),
+    [Input ('loop_breaker', 'children')]
+)
+def resetButtonAnnotate(val):
+    '''
+    The function resets the n_clicks value of the Submit button. If the value returned from the executeIndex function is True, it means that the crispritz call was executed and finished,
+    meaning that we need to hide the loading spinner. The n_clicks is put to 0, so that it triggers the modifyVisibilitySpin() function in order to hide the spinner
+    '''
+    if val is None or val is '':
+        raise PreventUpdate
+
+    if val:
+        return 0
+    return None
 #################################
 # Callbacks for Generate Report #
 #################################
