@@ -119,7 +119,7 @@ def render_content(tab):
         for dir in onlydir:
             gen_dir.append({'label': dir, 'value' : dir})
         final_list.append(html.P(["Select an available Genome ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your directory containing the fasta file(s) into the Genomes directory"))]))
-        final_list.append(dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genomes-search"))
+        final_list.append(html.Div(dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genomes-search"), id = "div-available-genomes-search"))
 
         #Dropdown available PAM
         onlyfile = [f for f in listdir('pam') if isfile(join('pam', f))]
@@ -127,7 +127,7 @@ def render_content(tab):
         for pam_name in onlyfile:
             pam_file.append({'label': pam_name, 'value' : pam_name})
         final_list.append(html.P(["Select an available PAM ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your PAM text file into the pam directory"))]))
-        final_list.append(html.Div(dcc.Dropdown(options = pam_file, clearable = False, id = "available-pams-search"), style = {'border': '3px solid red'}))
+        final_list.append(html.Div(dcc.Dropdown(options = pam_file, clearable = False, id = "available-pams-search"), id = "div-available-pams-search"))
 
         #Dropdown available guide file
         onlyfile = [f for f in listdir('guides') if isfile(join('guides', f))]
@@ -135,7 +135,7 @@ def render_content(tab):
         for guide_name in onlyfile:
             guide_file.append({'label': guide_name, 'value' : guide_name})
         final_list.append(html.P(["Select an available Guide file ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your Guide text file into the guides directory"))]))
-        final_list.append(html.Div(dcc.Dropdown(options = guide_file, clearable = False, id = "available-guides-search")))
+        final_list.append(html.Div(dcc.Dropdown(options = guide_file, clearable = False, id = "available-guides-search"), id = "div-available-guides-search"))
 
 
         #Genome name
@@ -155,10 +155,14 @@ def render_content(tab):
                 html.Div(
                     [html.Label('Insert # of RNA bulges'),
                     dcc.Input(id = 'max-rna', placeholder='Example: 2', type='number', min = 0, disabled = True)]
+                ),
+                html.Div(
+                    [html.Label('Insert # of Threads'),
+                    dcc.Input(id = 'max-thr', placeholder='Example: 2', type='number', min = 1, disabled = True)]
                 )],
                 id = "container-m-d-r",
                 className = "flex-container-mdr-search",
-                style = {'width' : '50%'}
+                style = {'width' : '75%'}
             )
         )
 
@@ -180,7 +184,7 @@ def render_content(tab):
         final_list.append(
             html.Div(
                 [daq.BooleanSwitch(on = False, label = "Calculate Scores", labelPosition = "top", id = 'score-switch', style = {'align-items':'start'}),          #TODO sistemare posizione del bottone
-                dcc.Dropdown(options = gen_dir, clearable = False, id = "scores-available-genomes-search", style = {'width':'50%'})
+                html.Div(dcc.Dropdown(options = gen_dir, clearable = False, id = "scores-available-genomes-search", placeholder = 'Select the Genome'), id = "div-scores-available-genomes-search", style = {'width':'200px'} )
                 ],
                 id = 'container-scores',
                 className = "flex-container-score",
@@ -193,6 +197,10 @@ def render_content(tab):
 
         #Submit job
         final_list.append(html.Button('Submit', id='submit-search-genome'))
+        final_list.append(html.Div(id='loop_breaker_container-search', children=[]))   #Needed for 'breaking' cicular dependency between button and div of spinner
+        final_list.append(html.Div('Searching', className = 'loader-name', id = 'id-loader-name-search',  style = {'visibility':'hidden'}))  
+        final_list.append(html.Div('',className = 'loader', id='spinner-search', style = {'visibility':'hidden'}))
+        
         final_list.append(html.Div(id = "executing-search-genome"))
 
         #TODO quando il search finisce, i risultati sono salvati in una cartella Results col nome in input
@@ -422,6 +430,7 @@ def resetButton(val):
 #Switch available fields from nonIndex to Index search
 @app.callback([Output('max-dna', 'disabled'),
             Output('max-rna', 'disabled'),
+            Output('max-thr', 'disabled'),
             Output('available-genomes-search', 'options')],
             [Input('index-search', 'on')]
             )
@@ -432,13 +441,13 @@ def switchSearch(on):
         for dir in onlydir:
             gen_dir.append({'label': dir, 'value' : dir})
 
-        return False, False, gen_dir
+        return False, False, False, gen_dir
     
     onlydir = [f for f in listdir('Genomes') if isdir(join('Genomes', f))]
     gen_dir = []
     for dir in onlydir:
         gen_dir.append({'label': dir, 'value' : dir})
-    return True, True, gen_dir
+    return True, True, True, gen_dir
 
 #Switch directory availability for Score 
 @app.callback(Output('scores-available-genomes-search', 'disabled'),
@@ -449,12 +458,21 @@ def switchScore(on):
         return False
     return True
 
-#Execute Search
-@app.callback([Output('executing-search-genome', 'children'),
+#Modify spinner visibility when button is clicked
+@app.callback([
+            Output('spinner-search', 'style'),
+            Output('id-loader-name-search', 'style'),
+            Output('executing-search-genome', 'children'),
             Output('name-result-file', 'required'),
             Output('max-mms', 'required'),
             Output('max-dna', 'required'),
-            Output('max-rna', 'required')],
+            Output('max-rna', 'required'),
+            Output('max-thr', 'required'),
+            Output('div-available-genomes-search', 'style'),
+            Output('div-available-pams-search', 'style'),
+            Output('div-available-guides-search', 'style'),
+            Output('result-checklist', 'style'),
+            Output('div-scores-available-genomes-search', 'style')],
             [Input('submit-search-genome', 'n_clicks')],
             [State('index-search', 'on'),
             State('available-genomes-search', 'value'),
@@ -464,31 +482,102 @@ def switchScore(on):
             State('max-mms', 'value'),
             State('max-dna', 'value'),
             State('max-rna', 'value'),
+            State('max-thr', 'value'),
             State('result-checklist', 'value'),
             State('score-switch', 'on'),
             State('scores-available-genomes-search', 'value')]
             )
-def executeSearch(n_clicks, index, genome, pam, guide, res_name, mm, dna, rna, res_type, score, genome_score):
+def visibilitySpinSearch(n_clicks, index, genome, pam, guide, res_name, mm, dna, rna, thr, res_type, score, genome_score):
     if n_clicks is None:
         raise PreventUpdate
     
-    
-    #Check if elements are valid
-    if genome is None or genome is '' or pam is None or pam is '' or guide is None or guide is '':
-        raise PreventUpdate        #TODO find better way to signal to provide a value from both dropdown list
-    if res_name is None or res_name is '' or mm is None or (index and (dna is None or rna is None)):
-        return '', True, True, True, True
-    if not res_type:
-        raise PreventUpdate         #TODO find better way to signal, maybe modify execute search genome?
-    if score and (genome_score is None or genome_score is ''):
-        return 'Error, no directory for scores selected', True, True, True, True   #TODO found a way
+    drop_red = {'border': '3px solid red'}
+    drop_red_checklist = {'width':'12%','border':'3px solid red'}
+    gen_update = None
+    pam_update = None
+    guide_update = None
+    checklist_result_type = None
+    score_update = None
+    drop_update = False 
 
-    if index:
-        subprocess.call(["sleep", "5s"])
-        return '', False, False, False, False
+    #Check if elements are valid
+    if genome is None or genome is '': 
+        gen_update = drop_red
+        drop_update = True
+    if pam is None or pam is '':
+        pam_update = drop_red
+        drop_update = True 
+    if guide is None or guide is '':
+        guide_update = drop_red
+        drop_update = True
+    if not res_type:
+        checklist_result_type = drop_red_checklist
+        drop_update = True
+    if score and (genome_score is None or genome_score is ''):
+        score_update = drop_red
+        drop_update = True
+
+    if res_name is None or res_name is '' or mm is None or (index and (dna is None or rna is None or thr is None)) or drop_update:
+        return {'visibility':'hidden'}, {'visibility':'hidden'},'', True, True, True, True, True, gen_update, pam_update, guide_update, checklist_result_type, score_update
     
-    subprocess.call(["sleep", "5s"])
-    return '', False, False, False, False
+    if n_clicks > 0:
+        
+        return {'visibility':'visible'}, {'visibility':'visible'},'', False, False, False, False, False, None, None, None, None, None
+    
+    return {'visibility':'hidden'}, {'visibility':'hidden'},'', False, False, False, False, False, None, None, None, None, None
+    
+#Execute Search (when spinnder is visible, otherwise just signal the nex Div to set n_clicks to None )
+@app.callback(Output('loop_breaker_container-search', 'children'),
+            [Input('spinner-search', 'style')],
+            [State('submit-search-genome', 'n_clicks'),
+            State('index-search', 'on'),
+            State('available-genomes-search', 'value'),
+            State('available-pams-search', 'value'),
+            State('available-guides-search', 'value'),
+            State('name-result-file', 'value'),
+            State('max-mms', 'value'),
+            State('max-dna', 'value'),
+            State('max-rna', 'value'),
+            State('max-thr', 'value'),
+            State('result-checklist', 'value'),
+            State('score-switch', 'on'),
+            State('scores-available-genomes-search', 'value')]
+)
+def executeSearch(style, n_clicks, index, genome, pam, guide, result, mms, dna, rna, thr, result_type, scores, genome_scores):
+    if n_clicks is None:
+        raise PreventUpdate
+
+    if style['visibility'] == 'hidden':
+        raise PreventUpdate
+
+    if n_clicks > 0:
+        if index:
+            subprocess.call(['echo', 'execute_searchindex_genome'])
+            subprocess.call(["sleep", "5s"])            #TODO find better positioning of Loading and loading gif
+            return [html.Div(id='loop_breaker', children=True)]
+        
+        subprocess.call(['echo', 'execute_search_genome'])
+        subprocess.call(["sleep", "5s"])            #TODO find better positioning of Loading and loading gif
+        return [html.Div(id='loop_breaker', children=True)] 
+    return [html.Div(id='loop_breaker', children=False)]
+
+#Loop breaker, if this callback was activated after doing a long process, signal the button callback to hide the spinner
+#If was activated in another way, simply signal the button to raise a prevent update
+@app.callback(
+    Output('submit-search-genome', 'n_clicks'),
+    [Input ('loop_breaker', 'children')]
+)
+def resetButtonSearch(val):
+    '''
+    The function resets the n_clicks value of the Submit button. If the value returned from the executeIndex function is True, it means that the crispritz call was executed and finished,
+    meaning that we need to hide the loading spinner. The n_clicks is put to 0, so that it triggers the modifyVisibilitySpin() function in order to hide the spinner
+    '''
+    if val is None or val is '':
+        raise PreventUpdate
+
+    if val:
+        return 0
+    return None
 
 ##########################
 # Callbacks for Annotate #
