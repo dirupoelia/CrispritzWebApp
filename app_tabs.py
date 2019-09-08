@@ -253,7 +253,7 @@ def render_content(tab):
         final_list.extend([html.Label('Insert the Guide sequence'), dcc.Input(id = 'guide-sequence-report', placeholder='Example: GAGTCCGAGCAGAAGAAGAANNN', type='text')])
         
         #Number of mismatches
-        final_list.append(dcc.Input(id = 'max-mms-report', placeholder='Example: 2', type='number', min = 0))
+        final_list.extend([html.Label('Insert the # of mismatches'),dcc.Input(id = 'max-mms-report', placeholder='Example: 2', type='number', min = 0)])
 
         #Dropdown available result file
         onlydir = [f for f in listdir('Results') if isdir(join('Results', f))]
@@ -269,6 +269,10 @@ def render_content(tab):
 
         #Submit job
         final_list.append(html.Button('Submit', id='submit-generate-report'))
+        final_list.append(html.Div(id='loop_breaker_container-generate', children=[]))   #Needed for 'breaking' cicular dependency between button and div of spinner
+        final_list.append(html.Div('Genrating result', className = 'loader-name', id = 'id-loader-name-generate',  style = {'visibility':'hidden'}))  
+        final_list.append(html.Div('',className = 'loader', id='spinner-generate', style = {'visibility':'hidden'}))
+        
         final_list.append(html.Div(id = "executing-generate-report"))
 
         return final_list
@@ -602,7 +606,7 @@ def parse_contents(contents):
     decoded = base64.b64decode(content_string)
     return decoded
 
-#Modify spinner visibility when bbutton is clicked
+#Modify spinner visibility when button is clicked
 @app.callback([Output('spinner-annotate', 'style'),
             Output('id-loader-name-annotate', 'style'),
             Output('executing-annotate-result', 'children'),
@@ -692,21 +696,73 @@ def resetButtonAnnotate(val):
 
 #TODO creare funzione che quando scelgo il Result controllo subito che cisiano tutti i file e nel caso li faccio vedere?
 
-#Execute Generate Report
-@app.callback([Output('executing-generate-report', 'value'),
+#Modifiy spinner visibility when button is pressed
+@app.callback([Output('spinner-generate', 'style'),
+            Output('id-loader-name-generate', 'style'),
+            Output('executing-generate-report', 'value'),
             Output('guide-sequence-report', 'required'),
             Output('max-mms-report', 'required'),
-            Output('available-results-report', 'style')],
+            Output('div-available-results-report', 'style')],
             [Input('submit-generate-report', 'n_clicks')],
             [State('guide-sequence-report', 'value'),
             State('max-mms-report', 'value'),
             State('available-results-report', 'value')]
 )
-def executeReport(n_clicks, sequence, mms, result_file):
+def visibilitySpinGenerate(n_clicks, sequence, mms, result_file):
     if n_clicks is None:
         raise PreventUpdate
-    #TODO continuare la funzione
-    raise PreventUpdate
+    #Check if elements are valid
+    drop_red = {'border': '3px solid red'}
+    result_update = None
+    drop_update = False
+    if result_file is None:
+        result_update = drop_red
+        drop_update = True
+    if sequence is None or sequence is '' or mms is None or drop_update:
+        return {'visibility':'hidden'}, {'visibility':'hidden'}, '', True, True, result_update
+    
+    if n_clicks > 0:
+        return {'visibility':'visible'}, {'visibility':'visible'}, '', False, False, None
+    return {'visibility':'hidden'}, {'visibility':'hidden'}, '', False, False, None
+
+#Execute generate (when spinner is visible, otherwise just signal the nex Div to set n_clicks to None )
+@app.callback(Output('loop_breaker_container-generate', 'children'),
+            [Input('spinner-generate', 'style')],
+            [State('submit-generate-report', 'n_clicks'),
+            State('guide-sequence-report', 'value'),
+            State('max-mms-report', 'value'),
+            State('available-results-report', 'value')]
+)
+def executeGenerate(style, n_clicks, guide, mms, result_file):
+    if n_clicks is None:
+        raise PreventUpdate
+
+    if style['visibility'] == 'hidden':
+        raise PreventUpdate
+
+    if n_clicks > 0:
+        subprocess.call(['echo', 'execute_generate_report'])
+        subprocess.call(["sleep", "5s"])          
+        return [html.Div(id='loop_breaker', children=True)]
+    return [html.Div(id='loop_breaker', children=False)]
+
+#Loop breaker, if this callback was activated after doing a long process, signal the button callback to hide the spinner
+#If was activated in another way, simply signal the button to raise a prevent update
+@app.callback(
+    Output('submit-generate-report', 'n_clicks'),
+    [Input ('loop_breaker', 'children')]
+)
+def resetButtonGenerate(val):
+    '''
+    The function resets the n_clicks value of the Submit button. If the value returned from the executeIndex function is True, it means that the crispritz call was executed and finished,
+    meaning that we need to hide the loading spinner. The n_clicks is put to 0, so that it triggers the modifyVisibilitySpin() function in order to hide the spinner
+    '''
+    if val is None or val is '':
+        raise PreventUpdate
+
+    if val:
+        return 0
+    return None
 
 #############################
 # Callbacks for Show Report #
