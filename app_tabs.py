@@ -15,11 +15,11 @@ import json                                 #for getting and saving report image
 from os import getcwd
 import time                                 #measure time for loading df table
 from flask_caching import Cache             #for cache of .targets or .scores
+import os
 
 PAGE_SIZE = 10                     #number of entries in each page of the table in view report
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.config['suppress_callback_exceptions'] = True       #necessary if update element in a callback generated in another callback
 app.css.config.serve_locally = True
@@ -32,6 +32,7 @@ CACHE_CONFIG = {
 }
 cache = Cache()
 cache.init_app(app.server, config=CACHE_CONFIG)
+app_location = os.path.dirname(os.path.abspath(__file__)) + '/'
 
 app.layout = html.Div([
     html.H1('CRISPRitz Web Application'),
@@ -62,14 +63,31 @@ operators = [['ge ', '>='],
               [Input('main-menu', 'value')])
 def render_content(tab):
     if tab == 'add-variants':
-        #TODO https://community.plot.ly/t/dash-loading-states/5687/27
-        #TODO https://www.w3schools.com/howto/howto_css_loader.asp
-        #TODO https://community.plot.ly/t/in-a-plotly-dash-app-how-to-show-a-default-text-value-in-a-div-upon-each-click-on-a-dropdown-or-button-etc-until-the-div-is-populated/14588/4
-
         final_list = []
 
-        final_list.append(html.Button('Long process', id = 'long-process-button'))
-        final_list.append(html.Div(id = 'long-process-div'))
+        #Dropdown available genomes
+        onlydir = [f for f in listdir('Genomes') if isdir(join('Genomes', f))]
+        gen_dir = []
+        for dir in onlydir:
+            gen_dir.append({'label': dir, 'value' : dir})
+        final_list.append(html.P(["Select an available Genome ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your directory containing the fasta file(s) into the Genomes directory"))]))
+        final_list.append(html.Div(dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genomes-variants"), id = 'div-available-genomes-variants'))
+
+        #Dropdown available Variants
+        onlydir = [f for f in listdir('Variants') if isdir(join('Variants', f))]
+        gen_dir = []
+        for dir in onlydir:
+            gen_dir.append({'label': dir, 'value' : dir})
+        final_list.append(html.P(["Select an available Variant ", html.Sup(html.Abbr("\u003F", title="To add or remove elements from this list, simply move (remove) your directory containing the .vcf file(s) into the Variants directory"))]))
+        final_list.append(html.Div(dcc.Dropdown(options = gen_dir, clearable = False, id = "available-variants-variants"), id = 'div-available-variants-variants'))
+
+        final_list.append(html.Br())
+        #Submit job
+        final_list.append(html.Button('Submit', id='submit-variants'))
+        final_list.append(html.Div(id='loop_breaker_container-variants', children=[]))   #Needed for 'breaking' cicular dependency between button and div of spinner
+        final_list.append(html.Div('Adding variants', className = 'loader-name', id = 'id-loader-name-variants',  style = {'visibility':'hidden'}))  
+        final_list.append(html.Div('',className = 'loader', id='spinner-variants', style = {'visibility':'hidden'}))
+        final_list.append(html.Div(id = "executing-variants"))
         return final_list
     elif tab == 'index-genome':
         final_list = []
@@ -183,15 +201,14 @@ def render_content(tab):
         #Boolean switch for Score calculation
         final_list.append(
             html.Div(
-                [daq.BooleanSwitch(on = False, label = "Calculate Scores", labelPosition = "top", id = 'score-switch', style = {'align-items':'start'}),          #TODO sistemare posizione del bottone
-                html.Div(dcc.Dropdown(options = gen_dir, clearable = False, id = "scores-available-genomes-search", placeholder = 'Select the Genome'), id = "div-scores-available-genomes-search", style = {'width':'200px'} )
+                [daq.BooleanSwitch(on = False, label = "Calculate Scores", labelPosition = "top", id = 'score-switch', style = {'align-items':'start'}),    
+                html.Div([html.Label('Select Genome'), dcc.Dropdown(options = gen_dir, clearable = False, id = "scores-available-genomes-search", placeholder = 'Select the Genome')], id = "div-scores-available-genomes-search", style = {'width':'200px'})
                 ],
                 id = 'container-scores',
                 className = "flex-container-score",
                 style = {'width' : '50%'}
             )
         )
-        #TODO add number thread selector
         
         final_list.append(html.Br())
 
@@ -250,7 +267,7 @@ def render_content(tab):
         final_list.append(html.P('Tool to generate a graphical report with annotated and overall mismatch and bulge profile for a given guide. The output is a graphical representation of the input guide behaviour.'))
         
         #Guide Sequence
-        final_list.extend([html.Label('Insert the Guide sequence'), dcc.Input(id = 'guide-sequence-report', placeholder='Example: GAGTCCGAGCAGAAGAAGAANNN', type='text')])
+        final_list.extend([html.Label('Insert the Guide sequence'), dcc.Input(id = 'guide-sequence-report', placeholder='Example: GAGTCCGAGCAGAAGAAGAANNN', type='text', size = '33')])
         
         #Number of mismatches
         final_list.extend([html.Label('Insert the # of mismatches'),dcc.Input(id = 'max-mms-report', placeholder='Example: 2', type='number', min = 0)])
@@ -270,7 +287,7 @@ def render_content(tab):
         #Submit job
         final_list.append(html.Button('Submit', id='submit-generate-report'))
         final_list.append(html.Div(id='loop_breaker_container-generate', children=[]))   #Needed for 'breaking' cicular dependency between button and div of spinner
-        final_list.append(html.Div('Genrating result', className = 'loader-name', id = 'id-loader-name-generate',  style = {'visibility':'hidden'}))  
+        final_list.append(html.Div(html.P('Generating result'), className = 'loader-name', id = 'id-loader-name-generate',  style = {'visibility':'hidden'}))  
         final_list.append(html.Div('',className = 'loader', id='spinner-generate', style = {'visibility':'hidden'}))
         
         final_list.append(html.Div(id = "executing-generate-report"))
@@ -336,6 +353,75 @@ def render_content(tab):
 #############################
 # Callbacks for Add variant #
 #############################
+
+#Modify spinner visibility when button is clicked
+@app.callback([Output('spinner-variants', 'style'),
+            Output('id-loader-name-variants', 'style'),
+            Output('div-available-genomes-variants', 'style'),
+            Output('div-available-variants-variants', 'style')],
+            [Input('submit-variants', 'n_clicks')],
+            [State('available-genomes-variants', 'value'),
+            State('available-variants-variants', 'value')]
+)
+def modifyVisibilitySpinVariants(n_clicks, genome, variant):
+    if n_clicks is None:
+        raise PreventUpdate
+
+    drop_red = {'border': '3px solid red'}
+    genome_update = None
+    variant_update = None
+    drop_update = False
+    if genome is None or genome is '':
+        genome_update = drop_red
+        drop_update = True
+    if variant is None or variant is '':
+        variant_update = drop_red
+        drop_update = True
+    if drop_update:
+        return {'visibility':'hidden'}, {'visibility':'hidden'}, genome_update, variant_update
+
+    if n_clicks > 0:
+        return {'visibility':'visible'}, {'visibility':'visible'}, None, None
+    return {'visibility':'hidden'}, {'visibility':'hidden'}, None, None
+
+#Execute Add Variants to a genome (when spinner is set Visible, otherwise just signal the nex Div to set n_clicks to None)
+@app.callback(Output('loop_breaker_container-variants', 'children'),
+            [Input('spinner-variants', 'style')],
+            [State('submit-variants', 'n_clicks'),
+            State('available-genomes-variants', 'value'),
+            State('available-variants-variants', 'value')]
+)
+def executeVariants(style, n_clicks, genome, variant):
+    if n_clicks is None:
+        raise PreventUpdate
+    
+    if style['visibility'] == 'hidden':
+        raise PreventUpdate
+    if n_clicks > 0:
+        command_string = 'add-variants' + ' ' + app_location + 'Variants/' + variant + ' ' + app_location + 'Genomes/' + genome
+        subprocess.call(['crispritz.py ' + command_string], shell = True)
+        #TODO docker call
+        return [html.Div(id='loop_breaker', children=True)]
+    return [html.Div(id='loop_breaker', children=False)]
+
+#Loop breaker, if this callback was activated after doing a long process, signal the button callback to hide the spinner
+#If was activated in another way, simply signal the button to raise a prevent update
+@app.callback(
+    Output('submit-variants', 'n_clicks'),
+    [Input ('loop_breaker', 'children')]
+)
+def resetButtonVariants(val):
+    '''
+    The function resets the n_clicks value of the Submit button. If the value returned from the executeIndex function is True, it means that the crispritz call was executed and finished,
+    meaning that we need to hide the loading spinner. The n_clicks is put to 0, so that it triggers the modifyVisibilitySpin() function in order to hide the spinner
+    '''
+    if val is None or val is '':
+        raise PreventUpdate
+
+    if val:
+        return 0
+    return None
+
 
 ##########################
 # Callbacks for Indexing #
@@ -408,8 +494,13 @@ def executeIndex(style, n_clicks, max_bulges, name, gen, pam):
     if style['visibility'] == 'hidden':
         raise PreventUpdate
     if n_clicks > 0:
-        subprocess.call(["ls", "-l"])
-        subprocess.call(["sleep", "5s"])            #TODO find better positioning of Loading and loading gif
+        command_string = 'index-genome ' + name + ' ' + app_location + 'Genomes/' + gen + ' ' + app_location + 'pam/' + pam + ' ' + '-bMax ' + str(max_bulges)
+        
+        subprocess.call(['crispritz.py '+ command_string], shell= True)            #TODO find better positioning of Loading and loading gif
+
+        #TODO differntiate between Conda and Docker
+        #TODO con docker le cartelle create sono root, 
+        #subprocess.call(['docker run -v ${PWD}:/DATA -w /DATA -i pinellolab/crispritz crispritz.py index-genome hg19_ref Genomes/hg19_ref/ pam/pamNGG.txt -bMax 2'], shell=True)
         return [html.Div(id='loop_breaker', children=True)]
     return [html.Div(id='loop_breaker', children=False)]
 
@@ -430,8 +521,9 @@ def resetButton(val):
     if val:
         return 0
     return None
+
 ########################
-# Callbacks for search #
+# Callbacks for Search #
 ########################
 
 #Switch available fields from nonIndex to Index search
@@ -559,12 +651,42 @@ def executeSearch(style, n_clicks, index, genome, pam, guide, result, mms, dna, 
 
     if n_clicks > 0:
         if index:
-            subprocess.call(['echo', 'execute_searchindex_genome'])
-            subprocess.call(["sleep", "5s"])            #TODO find better positioning of Loading and loading gif
+            command_string = 'search ' + app_location + 'genome_library/' + genome + ' ' + app_location + 'pam/' + pam + ' ' + app_location + 'guides/' + guide + ' ' + result + ' ' + '-index' + ' ' + '-mm' + ' ' + str(mms) + ' '
+            if dna > 0:
+                command_string = command_string + '-bDNA' + ' ' + str(dna) + ' '
+            if rna > 0:
+                command_string = command_string + '-bRNA' + ' ' + str(rna) + ' ' 
+            if 'r' in result_type and 'p' in result_type:
+                command_string = command_string + '-t' + ' '
+            else:
+                command_string = command_string + '-' + result_type[0] + ' '
+            command_string = command_string + '-th' + ' ' + str(thr) + ' '
+            if scores:
+                command_string = command_string + '-scores' + ' ' + app_location + 'Genomes/' + genome_scores
+            
+            subprocess.call(['crispritz.py '+ command_string], shell= True)            #TODO docker call
+
+            #Move results into a directory in the Results directory
+            if not isdir(app_location + 'Results/' + result):
+                subprocess.call(['mkdir', app_location + 'Results/' + result ])
+            subprocess.call(['mv -f' + ' ' + app_location + result + '.*.txt' + ' ' + app_location + 'Results/' + result], shell=True)
+            subprocess.call(['mv -f' + ' ' + app_location + result + '.*.xls' + ' ' + app_location + 'Results/' + result], shell=True)
             return [html.Div(id='loop_breaker', children=True)]
         
-        subprocess.call(['echo', 'execute_search_genome'])
-        subprocess.call(["sleep", "5s"])            #TODO find better positioning of Loading and loading gif
+        command_string = 'search ' + app_location + 'Genomes/' + genome + ' ' + app_location + 'pam/' + pam + ' ' + app_location + 'guides/' + guide + ' ' + result + ' ' + '-mm' + ' ' + str(mms) + ' '
+        if 'r' in result_type and 'p' in result_type:
+                command_string = command_string + '-t' + ' '
+        else:
+            command_string = command_string + '-' + result_type[0] + ' '
+        if scores:
+            command_string = command_string + '-scores' + ' ' + app_location + 'Genomes/' + genome_scores
+        subprocess.call(['crispritz.py ' + command_string], shell= True)            #TODO Docker call
+
+        #Move results into a directory in the Results directory
+        if not isdir(app_location + 'Results/' + result):
+            subprocess.call(['mkdir', app_location + 'Results/' + result ])
+        subprocess.call(['mv -f' + ' ' + app_location + result + '.*.txt' + ' ' + app_location + 'Results/' + result], shell=True)
+        subprocess.call(['mv -f' + ' ' + app_location + result + '.*.xls' + ' ' + app_location + 'Results/' + result], shell=True)
         return [html.Div(id='loop_breaker', children=True)] 
     return [html.Div(id='loop_breaker', children=False)]
 
@@ -664,12 +786,18 @@ def executeAnnotation(style, n_clicks, guide, result_target, result_name, file_c
 
     if n_clicks > 0:
         paths = parse_contents(file_content).decode('utf-8')
-        file_tmp = open('test.txt', 'w')  #TODO choose better name for when multiple users
+        file_tmp_location = app_location + 'Results/'+ result_target + '/annotation_path.txt'
+        file_tmp = open(file_tmp_location, 'w')  #TODO choose better name for when multiple users
         file_tmp.write(paths)       #use file_tmp as input for the bash call
-
+        file_tmp.close()
+        if not isfile(app_location + 'Results/' + result_target + '/' + result_target + '.targets.txt'):
+            return [html.Div(id='loop_breaker', children=False)]        #TODO segnalare che manca il file.targets?
+        
         #Note that we need the targets.txt file inside the result_target directory
-        subprocess.call(["echo", "execute_annotate_result"])
-        subprocess.call(["sleep", "5s"])
+        command_string = 'annotate-results' + ' ' + app_location + 'guides/' + guide + ' ' + app_location + 'Results/' + result_target + '/' + result_target + '.targets.txt' + ' ' + file_tmp_location + ' ' + result_name
+        subprocess.call(['crispritz.py ' + command_string], shell = True)
+
+        subprocess.call(['mv -f' + ' ' + app_location + result_name + '.*.txt' + ' ' + app_location + 'Results/' + result_target ], shell=True)
         return [html.Div(id='loop_breaker', children=True)]
     return [html.Div(id='loop_breaker', children=False)]
 
@@ -731,9 +859,10 @@ def visibilitySpinGenerate(n_clicks, sequence, mms, result_file):
             [State('submit-generate-report', 'n_clicks'),
             State('guide-sequence-report', 'value'),
             State('max-mms-report', 'value'),
-            State('available-results-report', 'value')]
+            State('available-results-report', 'value'),
+            State('gecko-comparison-report','on')]
 )
-def executeGenerate(style, n_clicks, guide, mms, result_file):
+def executeGenerate(style, n_clicks, guide, mms, result_file, gecko):
     if n_clicks is None:
         raise PreventUpdate
 
@@ -741,8 +870,13 @@ def executeGenerate(style, n_clicks, guide, mms, result_file):
         raise PreventUpdate
 
     if n_clicks > 0:
-        subprocess.call(['echo', 'execute_generate_report'])
-        subprocess.call(["sleep", "5s"])          
+        #TODO Check if all file are available
+
+        command_string = 'generate-report' + ' ' + guide + ' ' + '-mm' + ' ' + str(mms) + ' ' #...TODO finish call
+        if gecko:
+            command_string = command_string + '-gecko'
+
+
         return [html.Div(id='loop_breaker', children=True)]
     return [html.Div(id='loop_breaker', children=False)]
 
@@ -899,17 +1033,6 @@ def showImg(json_data, n_clicks, value):
     encoded_image = base64.b64encode(open(image_filename, 'rb').read())
     return 'data:image/png;base64,{}'.format(encoded_image.decode()), 'Selected image: ' + image_filename.split('/')[-1] , {'width':'150px'} 
 
-######################TEST###################
-@app.callback(
-    Output('long-process-div', 'children'),
-    [Input('long-process-button', 'n_clicks')]
-)
-def testLongProcess(n):
-    if n is None:
-        raise PreventUpdate
-    subprocess.call(["sleep", "500s"])
-
-    return 'Done'
     
 if __name__ == '__main__':
     app.run_server(debug=True)
