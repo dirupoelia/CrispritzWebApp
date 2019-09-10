@@ -871,8 +871,9 @@ def executeGenerate(style, n_clicks, guide, mms, result_file, gecko):
 
     if n_clicks > 0:
         #TODO Check if all file are available
+        #crispritz.py generate-report GAGTCCGAGCAGAAGAAGAANNN -mm 4 -profile emx1.hg19.profile.xls -extprofile emx1.hg19.extended_profile.xls -exons emx1.hg19.annotated.ExonsCount.txt -introns emx1.hg19.annotated.IntronsCount.txt -dnase emx1.hg19.annotated.DNAseCount.txt -ctcf emx1.hg19.annotated.CTCFCount.txt -promoters emx1.hg19.annotated.PromotersCount.txt -gecko
 
-        command_string = 'generate-report' + ' ' + guide + ' ' + '-mm' + ' ' + str(mms) + ' ' #...TODO finish call
+        command_string = 'generate-report' + ' ' + guide + ' ' + '-mm' + ' ' + str(mms) + ' ' + '-profile' + ' ' + result_file + '.profile.xls'  + ' ' + '-extprofile' + ' ' + result_file + '.extended_profile.xls' + ' ' + '-exons' + ' ' + result_file + 'annotated.ExonsCount.txt' #...TODO finish call
         if gecko:
             command_string = command_string + '-gecko'
 
