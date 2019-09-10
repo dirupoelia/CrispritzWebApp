@@ -1,4 +1,7 @@
 # CrispritzWebApp
+Installare il conda di crispritz, poi in quel conda aggiungere:
+
+
 Dash (Testato con 1.1.1)
 ```
 pip3 install dash
