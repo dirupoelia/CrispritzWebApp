@@ -80,3 +80,84 @@
    /* Then we define how is distributed the remaining space */
    justify-content: flex-start;
 }
+
+/*Containers for app_simplified*/
+.flex-job-title{
+  /* We first create a flex layout context */
+  display: flex;
+  
+  /* Then we define the flow direction 
+     and if we allow the items to wrap 
+   * Remember this is the same as:
+   * flex-direction: row;
+   * flex-wrap: wrap;
+   */
+  flex-flow: row wrap;
+  /* Then we define how is distributed the remaining space */
+  justify-content: space-between;
+
+}
+.flex-pam{
+  /* We first create a flex layout context */
+  display: flex;
+  
+  /* Then we define the flow direction 
+     and if we allow the items to wrap 
+   * Remember this is the same as:
+   * flex-direction: row;
+   * flex-wrap: wrap;
+   */
+  flex-flow: row wrap;
+  /* Then we define how is distributed the remaining space */
+  justify-content: space-between;
+
+}
+.flex-steps{
+   /* We first create a flex layout context */
+   display: flex;
+  
+   /* Then we define the flow direction 
+      and if we allow the items to wrap 
+    * Remember this is the same as:
+    * flex-direction: row;
+    * flex-wrap: wrap;
+    */
+   flex-flow: row wrap;
+   /* Then we define how is distributed the remaining space */
+   justify-content: space-between;
+
+}
+.flex-guide-pam-mm-bul{
+  /* We first create a flex layout context */
+  display: flex;
+  
+  /* Then we define the flow direction 
+     and if we allow the items to wrap 
+   * Remember this is the same as:
+   * flex-direction: row;
+   * flex-wrap: wrap;
+   */
+  flex-flow: row wrap;
+  /* Then we define how is distributed the remaining space */
+  justify-content: space-between;
+  padding:5px; 
+}
+
+.flex-pam-mm-bul{
+  /* We first create a flex layout context */
+  display: flex;
+  
+  /* Then we define the flow direction 
+     and if we allow the items to wrap 
+   * Remember this is the same as:
+   * flex-direction: row;
+   * flex-wrap: wrap;
+   */
+  flex-flow: row wrap;
+  /* Then we define how is distributed the remaining space */
+  justify-content: space-between;
+  padding:5px;
+  flex-direction: column ;
+
+
+}
