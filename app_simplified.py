@@ -91,16 +91,16 @@ final_list.append(
 #         style = {'margin':'1%', 'width':'23%'}
 #     )
 # )
-final_list.append(
-    html.Div(
-        [
-            html.P('Insert Email: ', style = {'padding-top':'5px'}),
-            dcc.Input(id = 'email', size = '30')
-        ],
-        className = 'flex-job-title',
-        style = {'margin':'1%', 'width':'23%'}
-    )
-)
+# final_list.append(
+#     html.Div(
+#         [
+#             html.P('Insert Email: ', style = {'padding-top':'5px'}),
+#             dcc.Input(id = 'email', size = '30')
+#         ],
+#         className = 'flex-job-title',
+#         style = {'margin':'1%', 'width':'23%'}
+#     )
+# )
 
 final_list.append(
     html.Div(
@@ -193,6 +193,116 @@ final_list.append(
     )
 )
 
+#new final_list
+final_list = []
+final_list.extend([html.H1('CRISPRitz Web Application'),
+    html.Div(children='''
+        CRISPRitz is a software package containing 5 different tools dedicated to perform predictive analysis and result assessement on CRISPR/Cas experiments. 
+    '''),
+    html.P()])
+
+final_list.append(
+    html.Div(
+        [
+            html.P(['Download the offline version here: ', html.A('www.google.com', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank")])
+        ]
+    )
+)
+
+final_list.append(
+    html.Div(
+        html.Div(
+            [
+                html.Div(
+                    [
+                        html.H3('STEP 1'),  #modify margin-top 
+                        html.P('Insert Genome'),
+                        html.Div(
+                            dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genome"),
+                            #style = {'width':'50%'}
+                        ),
+                        html.P('Select the variant'),
+                        html.Div(
+                            dcc.Dropdown(options = var_dir, clearable = False, id = 'available-variant')
+                        ),
+                        html.Div(
+                            [
+                                html.Div(
+                                    [
+                                        html.P('Select PAM'),
+                                        html.Div(
+                                            dcc.Dropdown(options = pam_file, clearable = False, id = 'available-pam')
+                                        )
+                                    ]
+                                ),
+                                html.Div(
+                                    [
+                                        html.P('Insert custom PAM'),
+                                        dcc.Input(type = 'text')
+                                    ]
+                                )
+                            ],
+                            id = 'div-pam',
+                            className = 'flex-div-pam'
+                        )
+                    ],
+                    id = 'step1'
+                ),
+                html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.H3('STEP 2'),  #TODO muovere fuori STEP 2 dal flex
+                                html.P('Insert the guides'),
+                                dcc.Textarea(id = 'text-guides'),
+                                
+                                html.Div(
+                                    [
+                                        dcc.Upload('Upload a file',id = 'upload-guides')
+                                    ],
+                                    style={
+                                        'width': '100%',
+                                        'height': '60px',
+                                        'lineHeight': '60px',
+                                        'borderWidth': '1px',
+                                        'borderStyle': 'dashed',
+                                        'borderRadius': '5px',
+                                        'textAlign': 'center',
+                                        #'margin': '10px'
+                                    }
+                                )
+                            ],
+                            id = 'div-guides'
+                        ),
+                        html.Div(
+                            [
+                                html.P('Insert mms'),
+                                dcc.Input(value = '0', id = 'mms', type = 'number', min = '0', style = {'width':'60px'}),
+                                html.P('Insert bulges DNA'),
+                                dcc.Input(value = '0', id = 'dna', type = 'number', min = '0', style = {'width':'60px'}),
+                                html.P('Insert bulges RNA'),
+                                dcc.Input(value = '0', id = 'rna', type = 'number', min = '0', style = {'width':'60px'})
+                            ]
+                        )
+                    ],
+                    id = 'step2',
+                    className = 'flex-step2'
+                ),
+                html.Div(
+                    [
+                        html.H3('Submit')
+                    ],
+                    id = 'step3'
+                )
+            ],
+            id = 'div-steps',
+            style = {'margin':'1%'},
+            className = 'flex-div-steps'
+        ),
+        style = {'background-color':'#eee', 'border-radius': '10px', 'border':'1px solid black'},
+        id = 'steps-background'
+    )
+)
 index_page = html.Div(final_list, style = {'margin':'1%'})
 
 #Load Page
