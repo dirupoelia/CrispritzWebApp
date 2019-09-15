@@ -100,7 +100,7 @@ final_list.extend([html.H1('CRISPRitz Web Application'),
 final_list.append(
     html.Div(
         [
-            html.P(['Download the offline version here: ', html.A('www.google.com', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank")])
+            html.P(['Download the offline version here: ', html.A('InfOmics/CRISPRitz', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank"), ' or ', html.A('Pinellolab/CRISPRitz', href = 'https://github.com/pinellolab/CRISPRitz', target="_blank") ])
         ]
     )
 )
@@ -132,7 +132,7 @@ final_list.append(
                                     ],
                                     style = {'flex':'0 0 50%'}
                                 ),
-                                html.P('or'),
+                                #html.P('or'),
                                 html.Div(
                                     [
                                         html.P('Insert custom PAM'),
@@ -209,10 +209,12 @@ final_list.append(
                         html.Div(
                             [
                                 html.Button('Submit', id = 'submit-job')
-                            ]
+                            ],
+                            style = {'display':'inline-block', 'margin':'0 auto'}
                         )
                     ],
-                    id = 'step3'
+                    id = 'step3',
+                    style = {'tex-align':'center'}
                 )
             ],
             id = 'div-steps',
@@ -227,8 +229,59 @@ index_page = html.Div(final_list, style = {'margin':'1%'})
 
 #Load Page
 final_list = []
-final_list.append(html.P('Passo1', id = 'passo1'))
-final_list.append(html.P('Passo2', id = 'passo2'))
+final_list.append(html.H1('CRISPRitz Web Application'))
+final_list.append(
+    html.Div(
+        html.Div(
+            html.Div(
+                [
+                    html.P('Job submitted. Copy this link to view the status and the result page '),
+                    html.Div(
+                        html.P('link', id = 'job-link'),
+                        style = {'border':'2px solid', 'border-color':'blue' ,'width':'70%','display':'inline-block', 'margin':'5px'}
+                    )
+                ],
+                style = {'display':'inline-block'}
+            ),
+            style = {'display':'inline-block','background-color':'rgba(154, 208, 150, 0.39)', 'border-radius': '10px', 'border':'1px solid black', 'width':'70%'}
+        ),
+        style = {'text-align':'center'}
+    )
+)
+
+final_list.append(
+    html.Div(
+        [
+            html.H4('Status report'),
+            html.Div(
+                [
+                    html.Div(
+                        html.Ul(
+                            [
+                                html.Li('Adding variants'),
+                                html.Li('Searching crRNA'),
+                                html.Li('Generating report')
+                            ]
+                        ),
+                        style = {'flex':'0 0 20%'}
+                    ),
+                    html.Div(
+                        html.Ul(
+                            [
+                                html.Li('To do', style = {'color':'red'}, id = 'add-variants-status'),
+                                html.Li('To do', style = {'color':'red'}, id = 'search-status'),
+                                html.Li('To do', style = {'color':'red'}, id = 'generate-report-status')
+                            ],
+                            style = {'list-style-type':'none'}
+                        )
+                    )
+                ],
+                className = 'flex-status'
+            )
+        ]
+    )
+)
+
 final_list.append(html.P('', id = 'done'))
 
 final_list.append(dcc.Interval(id = 'load-page-check', interval=3*1000))
@@ -238,29 +291,37 @@ load_page = html.Div(final_list, style = {'margin':'1%'})
 #Submit Job, chenge url
 @app.callback(
     [Output('url', 'pathname'),
-    Output('url','search')],
-
-    [Input('submit-job', 'n_clicks')]
+    Output('url','search')
+    ],
+    [Input('submit-job', 'n_clicks')],
+    [State('url', 'href')]
 )
-def changeUrl(n):
+def changeUrl(n, href):
     if n is None:
         raise PreventUpdate
     
     job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
 
     subprocess.Popen(['sleep 5s; mkdir Results/' + job_id], shell = True)
+    print( 'change url: ',href + '?job=' + job_id)
     return '/load','?job=' + job_id
 
 #When url changed, load new page
 @app.callback(
-    Output('page-content', 'children'),
-    [Input('url', 'pathname')]
+    [Output('page-content', 'children'),
+    Output('job-link', 'children')],
+    [Input('url', 'pathname')],
+    [State('url','href'), 
+    State('url','search')
+    ]
 )
-def changePage(path):
+def changePage(path, href, search):
+    print ('changepage: ', href)
+    print('search', search)
     if path == '/load':
-        return load_page
+        return load_page, href+search   #TODO se ricarico la pagina si sdoppia il search
 
-    return index_page
+    return index_page, ''
 
 #Check end job
 @app.callback(
@@ -272,8 +333,7 @@ def refreshSearch(n, dir_name):
     if n is None:
         raise PreventUpdate
     onlydir = [f for f in listdir('Results') if isdir(join('Results', f))]
-    print(onlydir)
-    print(dir_name.split('=')[-1])
+    
     if dir_name.split('=')[-1] in onlydir:
         return 'Done'
     raise PreventUpdate
