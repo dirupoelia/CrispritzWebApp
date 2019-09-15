@@ -66,21 +66,6 @@ app.layout = html.Div([
     html.Div(id='page-content')
 ])
 
-final_list = []
-final_list.extend([html.H1('CRISPRitz Web Application'),
-    html.Div(children='''
-        CRISPRitz is a software package containing 5 different tools dedicated to perform predictive analysis and result assessement on CRISPR/Cas experiments. 
-    '''),
-    html.P()])
-
-final_list.append(
-    html.Div(
-        [
-            html.P(['Download the offline version here: ', html.A('www.google.com', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank")])
-        ]
-    )
-)
-
 # final_list.append(
 #     html.Div(
 #         [
@@ -102,96 +87,7 @@ final_list.append(
 #     )
 # )
 
-final_list.append(
-    html.Div(
-        [
-            html.Div(
-                html.Div(
-                    [
-                        html.H5('Step 1'),
-                        html.P('Insert Job title: ', style = {'padding-top':'5px'}),
-                        dcc.Input(id = 'job-name', size = '30'),
-                        html.P('Select a Genome'),
-                            
-                            html.Div(
-                                dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genome"),
-                                style = {'width':'50%'}
-                            ),
-                            html.P('Select a vcf file'),
-                            html.Div(
-                                dcc.Dropdown(options = var_dir, clearable = False, id = 'available-variant'),
-                                style = {'width':'50%'}
-                            )
-                            
-                    ],
-                    id = 'div-step1',
-                    style = {'margin':'1%'}
-                ),
-                style = {'background-color':'#eee', 'border-radius': '10px', 'width':'45%'},
-                id = 'div-background-step1'
-            ),
-            html.Div(
-                html.Div(
-                    [
-                        html.H5('Step 2'),
-                        html.Div(
-                            [
-                                html.Div(
-                                    [
-                                        html.P('Insert guide'),
-                                        dcc.Textarea(id = 'guides', rows = 20, style = {'width':'300px', 'height':'200px'})
-                                    ]
-                                ),
-                                html.Div(
-                                    html.Div(
-                                        [
-                                            html.P('Select a Pam', style = {'margin':'5px'}),
-                                            html.Div(
-                                                dcc.Dropdown(options = pam_file, clearable = False, id = "available-pams"),
-                                                #style = {'width':'75%'}
-                                            ),
-                                            html.P('Select # of mismatches', style = {'margin':'5px'}),
-                                            html.Div(
-                                                dcc.Dropdown(options = pam_file, clearable = False, id = "mismatches"),
-                                                #style = {'width':'75%'}
-                                            ),
-                                            html.P('Select # of DNA bulges', style = {'margin':'5px'}),
-                                            html.Div(
-                                                dcc.Dropdown(options = pam_file, clearable = False, id = "dna"),
-                                                #style = {'width':'75%'}
-                                            ),
-                                            html.P('Select # of RNA bulges', style = {'margin':'5px'}),
-                                            html.Div(
-                                                dcc.Dropdown(options = pam_file, clearable = False, id = "rna"),
-                                                #style = {'width':'75%'}
-                                            )
-                                        
-                                        ],
-                                        className = 'flex-pam-mm-bul',
-                                        #style={'flex-basis': '200px'} 
-                                    )
-                                )
-                                
-                            ],
-                            className = 'flex-guide-pam-mm-bul'
-                        ),
 
-
-                        
-                        html.Button('Submit job', id = 'submit-job')
-                    ],
-                
-                    id = 'div-step2',
-                    style = {'margin':'1%', 'width':'75%'}
-                
-                ),
-                style = {'background-color':'#eee', 'border-radius': '10px', 'width':'45%'},
-                id = 'div-background-step2'
-            )
-        ],
-        className = 'flex-steps'
-    )
-)
 
 #new final_list
 final_list = []
@@ -215,15 +111,15 @@ final_list.append(
             [
                 html.Div(
                     [
-                        html.H3('STEP 1'),  #modify margin-top 
-                        html.P('Insert Genome'),
+                        html.H3('STEP 1', style = {'margin-top':'0'}), 
+                        html.P('Select a genome'),
                         html.Div(
-                            dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genome"),
+                            dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genome", style = {'width':'75%'}),
                             #style = {'width':'50%'}
                         ),
-                        html.P('Select the variant'),
+                        html.P('Add a genome variant'),
                         html.Div(
-                            dcc.Dropdown(options = var_dir, clearable = False, id = 'available-variant')
+                            dcc.Dropdown(options = var_dir, clearable = False, id = 'available-variant', style = {'width':'75%'})
                         ),
                         html.Div(
                             [
@@ -231,10 +127,12 @@ final_list.append(
                                     [
                                         html.P('Select PAM'),
                                         html.Div(
-                                            dcc.Dropdown(options = pam_file, clearable = False, id = 'available-pam')
+                                            dcc.Dropdown(options = pam_file, clearable = False, id = 'available-pam', style = {'width':'75%'})
                                         )
-                                    ]
+                                    ],
+                                    style = {'flex':'0 0 50%'}
                                 ),
+                                html.P('or'),
                                 html.Div(
                                     [
                                         html.P('Insert custom PAM'),
@@ -246,51 +144,73 @@ final_list.append(
                             className = 'flex-div-pam'
                         )
                     ],
-                    id = 'step1'
+                    id = 'step1',
+                    style = {'flex':'0 0 40%'}
                 ),
+                html.Div(style = {'border-right':'solid 1px white'}),
                 html.Div(
                     [
+                        html.H3('STEP 2', style = {'margin-top':'0'}),
                         html.Div(
                             [
-                                html.H3('STEP 2'),  #TODO muovere fuori STEP 2 dal flex
-                                html.P('Insert the guides'),
-                                dcc.Textarea(id = 'text-guides'),
-                                
                                 html.Div(
                                     [
-                                        dcc.Upload('Upload a file',id = 'upload-guides')
+                                        
+                                        html.Div(
+                                            [
+                                                html.P(['Insert crRNA sequence(s)', html.Abbr('\uD83D\uDEC8', style = {'text-decoration':'none'} ,title = 'One sequence per line. All sequences must have the same lenght and PAM characters are not required')], style = {'word-wrap': 'break-word'}), 
+                            
+                                                dcc.Textarea(id = 'text-guides', placeholder = 'GAGTCCGAGCAGAAGAAGAANNN\nCCATCGGTGGCCGTTTGCCCNNN', style = {'width':'275px', 'height':'160px'}),
+                                                html.P('or', style = {'position': 'relative', 'left':'50%'}),
+                                                html.Div(
+                                                    [
+                                                        dcc.Upload('Upload file with crRNA sequences',id = 'upload-guides')
+                                                    ],
+                                                    style={
+                                                        'width': '100%',
+                                                        'height': '60px',
+                                                        'lineHeight': '60px',
+                                                        'borderWidth': '1px',
+                                                        'borderStyle': 'dashed',
+                                                        'borderRadius': '5px',
+                                                        'textAlign': 'center',
+                                                        #'margin': '10px'
+                                                    }
+                                                )
+                                            ],
+                                            style = {'width':'275px'} #same as text-area
+                                        )
                                     ],
-                                    style={
-                                        'width': '100%',
-                                        'height': '60px',
-                                        'lineHeight': '60px',
-                                        'borderWidth': '1px',
-                                        'borderStyle': 'dashed',
-                                        'borderRadius': '5px',
-                                        'textAlign': 'center',
-                                        #'margin': '10px'
-                                    }
+                                    id = 'div-guides'
+                                ),
+                                html.Div(
+                                    [
+                                        html.P('Allowed mismatches'),
+                                        dcc.Input(value = '0', id = 'mms', type = 'number', min = '0', style = {'width':'60px'}),
+                                        html.P('Bulge DNA size'),
+                                        dcc.Input(value = '0', id = 'dna', type = 'number', min = '0', style = {'width':'60px'}),
+                                        html.P('Bulge RNA size'),
+                                        dcc.Input(value = '0', id = 'rna', type = 'number', min = '0', style = {'width':'60px'})
+                                    ]
                                 )
                             ],
-                            id = 'div-guides'
-                        ),
-                        html.Div(
-                            [
-                                html.P('Insert mms'),
-                                dcc.Input(value = '0', id = 'mms', type = 'number', min = '0', style = {'width':'60px'}),
-                                html.P('Insert bulges DNA'),
-                                dcc.Input(value = '0', id = 'dna', type = 'number', min = '0', style = {'width':'60px'}),
-                                html.P('Insert bulges RNA'),
-                                dcc.Input(value = '0', id = 'rna', type = 'number', min = '0', style = {'width':'60px'})
-                            ]
+                            className = 'flex-step2'
                         )
+
                     ],
                     id = 'step2',
-                    className = 'flex-step2'
+                    style = {'flex':'0 0 40%'}
+                    
                 ),
+                html.Div(style = {'border-right':'solid 1px white'}),
                 html.Div(
                     [
-                        html.H3('Submit')
+                        html.H3('Submit', style = {'margin-top':'0'}),
+                        html.Div(
+                            [
+                                html.Button('Submit', id = 'submit-job')
+                            ]
+                        )
                     ],
                     id = 'step3'
                 )
@@ -299,7 +219,7 @@ final_list.append(
             style = {'margin':'1%'},
             className = 'flex-div-steps'
         ),
-        style = {'background-color':'#eee', 'border-radius': '10px', 'border':'1px solid black'},
+        style = {'background-color':'rgba(154, 208, 150, 0.39)', 'border-radius': '10px', 'border':'1px solid black'},
         id = 'steps-background'
     )
 )

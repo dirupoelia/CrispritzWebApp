@@ -174,7 +174,7 @@
    */
   flex-flow: row wrap;
   /* Then we define how is distributed the remaining space */
-  justify-content:flex-start;
+  justify-content:space-between;
   padding:5px; 
 }
 
@@ -190,8 +190,8 @@
     */
    flex-flow: row wrap;
    /* Then we define how is distributed the remaining space */
-   justify-content: space-between;
-   padding:5px; 
+   justify-content: flex-start;
+   /*padding:5px; */
 
 }
 .flex-step2{
@@ -206,7 +206,7 @@
    */
   flex-flow: row wrap;
   /* Then we define how is distributed the remaining space */
-  justify-content: flex-start;
+  justify-content: space-between;
   padding:5px; 
 
 }
