@@ -1,2 +1,0 @@
-#Bulge_type	crRNA	DNA	Chromosome	Position	Direction	Mismatches	Bulge_Size	Annotation_Type
-X	CTCACCATTGCACTCCAGCCNNN	CaCgCCATTGCACTCCAGCCTGG	chr22	35321907	+	2	0	promoter

@@ -136,7 +136,7 @@ final_list.append(
                                 html.Div(
                                     [
                                         html.P('Insert custom PAM'),
-                                        dcc.Input(type = 'text')
+                                        dcc.Input(type = 'text', id = 'custom-pam')
                                     ]
                                 )
                             ],
@@ -164,7 +164,7 @@ final_list.append(
                                                 html.P('or', style = {'position': 'relative', 'left':'50%'}),
                                                 html.Div(
                                                     [
-                                                        dcc.Upload('Upload file with crRNA sequences',id = 'upload-guides')
+                                                        dcc.Upload('Upload file with crRNA sequences', id = 'upload-guides')
                                                     ],
                                                     style={
                                                         'width': '100%',
@@ -286,24 +286,102 @@ final_list.append(html.P('', id = 'done'))
 
 final_list.append(dcc.Interval(id = 'load-page-check', interval=3*1000))
 load_page = html.Div(final_list, style = {'margin':'1%'})
+
 ##################################################CALLBACKS##################################################
 
-#Submit Job, chenge url
+#Submit Job, change url
 @app.callback(
     [Output('url', 'pathname'),
-    Output('url','search')
-    ],
+    Output('url','search')],
     [Input('submit-job', 'n_clicks')],
-    [State('url', 'href')]
+    [State('url', 'href'),
+    State('available-genome', 'value'),
+    State('available-variant', 'value'),
+    State('available-pam','value'),
+    State('custom-pam','value'),
+    State('text-guides', 'value'),
+    State('upload-guides','contents'),
+    State('mms','value'),
+    State('dna','value'),
+    State('rna','value')]
 )
-def changeUrl(n, href):
+def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_guides, mms, dna, rna):      #NOTE startJob
     if n is None:
         raise PreventUpdate
     
-    job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+    #TODO check se input è corretto
 
-    subprocess.Popen(['sleep 5s; mkdir Results/' + job_id], shell = True)
-    print( 'change url: ',href + '?job=' + job_id)
+
+    job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
+    result_dir = 'Results/' + job_id
+    subprocess.run(['mkdir ' + result_dir], shell = True)
+    enrich = True
+    index = True
+    search_index = True
+    search = True
+    annotation = True
+    report =  True
+
+    #Check which tool to use
+    #TODO controllare se add-variants mi crea una cartella all'interno di SNP genomes, nel caso fare in modo che lo faccia
+
+    #Enrichment
+    if variant is None:
+        variant = ''
+        enrich = False
+    all_genome_enr = [f for f in listdir('variants_genome/SNPs_genome') if isdir(join('variants_genome/SNPs_genome', f))]
+    genome_enr = genome_ref + '_' + variant
+    if (genome_ref + '_' + variant in all_genome_enr):          #NOTE Enriched genomes dir names are genome_ref name + symbol + variant_dir name
+        enrich = False
+        
+    
+    #Indexing and search
+    #NOTE Indexed genomes names are PAM + _ + bMax + _ + genome_ref/genome_enr
+    all_genomes_idx = [f for f in listdir('genome_library') if isdir(join('genome_library', f))]
+    
+    #TODO sistemare pam, mi serve anche un file oltre alla pam in se
+    with open('pam/' + pam) as pam_file:
+        pam = pam_file.readline()
+        
+        if int(pam.split(' ')[-1]) < 0:
+            end_idx = int(pam.split(' ')[-1]) * (-1)
+            pam = pam.split(' ')[0][0 : end_idx]
+        else:
+            end_idx = int(pam.split(' ')[-1])
+            pam = pam.split(' ')[0][end_idx * (-1):]
+    
+    if text_guides is not None and text_guides is not '':
+        guides_file = open(result_dir + '/guides.txt', 'w')
+        guides_file.write(text_guides)
+        guides_file.close()
+    if custom_pam is not None and custom_pam is not '':
+        pam = custom_pam
+
+    
+    if (int(dna) > 0 or int(rna) > 0):
+        index = False
+    max_bulges = rna
+    if (int(dna) > int(rna)):
+        max_bulges = dna
+    print (pam, max_bulges, genome_ref, variant)
+    if (index and (pam + '_' + max_bulges + '_' + genome_ref + '_' + variant) in all_genomes_idx):
+        index = False
+
+    if (index):
+        search = False
+    if (not index):
+        search_index = False
+    
+    #Annotation
+    #Generate report
+    #TODO trovare modo di comparare bene le guide in input che se sono uguali a un risultato fatto non rifaccio la search
+    
+    #TODO if human genome -> annotation = human genome. mouse -> annotation mouse etc
+    #TODO sistemare genome_ref, _enr, _idx, pam deve essere file, guides lo stesso
+    genome_idx = genome_ref
+    subprocess.Popen(['assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + variant + ' ' + ' ' + genome_ref + ' ' + genome_enr + ' ' + genome_idx + (
+        ' ' + pam + ' ' + file_guides + ' ' + mms + ' ' + dna + ' ' + rna + ' ' + enrich + ' ' + index + ' ' + search_index + ' ' + ' ' + search + (
+            ' ' + annotation + ' ' + report)) ], shell = True)
     return '/load','?job=' + job_id
 
 #When url changed, load new page
@@ -316,27 +394,40 @@ def changeUrl(n, href):
     ]
 )
 def changePage(path, href, search):
-    print ('changepage: ', href)
-    print('search', search)
+    
     if path == '/load':
-        return load_page, href+search   #TODO se ricarico la pagina si sdoppia il search
-
+        return load_page, 'http://127.0.0.1:8050/load' + search #NOTE change the url part when DNS are changed
+    
     return index_page, ''
 
 #Check end job
 @app.callback(
-    Output('done', 'children'),
+    [Output('done', 'children'),
+    Output('add-variants-status', 'children'),
+    Output('search-status', 'children'),
+    Output('generate-report-status', 'children')],
     [Input('load-page-check', 'n_intervals')],
     [State('url', 'search')]
 )
 def refreshSearch(n, dir_name):
     if n is None:
-        raise PreventUpdate
-    onlydir = [f for f in listdir('Results') if isdir(join('Results', f))]
+        raise PreventUpdate     #TODO fa un controllo subito, così l'utente non deve aspettare 3 secondi per l'update
     
+    onlydir = [f for f in listdir('Results') if isdir(join('Results', f))]
+    current_job_dir = 'Results/' +  dir_name.split('=')[-1] + '/'
     if dir_name.split('=')[-1] in onlydir:
-        return 'Done'
+        onlyfile = [f for f in listdir(current_job_dir) if isfile(join(current_job_dir, f))]
+        if 'enrich_done.txt' in onlyfile:
+            return 'Done', html.P('Done', style = {'color':'green'}), 'a', 'b'
     raise PreventUpdate
+
+
+#Read the uploaded file and converts into bit
+def parse_contents(contents):
+    content_type, content_string = contents.split(',')
+
+    decoded = base64.b64decode(content_string)
+    return decoded
 
 if __name__ == '__main__':
     app.run_server(debug=True)

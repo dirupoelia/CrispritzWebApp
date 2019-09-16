@@ -1,5 +1,0 @@
-EXONS	hg19_annotations/hg19_exon.bed
-INTRONS	hg19_annotations/hg19_intron.bed
-CTCF	hg19_annotations/hg19_CTCF.bed
-DNASE	hg19_annotations/hg19_dnase.bed
-PROMOTERS	hg19_annotations/hg19_promoter.bed
