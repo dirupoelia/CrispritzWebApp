@@ -18,6 +18,8 @@ from flask_caching import Cache             #for cache of .targets or .scores
 import os
 import string                               #for job id
 import random                               #for job id
+import sys                                  #for sys.exit()
+
 PAGE_SIZE = 10                     #number of entries in each page of the table in view report
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -329,47 +331,69 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
     if variant is None:
         variant = ''
         enrich = False
-    all_genome_enr = [f for f in listdir('variants_genome/SNPs_genome') if isdir(join('variants_genome/SNPs_genome', f))]
-    genome_enr = genome_ref + '_' + variant
-    if (genome_ref + '_' + variant in all_genome_enr):          #NOTE Enriched genomes dir names are genome_ref name + symbol + variant_dir name
-        enrich = False
+        genome_enr = genome_ref
+    else:
+        all_genome_enr = [f for f in listdir('variants_genome/SNPs_genome') if isdir(join('variants_genome/SNPs_genome', f))]
+        genome_enr = genome_ref + '_' + variant
+        if (genome_ref + '_' + variant in all_genome_enr):          #NOTE Enriched genomes dir names are genome_ref name + symbol + variant_dir name
+            enrich = False
         
     
     #Indexing and search
     #NOTE Indexed genomes names are PAM + _ + bMax + _ + genome_ref/genome_enr
     all_genomes_idx = [f for f in listdir('genome_library') if isdir(join('genome_library', f))]
     
-    #TODO sistemare pam, mi serve anche un file oltre alla pam in se
-    with open('pam/' + pam) as pam_file:
-        pam = pam_file.readline()
-        
-        if int(pam.split(' ')[-1]) < 0:
-            end_idx = int(pam.split(' ')[-1]) * (-1)
-            pam = pam.split(' ')[0][0 : end_idx]
-        else:
-            end_idx = int(pam.split(' ')[-1])
-            pam = pam.split(' ')[0][end_idx * (-1):]
-    
-    if text_guides is not None and text_guides is not '':
-        guides_file = open(result_dir + '/guides.txt', 'w')
-        guides_file.write(text_guides)
-        guides_file.close()
+    #TODO if pam input area, find way to select left or right of guide
+    pam_len = 0
     if custom_pam is not None and custom_pam is not '':
-        pam = custom_pam
+        pam_char = custom_pam
+        pam_len = len(pam_char)
+        #Save to file as NNNN...PAM, but first check what guides have been inserted
+        if text_guides is not None and text_guides is not '':
+            n_number = len(text_guides.split('\n')[0])
+        else:
+            decoded_guides = parse_contents(file_guides).decode('utf-8')
+            n_number = len(decoded_guides.split('\n')[0]) - decoded_guides.split('\n')[0].count('N')
+        with open(result_dir + '/pam.txt', 'w') as pam_file:
+            pam_file.write(('N' * n_number) + pam_char)
+            pam = result_dir + '/pam.txt'
+    else:
+        with open('pam/' + pam) as pam_file:
+            pam_char = pam_file.readline()
+            
+            if int(pam_char.split(' ')[-1]) < 0:
+                end_idx = int(pam_char.split(' ')[-1]) * (-1)
+                pam_char = pam_char.split(' ')[0][0 : end_idx]
+                pam_len = end_idx
+            else:
+                end_idx = int(pam_char.split(' ')[-1])
+                pam_char = pam_char.split(' ')[0][end_idx * (-1):]
+                pam_len = end_idx
 
-    
+    guides_file = result_dir + '/guides.txt'
+    if text_guides is not None and text_guides is not '':
+        save_guides_file = open(result_dir + '/guides.txt', 'w')
+        text_guides = text_guides.replace('\n', 'N' * pam_len + '\n') + 'N' * pam_len    #TODO what if pam at beginning?
+        save_guides_file.write(text_guides)
+        save_guides_file.close()     
+    else:
+        decoded_guides = parse_contents(file_guides).decode('utf-8')
+        print(decoded_guides)
+        save_guides_file = open(result_dir + '/guides.txt', 'w')
+        save_guides_file.write(decoded_guides)
+        save_guides_file.close()
+
     if (int(dna) > 0 or int(rna) > 0):
         index = False
     max_bulges = rna
     if (int(dna) > int(rna)):
         max_bulges = dna
-    print (pam, max_bulges, genome_ref, variant)
     if (index and (pam + '_' + max_bulges + '_' + genome_ref + '_' + variant) in all_genomes_idx):
         index = False
 
     if (index):
         search = False
-    if (not index):
+    else:
         search_index = False
     
     #Annotation
