@@ -331,12 +331,12 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
 
     #Enrichment
     if variant is None:
-        variant = ''
+        variant = 'None'
         enrich = False
         genome_enr = genome_ref
     else:
         all_genome_enr = [f for f in listdir('variants_genome/SNPs_genome') if isdir(join('variants_genome/SNPs_genome', f))]
-        if variant is '':
+        if variant is 'None':
             genome_enr = genome_ref
         else:
             genome_enr = genome_ref + '_' + variant
@@ -374,6 +374,8 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
                 end_idx = int(pam_char.split(' ')[-1])
                 pam_char = pam_char.split(' ')[0][end_idx * (-1):]
                 pam_len = end_idx
+        subprocess.run(['cp pam/' + pam + ' ' + result_dir + '/pam.txt'], shell = True)
+        pam = result_dir + '/pam.txt'
 
     guides_file = result_dir + '/guides.txt'
     if text_guides is not None and text_guides is not '':
@@ -395,13 +397,12 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
     if (index and (pam_char + '_' + str(max_bulges) + '_' + genome_ref + '_' + variant) in all_genomes_idx):
         index = False
 
-    print ('index', str(index))
     if (index):
         search = False
     else:
         search_index = False
 
-    if variant is '':
+    if variant is 'None':
         genome_idx = pam_char + '_' + str(max_bulges) + '_' + genome_ref
     else:
         genome_idx = pam_char + '_' + str(max_bulges) + '_' + genome_ref + '_' + variant
@@ -480,8 +481,10 @@ def refreshSearch(n, dir_name):
     current_job_dir = 'Results/' +  dir_name.split('=')[-1] + '/'
     if dir_name.split('=')[-1] in onlydir:
         onlyfile = [f for f in listdir(current_job_dir) if isfile(join(current_job_dir, f))]
-        if 'enrich_done.txt' in onlyfile:
-            return 'Done', html.P('Done', style = {'color':'green'}), 'a', 'b'
+        if 'log.txt' in onlyfile:
+            with open(current_job_dir + 'log.txt') as log:
+                if ('Add-variants\tDone' in log.read()):
+                    return 'Done', html.P('Done', style = {'color':'green'}), 'a', 'b'
     raise PreventUpdate
 
 
