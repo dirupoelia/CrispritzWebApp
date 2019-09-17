@@ -19,6 +19,7 @@ import os
 import string                               #for job id
 import random                               #for job id
 import sys                                  #for sys.exit()
+import filecmp                              #check if Params files are equals
 
 PAGE_SIZE = 10                     #number of entries in each page of the table in view report
 
@@ -317,6 +318,7 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
     job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
     result_dir = 'Results/' + job_id
     subprocess.run(['mkdir ' + result_dir], shell = True)
+    
     enrich = True
     index = True
     search_index = True
@@ -334,11 +336,14 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
         genome_enr = genome_ref
     else:
         all_genome_enr = [f for f in listdir('variants_genome/SNPs_genome') if isdir(join('variants_genome/SNPs_genome', f))]
-        genome_enr = genome_ref + '_' + variant
+        if variant is '':
+            genome_enr = genome_ref
+        else:
+            genome_enr = genome_ref + '_' + variant
         if (genome_ref + '_' + variant in all_genome_enr):          #NOTE Enriched genomes dir names are genome_ref name + symbol + variant_dir name
             enrich = False
         
-    
+    #subprocess.run(['crispritz.py add-variants ' + 'Variants/' + variant + ' ' + 'Genomes/' + genome_ref], shell = True)
     #Indexing and search
     #NOTE Indexed genomes names are PAM + _ + bMax + _ + genome_ref/genome_enr
     all_genomes_idx = [f for f in listdir('genome_library') if isdir(join('genome_library', f))]
@@ -378,34 +383,68 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
         save_guides_file.close()     
     else:
         decoded_guides = parse_contents(file_guides).decode('utf-8')
-        print(decoded_guides)
         save_guides_file = open(result_dir + '/guides.txt', 'w')
         save_guides_file.write(decoded_guides)
         save_guides_file.close()
 
-    if (int(dna) > 0 or int(rna) > 0):
+    if (int(dna) == 0 and int(rna) == 0):
         index = False
     max_bulges = rna
     if (int(dna) > int(rna)):
         max_bulges = dna
-    if (index and (pam + '_' + max_bulges + '_' + genome_ref + '_' + variant) in all_genomes_idx):
+    if (index and (pam_char + '_' + str(max_bulges) + '_' + genome_ref + '_' + variant) in all_genomes_idx):
         index = False
 
+    print ('index', str(index))
     if (index):
         search = False
     else:
         search_index = False
+
+    if variant is '':
+        genome_idx = pam_char + '_' + str(max_bulges) + '_' + genome_ref
+    else:
+        genome_idx = pam_char + '_' + str(max_bulges) + '_' + genome_ref + '_' + variant
+
+    #Create Params.txt file
+    with open(result_dir + '/Params.txt', 'w') as p:
+        p.write('Genome_ref\t' + genome_enr + '\n')
+        if index:
+            p.write('Genome_idx\t' + genome_idx + '\n')
+        else:
+            p.write('Genome_idx\t' + 'None\n')
+        p.write('Variant\t' + str(variant) + '\n')
+        p.write('Pam\t' + pam_char + '\n')
+        p.write('Max_bulges\t' + str(max_bulges) + '\n')
+        p.write('Mismatches\t' + str(mms) + '\n')
+        p.write('DNA\t' + str(dna) + '\n')
+        p.write('RNA\t' + str(rna) + '\n')
+        p.close()
+
+
     
+    #Check if input parameters (mms, bulges, pam, guides, genome) are the same as a previous search
+    all_result_dirs = [f for f in listdir('Results') if isdir(join('Results', f))]
+    all_result_dirs.remove(job_id)
+    for check_param_dir in all_result_dirs:
+        if os.path.exists('Results/' + check_param_dir + '/Params.txt'):
+            if (filecmp.cmp('Results/' + check_param_dir + '/Params.txt', result_dir + '/Params.txt' )):
+                search = False
+                search_index = False
+                #TODO copy result from one directory to the current one or create simlink
+ 
     #Annotation
+    if (not search and not search_index):
+        annotation = False      #TODO copy result from one directory to the current one or create simlink
+
     #Generate report
-    #TODO trovare modo di comparare bene le guide in input che se sono uguali a un risultato fatto non rifaccio la search
+    if (not enrich and not index and not search and not search_index):
+        report = False          #TODO copy result from one directory to the current one or create simlink
     
     #TODO if human genome -> annotation = human genome. mouse -> annotation mouse etc
-    #TODO sistemare genome_ref, _enr, _idx, pam deve essere file, guides lo stesso
-    genome_idx = genome_ref
-    subprocess.Popen(['assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + variant + ' ' + ' ' + genome_ref + ' ' + genome_enr + ' ' + genome_idx + (
-        ' ' + pam + ' ' + file_guides + ' ' + mms + ' ' + dna + ' ' + rna + ' ' + enrich + ' ' + index + ' ' + search_index + ' ' + ' ' + search + (
-            ' ' + annotation + ' ' + report)) ], shell = True)
+    subprocess.Popen(['assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + str(variant) + ' ' + 'Genomes/' + genome_ref + ' ' + 'variants_genome/SNPs_genome/' + genome_enr + ' ' + 'genome_library/' + genome_idx + (
+        ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(enrich) + ' ' + str(index) + ' ' + str(search_index) + ' ' + ' ' + str(search) + (
+            ' ' + str(annotation) + ' ' + str(report))) ], shell = True)
     return '/load','?job=' + job_id
 
 #When url changed, load new page
