@@ -40,39 +40,61 @@ if [ ${10} -ge $9 ]; then
     max=${10}
 fi
 if [ ${12} = 'True' ]; then   
-    #crispritz.py index-genome $genome_idx_basename $used_genome_dir $6 -bMax $max
-    echo 'crispritz indexing'
+    crispritz.py index-genome $genome_idx_basename $used_genome_dir $6 -bMax $max
+    #echo 'crispritz indexing'
 fi
 echo 'Index-generation\tDone\t'$(date) >> $1'/'log.txt
 
 #Start search
 echo 'Search\tStart\t'$(date) >> $1'/'log.txt
-if [ ${13} = 'True' ]; then
-    echo 'crispritz search'
-    #crispritz.py search $used_genome_dir $6 $7 name_file -mm $8 -t -scores $used_genome_dir
+if [ ${14} = 'True' ]; then
+    #echo 'crispritz search'
+    crispritz.py search $used_genome_dir $6 $7 name_file -mm $8 -t -scores $used_genome_dir
+    mv ./name_file.*.txt $1
+    mv ./name_file.*.xls $1
 fi
 echo 'Search\tDone\t'$(date) >> $1'/'log.txt
 
 
 #Start search index
 echo 'Search-index\tStart\t'$(date) >> $1'/'log.txt
-if [ ${14} = 'True' ]; then
-    echo 'crispritz search-index'
-    #crispritz.py search $5 $6 $7 name_file -index -mm $8 -bDNA $9 -bRNA ${10} -t -scores $used_genome_dir
+echo "genomeidxdir" $5
+echo "pam" $6
+echo "guide" $7
+if [ ${13} = 'True' ]; then
+    #echo 'crispritz search-index'
+    crispritz.py search $5 $6 $7 name_file -index -mm $8 -bDNA $9 -bRNA ${10} -t -scores $used_genome_dir
+    mv ./name_file.*.txt $1
+    mv ./name_file.*.xls $1
 fi
 echo 'Search-index\tDone\t'$(date) >> $1'/'log.txt
 
 #Start annotation
 echo 'Annotation\tStart\t'$(date) >> $1'/'log.txt
 if [ ${15} = 'True' ]; then
-    echo 'crispritz annotate'
+    #echo 'crispritz annotate'
+    crispritz.py annotate-results $7 $1'/name_file.targets.txt' annotations_path.txt 'name_file.annotated'
+    mv ./name_file.annotated.*.txt $1
 fi
 echo 'Annotation\tDone\t'$(date) >> $1'/'log.txt
 
 #Start generate report
 echo 'Report\tStart\t'$(date) >> $1'/'log.txt
 if [ ${16} = 'True' ]; then
-    echo 'crispritz report'
+    #echo 'crispritz report'
+    #-profile emx1.hg19.profile.xls -extprofile emx1.hg19.extended_profile.xls -exons emx1.hg19.annotated.ExonsCount.txt -introns emx1.hg19.annotated.IntronsCount.txt -dnase emx1.hg19.annotated.DNAseCount.txt -ctcf emx1.hg19.annotated.CTCFCount.txt -promoters emx1.hg19.annotated.PromotersCount.txt -gecko
+    while IFS= read -r line || [ -n "$line" ]; do    
+        echo $line
+        for i in $(seq 1 $8); do 
+        echo $i
+        crispritz.py generate-report $line -mm $i -profile $1'/name_file.profile.xls' -extprofile $1'/name_file.extended_profile.xls' -exons $1'/name_file.annotated.ExonsCount.txt' -introns $1'/name_file.annotated.IntronsCount.txt' -dnase $1'/name_file.annotated.DNAseCount.txt' -ctcf $1'/name_file.annotated.CTCFCount.txt' -promoters $1'/name_file.annotated.PromotersCount.txt' -gecko
+        done
+
+    done < $7
+    
+    mv ./*.pdf $1
+    mv ./*.png $1
+  
 fi
 echo 'Report\tDone\t'$(date) >> $1'/'log.txt
 

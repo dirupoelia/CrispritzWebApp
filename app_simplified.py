@@ -66,7 +66,8 @@ for dir in onlydir:
 #For multipage
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
-    html.Div(id='page-content')
+    html.Div(id='page-content'),
+    html.P(id = 'signal')
 ])
 
 # final_list.append(
@@ -280,8 +281,12 @@ final_list.append(
                     )
                 ],
                 className = 'flex-status'
+            ),
+            html.Div(
+                dcc.Link('View Results', style = {'visibility':'hidden'}, id = 'view-results')
             )
-        ]
+        ],
+        id = 'div-status-report'
     )
 )
 
@@ -290,6 +295,35 @@ final_list.append(html.P('', id = 'done'))
 final_list.append(dcc.Interval(id = 'load-page-check', interval=3*1000))
 load_page = html.Div(final_list, style = {'margin':'1%'})
 
+#Result page
+final_list = []
+final_list.append(html.H1('CRISPRitz Web Application'))
+
+col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'CFD', 'Doench2016']
+col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric']
+cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
+final_list.append(
+    html.Div(
+        dash_table.DataTable(
+            id='result-table', 
+            columns=cols, 
+            virtualization = True,
+            fixed_rows={ 'headers': True, 'data': 0 },
+            style_cell={'width': '150px'},
+            page_current=0,
+            page_size=PAGE_SIZE,
+            page_action='custom',
+            sort_action='custom',
+            sort_mode='multi',
+            sort_by=[],
+            filter_action='custom',
+            filter_query=''
+        ),
+        id = 'div-result-table'
+    )
+)
+
+result_page = html.Div(final_list, style = {'margin':'1%'})
 ##################################################CALLBACKS##################################################
 
 #Submit Job, change url
@@ -313,8 +347,8 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
         raise PreventUpdate
     
     #TODO check se input è corretto
-
-
+   
+    
     job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
     result_dir = 'Results/' + job_id
     subprocess.run(['mkdir ' + result_dir], shell = True)
@@ -391,16 +425,17 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
 
     if (int(dna) == 0 and int(rna) == 0):
         index = False
+        search_index = False
     max_bulges = rna
     if (int(dna) > int(rna)):
         max_bulges = dna
     if (index and (pam_char + '_' + str(max_bulges) + '_' + genome_ref + '_' + variant) in all_genomes_idx):
         index = False
 
-    if (index):
+    if (search_index):
         search = False
-    else:
-        search_index = False
+    # else:
+    #     search_index = False
 
     if variant is 'None':
         genome_idx = pam_char + '_' + str(max_bulges) + '_' + genome_ref
@@ -410,7 +445,7 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
     #Create Params.txt file
     with open(result_dir + '/Params.txt', 'w') as p:
         p.write('Genome_ref\t' + genome_enr + '\n')
-        if index:
+        if search_index:
             p.write('Genome_idx\t' + genome_idx + '\n')
         else:
             p.write('Genome_idx\t' + 'None\n')
@@ -437,14 +472,13 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
     #Annotation
     if (not search and not search_index):
         annotation = False      #TODO copy result from one directory to the current one or create simlink
-
+ 
     #Generate report
     if (not enrich and not index and not search and not search_index):
         report = False          #TODO copy result from one directory to the current one or create simlink
-    
     #TODO if human genome -> annotation = human genome. mouse -> annotation mouse etc
     subprocess.Popen(['assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + str(variant) + ' ' + 'Genomes/' + genome_ref + ' ' + 'variants_genome/SNPs_genome/' + genome_enr + ' ' + 'genome_library/' + genome_idx + (
-        ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(enrich) + ' ' + str(index) + ' ' + str(search_index) + ' ' + ' ' + str(search) + (
+        ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(enrich) + ' ' + str(index) + ' ' + str(search_index) + ' ' + str(search) + (
             ' ' + str(annotation) + ' ' + str(report))) ], shell = True)
     return '/load','?job=' + job_id
 
@@ -458,18 +492,20 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
     ]
 )
 def changePage(path, href, search):
-    
+
     if path == '/load':
         return load_page, 'http://127.0.0.1:8050/load' + search #NOTE change the url part when DNS are changed
-    
+    if path == '/result':
+        return result_page, 'http://127.0.0.1:8050/load' + search
     return index_page, ''
 
 #Check end job
 @app.callback(
-    [Output('done', 'children'),
+    [Output('view-results', 'style'),
     Output('add-variants-status', 'children'),
     Output('search-status', 'children'),
-    Output('generate-report-status', 'children')],
+    Output('generate-report-status', 'children'),
+    Output('view-results','href')],
     [Input('load-page-check', 'n_intervals')],
     [State('url', 'search')]
 )
@@ -483,9 +519,128 @@ def refreshSearch(n, dir_name):
         onlyfile = [f for f in listdir(current_job_dir) if isfile(join(current_job_dir, f))]
         if 'log.txt' in onlyfile:
             with open(current_job_dir + 'log.txt') as log:
-                if ('Add-variants\tDone' in log.read()):
-                    return 'Done', html.P('Done', style = {'color':'green'}), 'a', 'b'
+                all_done = 0
+                add_var_status = html.P('To do', style = {'color':'red'})
+                search_status = html.P('To do', style = {'color':'red'})
+                report_status = html.P('To do', style = {'color':'red'})
+                current_log = log.read()
+                if ('Add-variants\tDone' in current_log):
+                    add_var_status = html.P('Done', style = {'color':'green'})
+                    all_done = all_done + 1
+                if ('Search-index\tDone' in current_log or 'Search\tDone' in current_log):
+                    search_status = html.P('Done', style = {'color':'green'})
+                    all_done = all_done + 1
+                if ('Report\tDone' in current_log):
+                    report_status = html.P('Done', style = {'color':'green'})
+                    all_done = all_done + 1
+                if all_done == 3:
+                    return {'visibility':'visible'}, add_var_status, search_status, report_status, '/result?job=' + dir_name.split('=')[-1]
+                else:
+                    return {'visibility':'hidden'}, add_var_status, search_status, report_status,''
     raise PreventUpdate
+
+#Perform expensive loading of a dataframe and save result into 'global store'
+#Cache are in the Cache directory
+@cache.memoize()
+def global_store(value):
+    
+    if value is None:
+        return ''
+    target = [f for f in listdir('Results/' + value) if isfile(join('Results/'+value, f)) and f.endswith('scores.txt') ]
+    if not target:
+        target = [f for f in listdir('Results/' + value) if isfile(join('Results/'+value, f)) and f.endswith('targets.txt') ]
+    
+    df = pd.read_csv('Results/' +value + '/' + target[0], sep = '\t')
+    df.rename(columns = {"#Bulge type":'BulgeType', '#Bulge_type':'BulgeType','Bulge Size': 'BulgeSize', 'Bulge_Size': 'BulgeSize', 'Doench 2016':'Doench2016','Doench_2016':'Doench2016'}, inplace = True)
+    return df
+
+#Callback to populate the tab, note that it's called when the result_page is loaded (dash implementation), so we do not use raise update to block this first callback
+@app.callback(
+    [Output('signal','children'),
+    Output('result-table','page_current'),
+    Output('result-table', "sort_by"), 
+    Output('result-table','filter_query')],
+    [Input('url', 'pathname')],
+    [State('url', 'search')]
+)
+def populateTable(pathname, search):
+    if pathname != '/result':
+        raise PreventUpdate
+
+    job_id = search.split('=')[-1]
+    job_directory = 'Results/' + job_id + '/'
+    #print('JOB_ID: ', job_id)
+    global_store(job_id)
+    return job_id, 0, [], ''
+
+#Send the data when next or prev button is clicked on the result table
+@app.callback(
+    Output('result-table', 'data'),
+    [Input('signal', 'children'),
+     Input('result-table', "page_current"),
+     Input('result-table', "page_size"),
+     Input('result-table', "sort_by"),
+     Input('result-table', 'filter_query')]
+)
+def update_table(value, page_current,page_size, sort_by, filter):
+    #print('signal_children', value)
+    if value is None:
+        raise PreventUpdate
+
+    
+    filtering_expressions = filter.split(' && ')    
+    df = global_store(value)
+    dff = df
+    for filter_part in filtering_expressions:
+        col_name, operator, filter_value = split_filter_part(filter_part)
+
+        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+            # these operators match pandas series operator method names
+            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
+        elif operator == 'contains':
+            dff = dff.loc[dff[col_name].str.contains(filter_value)]
+        elif operator == 'datestartswith':
+            # this is a simplification of the front-end filtering logic,
+            # only works with complete fields in standard format
+            dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+
+    if len(sort_by):
+        dff = dff.sort_values(
+            [col['column_id'] for col in sort_by],
+            ascending=[
+                col['direction'] == 'asc'
+                for col in sort_by
+            ],
+            inplace=False
+        )
+    
+    return dff.iloc[
+        page_current*page_size:(page_current+ 1)*page_size
+    ].to_dict('records')
+
+#For filtering
+def split_filter_part(filter_part):
+    for operator_type in operators:
+        for operator in operator_type:
+            if operator in filter_part:
+                name_part, value_part = filter_part.split(operator, 1)
+                name = name_part[name_part.find('{') + 1: name_part.rfind('}')]
+
+                value_part = value_part.strip()
+                v0 = value_part[0]
+                if (v0 == value_part[-1] and v0 in ("'", '"', '`')):
+                    value = value_part[1: -1].replace('\\' + v0, v0)
+                else:
+                    try:
+                        value = float(value_part)
+                    except ValueError:
+                        value = value_part
+
+                # word operators need spaces after them in the filter string,
+                # but we don't want these later
+                return name, operator_type[0].strip(), value
+
+    return [None] * 3
 
 
 #Read the uploaded file and converts into bit
