@@ -67,7 +67,7 @@ for dir in onlydir:
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content'),
-    html.P(id = 'signal')
+    html.P(id = 'signal', style = {'visibility':'hidden'})
 ])
 
 # final_list.append(
@@ -322,7 +322,30 @@ final_list.append(
         id = 'div-result-table'
     )
 )
-
+df_guide = pd.read_csv('Results/test/guides.txt', names = ['Guides'])
+print(df_guide)
+final_list.append(
+    html.Div(
+        dash_table.DataTable(
+            id = 'guide-table',
+            columns = [{'name':'Guides', 'id':'Guides', 'type':'text'}],
+            data = df_guide.to_dict('records')
+        )
+    )
+)
+final_list.append(html.P('before', id = 'test-p'))
+final_list.append(
+    html.Div(
+        html.A(
+            html.Img(id = 'selected-img', width="65%", height="65%", 
+            src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/test/test.png', 'rb').read()).decode())),
+            
+            target="_blank",
+            #href = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/test/test.png', 'rb').read()))
+            href = app.get_asset_url ('loadingimage.gif')
+        )
+    )
+)
 result_page = html.Div(final_list, style = {'margin':'1%'})
 ##################################################CALLBACKS##################################################
 
@@ -650,6 +673,23 @@ def parse_contents(contents):
     decoded = base64.b64decode(content_string)
     return decoded
 
+
+@app.callback(Output('test-p', 'children'),
+[Input('guide-table','selected_cells')], [State('guide-table', 'rows')]
+)
+def testcel(sel, rows):
+    if sel is None:
+        raise PreventUpdate
+    print('sel',sel)
+    print('rows', rows)
+    print(df_guide['Guides'].values[0])
+    return 'after'
 if __name__ == '__main__':
     app.run_server(debug=True)
     cache.clear()       #delete cache when server is closed
+
+    #TODO per le immagini, uso base 64 per vederle, e href = assets per aprirle in new tab
+    #TODO devo creare link o cartelle in assets per le immagini
+    #TODO per la tabella, controllo testcel per avere il nome della guida selezionata (se ne selezioni
+    # + di una, devo prender solo la prima)
+    #TODO creo dropdow per mms e quando ho selezionato ho l'immagine

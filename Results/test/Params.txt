@@ -1,0 +1,8 @@
+Genome_ref	hg19_ref_hg19_1000genomeproject_vcf
+Genome_idx	None
+Variant	hg19_1000genomeproject_vcf
+Pam	NGG
+Max_bulges	0
+Mismatches	1
+DNA	0
+RNA	0

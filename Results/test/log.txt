@@ -1,0 +1,14 @@
+Job	Start	mer 18 set 2019, 23.21.01, CEST
+Add-variants	Start	mer 18 set 2019, 23.21.01, CEST
+Add-variants	Done	mer 18 set 2019, 23.22.01, CEST
+Index-generation	Start	mer 18 set 2019, 23.22.01, CEST
+Index-generation	Done	mer 18 set 2019, 23.22.01, CEST
+Search	Start	mer 18 set 2019, 23.22.01, CEST
+Search	Done	mer 18 set 2019, 23.22.29, CEST
+Search-index	Start	mer 18 set 2019, 23.22.29, CEST
+Search-index	Done	mer 18 set 2019, 23.22.29, CEST
+Annotation	Start	mer 18 set 2019, 23.22.29, CEST
+Annotation	Done	mer 18 set 2019, 23.23.57, CEST
+Report	Start	mer 18 set 2019, 23.23.57, CEST
+Report	Done	mer 18 set 2019, 23.24.08, CEST
+Job	Done	mer 18 set 2019, 23.24.08, CEST
