@@ -18,3 +18,7 @@ Flask-Caching (Vengono installati anche Flask-1.1.1 Flask-Caching-1.7.2 Jinja2-2
 ```
 pip3 install Flask-Caching 
 ```
+Comando rename
+```
+sudo apt install rename
+```

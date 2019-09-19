@@ -17,6 +17,7 @@
 #$16 is generate report
 
 #echo $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13 $14 $15 $16
+jobid=$(basename $1)
 echo 'Job\tStart\t'$(date)> $1'/'log.txt
 used_genome_dir=$3                  #if variants, use variants_genome/SNP , else use Genome/genome
 if [ $2 != 'None' ]; then
@@ -49,9 +50,9 @@ echo 'Index-generation\tDone\t'$(date) >> $1'/'log.txt
 echo 'Search\tStart\t'$(date) >> $1'/'log.txt
 if [ ${14} = 'True' ]; then
     #echo 'crispritz search'
-    crispritz.py search $used_genome_dir $6 $7 name_file -mm $8 -t -scores $used_genome_dir
-    mv ./name_file.*.txt $1
-    mv ./name_file.*.xls $1
+    crispritz.py search $used_genome_dir $6 $7 $jobid -mm $8 -t -scores $used_genome_dir
+    mv ./$jobid.*.txt $1
+    mv ./$jobid.*.xls $1
 fi
 echo 'Search\tDone\t'$(date) >> $1'/'log.txt
 
@@ -63,9 +64,9 @@ echo "pam" $6
 echo "guide" $7
 if [ ${13} = 'True' ]; then
     #echo 'crispritz search-index'
-    crispritz.py search $5 $6 $7 name_file -index -mm $8 -bDNA $9 -bRNA ${10} -t -scores $used_genome_dir
-    mv ./name_file.*.txt $1
-    mv ./name_file.*.xls $1
+    crispritz.py search $5 $6 $7 $jobid -index -mm $8 -bDNA $9 -bRNA ${10} -t -scores $used_genome_dir
+    mv ./$jobid.*.txt $1
+    mv ./$jobid.*.xls $1
 fi
 echo 'Search-index\tDone\t'$(date) >> $1'/'log.txt
 
@@ -73,8 +74,8 @@ echo 'Search-index\tDone\t'$(date) >> $1'/'log.txt
 echo 'Annotation\tStart\t'$(date) >> $1'/'log.txt
 if [ ${15} = 'True' ]; then
     #echo 'crispritz annotate'
-    crispritz.py annotate-results $7 $1'/name_file.targets.txt' annotations_path.txt 'name_file.annotated'
-    mv ./name_file.annotated.*.txt $1
+    crispritz.py annotate-results $7 $1'/'$jobid'.targets.txt' annotations_path.txt $jobid'.annotated'
+    mv ./$jobid.annotated.*.txt $1
 fi
 echo 'Annotation\tDone\t'$(date) >> $1'/'log.txt
 
@@ -85,17 +86,21 @@ if [ ${16} = 'True' ]; then
     #-profile emx1.hg19.profile.xls -extprofile emx1.hg19.extended_profile.xls -exons emx1.hg19.annotated.ExonsCount.txt -introns emx1.hg19.annotated.IntronsCount.txt -dnase emx1.hg19.annotated.DNAseCount.txt -ctcf emx1.hg19.annotated.CTCFCount.txt -promoters emx1.hg19.annotated.PromotersCount.txt -gecko
     while IFS= read -r line || [ -n "$line" ]; do    
         echo $line
-        for i in $(seq 1 $8); do 
+        for i in $(seq 0 $8); do 
         echo $i
-        crispritz.py generate-report $line -mm $i -profile $1'/name_file.profile.xls' -extprofile $1'/name_file.extended_profile.xls' -exons $1'/name_file.annotated.ExonsCount.txt' -introns $1'/name_file.annotated.IntronsCount.txt' -dnase $1'/name_file.annotated.DNAseCount.txt' -ctcf $1'/name_file.annotated.CTCFCount.txt' -promoters $1'/name_file.annotated.PromotersCount.txt' -gecko
+        echo $jobid
+        echo $1
+        crispritz.py generate-report $line -mm $i -profile $1'/'$jobid'.profile.xls' -extprofile $1/*.extended_profile.xls -exons $1'/'$jobid'.annotated.ExonsCount.txt' -introns $1'/'$jobid'.annotated.IntronsCount.txt' -dnase $1'/'$jobid'.annotated.DNAseCount.txt' -ctcf $1'/'$jobid'.annotated.CTCFCount.txt' -promoters $1'/'$jobid'.annotated.PromotersCount.txt' -gecko
         done
 
     done < $7
-    
-    mv ./*.pdf $1
-    mv ./*.png $1
   
 fi
+mv ./*.pdf $1
+mv ./*.png $1   #TODO move these command inside if, and check for when to do annotation ref and enr for barplot
+
+mkdir assets/Img/$jobid
+ln -s $PWD/$1/*.png assets/Img/$jobid/
 echo 'Report\tDone\t'$(date) >> $1'/'log.txt
 
 echo 'Job\tDone\t'$(date)>> $1'/'log.txt

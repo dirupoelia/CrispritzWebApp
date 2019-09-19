@@ -322,30 +322,48 @@ final_list.append(
         id = 'div-result-table'
     )
 )
-df_guide = pd.read_csv('Results/test/guides.txt', names = ['Guides'])
-print(df_guide)
+
+final_list.append(html.Br())
 final_list.append(
     html.Div(
-        dash_table.DataTable(
-            id = 'guide-table',
-            columns = [{'name':'Guides', 'id':'Guides', 'type':'text'}],
-            data = df_guide.to_dict('records')
-        )
-    )
-)
-final_list.append(html.P('before', id = 'test-p'))
-final_list.append(
-    html.Div(
-        html.A(
-            html.Img(id = 'selected-img', width="65%", height="65%", 
-            src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/test/test.png', 'rb').read()).decode())),
+        [
+            dash_table.DataTable(
+                id = 'guide-table',
+                columns = [{'name':'Guides', 'id':'Guides', 'type':'text'}],
+                page_size=PAGE_SIZE
+                
+            ),
+            dcc.Dropdown(id = 'mms-dropdown', style = {'flex':'0 0 5%'}),
+            html.Div(
+                html.A(
+                    html.Img(id = 'radar-img', width="100%", #height="30%", 
+                    
+                    ),
+                    
+                    target="_blank",
+                    id = 'link-radar'
+                    
+                ),
+                style = {'flex':'0 0 30%'}
+            ),
+            html.Div(
+                html.A(
+                    html.Img(id = 'barplot-img', width="100%", #height="30%", 
+                    
+                    ),
+                    
+                    target="_blank",
+                    id = 'link-barplot'
+                    
+                ),
+                style = {'flex':'0 0 30%'}
+            )
             
-            target="_blank",
-            #href = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/test/test.png', 'rb').read()))
-            href = app.get_asset_url ('loadingimage.gif')
-        )
+        ],
+        className = 'flex-view-images'
     )
 )
+
 result_page = html.Div(final_list, style = {'margin':'1%'})
 ##################################################CALLBACKS##################################################
 
@@ -487,11 +505,14 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
     all_result_dirs.remove(job_id)
     for check_param_dir in all_result_dirs:
         if os.path.exists('Results/' + check_param_dir + '/Params.txt'):
+            print('checkparamdir:', check_param_dir)
             if (filecmp.cmp('Results/' + check_param_dir + '/Params.txt', result_dir + '/Params.txt' )):
                 search = False
                 search_index = False
-                #TODO copy result from one directory to the current one or create simlink
- 
+                subprocess.run(['ln -s $PWD/Results/' + check_param_dir + '/' + check_param_dir + '* ' + result_dir + '/'], shell = True) #TODO copy result from one directory to the current one or create simlink
+                subprocess.run(['ln -s $PWD/Results/' + check_param_dir + '/*.png ' + result_dir + '/'], shell = True)
+                subprocess.run(['rename \'s/' + check_param_dir + '/' + job_id + '/g\' ' + result_dir + '/*'], shell = True)
+                break
     #Annotation
     if (not search and not search_index):
         annotation = False      #TODO copy result from one directory to the current one or create simlink
@@ -598,7 +619,9 @@ def populateTable(pathname, search):
 
 #Send the data when next or prev button is clicked on the result table
 @app.callback(
-    Output('result-table', 'data'),
+    [Output('result-table', 'data'),
+    Output('guide-table', 'data'),
+    Output('mms-dropdown','options')],
     [Input('signal', 'children'),
      Input('result-table', "page_current"),
      Input('result-table', "page_size"),
@@ -637,9 +660,19 @@ def update_table(value, page_current,page_size, sort_by, filter):
             inplace=False
         )
     
+    #Load guide table
+    df_guide = pd.read_csv('Results/' + value + '/guides.txt', names = ['Guides'])
+
+    #Load mismatches
+    with open('Results/' + value + '/Params.txt') as p:
+       
+        mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
+    mms = int(mms[0])
+    mms_values = [{'label':i, 'value':i} for i in range(mms + 1) ]
+
     return dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
-    ].to_dict('records')
+    ].to_dict('records'), df_guide.to_dict('records'), mms_values
 
 #For filtering
 def split_filter_part(filter_part):
@@ -673,23 +706,41 @@ def parse_contents(contents):
     decoded = base64.b64decode(content_string)
     return decoded
 
-
-@app.callback(Output('test-p', 'children'),
-[Input('guide-table','selected_cells')], [State('guide-table', 'rows')]
+#Show images
+@app.callback(
+    [Output('barplot-img', 'src'),
+    Output('link-barplot', 'href'),
+    Output('radar-img','src'),
+    Output('link-radar','href')],
+    [Input('guide-table','selected_cells'),
+    Input('mms-dropdown','value')],
+    [State('guide-table', 'data'),
+    State('url','search')]
 )
-def testcel(sel, rows):
-    if sel is None:
+def testcel(sel_cel, mms, all_guides, job_id):
+    if sel_cel is None or mms is None:
         raise PreventUpdate
-    print('sel',sel)
-    print('rows', rows)
-    print(df_guide['Guides'].values[0])
-    return 'after'
+    print('TEST')
+    job_id = job_id.split('=')[-1]
+    barplot_img = 'summary_histogram_' + str(mms) + 'mm.png'
+    try:            #NOTE serve per non generare errori se il barplot non è stato fatto
+        barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
+        barplot_href = 'assets/Img/' + job_id + '/' + barplot_img
+    except:
+        barplot_src = ''
+        barplot_href = ''
+    guide = all_guides[int(sel_cel[0]['row'])]['Guides'] 
+    radar_img = 'summary_single_guide_' + guide + '_' + str(mms) + 'mm.png'
+    radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
+    radar_href = 'assets/Img/' + job_id + '/' + radar_img
+    return barplot_src, barplot_href, radar_src, radar_href
+
+
 if __name__ == '__main__':
     app.run_server(debug=True)
     cache.clear()       #delete cache when server is closed
 
-    #TODO per le immagini, uso base 64 per vederle, e href = assets per aprirle in new tab
-    #TODO devo creare link o cartelle in assets per le immagini
-    #TODO per la tabella, controllo testcel per avere il nome della guida selezionata (se ne selezioni
-    # + di una, devo prender solo la prima)
-    #TODO creo dropdow per mms e quando ho selezionato ho l'immagine
+    #TODO se faccio l'annotazione (stessi parametri) dei targets ottenuti da enr e ref genomes, poi posso usare i loro summary counts per fare il barplot, che dipende solo dai mm e non dalle guide
+    #BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti
+    #Iupac
+    #BUG emx1.txt error on loading extended_profile
