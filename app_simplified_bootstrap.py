@@ -20,11 +20,13 @@ import string                               #for job id
 import random                               #for job id
 import sys                                  #for sys.exit()
 import filecmp                              #check if Params files are equals
+import dash_bootstrap_components as dbc
 
 PAGE_SIZE = 10                     #number of entries in each page of the table in view report
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
 app.config['suppress_callback_exceptions'] = True       #necessary if update element in a callback generated in another callback
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
@@ -376,6 +378,36 @@ final_list.append(
 )
 
 result_page = html.Div(final_list, style = {'margin':'1%'})
+
+
+#Test bootstrap page
+final_list = []
+final_list.append(
+    html.Div(
+    [
+        dbc.Button("Toggle", id="alert-toggle-auto", className="mr-1"),
+        html.Hr(),
+        dbc.Alert(
+            "Hello! I am an auto-dismissing alert!",
+            id="alert-auto",
+            is_open=True,
+            duration=4000,
+        ),
+    ]
+)
+)
+
+@app.callback(
+    Output("alert-auto", "is_open"),
+    [Input("alert-toggle-auto", "n_clicks")],
+    [State("alert-auto", "is_open")],
+)
+def toggle_alert(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+test_page = html.Div(final_list, style = {'margin':'1%'})
 ##################################################CALLBACKS##################################################
 
 #Submit Job, change url
@@ -552,6 +584,8 @@ def changePage(path, href, search):
         return load_page, 'http://127.0.0.1:8050/load' + search #NOTE change the url part when DNS are changed
     if path == '/result':
         return result_page, 'http://127.0.0.1:8050/load' + search
+    if path == '/test-page':
+        return test_page, 'http://127.0.0.1:8050/load' + search
     return index_page, ''
 
 #Check end job

@@ -50,7 +50,7 @@ echo 'Index-generation\tDone\t'$(date) >> $1'/'log.txt
 echo 'Search\tStart\t'$(date) >> $1'/'log.txt
 if [ ${14} = 'True' ]; then
     #echo 'crispritz search'
-    crispritz.py search $used_genome_dir $6 $7 $jobid -mm $8 -t -scores $used_genome_dir
+    crispritz.py search $used_genome_dir $6 $7 $jobid -mm $8 -t -scores $3
     mv ./$jobid.*.txt $1
     mv ./$jobid.*.xls $1
 fi
@@ -64,7 +64,7 @@ echo "pam" $6
 echo "guide" $7
 if [ ${13} = 'True' ]; then
     #echo 'crispritz search-index'
-    crispritz.py search $5 $6 $7 $jobid -index -mm $8 -bDNA $9 -bRNA ${10} -t -scores $used_genome_dir
+    crispritz.py search $5 $6 $7 $jobid -index -mm $8 -bDNA $9 -bRNA ${10} -t -scores $3
     mv ./$jobid.*.txt $1
     mv ./$jobid.*.xls $1
 fi
@@ -91,6 +91,7 @@ if [ ${16} = 'True' ]; then
         echo $jobid
         echo $1
         crispritz.py generate-report $line -mm $i -profile $1'/'$jobid'.profile.xls' -extprofile $1/*.extended_profile.xls -exons $1'/'$jobid'.annotated.ExonsCount.txt' -introns $1'/'$jobid'.annotated.IntronsCount.txt' -dnase $1'/'$jobid'.annotated.DNAseCount.txt' -ctcf $1'/'$jobid'.annotated.CTCFCount.txt' -promoters $1'/'$jobid'.annotated.PromotersCount.txt' -gecko
+        #crispritz.py generate-report GAGTCCGAGCAGAAGAAGAANNN -mm 0 -profile emx1.profile.xls  -extprofile emx1.extended_profile.xls -exons emx1.hg19.annotated.ExonsCount.txt -introns emx1.hg19.annotated.IntronsCount.txt  -dnase emx1.hg19.annotated.DNAseCount.txt -ctcf emx1.hg19.annotated.CTCFCount.txt -promoters emx1.hg19.annotated.PromotersCount.txt -gecko
         done
 
     done < $7
