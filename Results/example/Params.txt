@@ -1,8 +1,0 @@
-Genome_ref	hg19_ref
-Genome_idx	None
-Variant	None
-Pam	NGG
-Max_bulges	0
-Mismatches	4
-DNA	0
-RNA	0

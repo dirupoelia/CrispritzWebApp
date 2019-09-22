@@ -67,6 +67,25 @@ for dir in onlydir:
 
 #For multipage
 app.layout = html.Div([
+    dbc.NavbarSimple(
+        children=[
+            dbc.NavItem(dbc.NavLink("Page 1", href="/")),
+            dbc.DropdownMenu(
+                children=[
+                    dbc.DropdownMenuItem("More pages", header=True),
+                    dbc.DropdownMenuItem("Page 2", href="#"),
+                    dbc.DropdownMenuItem("Page 3", href="#"),
+                ],
+                nav=True,
+                in_navbar=True,
+                label="More",
+            ),
+        ],
+        brand="NavbarSimple",
+        brand_href="#",
+        color="primary",
+        dark=True,
+    ),
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content'),
     html.P(id = 'signal', style = {'visibility':'hidden'})
@@ -148,7 +167,8 @@ final_list.append(
                             ],
                             id = 'div-pam',
                             className = 'flex-div-pam'
-                        )
+                        ),
+                        html.P('Send us a request to add a specific genome sequence or a variant, or download the offline version', style = {'margin-top':'10px'})
                     ],
                     id = 'step1',
                     style = {'flex':'0 0 40%'}
@@ -217,6 +237,9 @@ final_list.append(
                 html.Div(style = {'border-right':'solid 1px white'}),
                 html.Div(
                     [
+                        html.H3('Advanced Options'),
+                        dcc.Checklist(options = [{'label':'Gecko comparison', 'value':'GC', 'disabled':False},
+                        {'label':'Reference genome comparison', 'value':'RGC', 'disabled':False}]),
                         html.H3('Submit', style = {'margin-top':'0'}),
                         html.Div(
                             [
@@ -226,7 +249,8 @@ final_list.append(
                         )
                     ],
                     id = 'step3',
-                    style = {'tex-align':'center'}
+                    style = {'tex-align':'center'},
+                    className = 'flex-step3'
                 )
             ],
             id = 'div-steps',

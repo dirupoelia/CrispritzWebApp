@@ -239,3 +239,19 @@
   /* Then we define how is distributed the remaining space */
   justify-content: space-between;
 }
+
+.flex-step3{
+  /* We first create a flex layout context */
+  display: flex;
+  
+  /* Then we define the flow direction 
+     and if we allow the items to wrap 
+   * Remember this is the same as:
+   * flex-direction: row;
+   * flex-wrap: wrap;
+   */
+  flex-flow: row wrap;
+  flex-direction: column ;
+  /* Then we define how is distributed the remaining space */
+  justify-content: space-between;
+}
