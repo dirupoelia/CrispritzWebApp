@@ -55,6 +55,7 @@ for dir in onlydir:
 
 #Dropdown available PAM
 onlyfile = [f for f in listdir('pam') if isfile(join('pam', f))]
+onlyfile = [x.replace('.txt', '') for x in onlyfile]            #removed .txt for better visualization
 pam_file = []
 for pam_name in onlyfile:
     pam_file.append({'label': pam_name, 'value' : pam_name})
@@ -65,27 +66,58 @@ var_dir = []
 for dir in onlydir:
     var_dir.append({'label': dir, 'value' : dir})
 
-#For multipage
-app.layout = html.Div([
-    dbc.NavbarSimple(
-        children=[
-            dbc.NavItem(dbc.NavLink("Page 1", href="/")),
+
+search_bar = dbc.Row(
+    [
+        #dbc.Col(dbc.Input(type="search", placeholder="Search")),
+        dbc.Col(dbc.NavLink('Home', active = True, href = 'http://127.0.0.1:8050', style = {'text-decoration':'none', 'color':'white'})),
+        dbc.Col(dbc.NavLink('About', active = True, href = 'http://127.0.0.1:8050', style = {'text-decoration':'none', 'color':'white'})),
+        dbc.Col(
             dbc.DropdownMenu(
                 children=[
-                    dbc.DropdownMenuItem("More pages", header=True),
-                    dbc.DropdownMenuItem("Page 2", href="#"),
-                    dbc.DropdownMenuItem("Page 3", href="#"),
+                    dbc.DropdownMenuItem("Github", header=True),
+                    dbc.DropdownMenuItem("InfOmics/CRISPRitz", href='https://github.com/InfOmics/CRISPRitz'),
+                    dbc.DropdownMenuItem("Pinellolab/CRISPRitz", href='https://github.com/pinellolab/CRISPRitz'),
                 ],
-                nav=True,
+                #nav=True,
                 in_navbar=True,
-                label="More",
+                label="Downloads",
+                style = {'width': '300px !important', 'font-size':'1.5rem !important' } #'height': '400px !important' #TODO sistemare grandezza link
             ),
-        ],
-        brand="NavbarSimple",
-        brand_href="#",
-        color="primary",
-        dark=True,
-    ),
+        ),
+        dbc.Col(dbc.NavLink('Contacts', active = True, href = 'http://127.0.0.1:8050', style = {'text-decoration':'none', 'color':'white'}))
+    ],
+    no_gutters=True,
+    className="ml-auto flex-nowrap mt-3 mt-md-0",
+    align="center",
+)
+PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
+
+
+navbar = dbc.Navbar(
+    [
+        html.A(
+            # Use row and col to control vertical alignment of logo / brand
+            dbc.Row(
+                [
+                    dbc.Col(html.Img(src=PLOTLY_LOGO, height="30px")),
+                    dbc.Col(dbc.NavbarBrand("CRISPRitz Web App", className="ml-2"))
+                ],
+                align="center",
+                no_gutters=True,
+            ),
+            href='http://127.0.0.1:8050',
+        ),
+        dbc.NavbarToggler(id="navbar-toggler"),
+        dbc.Collapse(search_bar, id="navbar-collapse", navbar=True),
+    ],
+    color="dark",
+    dark=True,
+)
+
+#For multipage
+app.layout = html.Div([
+    navbar,
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content'),
     html.P(id = 'signal', style = {'visibility':'hidden'})
@@ -139,12 +171,11 @@ final_list.append(
                         html.H3('STEP 1', style = {'margin-top':'0'}), 
                         html.P('Select a genome'),
                         html.Div(
-                            dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genome", style = {'width':'75%'}),
-                            #style = {'width':'50%'}
+                            dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genome", style = {'width':'75%'})
                         ),
                         html.P('Add a genome variant'),
                         html.Div(
-                            dcc.Dropdown(options = var_dir, clearable = False, id = 'available-variant', style = {'width':'75%'})
+                            dcc.Dropdown(options = var_dir,clearable = False, id = 'available-variant', style = {'width':'75%'})
                         ),
                         html.Div(
                             [
@@ -238,14 +269,33 @@ final_list.append(
                 html.Div(
                     [
                         html.H3('Advanced Options'),
-                        dcc.Checklist(options = [{'label':'Gecko comparison', 'value':'GC', 'disabled':False},
-                        {'label':'Reference genome comparison', 'value':'RGC', 'disabled':False}]),
-                        html.H3('Submit', style = {'margin-top':'0'}),
+                        dcc.Checklist(
+                            options = [{'label':'Gecko comparison', 'value':'GC', 'disabled':False},
+                            {'label':'Reference genome comparison', 'value':'RGC', 'disabled':False},
+                            {'label':'Notify me by email','value':'email', 'disabled':False}], 
+                            id = 'checklist-advanced'
+                        ),
+                        dbc.Fade(
+                            [
+                                dbc.FormGroup(
+                                    [
+                                        dbc.Label("Email", html_for="example-email"),
+                                        dbc.Input(type="email", id="example-email", placeholder="Enter email"),
+                                        dbc.FormText(
+                                            "Are you on email? You simply have to be these days",
+                                            color="secondary",
+                                        ),
+                                    ]
+                                )
+                            ],
+                            id = 'fade', is_in= False, appear= False
+                        ),
+                        #html.H3('Submit', style = {'margin-top':'0'}),
                         html.Div(
                             [
                                 html.Button('Submit', id = 'submit-job')
                             ],
-                            style = {'display':'inline-block', 'margin':'0 auto'}
+                            style = {'display':'inline-block', 'margin':'0 auto'}   #style="height:55px; width:150px"
                         )
                     ],
                     id = 'step3',
@@ -434,11 +484,37 @@ def toggle_alert(n, is_open):
 test_page = html.Div(final_list, style = {'margin':'1%'})
 ##################################################CALLBACKS##################################################
 
+#Fade in/out email
+@app.callback(
+    Output("fade", "is_in"),
+    [Input("checklist-advanced", "value")],
+    [State("fade", "is_in")],
+)
+def toggle_fade(selected_options, is_in):
+    if  selected_options is None:
+        return False
+    if 'email' in selected_options:
+        return True
+    return False
+
+#Check input validity
+@app.callback(
+    [Output('check-input', 'children'),
+    Output('available-genome', 'style')],
+    [Input('submit-job', 'n_clicks')],
+    [State('avaible-genome', 'value')]
+)
+def checkInput(n_clicks, genome):           #TODO app continua a chiamare changeUrl callback se metto come trigger check-input
+    if n_clicks is None:
+        raise PreventUpdate
+
+    return 'no', {'border':'3px solid red'}
+
 #Submit Job, change url
 @app.callback(
     [Output('url', 'pathname'),
     Output('url','search')],
-    [Input('submit-job', 'n_clicks')],
+    [Input('submit-job','n_clicks')],
     [State('url', 'href'),
     State('available-genome', 'value'),
     State('available-variant', 'value'),
@@ -456,7 +532,8 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
     
     #TODO check se input è corretto
    
-    
+    if pam is None or pam is '':
+        return '/', ''
     job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
     result_dir = 'Results/' + job_id
     subprocess.run(['mkdir ' + result_dir], shell = True)
@@ -821,8 +898,11 @@ if __name__ == '__main__':
     #TODO se faccio l'annotazione (stessi parametri) dei targets ottenuti da enr e ref genomes, poi posso usare i loro summary counts per fare il barplot, che dipende solo dai mm e non dalle guide
     #BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti
     #Iupac
-    #BUG emx1.txt error on loading extended_profile
 
 
-    #TODO bootstrap per fare il menu, aggiungere selezione per gecko e il barplot, inserire email quando finito, magari un menu avanzate per opzioni avanzate, divisione tra genomi e genomi enr (al posto
+    #TODO bootstrap per fare il menu, inserire email quando finito, magari un menu avanzate per opzioni avanzate, divisione tra genomi e genomi enr (al posto
     # della select varfile), cambiare il nome delle pam togliendo txt e mettendo nome giusto
+
+    #TODO idea: togliere pam custom e fare solo elenco di tutte le possibili pam (con 5'-NGG-3'), togliere varianti e mettere un solo elenco con genomi ref e enr,
+    # togliere caricamento del file per evitare confusione, descrivere meglio le restrizioni delle guide in input, mms max 10, bulges max 5 (a tendina), title per spiegare
+    # gecko e altre opzioni avanzate
