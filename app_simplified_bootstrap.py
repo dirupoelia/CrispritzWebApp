@@ -21,6 +21,7 @@ import random                               #for job id
 import sys                                  #for sys.exit()
 import filecmp                              #check if Params files are equals
 import dash_bootstrap_components as dbc
+import collections                          #For check if guides are the same in two results
 
 PAGE_SIZE = 10                     #number of entries in each page of the table in view report
 
@@ -49,6 +50,7 @@ operators = [['ge ', '>='],
 
 #Dropdown available genomes
 onlydir = [f for f in listdir('Genomes') if isdir(join('Genomes', f))]
+onlydir = [x.replace('_', ' ') for x in onlydir]
 gen_dir = []
 for dir in onlydir:
     gen_dir.append({'label': dir, 'value' : dir})
@@ -192,7 +194,7 @@ final_list.append(
                                 html.Div(
                                     [
                                         html.P('Insert custom PAM'),
-                                        dcc.Input(type = 'text', id = 'custom-pam', placeholder = 'NGG')
+                                        dcc.Input(type = 'text', id = 'custom-pam', placeholder = 'NGG', disabled = True)
                                     ]
                                 )
                             ],
@@ -497,18 +499,6 @@ def toggle_fade(selected_options, is_in):
         return True
     return False
 
-#Check input validity
-@app.callback(
-    [Output('check-input', 'children'),
-    Output('available-genome', 'style')],
-    [Input('submit-job', 'n_clicks')],
-    [State('avaible-genome', 'value')]
-)
-def checkInput(n_clicks, genome):           #TODO app continua a chiamare changeUrl callback se metto come trigger check-input
-    if n_clicks is None:
-        raise PreventUpdate
-
-    return 'no', {'border':'3px solid red'}
 
 #Submit Job, change url
 @app.callback(
@@ -517,64 +507,71 @@ def checkInput(n_clicks, genome):           #TODO app continua a chiamare change
     [Input('submit-job','n_clicks')],
     [State('url', 'href'),
     State('available-genome', 'value'),
-    State('available-variant', 'value'),
     State('available-pam','value'),
-    State('custom-pam','value'),
     State('text-guides', 'value'),
     State('upload-guides','contents'),
     State('mms','value'),
     State('dna','value'),
-    State('rna','value')]
+    State('rna','value'),
+    State('checklist-advanced','value'),
+    State('example-email','value')]
 )
-def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_guides, mms, dna, rna):      #NOTE startJob
+def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna, rna, adv_opts, dest_email):      #NOTE startJob
+    '''
+    genome_selected can be Human genome (hg19), or Human Genome (hg19) - 1000 Genome Project, the '-' character defines the ref or enr version.
+    Note that pam parameter can be 5'-NGG-3', but the corresponding filename is 5'-NGG-3'.txt
+    Pam file (5'-NGG-3'.txt) is structured as NGG 3, or TTTN -4. The created pam.txt inside the result directory add the corresponding N's
+    '''
     if n is None:
         raise PreventUpdate
     
-    #TODO check se input è corretto
-   
+    #Check input, else give simple input
+    if genome_selected is None or genome_selected is '':
+        genome_selected = 'hg19_ref'
     if pam is None or pam is '':
-        return '/', ''
+        pam = '5\'-NGG-3\''
+    if text_guides is None or text_guides is '':
+        text_guides = 'GAGTCCGAGCAGAAGAAGAA'
+    else:
+        text_guides = text_guides.strip()
+        if ( not all(len(elem) == len(text_guides.split('\n')[0]) for elem in text_guides.split('\n'))):
+            text_guides = selectSameLenGuides(text_guides)
+
     job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
     result_dir = 'Results/' + job_id
     subprocess.run(['mkdir ' + result_dir], shell = True)
     
-    enrich = True
-    index = True
     search_index = True
     search = True
     annotation = True
     report =  True
-
-    #Check which tool to use
-    #TODO controllare se add-variants mi crea una cartella all'interno di SNP genomes, nel caso fare in modo che lo faccia
-
-    #Enrichment
-    if variant is None:
-        variant = 'None'
-        enrich = False
-        genome_enr = genome_ref
-    else:
-        all_genome_enr = [f for f in listdir('variants_genome/SNPs_genome') if isdir(join('variants_genome/SNPs_genome', f))]
-        if variant is 'None':
-            genome_enr = genome_ref
-        else:
-            genome_enr = genome_ref + '_' + variant
-        if (genome_ref + '_' + variant in all_genome_enr):          #NOTE Enriched genomes dir names are genome_ref name + symbol + variant_dir name
-            enrich = False
-        
-    #subprocess.run(['crispritz.py add-variants ' + 'Variants/' + variant + ' ' + 'Genomes/' + genome_ref], shell = True)
-    #Indexing and search
-    #NOTE Indexed genomes names are PAM + _ + bMax + _ + genome_ref/genome_enr
-    all_genomes_idx = [f for f in listdir('genome_library') if isdir(join('genome_library', f))]
+    gecko_comp = False
+    ref_comparison = False
+    send_email = False
+    if adv_opts is None:
+        adv_opts = []
+    if 'GC' in adv_opts:
+        gecko_comp = True
+    if 'RGC' in adv_opts:
+        ref_comparison = True
+    if 'email' in adv_opts:
+        send_email = True
     
-    #TODO if pam input area, find way to select left or right of guide
+    #Set parameters
+    genome_selected = genome_selected.replace(' ', '_')
+    genome_ref = genome_selected.split('+')[0]              #+ char to separate ref and vcf, eg Human_genome+1000_genome_project
+
+    #NOTE Indexed genomes names are PAM + _ + bMax + _ + genome_selected/genome_enr
+    
     pam_len = 0
-    if custom_pam is not None and custom_pam is not '':
+    custom_pam = None
+    if custom_pam is not None and custom_pam is not '':             #NOTE disabled, not updated to new PAM style (5'-NGG-3'), only else is working
         pam_char = custom_pam
         pam_len = len(pam_char)
         #Save to file as NNNN...PAM, but first check what guides have been inserted
         if text_guides is not None and text_guides is not '':
             n_number = len(text_guides.split('\n')[0])
+            raise PreventUpdate
         else:
             decoded_guides = parse_contents(file_guides).decode('utf-8')
             n_number = len(decoded_guides.split('\n')[0]) - decoded_guides.split('\n')[0].count('N')
@@ -582,92 +579,109 @@ def changeUrl(n, href, genome_ref, variant, pam, custom_pam, text_guides, file_g
             pam_file.write(('N' * n_number) + pam_char)
             pam = result_dir + '/pam.txt'
     else:
-        with open('pam/' + pam) as pam_file:
+        with open('pam/' + pam + '.txt') as pam_file:
             pam_char = pam_file.readline()
-            
+            index_pam_value = pam_char.split(' ')[-1]
             if int(pam_char.split(' ')[-1]) < 0:
                 end_idx = int(pam_char.split(' ')[-1]) * (-1)
                 pam_char = pam_char.split(' ')[0][0 : end_idx]
                 pam_len = end_idx
+                pam_begin = True
             else:
                 end_idx = int(pam_char.split(' ')[-1])
                 pam_char = pam_char.split(' ')[0][end_idx * (-1):]
                 pam_len = end_idx
-        subprocess.run(['cp pam/' + pam + ' ' + result_dir + '/pam.txt'], shell = True)
-        pam = result_dir + '/pam.txt'
+                pam_begin = False
 
+        len_guides = len(text_guides.split('\n')[0])
+        if (pam_begin):
+            pam_to_file = pam_char + ('N' * len_guides) + ' ' + index_pam_value
+        else:
+            pam_to_file = ('N' * len_guides) + pam_char + ' ' + index_pam_value
+
+        save_pam_file = open(result_dir + '/pam.txt', 'w')
+        save_pam_file.write(pam_to_file)
+        save_pam_file.close()
+        pam = result_dir + '/pam.txt'
+        
     guides_file = result_dir + '/guides.txt'
     if text_guides is not None and text_guides is not '':
         save_guides_file = open(result_dir + '/guides.txt', 'w')
-        text_guides = text_guides.replace('\n', 'N' * pam_len + '\n') + 'N' * pam_len    #TODO what if pam at beginning?
+        if (pam_begin):
+            text_guides = 'N' * pam_len + text_guides.replace('\n', '\n' + 'N' * pam_len)
+        else:
+            text_guides = text_guides.replace('\n', 'N' * pam_len + '\n') + 'N' * pam_len
         save_guides_file.write(text_guides)
         save_guides_file.close()     
-    else:
+    else:                                                                   #NOTE remove functionality to upload txt file with guides?
         decoded_guides = parse_contents(file_guides).decode('utf-8')
         save_guides_file = open(result_dir + '/guides.txt', 'w')
         save_guides_file.write(decoded_guides)
         save_guides_file.close()
 
     if (int(dna) == 0 and int(rna) == 0):
-        index = False
         search_index = False
     max_bulges = rna
     if (int(dna) > int(rna)):
         max_bulges = dna
-    if (index and (pam_char + '_' + str(max_bulges) + '_' + genome_ref + '_' + variant) in all_genomes_idx):
-        index = False
 
     if (search_index):
         search = False
-    # else:
-    #     search_index = False
 
-    if variant is 'None':
-        genome_idx = pam_char + '_' + str(max_bulges) + '_' + genome_ref
+    if int(max_bulges) <= 2:
+        genome_idx = pam_char + '_' + '2' + '_' + genome_selected
     else:
-        genome_idx = pam_char + '_' + str(max_bulges) + '_' + genome_ref + '_' + variant
-
+        genome_idx = pam_char + '_' + '5' + '_' + genome_selected
+    
     #Create Params.txt file
     with open(result_dir + '/Params.txt', 'w') as p:
-        p.write('Genome_ref\t' + genome_enr + '\n')
+        p.write('Genome_selected\t' + genome_selected + '\n')         #era genome_enr
+        p.write('Genome_ref\t' + genome_ref + '\n')
         if search_index:
             p.write('Genome_idx\t' + genome_idx + '\n')
         else:
             p.write('Genome_idx\t' + 'None\n')
-        p.write('Variant\t' + str(variant) + '\n')
         p.write('Pam\t' + pam_char + '\n')
         p.write('Max_bulges\t' + str(max_bulges) + '\n')
         p.write('Mismatches\t' + str(mms) + '\n')
         p.write('DNA\t' + str(dna) + '\n')
         p.write('RNA\t' + str(rna) + '\n')
+        p.write('Gecko\t' + str(gecko_comp) + '\n')
+        p.write('Ref_comp\t' + str(ref_comparison) + '\n')
         p.close()
 
-
-    
     #Check if input parameters (mms, bulges, pam, guides, genome) are the same as a previous search
     all_result_dirs = [f for f in listdir('Results') if isdir(join('Results', f))]
     all_result_dirs.remove(job_id)
+    all_result_dirs.remove('test')
     for check_param_dir in all_result_dirs:
         if os.path.exists('Results/' + check_param_dir + '/Params.txt'):
-            print('checkparamdir:', check_param_dir)
             if (filecmp.cmp('Results/' + check_param_dir + '/Params.txt', result_dir + '/Params.txt' )):
-                search = False
-                search_index = False
-                subprocess.run(['ln -s $PWD/Results/' + check_param_dir + '/' + check_param_dir + '* ' + result_dir + '/'], shell = True) #TODO copy result from one directory to the current one or create simlink
-                subprocess.run(['ln -s $PWD/Results/' + check_param_dir + '/*.png ' + result_dir + '/'], shell = True)
-                subprocess.run(['rename \'s/' + check_param_dir + '/' + job_id + '/g\' ' + result_dir + '/*'], shell = True)
-                break           #BUG manca il controllo sulle guide
+                    guides1 = open('Results/' + check_param_dir + '/guides.txt').read().split('\n')
+                    guides2 = open('Results/' + job_id + '/guides.txt').read().split('\n')
+                    if (collections.Counter(guides1) == collections.Counter(guides2)):
+                        search = False
+                        search_index = False
+                        subprocess.run(['ln -s $PWD/Results/' + check_param_dir + '/' + check_param_dir + '* ' + result_dir + '/'], shell = True) #TODO copy result from one directory to the current one or create simlink
+                        subprocess.run(['ln -s $PWD/Results/' + check_param_dir + '/*.png ' + result_dir + '/'], shell = True)
+                        subprocess.run(['rename \'s/' + check_param_dir + '/' + job_id + '/g\' ' + result_dir + '/*'], shell = True)
+                        break           #BUG manca il controllo sulle guide
+    
     #Annotation
     if (not search and not search_index):
         annotation = False      #TODO copy result from one directory to the current one or create simlink
  
     #Generate report
-    if (not enrich and not index and not search and not search_index):
+    if (not search and not search_index):
         report = False          #TODO copy result from one directory to the current one or create simlink
+    
     #TODO if human genome -> annotation = human genome. mouse -> annotation mouse etc
-    subprocess.Popen(['assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + str(variant) + ' ' + 'Genomes/' + genome_ref + ' ' + 'variants_genome/SNPs_genome/' + genome_enr + ' ' + 'genome_library/' + genome_idx + (
-        ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(enrich) + ' ' + str(index) + ' ' + str(search_index) + ' ' + str(search) + (
-            ' ' + str(annotation) + ' ' + str(report))) ], shell = True)
+    
+    subprocess.Popen(['assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
+        ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
+            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison)
+        )
+    )], shell = True)
     return '/load','?job=' + job_id
 
 #When url changed, load new page
@@ -890,6 +904,19 @@ def showUploadedFilename(name):
     if name is None:
         raise PreventUpdate
     return 'Uploaded file: ' + name, {'visibility':'visible'}
+
+#If the input guides are different len, select the ones with same length as the first
+def selectSameLenGuides(list_guides):
+    selected_length = len(list_guides.split('\n')[0])
+    same_len_guides_list = []
+    for guide in list_guides.split('\n'):
+        if len(guide) == selected_length:
+            same_len_guides_list.append(guide)
+    same_len_guides = '\n'.join(same_len_guides_list).strip()
+    return same_len_guides
+
+
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
