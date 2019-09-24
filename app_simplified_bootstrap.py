@@ -68,7 +68,9 @@ var_dir = []
 for dir in onlydir:
     var_dir.append({'label': dir, 'value' : dir})
 
-
+#Available mismatches and bulges
+av_mismatches = [{'label': i, 'value': i} for i in range(0, 11)]
+av_bulges = [{'label': i, 'value': i} for i in range(0, 6)]
 search_bar = dbc.Row(
     [
         #dbc.Col(dbc.Input(type="search", placeholder="Search")),
@@ -84,7 +86,7 @@ search_bar = dbc.Row(
                 #nav=True,
                 in_navbar=True,
                 label="Downloads",
-                style = {'width': '300px !important', 'font-size':'1.5rem !important' } #'height': '400px !important' #TODO sistemare grandezza link
+                style = {'width': '300px !important' } #'height': '400px !important' #TODO sistemare grandezza link
             ),
         ),
         dbc.Col(dbc.NavLink('Contacts', active = True, href = 'http://127.0.0.1:8050', style = {'text-decoration':'none', 'color':'white'}))
@@ -251,11 +253,11 @@ final_list.append(
                                 html.Div(
                                     [
                                         html.P('Allowed mismatches'),
-                                        dcc.Input(value = '0', id = 'mms', type = 'number', min = '0', style = {'width':'60px'}),
+                                        dcc.Dropdown(options = av_mismatches, clearable = False, value = '0', id = 'mms', style = {'width':'60px'}),
                                         html.P('Bulge DNA size'),
-                                        dcc.Input(value = '0', id = 'dna', type = 'number', min = '0', style = {'width':'60px'}),
+                                        dcc.Dropdown(options = av_bulges, clearable = False, value = '0', id = 'dna', style = {'width':'60px'}),
                                         html.P('Bulge RNA size'),
-                                        dcc.Input(value = '0', id = 'rna', type = 'number', min = '0', style = {'width':'60px'})
+                                        dcc.Dropdown(options = av_bulges, clearable = False, value = '0', id = 'rna', style = {'width':'60px'})
                                     ]
                                 )
                             ],
@@ -346,8 +348,8 @@ final_list.append(
                     html.Div(
                         html.Ul(
                             [
-                                html.Li('Adding variants'),
                                 html.Li('Searching crRNA'),
+                                html.Li('Annotating result'),
                                 html.Li('Generating report')
                             ]
                         ),
@@ -356,8 +358,8 @@ final_list.append(
                     html.Div(
                         html.Ul(
                             [
-                                html.Li('To do', style = {'color':'red'}, id = 'add-variants-status'),
                                 html.Li('To do', style = {'color':'red'}, id = 'search-status'),
+                                html.Li('To do', style = {'color':'red'}, id = 'annotate-result-status'),
                                 html.Li('To do', style = {'color':'red'}, id = 'generate-report-status')
                             ],
                             style = {'list-style-type':'none'}
@@ -662,8 +664,8 @@ def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna,
                     if (collections.Counter(guides1) == collections.Counter(guides2)):
                         search = False
                         search_index = False
-                        subprocess.run(['ln -s $PWD/Results/' + check_param_dir + '/' + check_param_dir + '* ' + result_dir + '/'], shell = True) #TODO copy result from one directory to the current one or create simlink
-                        subprocess.run(['ln -s $PWD/Results/' + check_param_dir + '/*.png ' + result_dir + '/'], shell = True)
+                        subprocess.run(['cp $PWD/Results/' + check_param_dir + '/' + check_param_dir + '* ' + result_dir + '/'], shell = True)
+                        subprocess.run(['cp $PWD/Results/' + check_param_dir + '/*.png ' + result_dir + '/'], shell = True)
                         subprocess.run(['rename \'s/' + check_param_dir + '/' + job_id + '/g\' ' + result_dir + '/*'], shell = True)
                         break           #BUG manca il controllo sulle guide
     
@@ -706,7 +708,7 @@ def changePage(path, href, search):
 #Check end job
 @app.callback(
     [Output('view-results', 'style'),
-    Output('add-variants-status', 'children'),
+    Output('annotate-result-status', 'children'),
     Output('search-status', 'children'),
     Output('generate-report-status', 'children'),
     Output('view-results','href')],
@@ -724,12 +726,12 @@ def refreshSearch(n, dir_name):
         if 'log.txt' in onlyfile:
             with open(current_job_dir + 'log.txt') as log:
                 all_done = 0
-                add_var_status = html.P('To do', style = {'color':'red'})
+                annotate_res_status = html.P('To do', style = {'color':'red'})
                 search_status = html.P('To do', style = {'color':'red'})
                 report_status = html.P('To do', style = {'color':'red'})
                 current_log = log.read()
-                if ('Add-variants\tDone' in current_log):
-                    add_var_status = html.P('Done', style = {'color':'green'})
+                if ('Annotation\tDone' in current_log):
+                    annotate_res_status = html.P('Done', style = {'color':'green'})
                     all_done = all_done + 1
                 if ('Search-index\tDone' in current_log or 'Search\tDone' in current_log):
                     search_status = html.P('Done', style = {'color':'green'})
@@ -738,9 +740,9 @@ def refreshSearch(n, dir_name):
                     report_status = html.P('Done', style = {'color':'green'})
                     all_done = all_done + 1
                 if all_done == 3:
-                    return {'visibility':'visible'}, add_var_status, search_status, report_status, '/result?job=' + dir_name.split('=')[-1]
+                    return {'visibility':'visible'}, annotate_res_status, search_status, report_status, '/result?job=' + dir_name.split('=')[-1]
                 else:
-                    return {'visibility':'hidden'}, add_var_status, search_status, report_status,''
+                    return {'visibility':'hidden'}, annotate_res_status, search_status, report_status,''
     raise PreventUpdate
 
 #Perform expensive loading of a dataframe and save result into 'global store'
@@ -890,8 +892,12 @@ def testcel(sel_cel, mms, all_guides, job_id):
         barplot_href = ''
     guide = all_guides[int(sel_cel[0]['row'])]['Guides'] 
     radar_img = 'summary_single_guide_' + guide + '_' + str(mms) + 'mm.png'
-    radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
-    radar_href = 'assets/Img/' + job_id + '/' + radar_img
+    try:
+        radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
+        radar_href = 'assets/Img/' + job_id + '/' + radar_img
+    except:
+        radar_src = ''
+        radar_href = ''
     return barplot_src, barplot_href, radar_src, radar_href
 
 #Show filename if user upload a file

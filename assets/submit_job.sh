@@ -88,7 +88,7 @@ mv ./*.pdf $1
 mv ./*.png $1   #TODO move these command inside if, and check for when to do annotation ref and enr for barplot
 
 mkdir assets/Img/$jobid
-ln -s $PWD/$1/*.png assets/Img/$jobid/
+cp $PWD/$1/*.png assets/Img/$jobid/
 echo 'Report\tDone\t'$(date) >> $1'/'log.txt
 
 echo 'Job\tDone\t'$(date)>> $1'/'log.txt
