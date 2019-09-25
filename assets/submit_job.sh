@@ -2,7 +2,7 @@
 #$1 is directory of result for submitted job id (Results/job_id)
 #$2 is genome_selected directory Eg Genomes/hg19_ref or Genomes/hg19_ref+1000genomeproject #NOTE + or - to decide
 #$3 is genome_ref directory     Eg Genomes/hg19_ref
-#$4 is genome_idx directory     Eg genome_library/NGG_2_hg19_ref+hg19_1000genomeproject
+#$4 is genome_idx directory     Eg genome_library/NGG_2_hg19_ref+hg19_1000genomeproject or genome_library/NGG_2_hg19_ref
 #$5 is pam file             Eg Results/72C1MNXDWF/pam.txt
 #$6 is guides file          Eg Results/LNHM6F3REO/guides.txt (both upload file and custom inserted)
 #$7 is mms
@@ -14,6 +14,8 @@
 #$13 is generate report
 #$14 is gecko comparison
 #$15 is genome_ref comparison
+#$16 is genme_idx_ref (for genome_ref comparison if search was done with indices)   Eg genome_library/NGG_2_hg19_ref
+#Note that if genome_selected is not enriched, the python exe will force $15 as false
 
 jobid=$(basename $1)
 echo 'Job\tStart\t'$(date)> $1'/'log.txt
@@ -29,7 +31,7 @@ if [ ${10} = 'True' ]; then
 
     if [ ${15} = 'True' ]; then
         mkdir $1'/ref'
-        crispritz.py search $4 $5 $6 $jobid'_ref' -index -mm $7 -bDNA $8 -bRNA ${9} -t
+        crispritz.py search ${16} $5 $6 $jobid'_ref' -index -mm $7 -bDNA $8 -bRNA ${9} -t      #TODO sistemare il genoma che non è quello in input ma il ref indicizzato
         mv ./$jobid'_ref'.*.txt $1/ref
         mv ./$jobid'_ref'.*.xls $1/ref
     fi
@@ -60,7 +62,7 @@ if [ ${12} = 'True' ]; then
     crispritz.py annotate-results $6 $1'/'$jobid'.targets.txt' annotations_path.txt $jobid'.annotated'
     mv ./$jobid.annotated.*.txt $1
     if [ ${15} = 'True' ]; then
-        crispritz.py annotate-results $6 $1'/'$jobid'_ref.targets.txt' annotations_path.txt $jobid'_ref.annotated'
+        crispritz.py annotate-results $6 $1'/ref/'$jobid'_ref.targets.txt' annotations_path.txt $jobid'_ref.annotated'
         mv ./$jobid'_ref'.annotated.*.txt $1/ref
     fi
 fi
@@ -74,11 +76,21 @@ if [ ${13} = 'True' ]; then
     while IFS= read -r line || [ -n "$line" ]; do    
         for i in $(seq 0 $7); do 
             
-            if [ ${14} = 'True' ]; then
-                crispritz.py generate-report $line -mm $i -profile $1'/'$jobid'.profile.xls' -extprofile $1/*.extended_profile.xls -exons $1'/'$jobid'.annotated.ExonsCount.txt' -introns $1'/'$jobid'.annotated.IntronsCount.txt' -dnase $1'/'$jobid'.annotated.DNAseCount.txt' -ctcf $1'/'$jobid'.annotated.CTCFCount.txt' -promoters $1'/'$jobid'.annotated.PromotersCount.txt' -gecko
-            else 
-                crispritz.py generate-report $line -mm $i -profile $1'/'$jobid'.profile.xls' -extprofile $1/*.extended_profile.xls -exons $1'/'$jobid'.annotated.ExonsCount.txt' -introns $1'/'$jobid'.annotated.IntronsCount.txt' -dnase $1'/'$jobid'.annotated.DNAseCount.txt' -ctcf $1'/'$jobid'.annotated.CTCFCount.txt' -promoters $1'/'$jobid'.annotated.PromotersCount.txt'
+            if [ ${14} = 'True' ]; then         #If -gecko
+                if [ ${15} = 'True' ]; then     #If genome_ref comparison
+                    crispritz.py generate-report $line -mm $i -profile $1'/'$jobid'.profile.xls' -extprofile $1/*.extended_profile.xls -exons $1'/'$jobid'.annotated.ExonsCount.txt' -introns $1'/'$jobid'.annotated.IntronsCount.txt' -dnase $1'/'$jobid'.annotated.DNAseCount.txt' -ctcf $1'/'$jobid'.annotated.CTCFCount.txt' -promoters $1'/'$jobid'.annotated.PromotersCount.txt' -sumref $1/ref/$jobid'_ref'.annotated.SummaryCount.txt -sumenr $1'/'$jobid'.annotated.SummaryCount.txt' -gecko
+                else
+                    crispritz.py generate-report $line -mm $i -profile $1'/'$jobid'.profile.xls' -extprofile $1/*.extended_profile.xls -exons $1'/'$jobid'.annotated.ExonsCount.txt' -introns $1'/'$jobid'.annotated.IntronsCount.txt' -dnase $1'/'$jobid'.annotated.DNAseCount.txt' -ctcf $1'/'$jobid'.annotated.CTCFCount.txt' -promoters $1'/'$jobid'.annotated.PromotersCount.txt' -gecko
+                fi
+            else
+                if [ ${15} = 'True' ]; then     #If genome_ref comparison 
+                    crispritz.py generate-report $line -mm $i -profile $1'/'$jobid'.profile.xls' -extprofile $1/*.extended_profile.xls -exons $1'/'$jobid'.annotated.ExonsCount.txt' -introns $1'/'$jobid'.annotated.IntronsCount.txt' -dnase $1'/'$jobid'.annotated.DNAseCount.txt' -ctcf $1'/'$jobid'.annotated.CTCFCount.txt' -promoters $1'/'$jobid'.annotated.PromotersCount.txt' -sumref $1/ref/$jobid'_ref'.annotated.SummaryCount.txt -sumenr $1'/'$jobid'.annotated.SummaryCount.txt'
+                else
+                    crispritz.py generate-report $line -mm $i -profile $1'/'$jobid'.profile.xls' -extprofile $1/*.extended_profile.xls -exons $1'/'$jobid'.annotated.ExonsCount.txt' -introns $1'/'$jobid'.annotated.IntronsCount.txt' -dnase $1'/'$jobid'.annotated.DNAseCount.txt' -ctcf $1'/'$jobid'.annotated.CTCFCount.txt' -promoters $1'/'$jobid'.annotated.PromotersCount.txt'
+                fi
             fi
+
+            
         done
 
     done < $6
@@ -93,3 +105,4 @@ echo 'Report\tDone\t'$(date) >> $1'/'log.txt
 
 echo 'Job\tDone\t'$(date)>> $1'/'log.txt
 
+python3 send_mail.py $1

@@ -1,0 +1,31 @@
+TODO 24/09:
+-Check input corretto																									X
+	-se qualche input manca, metto un generico human genome ref, 0 0 0, 2 guide (quelle nel placeholder), NGG pam		X
+	-se le guide sono errate (lunghezze diverse, + di mille), tengo valida la prima e scarto quelle non conformi		X
+-Controllare se add-variants mi crea una cartella all'interno di SNP genomes, nel caso fare in modo che lo faccia		X
+-PAM sinistra/destra																									X
+	-in base alla pam scelta sul server, sistemo la cosa																X
+-Da symlink a cp																										X
+-Collegare annotazioni con i genomi esatti
+-Sulla pagina load, fare il controllo subito così l'utente non aspetta i 3 secondi
+-Implementare opzione aggiuntiva -gecko																					X
+-Implementare opzione aggiuntiva barplot																				X <- check bug generate report
+-Aggiungere pam corrette
+	-5'-NGG-3'
+	-Poi sistemare nella chiamata che deve essere uguale al file														X
+-Sistemare menu
+-Sistemare email
+-Sistemare genomi, avere solo un elenco
+-Non far partire l'indice e l'arricchimento, saranno già presenti sul server											X
+-Aggiungere controllo guide per vedere se i res sono già stati fatti													X
+-Bug nel generate report, se provo a fare barplot di un mms che ha 0 risultati mi da errore
+(Traceback (most recent call last):
+  File "/home/edirupo/.conda/envs/webapp/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 134, in <module>
+    arraySummaryCountTwo[:, uppermm])/10), math.ceil(max(arraySummaryCountTwo[:, uppermm])/5))
+ValueError: arange: cannot compute length
+)
+	-se y_range = 0 0 0, significa che non ci sono target con quei mms in ref e in enr, quindi creo plot con scritto no
+	no result. Posso usare max tra y_range e 10 per evitare errore
+	-testarlo se almeno enr o ref ha 1+ risultati, si, se entrambi sono 0 mi da errore									X
+-Controllo se i risultati sono 0, inviare messaggio di errore/risultati 0												X
+	-migliorare grafica dei risultati a 0 e risultati che non esistono più

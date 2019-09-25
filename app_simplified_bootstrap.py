@@ -177,10 +177,10 @@ final_list.append(
                         html.Div(
                             dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genome", style = {'width':'75%'})
                         ),
-                        html.P('Add a genome variant'),
-                        html.Div(
-                            dcc.Dropdown(options = var_dir,clearable = False, id = 'available-variant', style = {'width':'75%'})
-                        ),
+                        # html.P('Add a genome variant', style = {'visibility':'hidden'}),
+                        # html.Div(
+                        #     dcc.Dropdown(options = var_dir,clearable = False, id = 'available-variant', style = {'width':'75%', 'visibility':'hidden'})
+                        # ),
                         html.Div(
                             [
                                 html.Div(
@@ -193,12 +193,12 @@ final_list.append(
                                     style = {'flex':'0 0 50%'}
                                 ),
                                 #html.P('or'),
-                                html.Div(
-                                    [
-                                        html.P('Insert custom PAM'),
-                                        dcc.Input(type = 'text', id = 'custom-pam', placeholder = 'NGG', disabled = True)
-                                    ]
-                                )
+                                # html.Div(
+                                #     [
+                                #         html.P('Insert custom PAM'),
+                                #         dcc.Input(type = 'text', id = 'custom-pam', placeholder = 'NGG', disabled = True)
+                                #     ]
+                                # )
                             ],
                             id = 'div-pam',
                             className = 'flex-div-pam'
@@ -384,7 +384,7 @@ load_page = html.Div(final_list, style = {'margin':'1%'})
 #Result page
 final_list = []
 final_list.append(html.H1('CRISPRitz Web Application'))
-
+final_list.append(html.Div(id='warning-div'))
 col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'CFD', 'Doench2016']
 col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric']
 cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
@@ -556,13 +556,20 @@ def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna,
         gecko_comp = True
     if 'RGC' in adv_opts:
         ref_comparison = True
-    if 'email' in adv_opts:
+    if 'email' in adv_opts and dest_email is not None:
         send_email = True
+        with open(result_dir + '/email.txt', 'w') as e:
+            e.write(dest_email + '\n')
+            e.write('http://127.0.0.1:8050/load?job=' + job_id + '\n')
+            e.write('Job done. Parameters: etc etc')
+            e.close()
+
     
     #Set parameters
     genome_selected = genome_selected.replace(' ', '_')
     genome_ref = genome_selected.split('+')[0]              #+ char to separate ref and vcf, eg Human_genome+1000_genome_project
-
+    if genome_ref == genome_selected:
+        ref_comparison = False
     #NOTE Indexed genomes names are PAM + _ + bMax + _ + genome_selected/genome_enr
     
     pam_len = 0
@@ -634,10 +641,11 @@ def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna,
         genome_idx = pam_char + '_' + '2' + '_' + genome_selected
     else:
         genome_idx = pam_char + '_' + '5' + '_' + genome_selected
-    
+    genome_idx_ref = genome_idx.split('+')[0]
+
     #Create Params.txt file
     with open(result_dir + '/Params.txt', 'w') as p:
-        p.write('Genome_selected\t' + genome_selected + '\n')         #era genome_enr
+        p.write('Genome_selected\t' + genome_selected + '\n')         
         p.write('Genome_ref\t' + genome_ref + '\n')
         if search_index:
             p.write('Genome_idx\t' + genome_idx + '\n')
@@ -655,7 +663,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna,
     #Check if input parameters (mms, bulges, pam, guides, genome) are the same as a previous search
     all_result_dirs = [f for f in listdir('Results') if isdir(join('Results', f))]
     all_result_dirs.remove(job_id)
-    all_result_dirs.remove('test')
+    #all_result_dirs.remove('test')
     for check_param_dir in all_result_dirs:
         if os.path.exists('Results/' + check_param_dir + '/Params.txt'):
             if (filecmp.cmp('Results/' + check_param_dir + '/Params.txt', result_dir + '/Params.txt' )):
@@ -667,21 +675,22 @@ def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna,
                         subprocess.run(['cp $PWD/Results/' + check_param_dir + '/' + check_param_dir + '* ' + result_dir + '/'], shell = True)
                         subprocess.run(['cp $PWD/Results/' + check_param_dir + '/*.png ' + result_dir + '/'], shell = True)
                         subprocess.run(['rename \'s/' + check_param_dir + '/' + job_id + '/g\' ' + result_dir + '/*'], shell = True)
-                        break           #BUG manca il controllo sulle guide
+                        break           
     
     #Annotation
     if (not search and not search_index):
-        annotation = False      #TODO copy result from one directory to the current one or create simlink
- 
+        annotation = False      
+
     #Generate report
     if (not search and not search_index):
-        report = False          #TODO copy result from one directory to the current one or create simlink
+        report = False         
     
     #TODO if human genome -> annotation = human genome. mouse -> annotation mouse etc
+
     
     subprocess.Popen(['assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
         ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
-            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison)
+            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref
         )
     )], shell = True)
     return '/load','?job=' + job_id
@@ -775,7 +784,8 @@ def populateTable(pathname, search):
 
     job_id = search.split('=')[-1]
     job_directory = 'Results/' + job_id + '/'
-    #print('JOB_ID: ', job_id)
+    if(not isdir(job_directory)):
+        return 'not_exists', 0, [], ''
     global_store(job_id)
     return job_id, 0, [], ''
 
@@ -783,7 +793,8 @@ def populateTable(pathname, search):
 @app.callback(
     [Output('result-table', 'data'),
     Output('guide-table', 'data'),
-    Output('mms-dropdown','options')],
+    Output('mms-dropdown','options'),
+    Output('warning-div', 'children')],
     [Input('signal', 'children'),
      Input('result-table', "page_current"),
      Input('result-table', "page_size"),
@@ -794,7 +805,9 @@ def update_table(value, page_current,page_size, sort_by, filter):
     #print('signal_children', value)
     if value is None:
         raise PreventUpdate
-
+    
+    if value == 'not_exists':
+        return [], [], [] , dbc.Alert("The selected result does not exist", color = "danger")
     
     filtering_expressions = filter.split(' && ')    
     df = global_store(value)
@@ -832,9 +845,14 @@ def update_table(value, page_current,page_size, sort_by, filter):
     mms = int(mms[0])
     mms_values = [{'label':i, 'value':i} for i in range(mms + 1) ]
 
+    #Check if results are not 0
+    warning_no_res = ''
+    if (len(dff.index) == 0 ):
+        warning_no_res = dbc.Alert("No results were found with the given parameters", color = "warning")
+    
     return dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
-    ].to_dict('records'), df_guide.to_dict('records'), mms_values
+    ].to_dict('records'), df_guide.to_dict('records'), mms_values, warning_no_res
 
 #For filtering
 def split_filter_part(filter_part):
@@ -879,7 +897,7 @@ def parse_contents(contents):
     [State('guide-table', 'data'),
     State('url','search')]
 )
-def testcel(sel_cel, mms, all_guides, job_id):
+def showImages(sel_cel, mms, all_guides, job_id):
     if sel_cel is None or mms is None:
         raise PreventUpdate
     job_id = job_id.split('=')[-1]
