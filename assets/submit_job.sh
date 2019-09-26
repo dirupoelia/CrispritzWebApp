@@ -15,6 +15,8 @@
 #$14 is gecko comparison
 #$15 is genome_ref comparison
 #$16 is genme_idx_ref (for genome_ref comparison if search was done with indices)   Eg genome_library/NGG_2_hg19_ref
+#$17 is send_email
+#$18 is annotation file containing path  EG hg19_ref_annotationspath.txt
 #Note that if genome_selected is not enriched, the python exe will force $15 as false
 
 jobid=$(basename $1)
@@ -59,10 +61,10 @@ echo 'Search\tDone\t'$(date) >> $1'/'log.txt
 echo 'Annotation\tStart\t'$(date) >> $1'/'log.txt
 if [ ${12} = 'True' ]; then
     #echo 'crispritz annotate'
-    crispritz.py annotate-results $6 $1'/'$jobid'.targets.txt' annotations_path.txt $jobid'.annotated'
+    crispritz.py annotate-results $6 $1'/'$jobid'.targets.txt' ${18} $jobid'.annotated'
     mv ./$jobid.annotated.*.txt $1
     if [ ${15} = 'True' ]; then
-        crispritz.py annotate-results $6 $1'/ref/'$jobid'_ref.targets.txt' annotations_path.txt $jobid'_ref.annotated'
+        crispritz.py annotate-results $6 $1'/ref/'$jobid'_ref.targets.txt' ${18} $jobid'_ref.annotated'
         mv ./$jobid'_ref'.annotated.*.txt $1/ref
     fi
 fi
@@ -104,5 +106,6 @@ cp $PWD/$1/*.png assets/Img/$jobid/
 echo 'Report\tDone\t'$(date) >> $1'/'log.txt
 
 echo 'Job\tDone\t'$(date)>> $1'/'log.txt
-
-python3 send_mail.py $1
+if [ ${17} = 'True' ]; then
+    python3 send_mail.py $1
+fi

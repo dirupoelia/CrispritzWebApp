@@ -74,8 +74,8 @@ av_bulges = [{'label': i, 'value': i} for i in range(0, 6)]
 search_bar = dbc.Row(
     [
         #dbc.Col(dbc.Input(type="search", placeholder="Search")),
-        dbc.Col(dbc.NavLink('Home', active = True, href = 'http://127.0.0.1:8050', style = {'text-decoration':'none', 'color':'white'})),
-        dbc.Col(dbc.NavLink('About', active = True, href = 'http://127.0.0.1:8050', style = {'text-decoration':'none', 'color':'white'})),
+        dbc.Col(dbc.NavLink('HOME', active = True, href = 'http://127.0.0.1:8050', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
+        dbc.Col(dbc.NavLink('ABOUT', active = True, href = 'http://127.0.0.1:8050', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
         dbc.Col(
             dbc.DropdownMenu(
                 children=[
@@ -86,10 +86,10 @@ search_bar = dbc.Row(
                 #nav=True,
                 in_navbar=True,
                 label="Downloads",
-                style = {'width': '300px !important' } #'height': '400px !important' #TODO sistemare grandezza link
+                style = {'width': '300px !important' } #'height': '400px !important' 
             ),
         ),
-        dbc.Col(dbc.NavLink('Contacts', active = True, href = 'http://127.0.0.1:8050', style = {'text-decoration':'none', 'color':'white'}))
+        dbc.Col(dbc.NavLink('CONTACTS', active = True, href = 'http://127.0.0.1:8050', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'}))
     ],
     no_gutters=True,
     className="ml-auto flex-nowrap mt-3 mt-md-0",
@@ -105,7 +105,7 @@ navbar = dbc.Navbar(
             dbc.Row(
                 [
                     dbc.Col(html.Img(src=PLOTLY_LOGO, height="30px")),
-                    dbc.Col(dbc.NavbarBrand("CRISPRitz Web App", className="ml-2"))
+                    dbc.Col(dbc.NavbarBrand("CRISPRitz Web App", className="ml-2", style = {'font-size': '30px'}))
                 ],
                 align="center",
                 no_gutters=True,
@@ -152,7 +152,7 @@ app.layout = html.Div([
 
 #new final_list
 final_list = []
-final_list.extend([html.H1('CRISPRitz Web Application'),
+final_list.extend([#html.H1('CRISPRitz Web Application'),
     html.Div(children='''
         CRISPRitz is a software package containing 5 different tools dedicated to perform predictive analysis and result assessement on CRISPR/Cas experiments. 
     '''),
@@ -165,7 +165,40 @@ final_list.append(
         ]
     )
 )
-
+checklist_div = html.Div(
+    [
+        dbc.FormGroup(
+            [
+                dbc.Checkbox(
+                    id="checkbox-gecko", className="form-check-input"
+                ),
+                dbc.Label(
+                    html.P(['Activate Gecko ', html.Abbr('comparison', title ='The results of your test guides will be compared with results obtained from a previous computed analysis on gecko library')]) ,
+                    html_for="checkbox-gecko",
+                    className="form-check-label",
+                ),
+                dbc.Checkbox(
+                    id="checkbox-ref-comp", className="form-check-input"
+                ),
+                dbc.Label(
+                    html.P(['Activate Reference genome ', html.Abbr('comparison', title ='The results of your test guides will be compared with the results obtained from a computed analysis on the corresponding reference genome. Note: this may increase computational time')]) ,
+                    html_for="checkbox-ref-comp",
+                    className="form-check-label",
+                ),
+                # dbc.Checkbox(
+                #     id="checkbox-email", className="form-check-input"
+                # ),
+                # dbc.Label(
+                #     'Notify me by email',
+                #     html_for="checkbox-email",
+                #     className="form-check-label",
+                # )
+            ],
+            check = True
+        )
+    ],
+    id = 'checklist-test-div'
+)
 final_list.append(
     html.Div(
         html.Div(
@@ -190,7 +223,7 @@ final_list.append(
                                             dcc.Dropdown(options = pam_file, clearable = False, id = 'available-pam', style = {'width':'75%'})
                                         )
                                     ],
-                                    style = {'flex':'0 0 50%'}
+                                    style = {'flex':'0 0 50%', 'margin-top': '10%'}
                                 ),
                                 #html.P('or'),
                                 # html.Div(
@@ -203,10 +236,17 @@ final_list.append(
                             id = 'div-pam',
                             className = 'flex-div-pam'
                         ),
-                        html.P('Send us a request to add a specific genome sequence or a variant, or download the offline version', style = {'margin-top':'10px'})
+                        html.Div(
+                            [
+                                html.P(#'Send us a request to add a specific genome sequence or a variant, or download the offline version'
+                                ['Contact us to request new genomes availability in the dropdown list', html.P('or'), html.P('Download the offline version'),], style = {'margin-top':'10px', 'text-align':'-webkit-center', 'position': 'relative', 'top': '25%'}),
+                                
+                            ],
+                            style = {'height':'50%'}
+                        ),
                     ],
                     id = 'step1',
-                    style = {'flex':'0 0 40%'}
+                    style = {'flex':'0 0 30%', 'tex-align':'center'}
                 ),
                 html.Div(style = {'border-right':'solid 1px white'}),
                 html.Div(
@@ -219,9 +259,14 @@ final_list.append(
                                         
                                         html.Div(
                                             [
-                                                html.P(['Insert crRNA sequence(s)', html.Abbr('\uD83D\uDEC8', style = {'text-decoration':'none'} ,title = 'One sequence per line. All sequences must have the same lenght and PAM characters are not required')], style = {'word-wrap': 'break-word'}), 
+                                                html.P([
+                                                    'Insert crRNA sequence(s), one per line.', 
+                                                    html.P('Sequences must have the same length and be provided without the PAM sequence') ,
+                                                    #html.Abbr('\uD83D\uDEC8', style = {'text-decoration':'none'} ,title = 'One sequence per line. All sequences must have the same lenght and PAM characters are not required')
+                                                ],
+                                                style = {'word-wrap': 'break-word'}), 
                             
-                                                dcc.Textarea(id = 'text-guides', placeholder = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', style = {'width':'275px', 'height':'160px'}),
+                                                dcc.Textarea(id = 'text-guides', placeholder = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', style = {'width':'450px', 'height':'160px'}),
                                                 html.P('or', style = {'position': 'relative', 'left':'50%'}),
                                                 html.Div(
                                                     [
@@ -245,7 +290,7 @@ final_list.append(
                                                     style = {'text-align':'center'}
                                                 )
                                             ],
-                                            style = {'width':'275px'} #same as text-area
+                                            style = {'width':'450px'} #same as text-area
                                         )
                                     ],
                                     id = 'div-guides'
@@ -273,22 +318,24 @@ final_list.append(
                 html.Div(
                     [
                         html.H3('Advanced Options'),
+                        checklist_div,
                         dcc.Checklist(
-                            options = [{'label':'Gecko comparison', 'value':'GC', 'disabled':False},
-                            {'label':'Reference genome comparison', 'value':'RGC', 'disabled':False},
+                            options = [
+                            #{'label':'Gecko comparison', 'value':'GC', 'disabled':False},
+                            #{'label':'Reference genome comparison', 'value':'RGC', 'disabled':False},
                             {'label':'Notify me by email','value':'email', 'disabled':False}], 
-                            id = 'checklist-advanced'
+                            id = 'checklist-advanced',
                         ),
                         dbc.Fade(
                             [
                                 dbc.FormGroup(
                                     [
                                         dbc.Label("Email", html_for="example-email"),
-                                        dbc.Input(type="email", id="example-email", placeholder="Enter email"),
-                                        dbc.FormText(
-                                            "Are you on email? You simply have to be these days",
-                                            color="secondary",
-                                        ),
+                                        dbc.Input(type="email", id="example-email", placeholder="Enter email", className='exampleEmail'),
+                                        # dbc.FormText(
+                                        #     "Are you on email? You simply have to be these days",
+                                        #     color="secondary",
+                                        # ),
                                     ]
                                 )
                             ],
@@ -319,7 +366,7 @@ index_page = html.Div(final_list, style = {'margin':'1%'})
 
 #Load Page
 final_list = []
-final_list.append(html.H1('CRISPRitz Web Application'))
+#final_list.append(html.H1('CRISPRitz Web Application'))
 final_list.append(
     html.Div(
         html.Div(
@@ -369,7 +416,10 @@ final_list.append(
                 className = 'flex-status'
             ),
             html.Div(
-                dcc.Link('View Results', style = {'visibility':'hidden'}, id = 'view-results')
+                [
+                    dcc.Link('View Results', style = {'visibility':'hidden'}, id = 'view-results'),
+                    html.Div(id = 'no-directory-error')
+                ]
             )
         ],
         id = 'div-status-report'
@@ -383,7 +433,7 @@ load_page = html.Div(final_list, style = {'margin':'1%'})
 
 #Result page
 final_list = []
-final_list.append(html.H1('CRISPRitz Web Application'))
+#final_list.append(html.H1('CRISPRitz Web Application'))
 final_list.append(html.Div(id='warning-div'))
 col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'CFD', 'Doench2016']
 col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric']
@@ -501,6 +551,19 @@ def toggle_fade(selected_options, is_in):
         return True
     return False
 
+#Email validity
+@app.callback(
+    Output('example-email', 'style'),
+    [Input('example-email', 'value')]
+)
+def checkEmailValidity(val):
+    if val is None:
+        raise PreventUpdate
+
+    if '@' in val:
+        return {'border':'1px solid #94f033', 'outline':'0'}
+    return {'border':'1px solid red'}
+
 
 #Submit Job, change url
 @app.callback(
@@ -515,14 +578,17 @@ def toggle_fade(selected_options, is_in):
     State('mms','value'),
     State('dna','value'),
     State('rna','value'),
-    State('checklist-advanced','value'),
+    State('checkbox-gecko','checked'),
+    State('checkbox-ref-comp', 'checked'),
+    State('checklist-advanced', 'value'),
     State('example-email','value')]
 )
-def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna, rna, adv_opts, dest_email):      #NOTE startJob
+def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna, rna, gecko_opt, genome_ref_opt, adv_opts,dest_email):      #NOTE startJob
     '''
-    genome_selected can be Human genome (hg19), or Human Genome (hg19) - 1000 Genome Project, the '-' character defines the ref or enr version.
+    genome_selected can be Human genome (hg19), or Human Genome (hg19) + 1000 Genome Project, the '+' character defines the ref or enr version.
     Note that pam parameter can be 5'-NGG-3', but the corresponding filename is 5'-NGG-3'.txt
     Pam file (5'-NGG-3'.txt) is structured as NGG 3, or TTTN -4. The created pam.txt inside the result directory add the corresponding N's
+    Annotations path file is named genome_name_annotationpath.txt, where genome_name is the reference genome name
     '''
     if n is None:
         raise PreventUpdate
@@ -552,9 +618,9 @@ def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna,
     send_email = False
     if adv_opts is None:
         adv_opts = []
-    if 'GC' in adv_opts:
+    if gecko_opt:
         gecko_comp = True
-    if 'RGC' in adv_opts:
+    if genome_ref_opt:
         ref_comparison = True
     if 'email' in adv_opts and dest_email is not None:
         send_email = True
@@ -563,7 +629,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna,
             e.write('http://127.0.0.1:8050/load?job=' + job_id + '\n')
             e.write('Job done. Parameters: etc etc')
             e.close()
-
+    
     
     #Set parameters
     genome_selected = genome_selected.replace(' ', '_')
@@ -685,12 +751,12 @@ def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna,
     if (not search and not search_index):
         report = False         
     
-    #TODO if human genome -> annotation = human genome. mouse -> annotation mouse etc
+    annotation_filepath = [f for f in listdir('./') if isfile(join('./', f)) and f.startswith(genome_ref)]
 
     
     subprocess.Popen(['assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
         ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
-            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref
+            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + annotation_filepath[0]
         )
     )], shell = True)
     return '/load','?job=' + job_id
@@ -720,7 +786,8 @@ def changePage(path, href, search):
     Output('annotate-result-status', 'children'),
     Output('search-status', 'children'),
     Output('generate-report-status', 'children'),
-    Output('view-results','href')],
+    Output('view-results','href'),
+    Output('no-directory-error', 'children')],
     [Input('load-page-check', 'n_intervals')],
     [State('url', 'search')]
 )
@@ -749,10 +816,10 @@ def refreshSearch(n, dir_name):
                     report_status = html.P('Done', style = {'color':'green'})
                     all_done = all_done + 1
                 if all_done == 3:
-                    return {'visibility':'visible'}, annotate_res_status, search_status, report_status, '/result?job=' + dir_name.split('=')[-1]
+                    return {'visibility':'visible'}, annotate_res_status, search_status, report_status, '/result?job=' + dir_name.split('=')[-1], ''
                 else:
-                    return {'visibility':'hidden'}, annotate_res_status, search_status, report_status,''
-    raise PreventUpdate
+                    return {'visibility':'hidden'}, annotate_res_status, search_status, report_status,'', ''
+    return {'visibility':'hidden'}, html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}), '', dbc.Alert("The selected result does not exist", color = "danger")
 
 #Perform expensive loading of a dataframe and save result into 'global store'
 #Cache are in the Cache directory
@@ -946,14 +1013,9 @@ if __name__ == '__main__':
     app.run_server(debug=True)
     cache.clear()       #delete cache when server is closed
 
-    #TODO se faccio l'annotazione (stessi parametri) dei targets ottenuti da enr e ref genomes, poi posso usare i loro summary counts per fare il barplot, che dipende solo dai mm e non dalle guide
     #BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti
     #Iupac
 
 
-    #TODO bootstrap per fare il menu, inserire email quando finito, magari un menu avanzate per opzioni avanzate, divisione tra genomi e genomi enr (al posto
-    # della select varfile), cambiare il nome delle pam togliendo txt e mettendo nome giusto
-
-    #TODO idea: togliere pam custom e fare solo elenco di tutte le possibili pam (con 5'-NGG-3'), togliere varianti e mettere un solo elenco con genomi ref e enr,
-    # togliere caricamento del file per evitare confusione, descrivere meglio le restrizioni delle guide in input, mms max 10, bulges max 5 (a tendina), title per spiegare
-    # gecko e altre opzioni avanzate
+    #TODO 
+    # togliere caricamento del file per evitare confusione,

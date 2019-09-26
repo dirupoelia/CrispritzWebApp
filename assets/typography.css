@@ -10,3 +10,24 @@ h1, h2, h3, h4, h5, h6 {
 .dropdown-header{
     font-size: 1.25rem;
 }
+
+.btn-secondary{
+    background-color: unset;
+    border : none;
+    font-size: 1.5rem;
+}
+.testHover:hover{
+    background-color: #545b62;
+    border-color: #4e555b;
+    border-radius: 0.25rem;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out
+}
+
+/* #checklist-advanced label:nth-child(1) {
+    margin-left : 5px;
+  } */
+  
+
+input:invalid{      
+    outline:0px;
+}

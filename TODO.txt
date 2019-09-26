@@ -29,3 +29,23 @@ ValueError: arange: cannot compute length
 	-testarlo se almeno enr o ref ha 1+ risultati, si, se entrambi sono 0 mi da errore									X
 -Controllo se i risultati sono 0, inviare messaggio di errore/risultati 0												X
 	-migliorare grafica dei risultati a 0 e risultati che non esistono più
+	
+26/09
+-Sistemare barplot		X		(vedere radar_chart.py)
+-Inserire Error nel load se non esiste il risultato			X
+-Sul load, fare controllo subito per non aspettare 3 sec  -> forse non possibile
+-Modificare stile warnings			X -> da vedere se va bene
+-Modificare stile menu						X
+	-Sistemare grandezza hover sui home, about,contacts		X -> va bene così
+-Inserite title per spigazioni opzioni avanzate				X
+	-Modificare allineamento checkbox						X
+-Inserire spiegazione guide									X
+-Inserire 'send us email or download offline'				X
+	-Inserire link a contatti e download
+-Modificare stile barplot quando non ho risultati			X
+-Modificare la mail
+-Aggiungere tutte le pam
+-Collegare annotazioni con genomi esatti					X
+-Aumentare dimensioni checklist
+
+-Creare docker con tutto
