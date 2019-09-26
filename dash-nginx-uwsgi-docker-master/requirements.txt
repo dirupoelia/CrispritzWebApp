@@ -1,0 +1,5 @@
+dash==1.0.0
+dash-daq==0.1.0
+Flask-Caching
+pandas
+dash-bootstrap-components
