@@ -22,6 +22,7 @@ import sys                                  #for sys.exit()
 import filecmp                              #check if Params files are equals
 import dash_bootstrap_components as dbc
 import collections                          #For check if guides are the same in two results
+from datetime import datetime               #For time when job submitted
 
 PAGE_SIZE = 10                     #number of entries in each page of the table in view report
 
@@ -239,7 +240,7 @@ final_list.append(
                         html.Div(
                             [
                                 html.P(#'Send us a request to add a specific genome sequence or a variant, or download the offline version'
-                                ['Contact us to request new genomes availability in the dropdown list', html.P('or'), html.P('Download the offline version'),], style = {'margin-top':'10px', 'text-align':'-webkit-center', 'position': 'relative', 'top': '25%'}),
+                                [html.A('Contact us', href = 'http://127.0.0.1:8050', target="_blank"),' to request new genomes availability in the dropdown list', html.P('or'), html.P('Download the offline version'),], style = {'margin-top':'10px', 'text-align':'-webkit-center', 'position': 'relative', 'top': '25%'}),
                                 
                             ],
                             style = {'height':'50%'}
@@ -622,14 +623,14 @@ def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna,
         gecko_comp = True
     if genome_ref_opt:
         ref_comparison = True
-    if 'email' in adv_opts and dest_email is not None:
+    if 'email' in adv_opts and dest_email is not None and len(dest_email.split('@')) > 1 and dest_email.split('@')[-1] is not '':
         send_email = True
         with open(result_dir + '/email.txt', 'w') as e:
             e.write(dest_email + '\n')
             e.write('http://127.0.0.1:8050/load?job=' + job_id + '\n')
+            e.write(datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S") + '\n')
             e.write('Job done. Parameters: etc etc')
             e.close()
-    
     
     #Set parameters
     genome_selected = genome_selected.replace(' ', '_')

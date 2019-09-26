@@ -1,4 +1,9 @@
 # import for send mail
+#Structure of email.txt
+# destinatario
+# job link
+# date submitted job
+# parameters (not yet implemented)
 import sys
 import smtplib
 from email.message import EmailMessage
@@ -8,11 +13,13 @@ with open (sys.argv[1] + '/email.txt', 'r') as e:
     #message building
     msg = EmailMessage()
     msg['to'] = e.readline().strip()
-    
-    msg['Subject'] = 'Job ... Done'
+    job_link = e.readline().strip()
+    date_submission = e.readline().strip()
+    msg['Subject'] = 'CRISPRitz - Job completed'
 
     msg['From'] = "elia.dirupo@hotmail.it"
-    content_email = 'Job done, visit link ' + e.readline().strip() + ' to view. ' + e.readline()
+    content_email = 'The requested job is completed, visit the following link ' + job_link + ' to view the report.'
+    #TODO add Parameters section with date and other parameters
     msg.set_content(content_email)
 
     context = ssl.SSLContext(ssl.PROTOCOL_TLS)

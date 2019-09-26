@@ -44,7 +44,7 @@ ValueError: arange: cannot compute length
 	-Inserire link a contatti e download
 -Modificare stile barplot quando non ho risultati			X
 -Modificare la mail
--Aggiungere tutte le pam
+-Aggiungere tutte le pam									X
 -Collegare annotazioni con genomi esatti					X
 -Aumentare dimensioni checklist
 
