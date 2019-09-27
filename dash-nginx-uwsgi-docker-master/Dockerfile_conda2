@@ -1,0 +1,23 @@
+FROM continuumio/miniconda3
+RUN conda create -n env python=3.6
+RUN echo "source activate env" > ~/.bashrc
+RUN conda config --add channels defaults
+RUN conda config --add channels bioconda
+RUN conda config --add channels conda-forge
+RUN conda install crispritz
+
+RUN /bin/bash -c "conda install -y \
+        flask \
+        uwsgi"
+
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+ENV PATH /opt/conda/envs/env/bin:$PATH
+
+FROM tiangolo/uwsgi-nginx-flask:python3.6
+LABEL maintainer="maintainer"
+
+COPY requirements.txt /tmp/
+COPY ./app /app
+
+RUN pip install -U pip && pip install -r /tmp/requirements.txt
+ENV NGINX_WORKER_PROCESSES auto

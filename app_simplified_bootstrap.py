@@ -221,7 +221,7 @@ final_list.append(
                                     [
                                         html.P('Select PAM'),
                                         html.Div(
-                                            dcc.Dropdown(options = pam_file, clearable = False, id = 'available-pam', style = {'width':'75%'})
+                                            dcc.Dropdown(options = pam_file, clearable = False, id = 'available-pam')
                                         )
                                     ],
                                     style = {'flex':'0 0 50%', 'margin-top': '10%'}

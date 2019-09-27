@@ -6,15 +6,15 @@ TODO 24/09:
 -PAM sinistra/destra																									X
 	-in base alla pam scelta sul server, sistemo la cosa																X
 -Da symlink a cp																										X
--Collegare annotazioni con i genomi esatti
+-Collegare annotazioni con i genomi esatti		X
 -Sulla pagina load, fare il controllo subito così l'utente non aspetta i 3 secondi
 -Implementare opzione aggiuntiva -gecko																					X
 -Implementare opzione aggiuntiva barplot																				X <- check bug generate report
 -Aggiungere pam corrette
-	-5'-NGG-3'
+	-5'-NGG-3'			X
 	-Poi sistemare nella chiamata che deve essere uguale al file														X
--Sistemare menu
--Sistemare email
+-Sistemare menu			X
+-Sistemare email		X
 -Sistemare genomi, avere solo un elenco
 -Non far partire l'indice e l'arricchimento, saranno già presenti sul server											X
 -Aggiungere controllo guide per vedere se i res sono già stati fatti													X
@@ -43,9 +43,19 @@ ValueError: arange: cannot compute length
 -Inserire 'send us email or download offline'				X
 	-Inserire link a contatti e download
 -Modificare stile barplot quando non ho risultati			X
--Modificare la mail
+-Modificare la mail											X
+	-Aggiungere paramtri alla mail
 -Aggiungere tutte le pam									X
 -Collegare annotazioni con genomi esatti					X
 -Aumentare dimensioni checklist
 
 -Creare docker con tutto
+
+27/09
+-Indice genomi con 25 e con 20 (lunghezza pam) mi da stessi risultati ma posizioni diverse di 5 nei res dei 20, controllo le posizioni coi res di cas offinder (secondo genoma)
+
+
+
+docker build -t my_docker .
+docker run -it my_docker [COMMAND]
+docker run -p 8080:80 my_docker python3 app_simplified_bootstrap.py
