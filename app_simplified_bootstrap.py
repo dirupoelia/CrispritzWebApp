@@ -61,7 +61,10 @@ onlyfile = [f for f in listdir('pam') if isfile(join('pam', f))]
 onlyfile = [x.replace('.txt', '') for x in onlyfile]            #removed .txt for better visualization
 pam_file = []
 for pam_name in onlyfile:
-    pam_file.append({'label': pam_name, 'value' : pam_name})
+    if 'NGG' in pam_name:
+        pam_file.append({'label':pam_name, 'value':pam_name})
+    else:
+        pam_file.append({'label': pam_name, 'value' : pam_name, 'disabled':True})
 
 #Dropdown available Variants
 onlydir = [f for f in listdir('Variants') if isdir(join('Variants', f))]
@@ -187,7 +190,7 @@ modal = html.Div(
         dbc.Modal(
             [
                 dbc.ModalHeader("WARNING! Missing inputs"),
-                dbc.ModalBody('The following inputs are missing, please select values before submitting the job'),
+                dbc.ModalBody('The following inputs are missing, please select values before submitting the job', id = 'warning-list'),
                 dbc.ModalFooter(
                     dbc.Button("Close", id="close" , className="modal-button")
                 ),
@@ -208,8 +211,9 @@ final_list.append(
                         html.H3('STEP 1', style = {'margin-top':'0'}), 
                         html.P('Select a genome'),
                         html.Div(
-                            dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genome", style = {'width':'75%'})
+                            dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genome",) #style = {'width':'75%'})
                         ),
+                        dbc.FormText('Note: Genomes enriched with variants are indicated with a \'+\' symbol', color='secondary'),
                         # html.P('Add a genome variant', style = {'visibility':'hidden'}),
                         # html.Div(
                         #     dcc.Dropdown(options = var_dir,clearable = False, id = 'available-variant', style = {'width':'75%', 'visibility':'hidden'})
@@ -238,9 +242,19 @@ final_list.append(
                         ),
                         html.Div(
                             [
-                                html.P(#'Send us a request to add a specific genome sequence or a variant, or download the offline version'
-                                [html.A('Contact us', href = 'http://127.0.0.1:8050', target="_blank"),' to request new genomes availability in the dropdown list', html.P('or'), html.P('Download the offline version'),], style = {'margin-top':'10px', 'text-align':'-webkit-center', 'position': 'relative', 'top': '25%'}),
-                                
+                                # html.P(#'Send us a request to add a specific genome sequence or a variant, or download the offline version'
+                                # [html.A('Contact us', href = 'http://127.0.0.1:8050', target="_blank"),' to request new genomes availability in the dropdown list', html.P('or'), html.P('Download the offline version'),], style = {'margin-top':'10px', 'text-align':'-webkit-center', 'position': 'relative', 'top': '25%'}),
+                                html.Ul(
+                                    [html.Li(
+                                        [html.A('Contact us', href = 'http://127.0.0.1:8050', target="_blank"),' to request new genomes availability in the dropdown list'],
+                                        style = {'margin-top':'5%'}
+                                    ),
+                                    html.Li(
+                                        [html.A('Download', href = 'https://github.com/InfOmics/CRISPRitz'), ' the offline version for more custom parameters']
+                                    )
+                                    ],
+                                    style = {'list-style':'inside'}
+                                )
                             ],
                             style = {'height':'50%'}
                         ),
@@ -267,7 +281,8 @@ final_list.append(
                                                 style = {'word-wrap': 'break-word'}), 
                             
                                                 dcc.Textarea(id = 'text-guides', placeholder = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', style = {'width':'450px', 'height':'160px'}),
-                                                html.P('Note: max number of crRNA is 1000'),
+                                                #html.P('Note: a maximum number of 1000 sequences can be provided'),
+                                                dbc.FormText('Note: a maximum number of 1000 sequences can be provided', color = 'secondary')
                                             ],
                                             style = {'width':'450px'} #same as text-area
                                         )
@@ -553,7 +568,8 @@ def checkEmailValidity(val):
     Output('text-guides', 'style'),
     Output('mms', 'className'),
     Output('dna', 'className'),
-    Output('rna', 'className')],
+    Output('rna', 'className'),
+    Output('warning-list', 'children')],
     [Input('check-job','n_clicks'),
     Input('close','n_clicks')],
     [State('available-genome', 'value'),
@@ -567,7 +583,8 @@ def checkEmailValidity(val):
 def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, is_open):
     if n is None:
         raise PreventUpdate
-
+    if is_open is None:
+        is_open = False
     
     classname_red = 'missing-input'
     genome_update = None
@@ -577,39 +594,43 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, is_
     dna_update = None
     rna_update = None
     update_style = False
-
+    miss_input_list = []
     
     if genome_selected is None or genome_selected is '':
         genome_update = classname_red
         update_style = True
+        miss_input_list.append('Genome')
     if pam is None or pam is '':
         pam_update = classname_red
         update_style = True
+        miss_input_list.append('PAM')
     if text_guides is None or text_guides is '':
         text_update = {'width':'450px', 'height':'160px','border': '1px solid red'}
         update_style = True
+        miss_input_list.append('crRNA sequence(s)')
     if mms is None or str(mms) is '':
         mms_update = classname_red
         update_style = True
+        miss_input_list.append('Allowed Mismatches')
     if dna is None or str(dna) is '':
         dna_update = classname_red
         update_style = True
+        miss_input_list.append('Bulge DNA size')
     if rna is None or str(rna) is '':
         rna_update = classname_red
         update_style = True
+        miss_input_list.append('Bulge RNA size')
+    miss_input = html.Div(
+        [
+            html.P('The following inputs are missing:'),
+            html.Ul([html.Li(x) for x in miss_input_list]),
+            html.P('Please fill in the values before submitting the job')
+        ]
+    )
     
-    if (n or n_close) and is_open:
-        return None, not is_open, genome_update, pam_update, text_update, mms_update, dna_update, rna_update
-
-    if update_style:
-        return 10, True, genome_update, pam_update, text_update, mms_update, dna_update, rna_update
-    
-    
-    
-    if (n or n_close) and is_open:
-        return None, not is_open, 'test'
-    
-    return 10, False, 'test'
+    if not update_style:
+        return 1, False, genome_update, pam_update, text_update, mms_update, dna_update, rna_update, miss_input
+    return None, not is_open, genome_update, pam_update, text_update, mms_update, dna_update, rna_update, miss_input
 
 #Submit Job, change url
 @app.callback(
@@ -637,9 +658,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     '''
     if n is None:
         raise PreventUpdate
-    if n == 10:
-        print('10')
-        raise PreventUpdate
+    
     #Check input, else give simple input
     if genome_selected is None or genome_selected is '':
         genome_selected = 'hg19_ref'

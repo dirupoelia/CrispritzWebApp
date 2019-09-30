@@ -63,11 +63,11 @@ docker run -p 8080:80 my_docker python3 app_simplified_bootstrap.py
 30/09
 -Inserire nota sotto select genome per specificare il vcf
 	-Note: genomes with a + means variants
--Cambiare il contact us in due frasi allineate con 'contact us for genome availability' e 'If you want custom genome, vcf, mms bulges etc etc download offline version (con link)'
+-Cambiare il contact us in due frasi allineate con 'contact us for genome availability' e 'If you want custom genome, vcf, mms bulges etc etc download offline version (con link)' X
 -Togliere upload e mettere limite a 1000 guide			X
 -Mettere la spiegazione delle adv opts come: Compare your results with gecko library e Compare your result with ref genome		X
 -Inserire un avviso se input manca		X 
-	- Inserire elenco input mancanti
+	- Inserire elenco input mancanti	X
 -Testare docker e fare file per scaricare e sistemare i genomi
 -Cambiare icona
 
