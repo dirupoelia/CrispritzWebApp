@@ -37,7 +37,7 @@ with open (sys.argv[1] + '/email.txt', 'r') as e:
     server.ehlo()
     #login and send message
     print('Prima login')
-    server.login("elia.dirupo@hotmail.it", "--set_password--")
+    server.login("elia.dirupo@hotmail.it", "--insert password")
     print('Prima send_message')
     server.send_message(msg)
     print('Prima quit')

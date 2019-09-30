@@ -31,3 +31,13 @@ h1, h2, h3, h4, h5, h6 {
 input:invalid{      
     outline:0px;
 }
+
+.modal-button{
+    background-color: rgb(50,50,50)
+}
+/* #test .Select-control{
+    border:1px solid red;
+} */
+.missing-input .Select-control{
+    border: 1px solid red;
+}

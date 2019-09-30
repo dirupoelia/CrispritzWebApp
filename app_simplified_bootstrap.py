@@ -128,27 +128,6 @@ app.layout = html.Div([
     html.P(id = 'signal', style = {'visibility':'hidden'})
 ])
 
-# final_list.append(
-#     html.Div(
-#         [
-#             html.P('Insert Job title: ', style = {'padding-top':'5px'}),
-#             dcc.Input(id = 'job-name', size = '30')
-#         ],
-#         className = 'flex-job-title',
-#         style = {'margin':'1%', 'width':'23%'}
-#     )
-# )
-# final_list.append(
-#     html.Div(
-#         [
-#             html.P('Insert Email: ', style = {'padding-top':'5px'}),
-#             dcc.Input(id = 'email', size = '30')
-#         ],
-#         className = 'flex-job-title',
-#         style = {'margin':'1%', 'width':'23%'}
-#     )
-# )
-
 
 
 #new final_list
@@ -174,7 +153,8 @@ checklist_div = html.Div(
                     id="checkbox-gecko", className="form-check-input"
                 ),
                 dbc.Label(
-                    html.P(['Activate Gecko ', html.Abbr('comparison', title ='The results of your test guides will be compared with results obtained from a previous computed analysis on gecko library')]) ,
+                    #html.P(['Activate Gecko ', html.Abbr('comparison', title ='The results of your test guides will be compared with results obtained from a previous computed analysis on gecko library')]) ,
+                    html.P('Compare your results with the Gecko library'),
                     html_for="checkbox-gecko",
                     className="form-check-label",
                 ),
@@ -182,7 +162,8 @@ checklist_div = html.Div(
                     id="checkbox-ref-comp", className="form-check-input"
                 ),
                 dbc.Label(
-                    html.P(['Activate Reference genome ', html.Abbr('comparison', title ='The results of your test guides will be compared with the results obtained from a computed analysis on the corresponding reference genome. Note: this may increase computational time')]) ,
+                    #html.P(['Activate Reference genome ', html.Abbr('comparison', title ='The results of your test guides will be compared with the results obtained from a computed analysis on the corresponding reference genome. Note: this may increase computational time')]) ,
+                    html.P('Compare your results with the corresponding reference genome'),
                     html_for="checkbox-ref-comp",
                     className="form-check-label",
                 ),
@@ -200,10 +181,28 @@ checklist_div = html.Div(
     ],
     id = 'checklist-test-div'
 )
+
+modal = html.Div(
+    [
+        dbc.Modal(
+            [
+                dbc.ModalHeader("WARNING! Missing inputs"),
+                dbc.ModalBody('The following inputs are missing, please select values before submitting the job'),
+                dbc.ModalFooter(
+                    dbc.Button("Close", id="close" , className="modal-button")
+                ),
+            ],
+            id="modal",
+            centered=True
+        ),
+    ]
+)
+
 final_list.append(
     html.Div(
         html.Div(
             [
+                modal,
                 html.Div(
                     [
                         html.H3('STEP 1', style = {'margin-top':'0'}), 
@@ -268,28 +267,7 @@ final_list.append(
                                                 style = {'word-wrap': 'break-word'}), 
                             
                                                 dcc.Textarea(id = 'text-guides', placeholder = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', style = {'width':'450px', 'height':'160px'}),
-                                                html.P('or', style = {'position': 'relative', 'left':'50%'}),
-                                                html.Div(
-                                                    [
-                                                        html.Div(
-                                                            [
-                                                                dcc.Upload('Upload file with crRNA sequences', id = 'upload-guides')
-                                                            ],
-                                                            style={
-                                                                'width': '100%',
-                                                                'height': '60px',
-                                                                'lineHeight': '60px',
-                                                                'borderWidth': '1px',
-                                                                'borderStyle': 'dashed',
-                                                                'borderRadius': '5px',
-                                                                'textAlign': 'center',
-                                                                #'margin': '10px'
-                                                            }
-                                                        ),
-                                                        html.P('', id = 'uploaded-filename',style = {'width':'275px', 'visibility':'hidden', 'display':'inline-block'})
-                                                    ],
-                                                    style = {'text-align':'center'}
-                                                )
+                                                html.P('Note: max number of crRNA is 1000'),
                                             ],
                                             style = {'width':'450px'} #same as text-area
                                         )
@@ -299,11 +277,11 @@ final_list.append(
                                 html.Div(
                                     [
                                         html.P('Allowed mismatches'),
-                                        dcc.Dropdown(options = av_mismatches, clearable = False, value = '0', id = 'mms', style = {'width':'60px'}),
+                                        dcc.Dropdown(options = av_mismatches, clearable = False, id = 'mms', style = {'width':'60px'}),
                                         html.P('Bulge DNA size'),
-                                        dcc.Dropdown(options = av_bulges, clearable = False, value = '0', id = 'dna', style = {'width':'60px'}),
+                                        dcc.Dropdown(options = av_bulges, clearable = False, id = 'dna', style = {'width':'60px'}),
                                         html.P('Bulge RNA size'),
-                                        dcc.Dropdown(options = av_bulges, clearable = False, value = '0', id = 'rna', style = {'width':'60px'})
+                                        dcc.Dropdown(options = av_bulges, clearable = False, id = 'rna', style = {'width':'60px'})
                                     ]
                                 )
                             ],
@@ -345,7 +323,8 @@ final_list.append(
                         #html.H3('Submit', style = {'margin-top':'0'}),
                         html.Div(
                             [
-                                html.Button('Submit', id = 'submit-job')
+                                html.Button('Submit', id = 'check-job'),
+                                html.Button('', id = 'submit-job', style = {'visibility':'hidden'})
                             ],
                             style = {'display':'inline-block', 'margin':'0 auto'}   #style="height:55px; width:150px"
                         )
@@ -565,6 +544,72 @@ def checkEmailValidity(val):
         return {'border':'1px solid #94f033', 'outline':'0'}
     return {'border':'1px solid red'}
 
+#Check input presence
+@app.callback(
+    [Output('submit-job', 'n_clicks'),
+    Output('modal', 'is_open'),
+    Output('available-genome', 'className'),
+    Output('available-pam', 'className'),
+    Output('text-guides', 'style'),
+    Output('mms', 'className'),
+    Output('dna', 'className'),
+    Output('rna', 'className')],
+    [Input('check-job','n_clicks'),
+    Input('close','n_clicks')],
+    [State('available-genome', 'value'),
+    State('available-pam','value'),
+    State('text-guides', 'value'),
+    State('mms','value'),
+    State('dna','value'),
+    State('rna','value'),
+    State("modal", "is_open")]
+)
+def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, is_open):
+    if n is None:
+        raise PreventUpdate
+
+    
+    classname_red = 'missing-input'
+    genome_update = None
+    pam_update = None
+    text_update = {'width':'450px', 'height':'160px'}
+    mms_update = None
+    dna_update = None
+    rna_update = None
+    update_style = False
+
+    
+    if genome_selected is None or genome_selected is '':
+        genome_update = classname_red
+        update_style = True
+    if pam is None or pam is '':
+        pam_update = classname_red
+        update_style = True
+    if text_guides is None or text_guides is '':
+        text_update = {'width':'450px', 'height':'160px','border': '1px solid red'}
+        update_style = True
+    if mms is None or str(mms) is '':
+        mms_update = classname_red
+        update_style = True
+    if dna is None or str(dna) is '':
+        dna_update = classname_red
+        update_style = True
+    if rna is None or str(rna) is '':
+        rna_update = classname_red
+        update_style = True
+    
+    if (n or n_close) and is_open:
+        return None, not is_open, genome_update, pam_update, text_update, mms_update, dna_update, rna_update
+
+    if update_style:
+        return 10, True, genome_update, pam_update, text_update, mms_update, dna_update, rna_update
+    
+    
+    
+    if (n or n_close) and is_open:
+        return None, not is_open, 'test'
+    
+    return 10, False, 'test'
 
 #Submit Job, change url
 @app.callback(
@@ -575,7 +620,6 @@ def checkEmailValidity(val):
     State('available-genome', 'value'),
     State('available-pam','value'),
     State('text-guides', 'value'),
-    State('upload-guides','contents'),
     State('mms','value'),
     State('dna','value'),
     State('rna','value'),
@@ -584,7 +628,7 @@ def checkEmailValidity(val):
     State('checklist-advanced', 'value'),
     State('example-email','value')]
 )
-def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna, rna, gecko_opt, genome_ref_opt, adv_opts,dest_email):      #NOTE startJob
+def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_opt, genome_ref_opt, adv_opts,dest_email):      #NOTE startJob
     '''
     genome_selected can be Human genome (hg19), or Human Genome (hg19) + 1000 Genome Project, the '+' character defines the ref or enr version.
     Note that pam parameter can be 5'-NGG-3', but the corresponding filename is 5'-NGG-3'.txt
@@ -593,7 +637,9 @@ def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna,
     '''
     if n is None:
         raise PreventUpdate
-    
+    if n == 10:
+        print('10')
+        raise PreventUpdate
     #Check input, else give simple input
     if genome_selected is None or genome_selected is '':
         genome_selected = 'hg19_ref'
@@ -603,6 +649,8 @@ def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna,
         text_guides = 'GAGTCCGAGCAGAAGAAGAA'
     else:
         text_guides = text_guides.strip()
+        if len(text_guides.split('\n') > 1000):
+            text_guides = '\n'.join(text_guides.split('\n')[:1000]).strip()
         if ( not all(len(elem) == len(text_guides.split('\n')[0]) for elem in text_guides.split('\n'))):
             text_guides = selectSameLenGuides(text_guides)
 
@@ -637,48 +685,35 @@ def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna,
     genome_ref = genome_selected.split('+')[0]              #+ char to separate ref and vcf, eg Human_genome+1000_genome_project
     if genome_ref == genome_selected:
         ref_comparison = False
-    #NOTE Indexed genomes names are PAM + _ + bMax + _ + genome_selected/genome_enr
+    #NOTE Indexed genomes names are PAM + _ + bMax + _ + genome_selected
     
     pam_len = 0
     custom_pam = None
-    if custom_pam is not None and custom_pam is not '':             #NOTE disabled, not updated to new PAM style (5'-NGG-3'), only else is working
-        pam_char = custom_pam
-        pam_len = len(pam_char)
-        #Save to file as NNNN...PAM, but first check what guides have been inserted
-        if text_guides is not None and text_guides is not '':
-            n_number = len(text_guides.split('\n')[0])
-            raise PreventUpdate
+
+    with open('pam/' + pam + '.txt') as pam_file:
+        pam_char = pam_file.readline()
+        index_pam_value = pam_char.split(' ')[-1]
+        if int(pam_char.split(' ')[-1]) < 0:
+            end_idx = int(pam_char.split(' ')[-1]) * (-1)
+            pam_char = pam_char.split(' ')[0][0 : end_idx]
+            pam_len = end_idx
+            pam_begin = True
         else:
-            decoded_guides = parse_contents(file_guides).decode('utf-8')
-            n_number = len(decoded_guides.split('\n')[0]) - decoded_guides.split('\n')[0].count('N')
-        with open(result_dir + '/pam.txt', 'w') as pam_file:
-            pam_file.write(('N' * n_number) + pam_char)
-            pam = result_dir + '/pam.txt'
+            end_idx = int(pam_char.split(' ')[-1])
+            pam_char = pam_char.split(' ')[0][end_idx * (-1):]
+            pam_len = end_idx
+            pam_begin = False
+
+    len_guides = len(text_guides.split('\n')[0])
+    if (pam_begin):
+        pam_to_file = pam_char + ('N' * len_guides) + ' ' + index_pam_value
     else:
-        with open('pam/' + pam + '.txt') as pam_file:
-            pam_char = pam_file.readline()
-            index_pam_value = pam_char.split(' ')[-1]
-            if int(pam_char.split(' ')[-1]) < 0:
-                end_idx = int(pam_char.split(' ')[-1]) * (-1)
-                pam_char = pam_char.split(' ')[0][0 : end_idx]
-                pam_len = end_idx
-                pam_begin = True
-            else:
-                end_idx = int(pam_char.split(' ')[-1])
-                pam_char = pam_char.split(' ')[0][end_idx * (-1):]
-                pam_len = end_idx
-                pam_begin = False
+        pam_to_file = ('N' * len_guides) + pam_char + ' ' + index_pam_value
 
-        len_guides = len(text_guides.split('\n')[0])
-        if (pam_begin):
-            pam_to_file = pam_char + ('N' * len_guides) + ' ' + index_pam_value
-        else:
-            pam_to_file = ('N' * len_guides) + pam_char + ' ' + index_pam_value
-
-        save_pam_file = open(result_dir + '/pam.txt', 'w')
-        save_pam_file.write(pam_to_file)
-        save_pam_file.close()
-        pam = result_dir + '/pam.txt'
+    save_pam_file = open(result_dir + '/pam.txt', 'w')
+    save_pam_file.write(pam_to_file)
+    save_pam_file.close()
+    pam = result_dir + '/pam.txt'
         
     guides_file = result_dir + '/guides.txt'
     if text_guides is not None and text_guides is not '':
@@ -689,11 +724,6 @@ def changeUrl(n, href, genome_selected, pam, text_guides, file_guides, mms, dna,
             text_guides = text_guides.replace('\n', 'N' * pam_len + '\n') + 'N' * pam_len
         save_guides_file.write(text_guides)
         save_guides_file.close()     
-    else:                                                                   #NOTE remove functionality to upload txt file with guides?
-        decoded_guides = parse_contents(file_guides).decode('utf-8')
-        save_guides_file = open(result_dir + '/guides.txt', 'w')
-        save_guides_file.write(decoded_guides)
-        save_guides_file.close()
 
     if (int(dna) == 0 and int(rna) == 0):
         search_index = False
@@ -986,16 +1016,6 @@ def showImages(sel_cel, mms, all_guides, job_id):
         radar_href = ''
     return barplot_src, barplot_href, radar_src, radar_href
 
-#Show filename if user upload a file
-@app.callback(
-    [Output('uploaded-filename', 'children'),
-    Output('uploaded-filename', 'style')],
-    [Input('upload-guides', 'filename')]
-)
-def showUploadedFilename(name):
-    if name is None:
-        raise PreventUpdate
-    return 'Uploaded file: ' + name, {'visibility':'visible'}
 
 #If the input guides are different len, select the ones with same length as the first
 def selectSameLenGuides(list_guides):
@@ -1006,9 +1026,6 @@ def selectSameLenGuides(list_guides):
             same_len_guides_list.append(guide)
     same_len_guides = '\n'.join(same_len_guides_list).strip()
     return same_len_guides
-
-
-
 
 if __name__ == '__main__':
     app.run_server(debug=True)
