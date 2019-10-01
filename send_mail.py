@@ -17,7 +17,7 @@ with open (sys.argv[1] + '/email.txt', 'r') as e:
     date_submission = e.readline().strip()
     msg['Subject'] = 'CRISPRitz - Job completed'
 
-    msg['From'] = "elia.dirupo@hotmail.it"
+    msg['From'] = "test.cri@hotmail.com"
     content_email = 'The requested job is completed, visit the following link ' + job_link + ' to view the report.'
     #TODO add Parameters section with date and other parameters
     msg.set_content(content_email)
@@ -34,7 +34,7 @@ with open (sys.argv[1] + '/email.txt', 'r') as e:
     server.starttls(context=context)
     server.ehlo()
     #login and send message
-    server.login("elia.dirupo@hotmail.it", "--insert mail")
+    server.login("test.cri@hotmail.com", "univrCrispritz")
     server.send_message(msg)
     #close connection
     server.quit()

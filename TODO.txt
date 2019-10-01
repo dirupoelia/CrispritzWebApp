@@ -74,3 +74,21 @@ docker run -p 8080:80 my_docker python3 app_simplified_bootstrap.py
 -Pe crispritz: quando trovo un target che ha + di una variante, se sono varianti di persone diverse la scarto.
 Alla fine per ogni targets trovato devo avere un elenco dei sample da dove sono arrivati e fare un istogramma dove indico, per ogni gruppo di sampl (1s, 2s, 3s) il numero di target trovati:
 eg.  ci sono 1000 target che hanno 3 samples
+
+
+
+
+---01/10
+-Inserire una guida gìà come esempio
+-Mettere 7 mms come massimo		X
+-Inserire possibilità di mettere sequenze come crispor (con varianti!), oppure posiizioni sul genoma. Da questa sequenza estraggo la pam selezionata
+e ottengo delle guide che poi vado a cercare su genoma enr.
+-Senza cliccare su view vai direttamente alla pagina
+-Result con 2 'pagine'
+	-Ho il profiling completo: per ogni soglia di mms metto la somma dei profiling su tutte le guide in quella colonna
+	-Una in cui seleziono la guida e ho il profiling di quella guida e le immagini
+	-Vedere come funziona doench e cfd e mettere cfd e doench su on targets, solo cfd su off targets. (vedere crispor)
+	-Se clicco su più info, compare la tabella completa di tutti gli offtargets (per quella guida?), ordinate in base a (mm+bulge più basso),
+	(priorità a offtargets sul gen enriched), (cfd e doench più alti -> cut efficiency più alta). Colorare con colori diversi gli offt se vengono da gen enr o ref
+-Inserire link per scaricare tutti gli offt, lasciar gestire ad apache il tutto
+-Inserire un riassunto dei parametri della ricerca

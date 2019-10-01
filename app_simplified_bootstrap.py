@@ -73,7 +73,7 @@ for dir in onlydir:
     var_dir.append({'label': dir, 'value' : dir})
 
 #Available mismatches and bulges
-av_mismatches = [{'label': i, 'value': i} for i in range(0, 11)]
+av_mismatches = [{'label': i, 'value': i} for i in range(0, 8)]
 av_bulges = [{'label': i, 'value': i} for i in range(0, 6)]
 search_bar = dbc.Row(
     [
@@ -668,7 +668,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         text_guides = 'GAGTCCGAGCAGAAGAAGAA'
     else:
         text_guides = text_guides.strip()
-        if len(text_guides.split('\n') > 1000):
+        if len(text_guides.split('\n')) > 1000:
             text_guides = '\n'.join(text_guides.split('\n')[:1000]).strip()
         if ( not all(len(elem) == len(text_guides.split('\n')[0]) for elem in text_guides.split('\n'))):
             text_guides = selectSameLenGuides(text_guides)
@@ -782,16 +782,19 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     #all_result_dirs.remove('test')
     for check_param_dir in all_result_dirs:
         if os.path.exists('Results/' + check_param_dir + '/Params.txt'):
-            if (filecmp.cmp('Results/' + check_param_dir + '/Params.txt', result_dir + '/Params.txt' )):
-                    guides1 = open('Results/' + check_param_dir + '/guides.txt').read().split('\n')
-                    guides2 = open('Results/' + job_id + '/guides.txt').read().split('\n')
-                    if (collections.Counter(guides1) == collections.Counter(guides2)):
-                        search = False
-                        search_index = False
-                        subprocess.run(['cp $PWD/Results/' + check_param_dir + '/' + check_param_dir + '* ' + result_dir + '/'], shell = True)
-                        subprocess.run(['cp $PWD/Results/' + check_param_dir + '/*.png ' + result_dir + '/'], shell = True)
-                        subprocess.run(['rename \'s/' + check_param_dir + '/' + job_id + '/g\' ' + result_dir + '/*'], shell = True)
-                        break           
+            if os.path.exists('Results/' + check_param_dir + '/log.txt'):
+                with open('Results/' + check_param_dir + '/log.txt') as log:
+                    if ('Job\tDone' in log.read()):
+                        if (filecmp.cmp('Results/' + check_param_dir + '/Params.txt', result_dir + '/Params.txt' )):
+                                guides1 = open('Results/' + check_param_dir + '/guides.txt').read().split('\n')
+                                guides2 = open('Results/' + job_id + '/guides.txt').read().split('\n')
+                                if (collections.Counter(guides1) == collections.Counter(guides2)):
+                                    search = False
+                                    search_index = False
+                                    subprocess.run(['cp $PWD/Results/' + check_param_dir + '/' + check_param_dir + '* ' + result_dir + '/'], shell = True)
+                                    subprocess.run(['cp $PWD/Results/' + check_param_dir + '/*.png ' + result_dir + '/'], shell = True)
+                                    subprocess.run(['rename \'s/' + check_param_dir + '/' + job_id + '/g\' ' + result_dir + '/*'], shell = True)
+                                    break           
     
     #Annotation
     if (not search and not search_index):

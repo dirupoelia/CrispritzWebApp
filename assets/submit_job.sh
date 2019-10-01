@@ -72,6 +72,8 @@ echo 'Annotation\tDone\t'$(date) >> $1'/'log.txt
 
 #Start generate report
 echo 'Report\tStart\t'$(date) >> $1'/'log.txt
+mkdir $jobid
+cd $jobid
 if [ ${13} = 'True' ]; then
     #echo 'crispritz report'
     #-profile emx1.hg19.profile.xls -extprofile emx1.hg19.extended_profile.xls -exons emx1.hg19.annotated.ExonsCount.txt -introns emx1.hg19.annotated.IntronsCount.txt -dnase emx1.hg19.annotated.DNAseCount.txt -ctcf emx1.hg19.annotated.CTCFCount.txt -promoters emx1.hg19.annotated.PromotersCount.txt -gecko
@@ -80,27 +82,28 @@ if [ ${13} = 'True' ]; then
             
             if [ ${14} = 'True' ]; then         #If -gecko
                 if [ ${15} = 'True' ]; then     #If genome_ref comparison
-                    crispritz.py generate-report $line -mm $i -profile $1'/'$jobid'.profile.xls' -extprofile $1/*.extended_profile.xls -exons $1'/'$jobid'.annotated.ExonsCount.txt' -introns $1'/'$jobid'.annotated.IntronsCount.txt' -dnase $1'/'$jobid'.annotated.DNAseCount.txt' -ctcf $1'/'$jobid'.annotated.CTCFCount.txt' -promoters $1'/'$jobid'.annotated.PromotersCount.txt' -sumref $1/ref/$jobid'_ref'.annotated.SummaryCount.txt -sumenr $1'/'$jobid'.annotated.SummaryCount.txt' -gecko
+                    crispritz.py generate-report $line -mm $i -profile ../$1'/'$jobid'.profile.xls' -extprofile ../$1/*.extended_profile.xls -exons ../$1'/'$jobid'.annotated.ExonsCount.txt' -introns ../$1'/'$jobid'.annotated.IntronsCount.txt' -dnase ../$1'/'$jobid'.annotated.DNAseCount.txt' -ctcf ../$1'/'$jobid'.annotated.CTCFCount.txt' -promoters ../$1'/'$jobid'.annotated.PromotersCount.txt' -sumref ../$1/ref/$jobid'_ref'.annotated.SummaryCount.txt -sumenr ../$1'/'$jobid'.annotated.SummaryCount.txt' -gecko
                 else
-                    crispritz.py generate-report $line -mm $i -profile $1'/'$jobid'.profile.xls' -extprofile $1/*.extended_profile.xls -exons $1'/'$jobid'.annotated.ExonsCount.txt' -introns $1'/'$jobid'.annotated.IntronsCount.txt' -dnase $1'/'$jobid'.annotated.DNAseCount.txt' -ctcf $1'/'$jobid'.annotated.CTCFCount.txt' -promoters $1'/'$jobid'.annotated.PromotersCount.txt' -gecko
+                    crispritz.py generate-report $line -mm $i -profile ../$1'/'$jobid'.profile.xls' -extprofile ../$1/*.extended_profile.xls -exons ../$1'/'$jobid'.annotated.ExonsCount.txt' -introns ../$1'/'$jobid'.annotated.IntronsCount.txt' -dnase ../$1'/'$jobid'.annotated.DNAseCount.txt' -ctcf ../$1'/'$jobid'.annotated.CTCFCount.txt' -promoters ../$1'/'$jobid'.annotated.PromotersCount.txt' -gecko
                 fi
             else
                 if [ ${15} = 'True' ]; then     #If genome_ref comparison 
-                    crispritz.py generate-report $line -mm $i -profile $1'/'$jobid'.profile.xls' -extprofile $1/*.extended_profile.xls -exons $1'/'$jobid'.annotated.ExonsCount.txt' -introns $1'/'$jobid'.annotated.IntronsCount.txt' -dnase $1'/'$jobid'.annotated.DNAseCount.txt' -ctcf $1'/'$jobid'.annotated.CTCFCount.txt' -promoters $1'/'$jobid'.annotated.PromotersCount.txt' -sumref $1/ref/$jobid'_ref'.annotated.SummaryCount.txt -sumenr $1'/'$jobid'.annotated.SummaryCount.txt'
+                    crispritz.py generate-report $line -mm $i -profile ../$1'/'$jobid'.profile.xls' -extprofile ../$1/*.extended_profile.xls -exons ../$1'/'$jobid'.annotated.ExonsCount.txt' -introns ../$1'/'$jobid'.annotated.IntronsCount.txt' -dnase ../$1'/'$jobid'.annotated.DNAseCount.txt' -ctcf ../$1'/'$jobid'.annotated.CTCFCount.txt' -promoters ../$1'/'$jobid'.annotated.PromotersCount.txt' -sumref ../$1/ref/$jobid'_ref'.annotated.SummaryCount.txt -sumenr ../$1'/'$jobid'.annotated.SummaryCount.txt'
                 else
-                    crispritz.py generate-report $line -mm $i -profile $1'/'$jobid'.profile.xls' -extprofile $1/*.extended_profile.xls -exons $1'/'$jobid'.annotated.ExonsCount.txt' -introns $1'/'$jobid'.annotated.IntronsCount.txt' -dnase $1'/'$jobid'.annotated.DNAseCount.txt' -ctcf $1'/'$jobid'.annotated.CTCFCount.txt' -promoters $1'/'$jobid'.annotated.PromotersCount.txt'
+                    crispritz.py generate-report $line -mm $i -profile ../$1'/'$jobid'.profile.xls' -extprofile ../$1/*.extended_profile.xls -exons ../$1'/'$jobid'.annotated.ExonsCount.txt' -introns ../$1'/'$jobid'.annotated.IntronsCount.txt' -dnase ../$1'/'$jobid'.annotated.DNAseCount.txt' -ctcf ../$1'/'$jobid'.annotated.CTCFCount.txt' -promoters ../$1'/'$jobid'.annotated.PromotersCount.txt'
                 fi
             fi
 
             
         done
 
-    done < $6
+    done < ../$6
   
 fi
-mv ./*.pdf $1
-mv ./*.png $1   #TODO move these command inside if, and check for when to do annotation ref and enr for barplot
-
+mv ./*.pdf ../$1
+mv ./*.png ../$1   #TODO move these command inside if, and check for when to do annotation ref and enr for barplot
+cd ..
+rm -r $jobid
 mkdir assets/Img/$jobid
 cp $PWD/$1/*.png assets/Img/$jobid/
 echo 'Report\tDone\t'$(date) >> $1'/'log.txt
