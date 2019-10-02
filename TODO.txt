@@ -75,20 +75,31 @@ docker run -p 8080:80 my_docker python3 app_simplified_bootstrap.py
 Alla fine per ogni targets trovato devo avere un elenco dei sample da dove sono arrivati e fare un istogramma dove indico, per ogni gruppo di sampl (1s, 2s, 3s) il numero di target trovati:
 eg.  ci sono 1000 target che hanno 3 samples
 
+-Quando faccio enrich genome, mi tengo i file .alt creati, o li modifico in modo da avere anche la lista di sample da dove arrivano
+-Dopoche ho ottenuto i targets dalla ricerca, per ogni target controllo:
+	-Se non ha iupac, non faccio nulla
+	-Se ha 1 iupac, controllo sul file .alt, in base alla posizione (position + posizione dello iupac), a che sample appartengono e lo aggiungo ai vari sample1.txt, sample2.txt ... file
+	-Se ha 1+ iupac, controllo il primo iupac a che sample appartengono (come sopra), poi faccio la stessa cosa col 2 iupac e così via. Faccio l'intersezione tra i vari gruppi
+	di sample trovati e se il risultato non è vuoto, aggiungo quel sample nei sample.txt rimasti nell'intersezione.
+
 
 
 
 ---01/10
 -Inserire una guida gìà come esempio
 -Mettere 7 mms come massimo		X
--Inserire possibilità di mettere sequenze come crispor (con varianti!), oppure posiizioni sul genoma. Da questa sequenza estraggo la pam selezionata
+-Inserire possibilità di mettere sequenze come crispor (con varianti!), oppure posizizioni sul genoma. Da questa sequenza estraggo la pam selezionata
 e ottengo delle guide che poi vado a cercare su genoma enr.
+	-Inserire controllo sugli input mancanti anche ai textbox e dropdown sulle sequenze
+	-Inserire controllo correttezza input textbox e dropdown sequenze
 -Senza cliccare su view vai direttamente alla pagina
 -Result con 2 'pagine'
-	-Ho il profiling completo: per ogni soglia di mms metto la somma dei profiling su tutte le guide in quella colonna
+	-Ho il profiling completo: per ogni soglia di mms metto la somma dei profiling su tutte le guide in quella colonna <- non mi da molte info, non lo faccio
 	-Una in cui seleziono la guida e ho il profiling di quella guida e le immagini
+		-Mi copio la tabella del profiling sul sito
 	-Vedere come funziona doench e cfd e mettere cfd e doench su on targets, solo cfd su off targets. (vedere crispor)
-	-Se clicco su più info, compare la tabella completa di tutti gli offtargets (per quella guida?), ordinate in base a (mm+bulge più basso),
+	-Se clicco su più info, compare la tabella completa di tutti gli offtargets (per quella guida), ordinate in base a (mm+bulge più basso),
 	(priorità a offtargets sul gen enriched), (cfd e doench più alti -> cut efficiency più alta). Colorare con colori diversi gli offt se vengono da gen enr o ref
+	-Per colorare, se un target ha una variante allora è del gen enr, se non le ha allora del gen ref --> controllare se i ref possono avere iupac
 -Inserire link per scaricare tutti gli offt, lasciar gestire ad apache il tutto
 -Inserire un riassunto dei parametri della ricerca

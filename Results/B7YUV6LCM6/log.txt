@@ -1,0 +1,10 @@
+Job	Start	mer 2 ott 2019, 16.00.35, CEST
+Search-index	Start	mer 2 ott 2019, 16.00.35, CEST
+Search-index	Done	mer 2 ott 2019, 16.00.42, CEST
+Search	Start	mer 2 ott 2019, 16.00.42, CEST
+Search	Done	mer 2 ott 2019, 16.00.42, CEST
+Annotation	Start	mer 2 ott 2019, 16.00.42, CEST
+Annotation	Done	mer 2 ott 2019, 16.01.28, CEST
+Report	Start	mer 2 ott 2019, 16.01.28, CEST
+Report	Done	mer 2 ott 2019, 16.01.36, CEST
+Job	Done	mer 2 ott 2019, 16.01.36, CEST
