@@ -96,10 +96,16 @@ e ottengo delle guide che poi vado a cercare su genoma enr.
 -Result con 2 'pagine'
 	-Ho il profiling completo: per ogni soglia di mms metto la somma dei profiling su tutte le guide in quella colonna <- non mi da molte info, non lo faccio
 	-Una in cui seleziono la guida e ho il profiling di quella guida e le immagini
-		-Mi copio la tabella del profiling sul sito
+		-Mi copio la tabella del profiling sul sito			X
 	-Vedere come funziona doench e cfd e mettere cfd e doench su on targets, solo cfd su off targets. (vedere crispor)
 	-Se clicco su più info, compare la tabella completa di tutti gli offtargets (per quella guida), ordinate in base a (mm+bulge più basso),
 	(priorità a offtargets sul gen enriched), (cfd e doench più alti -> cut efficiency più alta). Colorare con colori diversi gli offt se vengono da gen enr o ref
 	-Per colorare, se un target ha una variante allora è del gen enr, se non le ha allora del gen ref --> controllare se i ref possono avere iupac
+		-PROBLEMA: se nei targets ho uno IUPAC, 'perdo' l'informazione riguardo che lettera c'era in quel posto nel ref -> vedere se avere l'info del ref
+		è importante (allora dobbiamo distinguere -> fare due ricerche su enr e ref) oppure no (fare singola ricerca e dividere in base a presenza iupac)
 -Inserire link per scaricare tutti gli offt, lasciar gestire ad apache il tutto
 -Inserire un riassunto dei parametri della ricerca
+
+
+-Fare un group by per ogni posizione e vedere se i ref e il var è sempre lo stesso o cambia (potrei avere 2500 A G e il resto A T)
+-Generare index genome NNN e 2 bulges su MV 

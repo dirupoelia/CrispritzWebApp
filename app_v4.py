@@ -494,13 +494,21 @@ final_list.append(html.Div(id='warning-div'))
 final_list.append(
     html.H3('Result Summary')
 )
+final_list.append(html.P('Select a Guide to view more details'))
 col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'CFD', 'Doench2016']
 col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric']
 cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
 
 final_list.append(
-    html.Div(id = 'div-general-profile-table')
+    html.Div(
+        dash_table.DataTable(
+            id = 'general-profile-table',
+            page_size=PAGE_SIZE
+        )
+        ,id = 'div-general-profile-table')
 )
+
+final_list.append(html.Br())
 final_list.append(
     html.Div(
         dash_table.DataTable(
@@ -518,7 +526,8 @@ final_list.append(
             filter_action='custom',
             filter_query=''
         ),
-        id = 'div-result-table'
+        id = 'div-result-table',
+        style = {'visibility':'hidden'}
     )
 )
 
@@ -526,12 +535,6 @@ final_list.append(html.Br())
 final_list.append(
     html.Div(
         [
-            dash_table.DataTable(
-                id = 'guide-table',
-                columns = [{'name':'Available Guides', 'id':'Guides', 'type':'text'}],
-                page_size=PAGE_SIZE
-                
-            ),
             html.Div(
                 [
                     html.P('Select the mismatch value'),
@@ -576,27 +579,12 @@ final_list = []
 final_list.append(
     html.Div(
     [
-        dbc.Button("Toggle", id="alert-toggle-auto", className="mr-1"),
-        html.Hr(),
-        dbc.Alert(
-            "Hello! I am an auto-dismissing alert!",
-            id="alert-auto",
-            is_open=True,
-            duration=4000,
-        ),
+        html.P('Test')
+        
     ]
 )
 )
 
-@app.callback(
-    Output("alert-auto", "is_open"),
-    [Input("alert-toggle-auto", "n_clicks")],
-    [State("alert-auto", "is_open")],
-)
-def toggle_alert(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 test_page = html.Div(final_list, style = {'margin':'1%'})
 ##################################################CALLBACKS##################################################
@@ -901,17 +889,22 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
 @app.callback(
     [Output('page-content', 'children'),
     Output('job-link', 'children')],
-    [Input('url', 'pathname')],
-    [State('url','href'), 
-    State('url','search')
-    ]
+    [Input('url', 'href'), Input('url','hash'), Input('url','pathname'), Input('url','search')],
+    # [State('url','pathname'), 
+    # State('url','search')]
 )
-def changePage(path, href, search):
+def changePage( href, hash_guide, path,search):
+    print('href', href)
+    print('hash', hash_guide)
+    print('pathname', path)
+    print('search', search)
 
     if path == '/load':
         return load_page, 'http://127.0.0.1:8050/load' + search #NOTE change the url part when DNS are changed
     if path == '/result':
-        return result_page, 'http://127.0.0.1:8050/load' + search
+        if hash_guide is None or hash_guide is '':
+            return result_page, 'http://127.0.0.1:8050/load' + search
+        return test_page, 'http://127.0.0.1:8050/load' + search
     if path == '/test-page':
         return test_page, 'http://127.0.0.1:8050/load' + search
     return index_page, ''
@@ -995,20 +988,26 @@ def populateTable(pathname, search):
 #Send the data when next or prev button is clicked on the result table
 @app.callback(
     [Output('result-table', 'data'),
-    Output('guide-table', 'data'),
     Output('mms-dropdown','options'),
-    Output('warning-div', 'children')],
+    Output('warning-div', 'children'),
+    Output('general-profile-table', 'columns'),
+    Output('general-profile-table', 'data'),
+    Output('div-result-table', 'style')],
     [Input('signal', 'children'),
      Input('result-table', "page_current"),
      Input('result-table', "page_size"),
      Input('result-table', "sort_by"),
-     Input('result-table', 'filter_query')]
+     Input('result-table', 'filter_query'),
+     Input('general-profile-table','selected_cells')],
+     [State('general-profile-table', 'data')]
 )
-def update_table(value, page_current,page_size, sort_by, filter):
+def update_table(value, page_current,page_size, sort_by, filter, sel_cel, all_guides):
     #print('signal_children', value)
     if value is None:
         raise PreventUpdate
-    
+    if value == 'not_exists':
+        return [], [] , dbc.Alert("The selected result does not exist", color = "danger"), [], [], {'visibility':'hidden'}
+
     #Load mismatches
     with open('Results/' + value + '/Params.txt') as p:
        mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
@@ -1020,61 +1019,73 @@ def update_table(value, page_current,page_size, sort_by, filter):
     for i in range(mms + 1):
         col_profile_general.append(str(i) + ' Mismatches')
     col_type = ['numeric' for i in col_profile_general]
+        
+    filtering_expressions = filter.split(' && ')
+    if sel_cel:
+        guide = all_guides[int(sel_cel[0]['row'])]['Guide']
+        filtering_expressions = ['{crRNA} = ' + guide]      #TODO currently only this filter will be applied when a guide is selected
+        df = global_store(value)
+        dff = df
+        for filter_part in filtering_expressions:
+            col_name, operator, filter_value = split_filter_part(filter_part)
 
-    if value == 'not_exists':
-        return [], [], [] , dbc.Alert("The selected result does not exist", color = "danger"), col_profile_general
-    
-    filtering_expressions = filter.split(' && ')    
-    df = global_store(value)
-    dff = df
-    for filter_part in filtering_expressions:
-        col_name, operator, filter_value = split_filter_part(filter_part)
+            if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+                # these operators match pandas series operator method names
+                dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
+            elif operator == 'contains':
+                dff = dff.loc[dff[col_name].str.contains(filter_value)]
+            elif operator == 'datestartswith':
+                # this is a simplification of the front-end filtering logic,
+                # only works with complete fields in standard format
+                dff = dff.loc[dff[col_name].str.startswith(filter_value)]
 
-        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
-            # these operators match pandas series operator method names
-            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
-        elif operator == 'contains':
-            dff = dff.loc[dff[col_name].str.contains(filter_value)]
-        elif operator == 'datestartswith':
-            # this is a simplification of the front-end filtering logic,
-            # only works with complete fields in standard format
-            dff = dff.loc[dff[col_name].str.startswith(filter_value)]
-
-    if len(sort_by):
-        dff = dff.sort_values(
-            [col['column_id'] for col in sort_by],
-            ascending=[
-                col['direction'] == 'asc'
-                for col in sort_by
-            ],
-            inplace=False
-        )
-    
-    #Load guide table
-    df_guide = pd.read_csv('Results/' + value + '/guides.txt', names = ['Guides'])
+        if len(sort_by):
+            dff = dff.sort_values(
+                [col['column_id'] for col in sort_by],
+                ascending=[
+                    col['direction'] == 'asc'
+                    for col in sort_by
+                ],
+                inplace=False
+            )
 
     #Check if results are not 0
     warning_no_res = ''
+    if not sel_cel:
+        dff = pd.DataFrame()    #TODO test
+
     if (len(dff.index) == 0 ):
         warning_no_res = dbc.Alert("No results were found with the given parameters", color = "warning")
     
     #Load profile
-    profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls', sep = '\t')
+    try:
+        profile = pd.read_csv('Results/' + value + '/' + value + '.profile_complete.xls')   #NOTE profile_complete has ',' as separator 
+    except:
+        profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls', sep = '\t')    #NOTE profile has \t as separator or ','
+        if len(profile.columns) == 1:
+            profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls')
+    
+    columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
+    keep_column = ['GUIDE', 'ONT', 'OFFT']
+    for i in range (mms + 1):
+        columns_profile_table.append({'name': str(i) + ' Mismatches', 'id':str(i) + ' Mismatches', 'type':'numeric'})
+        keep_column.append(str(i) + 'MM')
 
-    rename_columns = {"ONT":'Total On-Targets', 'OFFT':'Total Off-Targets'}
+   
+    profile = profile[keep_column]
+    rename_columns = {'GUIDE':'Guide',"ONT":'Total On-Targets', 'OFFT':'Total Off-Targets'}
     for i in range(mms + 1):
         rename_columns[str(i) + 'MM'] = str(i) + ' Mismatches'
-    profile.rename(columns = rename_columns, inplace = True)
-    print (rename_columns)
-    print(profile.columns)
-    ont_index = profile.columns.get_loc('Total On-Targets')
-    profile = profile.iloc[:,ont_index:-1]
-    profile = profile.drop(profile.columns[2:4], axis=1) #Now profile is ONT, OFFT, 0MM, 1MM ... N MM
-    
-    print (profile)
+
+
+    profile.rename(columns = rename_columns, inplace = True)    #Now profile is Guide, Total On-targets, ...
+     
+    vis = {'visibility':'hidden'}
+    if sel_cel:
+        vis = {'visibility':'visible'}
     return dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
-    ].to_dict('records'), df_guide.to_dict('records'), mms_values, warning_no_res,col_profile_general
+    ].to_dict('records'), mms_values, warning_no_res, columns_profile_table, profile.to_dict('records'), vis
 
 #For filtering
 def split_filter_part(filter_part):
@@ -1114,9 +1125,9 @@ def parse_contents(contents):
     Output('link-barplot', 'href'),
     Output('radar-img','src'),
     Output('link-radar','href')],
-    [Input('guide-table','selected_cells'),
+    [Input('general-profile-table','selected_cells'),
     Input('mms-dropdown','value')],
-    [State('guide-table', 'data'),
+    [State('general-profile-table', 'data'),
     State('url','search')]
 )
 def showImages(sel_cel, mms, all_guides, job_id):
@@ -1130,7 +1141,7 @@ def showImages(sel_cel, mms, all_guides, job_id):
     except:
         barplot_src = ''
         barplot_href = ''
-    guide = all_guides[int(sel_cel[0]['row'])]['Guides'] 
+    guide = all_guides[int(sel_cel[0]['row'])]['Guide'] 
     radar_img = 'summary_single_guide_' + guide + '_' + str(mms) + 'mm.png'
     try:
         radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
@@ -1139,6 +1150,21 @@ def showImages(sel_cel, mms, all_guides, job_id):
         radar_src = ''
         radar_href = ''
     return barplot_src, barplot_href, radar_src, radar_href
+
+#Redirect page when click on guide to show detailed targets
+# @app.callback(
+#     Output('url','hash'),
+#     [Input('general-profile-table','selected_cells')],
+#     [State('general-profile-table', 'data')]
+# )
+# def viewSpecificGuide(sel_cel, all_guides):
+#     if sel_cel is None:
+#         raise PreventUpdate
+#     if not sel_cel:             #Selecting next or previous on the table activate this callback, so this is to prevent
+#         raise PreventUpdate
+#     guide = all_guides[int(sel_cel[0]['row'])]['Guide'] #NOTE return corresponding guide even if select another cell in same row
+#     return '#' + guide
+
 
 
 #If the input guides are different len, select the ones with same length as the first
