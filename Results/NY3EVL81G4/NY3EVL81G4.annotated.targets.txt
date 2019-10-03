@@ -1,0 +1,1 @@
+#Bulge_type	crRNA	DNA	Chromosome	Position	Direction	Mismatches	Bulge_Size	Annotation_Type

@@ -226,13 +226,10 @@ tab_guides_content = html.Div(
 )
 tab_sequence_content = html.Div(
     [
-        html.P([
-            'Insert any sequence(s) where you want to search for crRNA targets', 
-            html.P('Or insert the genomic range to search to the selected genome') ,
-        ],
+        html.P(['Search crRNAs by inserting one or more genomic sequences.', html.P('Chromosome ranges can also be supplied')],
         style = {'word-wrap': 'break-word'}), 
 
-        dcc.Textarea(id = 'text-sequence', placeholder = '>chr1\nCCATCGGTGGCCGTTTGCCC\n>chr2 123:452', style = {'width':'450px', 'height':'160px'}),
+        dcc.Textarea(id = 'text-sequence', placeholder = '>sequence 1\nAAGTCCCAGGACTTCAGAAGagctgtgagaccttggc\n>sequence2\nchr1:11,130,540-11,130,751', style = {'width':'450px', 'height':'160px'}),
         #html.P('Note: a maximum number of 1000 sequences can be provided'),
         dbc.FormText('Note: a maximum number of 1000 characters can be provided', color = 'secondary')
     ],
@@ -509,6 +506,7 @@ final_list.append(
 )
 
 final_list.append(html.Br())
+final_list.append(html.P('List of Targets found for each guide'))
 final_list.append(
     html.Div(
         dash_table.DataTable(
@@ -524,10 +522,13 @@ final_list.append(
             sort_mode='multi',
             sort_by=[],
             filter_action='custom',
-            filter_query=''
+            filter_query='',
+            style_table={
+                'height': '300px',
+                #'overflowY': 'scroll',
+            },
         ),
         id = 'div-result-table',
-        style = {'visibility':'hidden'}
     )
 )
 
@@ -675,10 +676,10 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, is_
         pam_update = classname_red
         update_style = True
         miss_input_list.append('PAM')
-    if text_guides is None or text_guides is '':
-        text_update = {'width':'450px', 'height':'160px','border': '1px solid red'}
-        update_style = True
-        miss_input_list.append('crRNA sequence(s)')
+    # if text_guides is None or text_guides is '':
+        # text_update = {'width':'450px', 'height':'160px','border': '1px solid red'}
+        # update_style = True
+        # miss_input_list.append('crRNA sequence(s)')
     if mms is None or str(mms) is '':
         mms_update = classname_red
         update_style = True
@@ -889,22 +890,22 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
 @app.callback(
     [Output('page-content', 'children'),
     Output('job-link', 'children')],
-    [Input('url', 'href'), Input('url','hash'), Input('url','pathname'), Input('url','search')],
+    [Input('url', 'href'), Input('url','pathname'), Input('url','search')],
     # [State('url','pathname'), 
     # State('url','search')]
 )
-def changePage( href, hash_guide, path,search):
-    print('href', href)
-    print('hash', hash_guide)
-    print('pathname', path)
-    print('search', search)
+def changePage( href, path,search):
+    # print('href', href)
+    # print('hash', hash_guide)
+    # print('pathname', path)
+    # print('search', search)
 
     if path == '/load':
         return load_page, 'http://127.0.0.1:8050/load' + search #NOTE change the url part when DNS are changed
     if path == '/result':
-        if hash_guide is None or hash_guide is '':
-            return result_page, 'http://127.0.0.1:8050/load' + search
-        return test_page, 'http://127.0.0.1:8050/load' + search
+        #if hash_guide is None or hash_guide is '':
+        return result_page, 'http://127.0.0.1:8050/load' + search
+        #return test_page, 'http://127.0.0.1:8050/load' + search
     if path == '/test-page':
         return test_page, 'http://127.0.0.1:8050/load' + search
     return index_page, ''
@@ -991,22 +992,23 @@ def populateTable(pathname, search):
     Output('mms-dropdown','options'),
     Output('warning-div', 'children'),
     Output('general-profile-table', 'columns'),
-    Output('general-profile-table', 'data'),
-    Output('div-result-table', 'style')],
+    Output('general-profile-table', 'data')],
     [Input('signal', 'children'),
      Input('result-table', "page_current"),
      Input('result-table', "page_size"),
      Input('result-table', "sort_by"),
      Input('result-table', 'filter_query'),
      Input('general-profile-table','selected_cells')],
-     [State('general-profile-table', 'data')]
+     [State('general-profile-table', 'data'),
+     State('url', 'search')]
 )
-def update_table(value, page_current,page_size, sort_by, filter, sel_cel, all_guides):
+def update_table(value, page_current,page_size, sort_by, filter, sel_cel, all_guides, search):
     #print('signal_children', value)
+    print('sel_cel', sel_cel)
     if value is None:
         raise PreventUpdate
     if value == 'not_exists':
-        return [], [] , dbc.Alert("The selected result does not exist", color = "danger"), [], [], {'visibility':'hidden'}
+        return [], [] , dbc.Alert("The selected result does not exist", color = "danger"), [], []
 
     #Load mismatches
     with open('Results/' + value + '/Params.txt') as p:
@@ -1016,8 +1018,8 @@ def update_table(value, page_current,page_size, sort_by, filter, sel_cel, all_gu
     mms_values = [{'label':i, 'value':i} for i in range(mms + 1) ]      
     
     col_profile_general = ['Total On-Targets', 'Total Off-Targets']
-    for i in range(mms + 1):
-        col_profile_general.append(str(i) + ' Mismatches')
+    for i in range(mms):
+        col_profile_general.append(str(i+1) + ' Mismatches')
     col_type = ['numeric' for i in col_profile_general]
         
     filtering_expressions = filter.split(' && ')
@@ -1053,8 +1055,16 @@ def update_table(value, page_current,page_size, sort_by, filter, sel_cel, all_gu
     warning_no_res = ''
     if not sel_cel:
         dff = pd.DataFrame()    #TODO test
+    job_id = search.split('=')[-1]
+    job_directory = 'Results/' + job_id + '/'
+    with open(job_directory + job_id + '.targets.txt') as t:
+        no_result = False
+        t.readline()
+        last_line = t.readline()
+        if (last_line is '' or last_line is '\n'):
+            no_result = True
 
-    if (len(dff.index) == 0 ):
+    if (no_result):
         warning_no_res = dbc.Alert("No results were found with the given parameters", color = "warning")
     
     #Load profile
@@ -1067,25 +1077,22 @@ def update_table(value, page_current,page_size, sort_by, filter, sel_cel, all_gu
     
     columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
     keep_column = ['GUIDE', 'ONT', 'OFFT']
-    for i in range (mms + 1):
-        columns_profile_table.append({'name': str(i) + ' Mismatches', 'id':str(i) + ' Mismatches', 'type':'numeric'})
-        keep_column.append(str(i) + 'MM')
+    for i in range (mms):
+        print(i+1)
+        columns_profile_table.append({'name': str(i+1) + ' Mismatches', 'id':str(i+1) + ' Mismatches', 'type':'numeric'})
+        keep_column.append(str(i+1) + 'MM')
 
    
     profile = profile[keep_column]
     rename_columns = {'GUIDE':'Guide',"ONT":'Total On-Targets', 'OFFT':'Total Off-Targets'}
-    for i in range(mms + 1):
-        rename_columns[str(i) + 'MM'] = str(i) + ' Mismatches'
-
+    for i in range(mms):
+        rename_columns[str(i+1) + 'MM'] = str(i+1) + ' Mismatches'
 
     profile.rename(columns = rename_columns, inplace = True)    #Now profile is Guide, Total On-targets, ...
      
-    vis = {'visibility':'hidden'}
-    if sel_cel:
-        vis = {'visibility':'visible'}
     return dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
-    ].to_dict('records'), mms_values, warning_no_res, columns_profile_table, profile.to_dict('records'), vis
+    ].to_dict('records'), mms_values, warning_no_res, columns_profile_table, profile.to_dict('records')
 
 #For filtering
 def split_filter_part(filter_part):

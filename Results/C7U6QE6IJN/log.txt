@@ -1,0 +1,10 @@
+Job	Start	gio 3 ott 2019, 23.41.39, CEST
+Search-index	Start	gio 3 ott 2019, 23.41.39, CEST
+Search-index	Done	gio 3 ott 2019, 23.41.39, CEST
+Search	Start	gio 3 ott 2019, 23.41.39, CEST
+Search	Done	gio 3 ott 2019, 23.41.48, CEST
+Annotation	Start	gio 3 ott 2019, 23.41.48, CEST
+Annotation	Done	gio 3 ott 2019, 23.43.14, CEST
+Report	Start	gio 3 ott 2019, 23.43.14, CEST
+Report	Done	gio 3 ott 2019, 23.43.53, CEST
+Job	Done	gio 3 ott 2019, 23.43.53, CEST

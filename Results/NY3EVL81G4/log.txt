@@ -1,0 +1,10 @@
+Job	Start	ven 4 ott 2019, 00.18.31, CEST
+Search-index	Start	ven 4 ott 2019, 00.18.31, CEST
+Search-index	Done	ven 4 ott 2019, 00.18.31, CEST
+Search	Start	ven 4 ott 2019, 00.18.31, CEST
+Search	Done	ven 4 ott 2019, 00.18.40, CEST
+Annotation	Start	ven 4 ott 2019, 00.18.40, CEST
+Annotation	Done	ven 4 ott 2019, 00.20.07, CEST
+Report	Start	ven 4 ott 2019, 00.20.07, CEST
+Report	Done	ven 4 ott 2019, 00.20.09, CEST
+Job	Done	ven 4 ott 2019, 00.20.09, CEST
