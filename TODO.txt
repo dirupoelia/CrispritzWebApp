@@ -105,7 +105,13 @@ e ottengo delle guide che poi vado a cercare su genoma enr.
 		è importante (allora dobbiamo distinguere -> fare due ricerche su enr e ref) oppure no (fare singola ricerca e dividere in base a presenza iupac)
 -Inserire link per scaricare tutti gli offt, lasciar gestire ad apache il tutto
 -Inserire un riassunto dei parametri della ricerca
-
+-CFD score in notazione scientifica
+-Passare a Alessandro tutto quanto il codice per il sito
 
 -Fare un group by per ogni posizione e vedere se i ref e il var è sempre lo stesso o cambia (potrei avere 2500 A G e il resto A T)
 -Generare index genome NNN e 2 bulges su MV 
+
+-Fare script per tagliare sequenze
+-Fare in modo che clicco sulla guida e gli offt appaiono su una nuova scheda
+-Doench solo per ont
+-Colonna cfd per max e min value per quella guida, stessa cosa per doenc

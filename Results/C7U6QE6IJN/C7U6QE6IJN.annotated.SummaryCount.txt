@@ -1,6 +1,0 @@
-Total_targets	0	0	0	1	26	162	0	0	0	0	0
-Total_exons	0	0	0	0	2	9	0	0	0	0	0
-Total_introns	0	0	0	0	0	0	0	0	0	0	0
-Total_ctcf	0	0	0	0	0	0	0	0	0	0	0
-Total_dnase	0	0	0	0	1	13	0	0	0	0	0
-Total_promoters	0	0	0	0	6	44	0	0	0	0	0
