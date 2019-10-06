@@ -30,6 +30,7 @@ import filecmp                              #check if Params files are equals
 import dash_bootstrap_components as dbc
 import collections                          #For check if guides are the same in two results
 from datetime import datetime               #For time when job submitted
+from seq_script import extract_seq, convert_pam
 
 PAGE_SIZE = 10                     #number of entries in each page of the table in view report
 
@@ -350,7 +351,7 @@ final_list.append(
                                         dcc.Dropdown(options = av_bulges, clearable = False, id = 'rna', style = {'width':'60px'}),
                                         dbc.Fade(
                                             [
-                                                html.P('Len of guides'),
+                                                html.P('crRNA length (without PAM)'),
                                                 dcc.Dropdown(options = av_guide_sequence, clearable = False, id = 'len-guide-sequence-ver', style = {'width':'60px'})
                                             ],
                                             id = 'fade-len-guide', is_in= False, appear= False
@@ -641,6 +642,7 @@ def resetTab(current_tab, is_in):
     Output('mms', 'className'),
     Output('dna', 'className'),
     Output('rna', 'className'),
+    Output('len-guide-sequence-ver', 'className'),
     Output('warning-list', 'children')],
     [Input('check-job','n_clicks'),
     Input('close','n_clicks')],
@@ -650,9 +652,11 @@ def resetTab(current_tab, is_in):
     State('mms','value'),
     State('dna','value'),
     State('rna','value'),
+    State('len-guide-sequence-ver','value'),
+    State('tabs','active_tab'),
     State("modal", "is_open")]
 )
-def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, is_open):
+def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, len_guide_seq, active_tab ,is_open):
     if n is None:
         raise PreventUpdate
     if is_open is None:
@@ -665,6 +669,7 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, is_
     mms_update = None
     dna_update = None
     rna_update = None
+    len_guide_update = None
     update_style = False
     miss_input_list = []
     
@@ -692,6 +697,10 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, is_
         rna_update = classname_red
         update_style = True
         miss_input_list.append('Bulge RNA size')
+    if (len_guide_seq is None or str(len_guide_seq) is '') and ('sequence-tab' in active_tab):
+        len_guide_update = classname_red
+        update_style = True
+        miss_input_list.append('crRNA length')
     miss_input = html.Div(
         [
             html.P('The following inputs are missing:'),
@@ -701,8 +710,8 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, is_
     )
     
     if not update_style:
-        return 1, False, genome_update, pam_update, text_update, mms_update, dna_update, rna_update, miss_input
-    return None, not is_open, genome_update, pam_update, text_update, mms_update, dna_update, rna_update, miss_input
+        return 1, False, genome_update, pam_update, text_update, mms_update, dna_update, rna_update, len_guide_update, miss_input
+    return None, not is_open, genome_update, pam_update, text_update, mms_update, dna_update, rna_update, len_guide_update, miss_input
 
 #Submit Job, change url
 @app.callback(
@@ -719,9 +728,12 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, is_
     State('checkbox-gecko','checked'),
     State('checkbox-ref-comp', 'checked'),
     State('checklist-advanced', 'value'),
-    State('example-email','value')]
+    State('example-email','value'),
+    State('tabs','active_tab'),
+    State('text-sequence','value'),
+    State('len-guide-sequence-ver', 'value')]
 )
-def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_opt, genome_ref_opt, adv_opts,dest_email):      #NOTE startJob
+def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_opt, genome_ref_opt, adv_opts,dest_email, active_tab, text_sequence, len_guide_sequence):      #NOTE startJob
     '''
     genome_selected can be Human genome (hg19), or Human Genome (hg19) + 1000 Genome Project, the '+' character defines the ref or enr version.
     Note that pam parameter can be 5'-NGG-3', but the corresponding filename is 5'-NGG-3'.txt
@@ -744,6 +756,10 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
             text_guides = '\n'.join(text_guides.split('\n')[:1000]).strip()
         if ( not all(len(elem) == len(text_guides.split('\n')[0]) for elem in text_guides.split('\n'))):
             text_guides = selectSameLenGuides(text_guides)
+    if (len_guide_sequence is None or str(len_guide_sequence) is '') and ('sequence-tab' in active_tab):
+        len_guide_sequence = 20
+    if (text_sequence is None or text_sequence is '') and ('sequence-tab' in active_tab):
+        text_sequence = '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
 
     job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
     result_dir = 'Results/' + job_id
@@ -771,6 +787,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
             e.write('Job done. Parameters: etc etc')
             e.close()
     
+    
     #Set parameters
     genome_selected = genome_selected.replace(' ', '_')
     genome_ref = genome_selected.split('+')[0]              #+ char to separate ref and vcf, eg Human_genome+1000_genome_project
@@ -794,6 +811,21 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
             pam_char = pam_char.split(' ')[0][end_idx * (-1):]
             pam_len = end_idx
             pam_begin = False
+    
+    if 'sequence-tab' in active_tab:
+        #Extract sequence and create the guides
+        guides = []
+        for name_and_seq in text_sequence.split('>'):
+            if '' == name_and_seq:
+                continue
+            name, seq = name_and_seq.strip().split('\n')
+            if 'chr' in seq:
+                extracted_seq = extract_seq.extractSequence(name, seq, genome_selected.replace(' ', '_'))
+            else:
+                extracted_seq = seq.strip()
+            guides.extend(convert_pam.getGuides(extracted_seq, pam_char, len_guide_sequence))
+            text_guides = '\n'.join(guides).strip()
+    
 
     len_guides = len(text_guides.split('\n')[0])
     if (pam_begin):

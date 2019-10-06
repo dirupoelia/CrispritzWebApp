@@ -89,9 +89,10 @@ eg.  ci sono 1000 target che hanno 3 samples
 -Inserire una guida gìà come esempio
 -Mettere 7 mms come massimo		X
 -Inserire possibilità di mettere sequenze come crispor (con varianti!), oppure posizizioni sul genoma. Da questa sequenza estraggo la pam selezionata
-e ottengo delle guide che poi vado a cercare su genoma enr.
-	-Inserire controllo sugli input mancanti anche ai textbox e dropdown sulle sequenze
-	-Inserire controllo correttezza input textbox e dropdown sequenze
+e ottengo delle guide che poi vado a cercare su genoma enr.			
+	-Aggiungere PAM inizio
+	-Inserire controllo sugli input mancanti anche ai textbox e dropdown sulle sequenze			X
+	-Inserire controllo correttezza input textbox e dropdown sequenze							X
 -Senza cliccare su view vai direttamente alla pagina
 -Result con 2 'pagine'
 	-Ho il profiling completo: per ogni soglia di mms metto la somma dei profiling su tutte le guide in quella colonna <- non mi da molte info, non lo faccio
@@ -106,12 +107,11 @@ e ottengo delle guide che poi vado a cercare su genoma enr.
 -Inserire link per scaricare tutti gli offt, lasciar gestire ad apache il tutto
 -Inserire un riassunto dei parametri della ricerca
 -CFD score in notazione scientifica
--Passare a Alessandro tutto quanto il codice per il sito
 
 -Fare un group by per ogni posizione e vedere se i ref e il var è sempre lo stesso o cambia (potrei avere 2500 A G e il resto A T)
 -Generare index genome NNN e 2 bulges su MV 
 
--Fare script per tagliare sequenze
+-Fare script per tagliare sequenze		X
 -Fare in modo che clicco sulla guida e gli offt appaiono su una nuova scheda
 -Doench solo per ont
 -Colonna cfd per max e min value per quella guida, stessa cosa per doenc
