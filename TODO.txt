@@ -112,6 +112,6 @@ e ottengo delle guide che poi vado a cercare su genoma enr.
 -Generare index genome NNN e 2 bulges su MV 
 
 -Fare script per tagliare sequenze		X
--Fare in modo che clicco sulla guida e gli offt appaiono su una nuova scheda
+-Fare in modo che clicco sulla guida e gli offt appaiono su una nuova scheda	X
 -Doench solo per ont
 -Colonna cfd per max e min value per quella guida, stessa cosa per doenc
