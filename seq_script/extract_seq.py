@@ -12,4 +12,7 @@ def extractSequence(name, input_range, genome_selected):
     output_extract = subprocess.check_output(['bedtools getfasta -fi ' + 'Genomes/' + genome_selected + '/' + chrom + '.fa' + ' -bed ' + name + '.bed'], shell=True).decode("utf-8") 
     try:
         os.remove('Genomes/' + genome_selected + '/' + chrom + '.fa.fai')
-    return output_extract.split('\n')[1].strip()
+    except:
+        pass
+    ret_string = output_extract.split('\n')[1].strip() 
+    return ret_string

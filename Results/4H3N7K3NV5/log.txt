@@ -1,0 +1,10 @@
+Job	Start	lun 7 ott 2019, 13.43.34, CEST
+Search-index	Start	lun 7 ott 2019, 13.43.34, CEST
+Search-index	Done	lun 7 ott 2019, 13.43.34, CEST
+Search	Start	lun 7 ott 2019, 13.43.34, CEST
+Search	Done	lun 7 ott 2019, 13.43.44, CEST
+Annotation	Start	lun 7 ott 2019, 13.43.44, CEST
+Annotation	Done	lun 7 ott 2019, 13.44.29, CEST
+Report	Start	lun 7 ott 2019, 13.44.29, CEST
+Report	Done	lun 7 ott 2019, 13.44.51, CEST
+Job	Done	lun 7 ott 2019, 13.44.51, CEST
