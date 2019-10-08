@@ -30,6 +30,7 @@ import filecmp                              #check if Params files are equals
 import dash_bootstrap_components as dbc
 import collections                          #For check if guides are the same in two results
 from datetime import datetime               #For time when job submitted
+from seq_script import extract_seq, convert_pam
 
 PAGE_SIZE = 10                     #number of entries in each page of the table in view report
 
@@ -87,8 +88,8 @@ av_guide_sequence = [{'label': i, 'value': i} for i in range(15, 26)]
 search_bar = dbc.Row(
     [
         #dbc.Col(dbc.Input(type="search", placeholder="Search")),
-        dbc.Col(dbc.NavLink('HOME', active = True, href = 'http://157.27.31.58', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
-        dbc.Col(dbc.NavLink('ABOUT', active = True, href = 'http://157.27.31.58', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
+        dbc.Col(dbc.NavLink('HOME', active = True, href = 'http://157.27.138.119', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
+        dbc.Col(dbc.NavLink('ABOUT', active = True, href = 'http://157.27.138.119', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
         dbc.Col(
             dbc.DropdownMenu(
                 children=[
@@ -102,7 +103,7 @@ search_bar = dbc.Row(
                 style = {'width': '300px !important' } #'height': '400px !important' 
             ),
         ),
-        dbc.Col(dbc.NavLink('CONTACTS', active = True, href = 'http://157.27.31.58', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'}))
+        dbc.Col(dbc.NavLink('CONTACTS', active = True, href = 'http://157.27.138.119', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'}))
     ],
     no_gutters=True,
     className="ml-auto flex-nowrap mt-3 mt-md-0",
@@ -123,7 +124,7 @@ navbar = dbc.Navbar(
                 align="center",
                 no_gutters=True,
             ),
-            href='http://157.27.31.58',
+            href='http://157.27.138.119',
         ),
         dbc.NavbarToggler(id="navbar-toggler"),
         dbc.Collapse(search_bar, id="navbar-collapse", navbar=True),
@@ -218,7 +219,7 @@ tab_guides_content = html.Div(
         ],
         style = {'word-wrap': 'break-word'}), 
 
-        dcc.Textarea(id = 'text-guides', placeholder = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', style = {'width':'450px', 'height':'160px'}),
+        dcc.Textarea(id = 'text-guides', placeholder = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', style = {'width':'450px', 'height':'160px', 'font-family':'monospace', 'font-size':'large'}),
         #html.P('Note: a maximum number of 1000 sequences can be provided'),
         dbc.FormText('Note: a maximum number of 1000 sequences can be provided', color = 'secondary')
     ],
@@ -229,7 +230,7 @@ tab_sequence_content = html.Div(
         html.P(['Search crRNAs by inserting one or more genomic sequences.', html.P('Chromosome ranges can also be supplied')],
         style = {'word-wrap': 'break-word'}), 
 
-        dcc.Textarea(id = 'text-sequence', placeholder = '>sequence 1\nAAGTCCCAGGACTTCAGAAGagctgtgagaccttggc\n>sequence2\nchr1:11,130,540-11,130,751', style = {'width':'450px', 'height':'160px'}),
+        dcc.Textarea(id = 'text-sequence', placeholder = '>sequence 1\nAAGTCCCAGGACTTCAGAAGagctgtgagaccttggc\n>sequence2\nchr1:11,130,540-11,130,751', style = {'width':'450px', 'height':'160px', 'font-family':'monospace', 'font-size':'large'}),
         #html.P('Note: a maximum number of 1000 sequences can be provided'),
         dbc.FormText('Note: a maximum number of 1000 characters can be provided', color = 'secondary')
     ],
@@ -277,10 +278,10 @@ final_list.append(
                         html.Div(
                             [
                                 # html.P(#'Send us a request to add a specific genome sequence or a variant, or download the offline version'
-                                # [html.A('Contact us', href = 'http://157.27.31.58', target="_blank"),' to request new genomes availability in the dropdown list', html.P('or'), html.P('Download the offline version'),], style = {'margin-top':'10px', 'text-align':'-webkit-center', 'position': 'relative', 'top': '25%'}),
+                                # [html.A('Contact us', href = 'http://157.27.138.119', target="_blank"),' to request new genomes availability in the dropdown list', html.P('or'), html.P('Download the offline version'),], style = {'margin-top':'10px', 'text-align':'-webkit-center', 'position': 'relative', 'top': '25%'}),
                                 html.Ul(
                                     [html.Li(
-                                        [html.A('Contact us', href = 'http://157.27.31.58', target="_blank"),' to request new genomes availability in the dropdown list'],
+                                        [html.A('Contact us', href = 'http://157.27.138.119', target="_blank"),' to request new genomes availability in the dropdown list'],
                                         style = {'margin-top':'5%'}
                                     ),
                                     html.Li(
@@ -350,7 +351,7 @@ final_list.append(
                                         dcc.Dropdown(options = av_bulges, clearable = False, id = 'rna', style = {'width':'60px'}),
                                         dbc.Fade(
                                             [
-                                                html.P('Len of guides'),
+                                                html.P('crRNA length (without PAM)'),
                                                 dcc.Dropdown(options = av_guide_sequence, clearable = False, id = 'len-guide-sequence-ver', style = {'width':'60px'})
                                             ],
                                             id = 'fade-len-guide', is_in= False, appear= False
@@ -484,96 +485,6 @@ final_list.append(html.P('', id = 'done'))
 final_list.append(dcc.Interval(id = 'load-page-check', interval=3*1000))
 load_page = html.Div(final_list, style = {'margin':'1%'})
 
-#Result page
-final_list = []
-#final_list.append(html.H1('CRISPRitz Web Application'))
-final_list.append(html.Div(id='warning-div'))
-final_list.append(
-    html.H3('Result Summary')
-)
-final_list.append(html.P('Select a Guide to view more details'))
-col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'CFD', 'Doench2016']
-col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric']
-cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
-
-final_list.append(
-    html.Div(
-        dash_table.DataTable(
-            id = 'general-profile-table',
-            page_size=PAGE_SIZE
-        )
-        ,id = 'div-general-profile-table')
-)
-
-final_list.append(html.Br())
-final_list.append(html.P('List of Targets found for each guide'))
-final_list.append(
-    html.Div(
-        dash_table.DataTable(
-            id='result-table', 
-            columns=cols, 
-            virtualization = True,
-            fixed_rows={ 'headers': True, 'data': 0 },
-            style_cell={'width': '150px'},
-            page_current=0,
-            page_size=PAGE_SIZE,
-            page_action='custom',
-            sort_action='custom',
-            sort_mode='multi',
-            sort_by=[],
-            filter_action='custom',
-            filter_query='',
-            style_table={
-                'height': '300px',
-                #'overflowY': 'scroll',
-            },
-        ),
-        id = 'div-result-table',
-    )
-)
-
-final_list.append(html.Br())
-final_list.append(
-    html.Div(
-        [
-            html.Div(
-                [
-                    html.P('Select the mismatch value'),
-                    dcc.Dropdown(id = 'mms-dropdown', style = {'flex':'0 0 5%'}, clearable = False)
-                ]
-            ),
-            html.Div(
-                html.A(
-                    html.Img(id = 'radar-img', width="100%", #height="30%", 
-                    
-                    ),
-                    
-                    target="_blank",
-                    id = 'link-radar'
-                    
-                ),
-                style = {'flex':'0 0 30%'}
-            ),
-            html.Div(
-                html.A(
-                    html.Img(id = 'barplot-img', width="100%", #height="30%", 
-                    
-                    ),
-                    
-                    target="_blank",
-                    id = 'link-barplot'
-                    
-                ),
-                style = {'flex':'0 0 30%'}
-            )
-            
-        ],
-        className = 'flex-view-images'
-    )
-)
-
-result_page = html.Div(final_list, style = {'margin':'1%'})
-
 
 #Test bootstrap page
 final_list = []
@@ -641,6 +552,7 @@ def resetTab(current_tab, is_in):
     Output('mms', 'className'),
     Output('dna', 'className'),
     Output('rna', 'className'),
+    Output('len-guide-sequence-ver', 'className'),
     Output('warning-list', 'children')],
     [Input('check-job','n_clicks'),
     Input('close','n_clicks')],
@@ -650,9 +562,11 @@ def resetTab(current_tab, is_in):
     State('mms','value'),
     State('dna','value'),
     State('rna','value'),
+    State('len-guide-sequence-ver','value'),
+    State('tabs','active_tab'),
     State("modal", "is_open")]
 )
-def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, is_open):
+def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, len_guide_seq, active_tab ,is_open):
     if n is None:
         raise PreventUpdate
     if is_open is None:
@@ -665,6 +579,7 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, is_
     mms_update = None
     dna_update = None
     rna_update = None
+    len_guide_update = None
     update_style = False
     miss_input_list = []
     
@@ -692,6 +607,10 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, is_
         rna_update = classname_red
         update_style = True
         miss_input_list.append('Bulge RNA size')
+    if (len_guide_seq is None or str(len_guide_seq) is '') and ('sequence-tab' in active_tab):
+        len_guide_update = classname_red
+        update_style = True
+        miss_input_list.append('crRNA length')
     miss_input = html.Div(
         [
             html.P('The following inputs are missing:'),
@@ -701,8 +620,8 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, is_
     )
     
     if not update_style:
-        return 1, False, genome_update, pam_update, text_update, mms_update, dna_update, rna_update, miss_input
-    return None, not is_open, genome_update, pam_update, text_update, mms_update, dna_update, rna_update, miss_input
+        return 1, False, genome_update, pam_update, text_update, mms_update, dna_update, rna_update, len_guide_update, miss_input
+    return None, not is_open, genome_update, pam_update, text_update, mms_update, dna_update, rna_update, len_guide_update, miss_input
 
 #Submit Job, change url
 @app.callback(
@@ -719,9 +638,12 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, is_
     State('checkbox-gecko','checked'),
     State('checkbox-ref-comp', 'checked'),
     State('checklist-advanced', 'value'),
-    State('example-email','value')]
+    State('example-email','value'),
+    State('tabs','active_tab'),
+    State('text-sequence','value'),
+    State('len-guide-sequence-ver', 'value')]
 )
-def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_opt, genome_ref_opt, adv_opts,dest_email):      #NOTE startJob
+def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_opt, genome_ref_opt, adv_opts,dest_email, active_tab, text_sequence, len_guide_sequence):      #NOTE startJob
     '''
     genome_selected can be Human genome (hg19), or Human Genome (hg19) + 1000 Genome Project, the '+' character defines the ref or enr version.
     Note that pam parameter can be 5'-NGG-3', but the corresponding filename is 5'-NGG-3'.txt
@@ -744,6 +666,10 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
             text_guides = '\n'.join(text_guides.split('\n')[:1000]).strip()
         if ( not all(len(elem) == len(text_guides.split('\n')[0]) for elem in text_guides.split('\n'))):
             text_guides = selectSameLenGuides(text_guides)
+    if (len_guide_sequence is None or str(len_guide_sequence) is '') and ('sequence-tab' in active_tab):
+        len_guide_sequence = 20
+    if (text_sequence is None or text_sequence is '') and ('sequence-tab' in active_tab):
+        text_sequence = '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
 
     job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
     result_dir = 'Results/' + job_id
@@ -766,10 +692,11 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         send_email = True
         with open(result_dir + '/email.txt', 'w') as e:
             e.write(dest_email + '\n')
-            e.write('http://157.27.31.58/load?job=' + job_id + '\n')
+            e.write('http://157.27.138.119/load?job=' + job_id + '\n')
             e.write(datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S") + '\n')
             e.write('Job done. Parameters: etc etc')
             e.close()
+    
     
     #Set parameters
     genome_selected = genome_selected.replace(' ', '_')
@@ -794,6 +721,21 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
             pam_char = pam_char.split(' ')[0][end_idx * (-1):]
             pam_len = end_idx
             pam_begin = False
+    
+    if 'sequence-tab' in active_tab:
+        #Extract sequence and create the guides
+        guides = []
+        for name_and_seq in text_sequence.split('>'):
+            if '' == name_and_seq:
+                continue
+            name, seq = name_and_seq.strip().split('\n')
+            if 'chr' in seq:
+                extracted_seq = extract_seq.extractSequence(name, seq, genome_selected.replace(' ', '_'))
+            else:
+                extracted_seq = seq.strip()
+            guides.extend(convert_pam.getGuides(extracted_seq, pam_char, len_guide_sequence))
+            text_guides = '\n'.join(guides).strip()
+    
 
     len_guides = len(text_guides.split('\n')[0])
     if (pam_begin):
@@ -890,24 +832,25 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
 @app.callback(
     [Output('page-content', 'children'),
     Output('job-link', 'children')],
-    [Input('url', 'href'), Input('url','pathname'), Input('url','search')],
+    [Input('url', 'href'), Input('url','pathname'), Input('url','search')],[State('url','hash')]
     # [State('url','pathname'), 
     # State('url','search')]
 )
-def changePage( href, path,search):
+def changePage( href, path, search, hash_guide):
     # print('href', href)
     # print('hash', hash_guide)
     # print('pathname', path)
     # print('search', search)
-
+    print('hash', hash_guide)
     if path == '/load':
-        return load_page, 'http://157.27.31.58/load' + search #NOTE change the url part when DNS are changed
+        return load_page, 'http://157.27.138.119/load' + search #NOTE change the url part when DNS are changed
     if path == '/result':
-        #if hash_guide is None or hash_guide is '':
-        return result_page, 'http://157.27.31.58/load' + search
-        #return test_page, 'http://157.27.31.58/load' + search
+        job_id = search.split('=')[-1]
+        if hash_guide is None or hash_guide is '':
+            return resultPage(job_id), 'http://157.27.138.119/load' + search
+        return guidePage(job_id, hash_guide.split('#')[1]), 'http://157.27.138.119/load' + search
     if path == '/test-page':
-        return test_page, 'http://157.27.31.58/load' + search
+        return test_page, 'http://157.27.138.119/load' + search
     return index_page, ''
 
 #Check end job
@@ -966,97 +909,90 @@ def global_store(value):
     df.rename(columns = {"#Bulge type":'BulgeType', '#Bulge_type':'BulgeType','Bulge Size': 'BulgeSize', 'Bulge_Size': 'BulgeSize', 'Doench 2016':'Doench2016','Doench_2016':'Doench2016'}, inplace = True)
     return df
 
-#Callback to populate the tab, note that it's called when the result_page is loaded (dash implementation), so we do not use raise update to block this first callback
-@app.callback(
-    [Output('signal','children'),
-    Output('result-table','page_current'),
-    Output('result-table', "sort_by"), 
-    Output('result-table','filter_query')],
-    [Input('url', 'pathname')],
-    [State('url', 'search')]
-)
-def populateTable(pathname, search):
-    if pathname != '/result':
-        raise PreventUpdate
+# #Callback to populate the tab, note that it's called when the result_page is loaded (dash implementation), so we do not use raise update to block this first callback
+# @app.callback(
+#     [Output('signal','children'),
+#     Output('result-table','page_current'),
+#     Output('result-table', "sort_by"), 
+#     Output('result-table','filter_query')],
+#     [Input('url', 'pathname')],
+#     [State('url', 'search')]
+# )
+# def populateTable(pathname, search):
+#     print('pathname', pathname)
+#     if pathname != '/result':
+#         raise PreventUpdate
 
-    job_id = search.split('=')[-1]
-    job_directory = 'Results/' + job_id + '/'
-    if(not isdir(job_directory)):
-        return 'not_exists', 0, [], ''
-    global_store(job_id)
-    return job_id, 0, [], ''
+#     job_id = search.split('=')[-1]
+#     job_directory = 'Results/' + job_id + '/'
+#     print('job dir', job_directory)
+#     if(not isdir(job_directory)):
+#         return 'not_exists', 0, [], ''
+#     #global_store(job_id)
+#     print('ok')
+#     return job_id, 0, [], ''
 
 #Send the data when next or prev button is clicked on the result table
 @app.callback(
-    [Output('result-table', 'data'),
-    Output('mms-dropdown','options'),
-    Output('warning-div', 'children'),
-    Output('general-profile-table', 'columns'),
-    Output('general-profile-table', 'data')],
-    [Input('signal', 'children'),
-     Input('result-table', "page_current"),
+    Output('result-table', 'data'),
+    [Input('result-table', "page_current"),
      Input('result-table', "page_size"),
      Input('result-table', "sort_by"),
-     Input('result-table', 'filter_query'),
-     Input('general-profile-table','selected_cells')],
-     [State('general-profile-table', 'data'),
-     State('url', 'search')]
+     Input('result-table', 'filter_query')],
+     [State('url', 'search'),
+     State('url', 'hash')]
 )
-def update_table(value, page_current,page_size, sort_by, filter, sel_cel, all_guides, search):
-    #print('signal_children', value)
-    print('sel_cel', sel_cel)
-    if value is None:
+def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
+    job_id = search.split('=')[-1]
+    job_directory = 'Results/' + job_id + '/'
+    guide = hash_guide.split('#')[1]
+    value = job_id
+    if search is None:
         raise PreventUpdate
-    if value == 'not_exists':
-        return [], [] , dbc.Alert("The selected result does not exist", color = "danger"), [], []
 
-    #Load mismatches
-    with open('Results/' + value + '/Params.txt') as p:
-       mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
-
-    mms = int(mms[0])
-    mms_values = [{'label':i, 'value':i} for i in range(mms + 1) ]      
-    
-    col_profile_general = ['Total On-Targets', 'Total Off-Targets']
-    for i in range(mms):
-        col_profile_general.append(str(i+1) + ' Mismatches')
-    col_type = ['numeric' for i in col_profile_general]
         
     filtering_expressions = filter.split(' && ')
-    if sel_cel:
-        guide = all_guides[int(sel_cel[0]['row'])]['Guide']
-        filtering_expressions = ['{crRNA} = ' + guide]      #TODO currently only this filter will be applied when a guide is selected
-        df = global_store(value)
-        dff = df
-        for filter_part in filtering_expressions:
-            col_name, operator, filter_value = split_filter_part(filter_part)
+    #filtering_expressions.append(['{crRNA} = ' + guide])     
+    df = global_store(value)
+    dff = df[df['crRNA'] == guide]
+    print('len index before', len(dff.index))
+    sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
+    sort_by.insert(1, {'column_id' : 'BulgeSize', 'direction': 'asc'})
+    sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
+    for filter_part in filtering_expressions:
+        col_name, operator, filter_value = split_filter_part(filter_part)
 
-            if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
-                # these operators match pandas series operator method names
-                dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
-            elif operator == 'contains':
-                dff = dff.loc[dff[col_name].str.contains(filter_value)]
-            elif operator == 'datestartswith':
-                # this is a simplification of the front-end filtering logic,
-                # only works with complete fields in standard format
-                dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+            # these operators match pandas series operator method names
+            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)].sort_values([col['column_id'] for col in sort_by],
+            ascending=[
+                col['direction'] == 'asc'
+                for col in sort_by
+            ],
+            inplace=False)
+        elif operator == 'contains':
+            dff = dff.loc[dff[col_name].str.contains(filter_value)]
+        elif operator == 'datestartswith':
+            # this is a simplification of the front-end filtering logic,
+            # only works with complete fields in standard format
+            dff = dff.loc[dff[col_name].str.startswith(filter_value)]
 
-        if len(sort_by):
-            dff = dff.sort_values(
-                [col['column_id'] for col in sort_by],
-                ascending=[
-                    col['direction'] == 'asc'
-                    for col in sort_by
-                ],
-                inplace=False
-            )
+    print('len index after', len(dff.index))
+    #NOTE sort_by: [{'column_id': 'BulgeType', 'direction': 'asc'}, {'column_id': 'crRNA', 'direction': 'asc'}]
+    #sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
+    #sort_by.insert(0, {'column_id' : 'BulgeSize', 'direction': 'asc'})
+    if len(sort_by):
+        dff = dff.sort_values(
+            [col['column_id'] for col in sort_by],
+            ascending=[
+                col['direction'] == 'asc'
+                for col in sort_by
+            ],
+            inplace=False
+        )
 
     #Check if results are not 0
     warning_no_res = ''
-    if not sel_cel:
-        dff = pd.DataFrame()    #TODO test
-    job_id = search.split('=')[-1]
-    job_directory = 'Results/' + job_id + '/'
     with open(job_directory + job_id + '.targets.txt') as t:
         no_result = False
         t.readline()
@@ -1066,33 +1002,12 @@ def update_table(value, page_current,page_size, sort_by, filter, sel_cel, all_gu
 
     if (no_result):
         warning_no_res = dbc.Alert("No results were found with the given parameters", color = "warning")
-    
-    #Load profile
-    try:
-        profile = pd.read_csv('Results/' + value + '/' + value + '.profile_complete.xls')   #NOTE profile_complete has ',' as separator 
-    except:
-        profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls', sep = '\t')    #NOTE profile has \t as separator or ','
-        if len(profile.columns) == 1:
-            profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls')
-    
-    columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
-    keep_column = ['GUIDE', 'ONT', 'OFFT']
-    for i in range (mms):
-        print(i+1)
-        columns_profile_table.append({'name': str(i+1) + ' Mismatches', 'id':str(i+1) + ' Mismatches', 'type':'numeric'})
-        keep_column.append(str(i+1) + 'MM')
 
-   
-    profile = profile[keep_column]
-    rename_columns = {'GUIDE':'Guide',"ONT":'Total On-Targets', 'OFFT':'Total Off-Targets'}
-    for i in range(mms):
-        rename_columns[str(i+1) + 'MM'] = str(i+1) + ' Mismatches'
-
-    profile.rename(columns = rename_columns, inplace = True)    #Now profile is Guide, Total On-targets, ...
      
     return dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
-    ].to_dict('records'), mms_values, warning_no_res, columns_profile_table, profile.to_dict('records')
+    ].to_dict('records')
+
 
 #For filtering
 def split_filter_part(filter_part):
@@ -1126,21 +1041,18 @@ def parse_contents(contents):
     decoded = base64.b64decode(content_string)
     return decoded
 
-#Show images
+#Show image: Barplot
 @app.callback(
     [Output('barplot-img', 'src'),
-    Output('link-barplot', 'href'),
-    Output('radar-img','src'),
-    Output('link-radar','href')],
-    [Input('general-profile-table','selected_cells'),
-    Input('mms-dropdown','value')],
-    [State('general-profile-table', 'data'),
-    State('url','search')]
+    Output('link-barplot', 'href')],
+    [Input('mms-dropdown','value')],
+    [State('url', 'search')]
 )
-def showImages(sel_cel, mms, all_guides, job_id):
-    if sel_cel is None or mms is None:
+def showImages(mms, search):
+    if mms is None:
         raise PreventUpdate
-    job_id = job_id.split('=')[-1]
+    job_id = search.split('=')[-1]
+    job_directory = 'Results/' + job_id + '/'
     barplot_img = 'summary_histogram_' + str(mms) + 'mm.png'
     try:            #NOTE serve per non generare errori se il barplot non è stato fatto
         barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
@@ -1148,7 +1060,37 @@ def showImages(sel_cel, mms, all_guides, job_id):
     except:
         barplot_src = ''
         barplot_href = ''
-    guide = all_guides[int(sel_cel[0]['row'])]['Guide'] 
+    # guide = all_guides[int(sel_cel[0]['row'])]['Guide'] 
+    # radar_img = 'summary_single_guide_' + guide + '_' + str(mms) + 'mm.png'
+    # try:
+    #     radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
+    #     radar_href = 'assets/Img/' + job_id + '/' + radar_img
+    # except:
+    #     radar_src = ''
+    #     radar_href = ''
+    return barplot_src, barplot_href
+
+#Show image: Radar chart
+@app.callback(
+    [Output('radar-img', 'src'),
+    Output('link-radar', 'href')],
+    [Input('mms-dropdown-guide-specific','value')],
+    [State('url', 'search'), State('url','hash')]
+)
+def showImages(mms, search, hash_guide):
+    if mms is None:
+        raise PreventUpdate
+    job_id = search.split('=')[-1]
+    job_directory = 'Results/' + job_id + '/'
+    # barplot_img = 'summary_histogram_' + str(mms) + 'mm.png'
+    # try:            #NOTE serve per non generare errori se il barplot non è stato fatto
+    #     barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
+    #     barplot_href = 'assets/Img/' + job_id + '/' + barplot_img
+    # except:
+    #     barplot_src = ''
+    #     barplot_href = ''
+    # guide = all_guides[int(sel_cel[0]['row'])]['Guide'] 
+    guide = hash_guide.split('#')[1]
     radar_img = 'summary_single_guide_' + guide + '_' + str(mms) + 'mm.png'
     try:
         radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
@@ -1156,23 +1098,19 @@ def showImages(sel_cel, mms, all_guides, job_id):
     except:
         radar_src = ''
         radar_href = ''
-    return barplot_src, barplot_href, radar_src, radar_href
+    return radar_src, radar_href
 
-#Redirect page when click on guide to show detailed targets
-# @app.callback(
-#     Output('url','hash'),
-#     [Input('general-profile-table','selected_cells')],
-#     [State('general-profile-table', 'data')]
-# )
-# def viewSpecificGuide(sel_cel, all_guides):
-#     if sel_cel is None:
-#         raise PreventUpdate
-#     if not sel_cel:             #Selecting next or previous on the table activate this callback, so this is to prevent
-#         raise PreventUpdate
-#     guide = all_guides[int(sel_cel[0]['row'])]['Guide'] #NOTE return corresponding guide even if select another cell in same row
-#     return '#' + guide
-
-
+def generate_table(dataframe, id_table, max_rows=26):
+    return html.Table(
+        # Header
+        [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
+        # Body
+        [html.Tr([
+            html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
+        ]) for i in range(min(len(dataframe), max_rows))],
+        style = {'display':'inline-block'},
+        id = id_table
+    )
 
 #If the input guides are different len, select the ones with same length as the first
 def selectSameLenGuides(list_guides):
@@ -1184,6 +1122,224 @@ def selectSameLenGuides(list_guides):
     same_len_guides = '\n'.join(same_len_guides_list).strip()
     return same_len_guides
 
+def resultPage(job_id):
+    value = job_id
+    job_directory = 'Results/' + job_id + '/'
+    warning_message = []
+    if (not isdir(job_directory)):
+        return html.Div(dbc.Alert("The selected result does not exist", color = "danger"))
+
+    #Load mismatches
+    with open('Results/' + value + '/Params.txt') as p:
+       mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
+
+    mms = int(mms[0])
+    mms_values = [{'label':i, 'value':i} for i in range(mms + 1) ]      
+    
+    col_profile_general = ['Total On-Targets', 'Total Off-Targets']
+    for i in range(mms):
+        col_profile_general.append(str(i+1) + ' Mismatches')
+    col_type = ['numeric' for i in col_profile_general]
+    
+    
+    #Load profile
+    try:
+        profile = pd.read_csv('Results/' + value + '/' + value + '.profile_complete.xls')   #NOTE profile_complete has ',' as separator
+        if len(profile.columns) == 1:
+            profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls', sep='\t')
+    except:
+        profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls', sep = '\t')    #NOTE profile has \t as separator or ','
+        if len(profile.columns) == 1:
+            profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls')
+    
+    columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
+    keep_column = ['GUIDE', 'ONT', 'OFFT']
+    for i in range (mms):
+        columns_profile_table.append({'name': str(i+1) + ' Mismatches', 'id':str(i+1) + ' Mismatches', 'type':'numeric'})
+        keep_column.append(str(i+1) + 'MM')
+    columns_profile_table.append({'name':'More Info', 'id':'More Info', 'type':'text'})
+    print(profile.columns)
+    profile = profile[keep_column]
+    rename_columns = {'GUIDE':'Guide',"ONT":'Total On-Targets', 'OFFT':'Total Off-Targets'}
+    for i in range(mms):
+        rename_columns[str(i+1) + 'MM'] = str(i+1) + ' Mismatches'
+
+    profile.rename(columns = rename_columns, inplace = True)    #Now profile is Guide, Total On-targets, ...
+    link_for_guides = [html.A('Show all...', href = 'http://157.27.138.119/result?job=' + job_id + '#' + i, target = '_blank') for i in profile['Guide']]
+    profile['More Info'] = link_for_guides
+    final_list = []
+
+    
+    #final_list.append(html.H1('CRISPRitz Web Application'))
+    final_list.append(
+        html.H3('Result Summary')
+    )
+    #final_list.append(html.P('Select a Guide to view more details'))
+    final_list.append(html.Div(
+            generate_table(profile, 'result-page-guide-table'),
+            style = {'text-align':'center'}
+        )
+    )
+    # final_list.append(
+    #     html.Div(
+    #         dash_table.DataTable(
+    #             id = 'general-profile-table',
+    #             page_size=PAGE_SIZE,
+    #             columns = columns_profile_table,
+    #             #data = profile.to_dict('records')
+    #         )
+    #         ,id = 'div-general-profile-table')
+    # )
+
+    final_list.append(html.Br())
+    final_list.append(
+        html.Div(
+            [
+                html.Div(
+                    [
+                        html.H5('Comparison with Reference Genome'),
+                        html.P('Select the mismatch value'),
+                        dcc.Dropdown(options = mms_values, id = 'mms-dropdown', style = {'flex':'0 0 5%', 'width':'100px'}, clearable = False)
+                    ]
+                ),
+                html.Div(
+                    html.A(
+                        html.Img(id = 'barplot-img', width="100%", #height="30%", 
+                        
+                        ),
+                        
+                        target="_blank",
+                        id = 'link-barplot'
+                        
+                    ),
+                    style = {'flex':'0 0 30%'}
+                ),
+                html.Div(
+                html.A(
+                    html.Img( width="100%", #height="30%", 
+                    
+                    ),
+                    
+                    target="_blank",
+                    
+                ),
+                style = {'flex':'0 0 30%'}
+            ),
+                
+            ],
+            className = 'flex-view-images'
+        )
+    )
+
+    result_page = html.Div(final_list, style = {'margin':'1%'})
+    return result_page
+
+
+def guidePage(job_id, guide):
+    value = job_id
+    final_list = []
+    final_list.append(html.P('List of Targets found for the selected guide'))
+    col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'CFD', 'Doench2016']
+    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric']
+    cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
+    job_directory = 'Results/' + job_id + '/'
+    #Load mismatches
+    with open('Results/' + value + '/Params.txt') as p:
+       mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
+
+    mms = int(mms[0])
+    mms_values = [{'label':i, 'value':i} for i in range(mms + 1) ]
+    global_store(job_id)    #TODO controllare se carica ogni volta o solo la prima
+    #NOTE the filtering is done automatically when the page is loaded due to the function update_table since it's triggered when the table is created, putting page_current, sort_by etc
+    #at initial values
+
+    # df = global_store(job_id)
+    # dff = df
+    # filtering_expressions = ['{crRNA} = ' + guide]
+    # for filter_part in filtering_expressions:
+    #     col_name, operator, filter_value = split_filter_part(filter_part)
+
+    #     if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+    #         # these operators match pandas series operator method names
+    #         dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
+    #     elif operator == 'contains':
+    #         dff = dff.loc[dff[col_name].str.contains(filter_value)]
+    #     elif operator == 'datestartswith':
+    #         # this is a simplification of the front-end filtering logic,
+    #         # only works with complete fields in standard format
+    #         dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+
+    final_list.append(
+        html.Div(
+            dash_table.DataTable(
+                id='result-table', 
+                columns=cols, 
+                #data = dff.to_dict('records'),
+                virtualization = True,
+                fixed_rows={ 'headers': True, 'data': 0 },
+                style_cell={'width': '150px'},
+                page_current=0,
+                page_size=PAGE_SIZE,
+                page_action='custom',
+                sort_action='custom',
+                sort_mode='multi',
+                sort_by=[],
+                filter_action='custom',
+                filter_query='',
+                style_table={
+                    'height': '300px',
+                    #'overflowY': 'scroll',
+                },
+                # style_data_conditional=[{
+                #     "if": {'column_id':'BulgeType', 'filter_query' : 'BulgeType eq "RNA"'}, #{'filter_query' : 'BulgeType eq "RNA"'},
+                #     "backgroundColor": "lightblue",
+                #     'color': 'white'
+                # }],
+            ),
+            id = 'div-result-table',
+        )
+    )
+    final_list.append(html.Br())
+    final_list.append(
+        html.Div(
+            [
+                html.Div(
+                    [
+                        html.P('Select the mismatch value'),
+                        dcc.Dropdown(options = mms_values, id = 'mms-dropdown-guide-specific', style = {'flex':'0 0 5%'}, clearable = False)
+                    ]
+                ),
+                
+                html.Div(
+                    html.A(
+                        html.Img(id = 'radar-img', width="100%", #height="30%", 
+                        
+                        ),
+                        
+                        target="_blank",
+                        id = 'link-radar'
+                        
+                    ),
+                    style = {'flex':'0 0 30%'}
+                ),
+                html.Div(
+                    html.A(
+                        html.Img( width="100%", #height="30%", 
+                        
+                        ),
+                        
+                        target="_blank",
+                        
+                    ),
+                    style = {'flex':'0 0 30%'}
+                )
+                
+            ],
+            className = 'flex-view-images'
+        )
+    )
+    return html.Div(final_list, style = {'margin':'1%'})
+
 if __name__ == '__main__':
     #app.run_server(debug=True)
     app.run_server(host='0.0.0.0', debug=True, port=80)
@@ -1191,7 +1347,3 @@ if __name__ == '__main__':
 
     #BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti
     #Iupac
-
-
-    #TODO 
-    # togliere caricamento del file per evitare confusione,

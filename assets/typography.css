@@ -41,3 +41,8 @@ input:invalid{
 .missing-input .Select-control{
     border: 1px solid red;
 }
+
+.result-page-guide-table .td:first-child{
+    font-family: monospace;
+    font-size: large;
+}

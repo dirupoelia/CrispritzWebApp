@@ -219,7 +219,7 @@ tab_guides_content = html.Div(
         ],
         style = {'word-wrap': 'break-word'}), 
 
-        dcc.Textarea(id = 'text-guides', placeholder = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', style = {'width':'450px', 'height':'160px'}),
+        dcc.Textarea(id = 'text-guides', placeholder = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', style = {'width':'450px', 'height':'160px', 'font-family':'monospace', 'font-size':'large'}),
         #html.P('Note: a maximum number of 1000 sequences can be provided'),
         dbc.FormText('Note: a maximum number of 1000 sequences can be provided', color = 'secondary')
     ],
@@ -230,7 +230,7 @@ tab_sequence_content = html.Div(
         html.P(['Search crRNAs by inserting one or more genomic sequences.', html.P('Chromosome ranges can also be supplied')],
         style = {'word-wrap': 'break-word'}), 
 
-        dcc.Textarea(id = 'text-sequence', placeholder = '>sequence 1\nAAGTCCCAGGACTTCAGAAGagctgtgagaccttggc\n>sequence2\nchr1:11,130,540-11,130,751', style = {'width':'450px', 'height':'160px'}),
+        dcc.Textarea(id = 'text-sequence', placeholder = '>sequence 1\nAAGTCCCAGGACTTCAGAAGagctgtgagaccttggc\n>sequence2\nchr1:11,130,540-11,130,751', style = {'width':'450px', 'height':'160px', 'font-family':'monospace', 'font-size':'large'}),
         #html.P('Note: a maximum number of 1000 sequences can be provided'),
         dbc.FormText('Note: a maximum number of 1000 characters can be provided', color = 'secondary')
     ],
@@ -952,12 +952,13 @@ def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
 
         
     filtering_expressions = filter.split(' && ')
-    filtering_expressions.append(['{crRNA} = ' + guide])     
+    #filtering_expressions.append(['{crRNA} = ' + guide])     
     df = global_store(value)
-    dff = df
+    dff = df[df['crRNA'] == guide]
     print('len index before', len(dff.index))
     sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
-    sort_by.insert(0, {'column_id' : 'BulgeSize', 'direction': 'asc'})
+    sort_by.insert(1, {'column_id' : 'BulgeSize', 'direction': 'asc'})
+    sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
 
@@ -1099,7 +1100,7 @@ def showImages(mms, search, hash_guide):
         radar_href = ''
     return radar_src, radar_href
 
-def generate_table(dataframe, max_rows=26):
+def generate_table(dataframe, id_table, max_rows=26):
     return html.Table(
         # Header
         [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
@@ -1107,7 +1108,8 @@ def generate_table(dataframe, max_rows=26):
         [html.Tr([
             html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
         ]) for i in range(min(len(dataframe), max_rows))],
-        style = {'display':'inline-block'}
+        style = {'display':'inline-block'},
+        id = id_table
     )
 
 #If the input guides are different len, select the ones with same length as the first
@@ -1142,7 +1144,9 @@ def resultPage(job_id):
     
     #Load profile
     try:
-        profile = pd.read_csv('Results/' + value + '/' + value + '.profile_complete.xls')   #NOTE profile_complete has ',' as separator 
+        profile = pd.read_csv('Results/' + value + '/' + value + '.profile_complete.xls')   #NOTE profile_complete has ',' as separator
+        if len(profile.columns) == 1:
+            profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls', sep='\t')
     except:
         profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls', sep = '\t')    #NOTE profile has \t as separator or ','
         if len(profile.columns) == 1:
@@ -1154,14 +1158,14 @@ def resultPage(job_id):
         columns_profile_table.append({'name': str(i+1) + ' Mismatches', 'id':str(i+1) + ' Mismatches', 'type':'numeric'})
         keep_column.append(str(i+1) + 'MM')
     columns_profile_table.append({'name':'More Info', 'id':'More Info', 'type':'text'})
-   
+    print(profile.columns)
     profile = profile[keep_column]
     rename_columns = {'GUIDE':'Guide',"ONT":'Total On-Targets', 'OFFT':'Total Off-Targets'}
     for i in range(mms):
         rename_columns[str(i+1) + 'MM'] = str(i+1) + ' Mismatches'
 
     profile.rename(columns = rename_columns, inplace = True)    #Now profile is Guide, Total On-targets, ...
-    link_for_guides = [html.A('More...', href = 'http://127.0.0.1:8050/result?job=' + job_id + '#' + i, target = '_blank') for i in profile['Guide']]
+    link_for_guides = [html.A('Show all...', href = 'http://127.0.0.1:8050/result?job=' + job_id + '#' + i, target = '_blank') for i in profile['Guide']]
     profile['More Info'] = link_for_guides
     final_list = []
 
@@ -1172,7 +1176,7 @@ def resultPage(job_id):
     )
     #final_list.append(html.P('Select a Guide to view more details'))
     final_list.append(html.Div(
-            generate_table(profile),
+            generate_table(profile, 'result-page-guide-table'),
             style = {'text-align':'center'}
         )
     )
@@ -1193,8 +1197,9 @@ def resultPage(job_id):
             [
                 html.Div(
                     [
+                        html.H5('Comparison with Reference Genome'),
                         html.P('Select the mismatch value'),
-                        dcc.Dropdown(options = mms_values, id = 'mms-dropdown', style = {'flex':'0 0 5%'}, clearable = False)
+                        dcc.Dropdown(options = mms_values, id = 'mms-dropdown', style = {'flex':'0 0 5%', 'width':'100px'}, clearable = False)
                     ]
                 ),
                 html.Div(
@@ -1233,7 +1238,7 @@ def resultPage(job_id):
 def guidePage(job_id, guide):
     value = job_id
     final_list = []
-    final_list.append(html.P('List of Targets found for each guide'))
+    final_list.append(html.P('List of Targets found for the selected guide'))
     col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'CFD', 'Doench2016']
     col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric']
     cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
@@ -1285,6 +1290,11 @@ def guidePage(job_id, guide):
                     'height': '300px',
                     #'overflowY': 'scroll',
                 },
+                # style_data_conditional=[{
+                #     "if": {'column_id':'BulgeType', 'filter_query' : 'BulgeType eq "RNA"'}, #{'filter_query' : 'BulgeType eq "RNA"'},
+                #     "backgroundColor": "lightblue",
+                #     'color': 'white'
+                # }],
             ),
             id = 'div-result-table',
         )
