@@ -491,8 +491,10 @@ final_list = []
 final_list.append(
     html.Div(
     [
-        html.P('Test')
-        
+        html.P('Test', id= 'test'),
+        html.Button('AA', id = 'button-test'),
+        html.Button('BB', id = 'button-test'),
+        html.Button('CC', id = 'button-test'),
     ]
 )
 )
@@ -500,6 +502,16 @@ final_list.append(
 
 test_page = html.Div(final_list, style = {'margin':'1%'})
 ##################################################CALLBACKS##################################################
+@app.callback(Output('test', 'children'),
+            [Input('button-test','n_clicks')], [State('button-test','n_clicks')]
+)
+def test(n, a):
+    if n is None:
+        raise PreventUpdate
+    return a
+
+
+
 
 #Fade in/out email
 @app.callback(
@@ -1111,6 +1123,21 @@ def generate_table(dataframe, id_table, max_rows=26):
         style = {'display':'inline-block'},
         id = id_table
     )
+
+#FOR BUTTON IN TABLE
+# element.style {
+#     background: none;
+#     border: none;
+#     margin: 0;
+#     padding: 0;
+#     cursor: pointer;
+#     font-family: monospace;
+#     font-size: large;
+#     font-weight: normal;
+# }
+
+
+
 
 #If the input guides are different len, select the ones with same length as the first
 def selectSameLenGuides(list_guides):

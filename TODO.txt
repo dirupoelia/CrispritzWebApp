@@ -128,8 +128,10 @@ list of alll targets
 
 -Ordinare le guide nella result page da meglio a peggio, mettere CFD globale e area score, mettere come crispor i mmismatches e area score per ogni mm value
 Se clicco sulla guida, viene selezionata e sotto appare una tabella a 2 colonne con le immagini a sx il radarchart a dx il barplot (fare per ogni guida)
+	-I file count sono così strutturati:				X fatto barplot per guida
+		-GUIDA	num_targets_inExons_0mms	num_targets_inExons_1mms	num_targets_inExons_2mms ...
 -differenziare target per ref o enr (2 ricerche intanto)
-Seguire immagine per tabella targets
+Seguire immagine di Luca per tabella targets
 -Far vedere che guida è stata selezionata
 -Bottone per esempio da far runnare
 -Modificare bottone farlo bello

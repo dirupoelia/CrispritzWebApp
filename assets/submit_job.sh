@@ -82,13 +82,15 @@ if [ ${13} = 'True' ]; then
             
             if [ ${14} = 'True' ]; then         #If -gecko
                 if [ ${15} = 'True' ]; then     #If genome_ref comparison
-                    crispritz.py generate-report $line -mm $i -profile ../$1'/'$jobid'.profile.xls' -extprofile ../$1/*.extended_profile.xls -exons ../$1'/'$jobid'.annotated.ExonsCount.txt' -introns ../$1'/'$jobid'.annotated.IntronsCount.txt' -dnase ../$1'/'$jobid'.annotated.DNAseCount.txt' -ctcf ../$1'/'$jobid'.annotated.CTCFCount.txt' -promoters ../$1'/'$jobid'.annotated.PromotersCount.txt' -sumref ../$1/ref/$jobid'_ref'.annotated.SummaryCount.txt -sumenr ../$1'/'$jobid'.annotated.SummaryCount.txt' -gecko
+                    python3 summary_guide.py $1 $7  #New annotated file are alredy located in right directories
+                    crispritz.py generate-report $line -mm $i -profile ../$1'/'$jobid'.profile.xls' -extprofile ../$1/*.extended_profile.xls -exons ../$1'/'$jobid'.annotated.ExonsCount.txt' -introns ../$1'/'$jobid'.annotated.IntronsCount.txt' -dnase ../$1'/'$jobid'.annotated.DNAseCount.txt' -ctcf ../$1'/'$jobid'.annotated.CTCFCount.txt' -promoters ../$1'/'$jobid'.annotated.PromotersCount.txt' -sumref ../$1/ref/$jobid'_ref'.annotated.$line.SummaryCount.txt -sumenr ../$1'/'$jobid'.annotated.'$line'.SummaryCount.txt' -gecko
                 else
                     crispritz.py generate-report $line -mm $i -profile ../$1'/'$jobid'.profile.xls' -extprofile ../$1/*.extended_profile.xls -exons ../$1'/'$jobid'.annotated.ExonsCount.txt' -introns ../$1'/'$jobid'.annotated.IntronsCount.txt' -dnase ../$1'/'$jobid'.annotated.DNAseCount.txt' -ctcf ../$1'/'$jobid'.annotated.CTCFCount.txt' -promoters ../$1'/'$jobid'.annotated.PromotersCount.txt' -gecko
                 fi
             else
-                if [ ${15} = 'True' ]; then     #If genome_ref comparison 
-                    crispritz.py generate-report $line -mm $i -profile ../$1'/'$jobid'.profile.xls' -extprofile ../$1/*.extended_profile.xls -exons ../$1'/'$jobid'.annotated.ExonsCount.txt' -introns ../$1'/'$jobid'.annotated.IntronsCount.txt' -dnase ../$1'/'$jobid'.annotated.DNAseCount.txt' -ctcf ../$1'/'$jobid'.annotated.CTCFCount.txt' -promoters ../$1'/'$jobid'.annotated.PromotersCount.txt' -sumref ../$1/ref/$jobid'_ref'.annotated.SummaryCount.txt -sumenr ../$1'/'$jobid'.annotated.SummaryCount.txt'
+                if [ ${15} = 'True' ]; then     #If genome_ref comparison
+                    python3 summary_guide.py $1 $7 
+                    crispritz.py generate-report $line -mm $i -profile ../$1'/'$jobid'.profile.xls' -extprofile ../$1/*.extended_profile.xls -exons ../$1'/'$jobid'.annotated.ExonsCount.txt' -introns ../$1'/'$jobid'.annotated.IntronsCount.txt' -dnase ../$1'/'$jobid'.annotated.DNAseCount.txt' -ctcf ../$1'/'$jobid'.annotated.CTCFCount.txt' -promoters ../$1'/'$jobid'.annotated.PromotersCount.txt' -sumref ../$1/ref/$jobid'_ref'.annotated.$line.SummaryCount.txt -sumenr ../$1'/'$jobid'.annotated.'$line'.SummaryCount.txt'
                 else
                     crispritz.py generate-report $line -mm $i -profile ../$1'/'$jobid'.profile.xls' -extprofile ../$1/*.extended_profile.xls -exons ../$1'/'$jobid'.annotated.ExonsCount.txt' -introns ../$1'/'$jobid'.annotated.IntronsCount.txt' -dnase ../$1'/'$jobid'.annotated.DNAseCount.txt' -ctcf ../$1'/'$jobid'.annotated.CTCFCount.txt' -promoters ../$1'/'$jobid'.annotated.PromotersCount.txt'
                 fi
