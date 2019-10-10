@@ -215,7 +215,7 @@ tab_guides_content = html.Div(
     [
         html.P([
             'Insert crRNA sequence(s), one per line.', 
-            html.P('Sequences must have the same length and be provided without the PAM sequence') ,
+            html.P('Sequences must have the same length and be provided without the PAM sequence', id = 'testP') ,
         ],
         style = {'word-wrap': 'break-word'}), 
 
@@ -491,28 +491,38 @@ final_list = []
 final_list.append(
     html.Div(
     [
-        html.P('Test', id= 'test'),
-        html.Button('AA', id = 'button-test'),
-        html.Button('BB', id = 'button-test'),
-        html.Button('CC', id = 'button-test'),
+        html.P('Test P', id= 'test-P'),
+        html.Button('AA', id = 'button-test1'),
+        html.Button('BB', id = 'button-test2'),
+        html.Button('CC', id = 'button-test3'),
+        html.Button('CC10', id = 'button-test10'),
+        html.Button ('Gen callback', id = 'gen-callback')
     ]
 )
 )
-
+final_list.append(html.Div(id='test-div-for-button'))
 
 test_page = html.Div(final_list, style = {'margin':'1%'})
 ##################################################CALLBACKS##################################################
-@app.callback(Output('test', 'children'),
-            [Input('button-test','n_clicks')], [State('button-test','n_clicks')]
+@app.callback(
+    Output('test-P', 'children'), [Input('button-test1', 'n_clicks')]
 )
-def test(n, a):
+def test1(n):
     if n is None:
         raise PreventUpdate
-    return a
+    print('btn1')
+    return ''
 
+@app.callback(
+    Output('test-div-for-button', 'children'), [Input('button-test10', 'n_clicks')]
+)
+def test1(n):
+    if n is None:
+        raise PreventUpdate
+    print('btn10')
+    return ''
 
-
-
+#################################################
 #Fade in/out email
 @app.callback(
     Output("fade", "is_in"),
@@ -863,6 +873,7 @@ def changePage( href, path, search, hash_guide):
         return guidePage(job_id, hash_guide.split('#')[1]), 'http://127.0.0.1:8050/load' + search
     if path == '/test-page':
         return test_page, 'http://127.0.0.1:8050/load' + search
+   
     return index_page, ''
 
 #Check end job
