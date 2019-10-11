@@ -135,3 +135,15 @@ Seguire immagine di Luca per tabella targets
 -Far vedere che guida è stata selezionata
 -Bottone per esempio da far runnare
 -Modificare bottone farlo bello
+
+11-10
+-Mettere bottone Insert/Delete vicino a step1
+-Mettere bottone per avere le immagini con 1 mm, 2 mm, ...mms, e show all
+-Mettere sotto focus on il link per vedere tutti i target di quella guida
+-Filtering e ordinamento nella tabella delle guide
+-Fare immagini più piccole e meglio sistemate
+
+-Idea per estrarre only_enr: nella creazione dei res faccio un hash su guida+chr+pos e poi quando controllo nel enr vedo se il suo hash compare nella tabella già compilata e lo scarto
+-Vedere java hash
+
+-Scaricare bedfile, estrarre seq e creare cartelle per ogni bedfile. indicizzare, fare ricerca con le due guide 6 mm 2 2 

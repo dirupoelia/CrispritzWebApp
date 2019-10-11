@@ -1169,25 +1169,64 @@ def loadColumnImages(sel_cel, all_guides, search):
     job_id = search.split('=')[-1]
     job_directory = 'Results/' + job_id + '/'
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
-    radar_img = 'summary_single_guide_' + guide + '_' + str(4) + 'mm.png'
-    test_col = html.Div(
-        [
-            html.Div(
-                html.A(
-                    html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
+    
+    with open('Results/' + job_id + '/Params.txt') as p:
+       mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
+    # test_col = html.Div(
+    #     [
+    #         html.Div(
+    #             html.A(
+    #                 html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
                      
                     
-                    ),
+    #                 ),
                     
-                    target="_blank",
-                    id = 'link-barplot',
-                    href = 'assets/Img/' + job_id + '/' + radar_img
+    #                 target="_blank",
+    #                 id = 'link-barplot',
+    #                 href = 'assets/Img/' + job_id + '/' + radar_img
                     
-                ),
-                style = {'flex':'0 0 30%'}
-            ),
+    #             ),
+    #             style = {'flex':'0 0 30%'}
+    #         ),
+    #         html.Div(
+    #         html.A(
+    #                 html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
+                     
+                    
+    #                 ),
+                
+    #             target="_blank",
+    #             href = 'assets/Img/' + job_id + '/' + radar_img
+                
+    #         ),
+    #         style = {'flex':'0 0 30%'}
+    #     ),
+            
+    #     ],
+    #     className = 'flex-view-images'
+    # )
+    fl = []
+    fl.append(html.H5('Focus on: ' + guide))
+    # fl.append(test_col)
+    # fl.append(test_col)
+    for i in range (int(mms) + 1):
+        radar_img = 'summary_single_guide_' + guide + '_' + str(i) + 'mm.png'
+
+        barplot_img = 'summary_histogram_' + guide + '_' + str(i) + 'mm.png'
+        try:            #NOTE serve per non generare errori se il barplot non è stato fatto
+            barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
+            barplot_href = 'assets/Img/' + job_id + '/' + barplot_img
+        except:
+            barplot_src = ''
+            barplot_href = ''
+        fl.append(
             html.Div(
-            html.A(
+       
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    html.A(
                     html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
                      
                     
@@ -1196,16 +1235,62 @@ def loadColumnImages(sel_cel, all_guides, search):
                 target="_blank",
                 href = 'assets/Img/' + job_id + '/' + radar_img
                 
-            ),
-            style = {'flex':'0 0 30%'}
-        ),
-            
-        ],
-        className = 'flex-view-images'
+            )
+                                ),
+                                dbc.Col(
+                                    html.A(
+                    html.Img(src = barplot_src,id = 'barplot-img', width="100%", #height="30%",
+                     
+                    
+                    ),
+                
+                target="_blank",
+                href = barplot_href
+                
+            )
+                                )
+                            ]
+                        ),
+                    ]
+
     )
-    fl = []
-    fl.append(test_col)
-    fl.append(test_col)
+        )
+    # test_col_bootstrap = html.Div(
+       
+    #                 [
+    #                     dbc.Row(
+    #                         [
+    #                             dbc.Col(
+    #                                 html.A(
+    #                 html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
+                     
+                    
+    #                 ),
+                
+    #             target="_blank",
+    #             href = 'assets/Img/' + job_id + '/' + radar_img
+                
+    #         )
+    #                             ),
+    #                             dbc.Col(
+    #                                 html.A(
+    #                 html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
+                     
+                    
+    #                 ),
+                
+    #             target="_blank",
+    #             href = 'assets/Img/' + job_id + '/' + radar_img
+                
+    #         )
+    #                             )
+    #                         ]
+    #                     ),
+    #                 ]
+
+    # )
+    # fl.append(test_col_bootstrap)
+    # fl.append(test_col_bootstrap)
     return fl
     
 
@@ -1480,6 +1565,7 @@ def guidePage(job_id, guide):
 
 if __name__ == '__main__':
     app.run_server(debug=True)
+    #app.run_server(host='0.0.0.0', debug=True, port=80)
     cache.clear()       #delete cache when server is closed
 
     #BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti

@@ -8,6 +8,7 @@ def getGuides(extracted_seq, pam, len_guide):
     
     len_pam = len(pam)
     #dict
+    len_guide = int(len_guide)
     pam_dict = {
         'A':  "ARWMDHV",
         'C':  "CYSMBHV",
