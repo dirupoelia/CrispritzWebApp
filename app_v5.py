@@ -33,7 +33,7 @@ from datetime import datetime               #For time when job submitted
 from seq_script import extract_seq, convert_pam
 
 PAGE_SIZE = 10                     #number of entries in each page of the table in view report
-
+URL = 'http://127.0.0.1:8050'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
@@ -88,8 +88,8 @@ av_guide_sequence = [{'label': i, 'value': i} for i in range(15, 26)]
 search_bar = dbc.Row(
     [
         #dbc.Col(dbc.Input(type="search", placeholder="Search")),
-        dbc.Col(dbc.NavLink('HOME', active = True, href = 'http://127.0.0.1:8050', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
-        dbc.Col(dbc.NavLink('ABOUT', active = True, href = 'http://127.0.0.1:8050', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
+        dbc.Col(dbc.NavLink('HOME', active = True, href = URL, className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
+        dbc.Col(dbc.NavLink('ABOUT', active = True, href = URL, className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
         dbc.Col(
             dbc.DropdownMenu(
                 children=[
@@ -103,7 +103,7 @@ search_bar = dbc.Row(
                 style = {'width': '300px !important' } #'height': '400px !important' 
             ),
         ),
-        dbc.Col(dbc.NavLink('CONTACTS', active = True, href = 'http://127.0.0.1:8050', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'}))
+        dbc.Col(dbc.NavLink('CONTACTS', active = True, href = URL, className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'}))
     ],
     no_gutters=True,
     className="ml-auto flex-nowrap mt-3 mt-md-0",
@@ -124,7 +124,7 @@ navbar = dbc.Navbar(
                 align="center",
                 no_gutters=True,
             ),
-            href='http://127.0.0.1:8050',
+            href=URL,
         ),
         dbc.NavbarToggler(id="navbar-toggler"),
         dbc.Collapse(search_bar, id="navbar-collapse", navbar=True),
@@ -287,10 +287,10 @@ final_list.append(
                         html.Div(
                             [
                                 # html.P(#'Send us a request to add a specific genome sequence or a variant, or download the offline version'
-                                # [html.A('Contact us', href = 'http://127.0.0.1:8050', target="_blank"),' to request new genomes availability in the dropdown list', html.P('or'), html.P('Download the offline version'),], style = {'margin-top':'10px', 'text-align':'-webkit-center', 'position': 'relative', 'top': '25%'}),
+                                # [html.A('Contact us', href = URL, target="_blank"),' to request new genomes availability in the dropdown list', html.P('or'), html.P('Download the offline version'),], style = {'margin-top':'10px', 'text-align':'-webkit-center', 'position': 'relative', 'top': '25%'}),
                                 html.Ul(
                                     [html.Li(
-                                        [html.A('Contact us', href = 'http://127.0.0.1:8050', target="_blank"),' to request new genomes availability in the dropdown list'],
+                                        [html.A('Contact us', href = URL, target="_blank"),' to request new genomes availability in the dropdown list'],
                                         style = {'margin-top':'5%'}
                                     ),
                                     html.Li(
@@ -747,7 +747,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         send_email = True
         with open(result_dir + '/email.txt', 'w') as e:
             e.write(dest_email + '\n')
-            e.write('http://127.0.0.1:8050/load?job=' + job_id + '\n')
+            e.write(URL + '/load?job=' + job_id + '\n')
             e.write(datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S") + '\n')
             e.write('Job done. Parameters: etc etc')
             e.close()
@@ -898,14 +898,14 @@ def changePage( href, path, search, hash_guide):
     # print('search', search)
     print('hash', hash_guide)
     if path == '/load':
-        return load_page, 'http://127.0.0.1:8050/load' + search #NOTE change the url part when DNS are changed
+        return load_page, URL + '/load' + search #NOTE change the url part when DNS are changed
     if path == '/result':
         job_id = search.split('=')[-1]
         if hash_guide is None or hash_guide is '':
-            return resultPage(job_id), 'http://127.0.0.1:8050/load' + search
-        return guidePage(job_id, hash_guide.split('#')[1]), 'http://127.0.0.1:8050/load' + search
+            return resultPage(job_id), URL + '/load' + search
+        return guidePage(job_id, hash_guide.split('#')[1]), URL + '/load' + search
     if path == '/test-page':
-        return test_page, 'http://127.0.0.1:8050/load' + search
+        return test_page, URL + '/load' + search
    
     return index_page, ''
 
@@ -1098,12 +1098,12 @@ def parse_contents(contents):
     return decoded
 
 #Show image: Barplot
-@app.callback(
-    [Output('barplot-img', 'src'),
-    Output('link-barplot', 'href')],
-    [Input('mms-dropdown','value')],
-    [State('url', 'search')]
-)
+# @app.callback(
+#     [Output('barplot-img', 'src'),
+#     Output('link-barplot', 'href')],
+#     [Input('mms-dropdown','value')],
+#     [State('url', 'search')]
+# )
 def showImages(mms, search):
     if mms is None:
         raise PreventUpdate
@@ -1127,12 +1127,12 @@ def showImages(mms, search):
     return barplot_src, barplot_href
 
 #Show image: Radar chart
-@app.callback(
-    [Output('radar-img', 'src'),
-    Output('link-radar', 'href')],
-    [Input('mms-dropdown-guide-specific','value')],
-    [State('url', 'search'), State('url','hash')]
-)
+# @app.callback(
+#     [Output('radar-img', 'src'),
+#     Output('link-radar', 'href')],
+#     [Input('mms-dropdown-guide-specific','value')],
+#     [State('url', 'search'), State('url','hash')]
+# )
 def showImages(mms, search, hash_guide):
     if mms is None:
         raise PreventUpdate
@@ -1155,6 +1155,59 @@ def showImages(mms, search, hash_guide):
         radar_src = ''
         radar_href = ''
     return radar_src, radar_href
+
+#Generate column of images
+@app.callback(
+    Output('all-images','children'),
+    [Input('general-profile-table', 'selected_cells')],
+    [State('general-profile-table', 'data'),
+    State('url', 'search')]
+)
+def loadColumnImages(sel_cel, all_guides, search):
+    if sel_cel is None:
+        raise PreventUpdate
+    job_id = search.split('=')[-1]
+    job_directory = 'Results/' + job_id + '/'
+    guide = all_guides[int(sel_cel[0]['row'])]['Guide']
+    radar_img = 'summary_single_guide_' + guide + '_' + str(4) + 'mm.png'
+    test_col = html.Div(
+        [
+            html.Div(
+                html.A(
+                    html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
+                     
+                    
+                    ),
+                    
+                    target="_blank",
+                    id = 'link-barplot',
+                    href = 'assets/Img/' + job_id + '/' + radar_img
+                    
+                ),
+                style = {'flex':'0 0 30%'}
+            ),
+            html.Div(
+            html.A(
+                    html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
+                     
+                    
+                    ),
+                
+                target="_blank",
+                href = 'assets/Img/' + job_id + '/' + radar_img
+                
+            ),
+            style = {'flex':'0 0 30%'}
+        ),
+            
+        ],
+        className = 'flex-view-images'
+    )
+    fl = []
+    fl.append(test_col)
+    fl.append(test_col)
+    return fl
+    
 
 def generate_table(dataframe, id_table, max_rows=26):
     return html.Table(
@@ -1236,7 +1289,7 @@ def resultPage(job_id):
         rename_columns[str(i+1) + 'MM'] = str(i+1) + ' Mismatches'
 
     profile.rename(columns = rename_columns, inplace = True)    #Now profile is Guide, Total On-targets, ...
-    #link_for_guides = [html.A('Show all...', href = 'http://127.0.0.1:8050/result?job=' + job_id + '#' + i, target = '_blank') for i in profile['Guide']]
+    #link_for_guides = [html.A('Show all...', href = URL + '/result?job=' + job_id + '#' + i, target = '_blank') for i in profile['Guide']]
     #profile['More Info'] = link_for_guides
     final_list = []
 
@@ -1274,45 +1327,48 @@ def resultPage(job_id):
     )
 
     final_list.append(html.Br())
-    final_list.append(
-        html.Div(
-            [
-                html.Div(
-                    [
-                        html.H5('Comparison with Reference Genome'),
-                        html.P('Select the mismatch value'),
-                        dcc.Dropdown(options = mms_values, id = 'mms-dropdown', style = {'flex':'0 0 5%', 'width':'100px'}, clearable = False)
-                    ]
-                ),
-                html.Div(
-                    html.A(
-                        html.Img(id = 'barplot-img', width="100%", #height="30%", 
+    
+    # final_list.append(
+    #     html.Div(
+    #         [
+    #             # html.Div(
+    #             #     [
+    #             #         html.H5('Comparison with Reference Genome'),
+    #             #         html.P('Select the mismatch value'),
+    #             #         dcc.Dropdown(options = mms_values, id = 'mms-dropdown', style = {'flex':'0 0 5%', 'width':'100px'}, clearable = False)
+    #             #     ]
+    #             # ),
+    #             html.Div(
+    #                 html.A(
+    #                     html.Img(id = 'barplot-img', width="100%", #height="30%", 
                         
-                        ),
+    #                     ),
                         
-                        target="_blank",
-                        id = 'link-barplot'
+    #                     target="_blank",
+    #                     id = 'link-barplot'
                         
-                    ),
-                    style = {'flex':'0 0 30%'}
-                ),
-                html.Div(
-                html.A(
-                    html.Img( width="100%", #height="30%", 
+    #                 ),
+    #                 style = {'flex':'0 0 30%'}
+    #             ),
+    #             html.Div(
+    #             html.A(
+    #                 html.Img( width="100%", #height="30%", 
                     
-                    ),
+    #                 ),
                     
-                    target="_blank",
+    #                 target="_blank",
                     
-                ),
-                style = {'flex':'0 0 30%'}
-            ),
+    #             ),
+    #             style = {'flex':'0 0 30%'}
+    #         ),
                 
-            ],
-            className = 'flex-view-images'
-        )
+    #         ],
+    #         className = 'flex-view-images'
+    #     )
+    # )
+    final_list.append(
+        html.Div(id = 'all-images')
     )
-
     result_page = html.Div(final_list, style = {'margin':'1%'})
     return result_page
 

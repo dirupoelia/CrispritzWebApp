@@ -108,6 +108,11 @@ cd ..
 rm -r $jobid
 mkdir assets/Img/$jobid
 cp $PWD/$1/*.png assets/Img/$jobid/
+
+#Temp (find better way when scores will be modified), sum of cfd per guide
+#TODO put control if scores were not computed
+awk -F'\t' '{a[$2] += $9} END{for (i in a) print i, a[i]}' $1/$jobid.scores.txt > $1'/'acfd.txt
+
 echo 'Report\tDone\t'$(date) >> $1'/'log.txt
 
 echo 'Job\tDone\t'$(date)>> $1'/'log.txt
