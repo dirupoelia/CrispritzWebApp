@@ -1227,7 +1227,7 @@ def loadColumnImages(sel_cel, all_guides, search):
                             [
                                 dbc.Col(
                                     html.A(
-                    html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
+                    html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="75%", height="auto",
                      
                     
                     ),
@@ -1235,11 +1235,11 @@ def loadColumnImages(sel_cel, all_guides, search):
                 target="_blank",
                 href = 'assets/Img/' + job_id + '/' + radar_img
                 
-            )
+            ),
                                 ),
                                 dbc.Col(
                                     html.A(
-                    html.Img(src = barplot_src,id = 'barplot-img', width="100%", #height="30%",
+                    html.Img(src = barplot_src,id = 'barplot-img', width="75%", height="auto",
                      
                     
                     ),
@@ -1249,12 +1249,14 @@ def loadColumnImages(sel_cel, all_guides, search):
                 
             )
                                 )
-                            ]
+                            ], 
                         ),
                     ]
 
     )
         )
+        fl.append(html.Br())
+        fl.append(html.Br())
     # test_col_bootstrap = html.Div(
        
     #                 [
@@ -1413,6 +1415,19 @@ def resultPage(job_id):
 
     final_list.append(html.Br())
     
+    #Create 10 buttons hidden and show when guide is selected, when button is pressed, show image with corresponding mm
+    final_list.append(
+        html.Div(
+            [
+                html.Button('0 mm'),
+                html.Button('1 mm'),
+                html.Button('2 mm'),
+                html.Button('3 mm', id = 'btn3', style = {'display':'none'}),
+                html.Button('4 mm', id ='btn4'),
+            ]
+        )
+    )
+
     # final_list.append(
     #     html.Div(
     #         [

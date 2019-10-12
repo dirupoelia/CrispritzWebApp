@@ -26,3 +26,8 @@ Bootstrap for dash
 ```
 conda install -c conda-forge dash-bootstrap-components
 ```
+pdftoppm to create png results
+```
+sudo apt-get install python-poppler
+```
+

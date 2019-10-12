@@ -133,7 +133,7 @@ Se clicco sulla guida, viene selezionata e sotto appare una tabella a 2 colonne 
 -differenziare target per ref o enr (2 ricerche intanto)
 Seguire immagine di Luca per tabella targets
 -Far vedere che guida è stata selezionata
--Bottone per esempio da far runnare
+-Bottone per esempio da far runnare			X
 -Modificare bottone farlo bello
 
 11-10
