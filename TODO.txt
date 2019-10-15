@@ -147,3 +147,6 @@ Seguire immagine di Luca per tabella targets
 -Vedere java hash
 
 -Scaricare bedfile, estrarre seq e creare cartelle per ogni bedfile. indicizzare, fare ricerca con le due guide 6 mm 2 2 
+
+-Per velocizzare l'estrazione dei dati (comm, uniq, min_max), possiamo cambiare il nome dei chr quando creiamo il file dei targets cambiano carattteri come _ in - in modo
+da poter usare LC_ALL=C

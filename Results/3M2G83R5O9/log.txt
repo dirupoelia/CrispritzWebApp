@@ -1,0 +1,10 @@
+Job	Start	mar 15 ott 2019, 14.32.49, CEST
+Search-index	Start	mar 15 ott 2019, 14.32.49, CEST
+Search-index	Done	mar 15 ott 2019, 14.32.49, CEST
+Search	Start	mar 15 ott 2019, 14.32.49, CEST
+Search	Done	mar 15 ott 2019, 14.32.53, CEST
+Annotation	Start	mar 15 ott 2019, 14.32.53, CEST
+Annotation	Done	mar 15 ott 2019, 14.34.25, CEST
+Report	Start	mar 15 ott 2019, 14.34.25, CEST
+Report	Done	mar 15 ott 2019, 14.34.43, CEST
+Job	Done	mar 15 ott 2019, 14.34.43, CEST
