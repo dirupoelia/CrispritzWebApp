@@ -1159,12 +1159,15 @@ def showImages(mms, search, hash_guide):
 #Generate column of images
 @app.callback(
     Output('all-images','children'),
-    [Input('general-profile-table', 'selected_cells')],
-    [State('general-profile-table', 'data'),
+    
+    [Input('btn4', 'n_clicks_timestamp'),
+        Input('btnAll','n_clicks_timestamp')],
+    [State('general-profile-table', 'selected_cells'),
+    State('general-profile-table', 'data'),
     State('url', 'search')]
 )
-def loadColumnImages(sel_cel, all_guides, search):
-    if sel_cel is None:
+def loadColumnImages(n4, nAll, sel_cel, all_guides, search):
+    if sel_cel is None :
         raise PreventUpdate
     job_id = search.split('=')[-1]
     job_directory = 'Results/' + job_id + '/'
@@ -1206,10 +1209,22 @@ def loadColumnImages(sel_cel, all_guides, search):
     #     className = 'flex-view-images'
     # )
     fl = []
+    fl.append(html.Br())
     fl.append(html.H5('Focus on: ' + guide))
+    fl.append(html.P(['View all targets found with the selected guide ' , html.A('here', href = URL + '/result?job=' + job_id + '#' + guide, target = '_blank')]))
     # fl.append(test_col)
     # fl.append(test_col)
-    for i in range (int(mms) + 1):
+    if not n4:
+        n4 = 0
+    if not nAll:
+        nAll = 0
+    if (int(n4) > int(nAll)):
+        min_mm = 4
+        max_mm = 5
+    else:
+        min_mm = 0
+        max_mm = int(mms) + 1
+    for i in range (min_mm, max_mm): #int(mms) + 1):
         radar_img = 'summary_single_guide_' + guide + '_' + str(i) + 'mm.png'
 
         barplot_img = 'summary_histogram_' + guide + '_' + str(i) + 'mm.png'
@@ -1408,7 +1423,8 @@ def resultPage(job_id):
                 id = 'general-profile-table',
                 page_size=PAGE_SIZE,
                 columns = columns_profile_table,
-                data = profile.to_dict('records')
+                data = profile.to_dict('records'),
+                selected_cells = [{'row':0, 'column':0}]
             )
             ,id = 'div-general-profile-table')
     )
@@ -1416,17 +1432,27 @@ def resultPage(job_id):
     final_list.append(html.Br())
     
     #Create 10 buttons hidden and show when guide is selected, when button is pressed, show image with corresponding mm
+    for i in range (10):
+        if (i <= mms):
+            final_list.append(
+                html.Button(str(i) + ' mm',id = 'btn' + str(i)),       
+            )
+        else:
+            final_list.append(
+                html.Button(str(i) + ' mm',id = 'btn' + str(i), style = {'display':'none'}),       
+            )
     final_list.append(
-        html.Div(
-            [
-                html.Button('0 mm'),
-                html.Button('1 mm'),
-                html.Button('2 mm'),
-                html.Button('3 mm', id = 'btn3', style = {'display':'none'}),
-                html.Button('4 mm', id ='btn4'),
-            ]
-        )
+        html.Button('Show all',id = 'btnAll'),
     )
+    # button_group = dbc.ButtonGroup(
+    # [dbc.Button("0 Mismatches", style = {'background-color':'grey'}),
+    # dbc.Button("1 Mismatches", style = {'background-color':'grey'}),
+    # dbc.Button("2 Mismatches", style = {'background-color':'grey'}),
+    # dbc.Button("3 Mismatches", style = {'background-color':'grey'}),
+    # dbc.Button("4 Mismatches", style = {'background-color':'grey'}),
+    # dbc.Button("5 Mismatches", style = {'background-color':'grey'})]
+    # )
+    # final_list.append(button_group)
 
     # final_list.append(
     #     html.Div(
@@ -1538,44 +1564,44 @@ def guidePage(job_id, guide):
         )
     )
     final_list.append(html.Br())
-    final_list.append(
-        html.Div(
-            [
-                html.Div(
-                    [
-                        html.P('Select the mismatch value'),
-                        dcc.Dropdown(options = mms_values, id = 'mms-dropdown-guide-specific', style = {'flex':'0 0 5%'}, clearable = False)
-                    ]
-                ),
+    # final_list.append(
+    #     html.Div(
+    #         [
+    #             # html.Div(
+    #             #     [
+    #             #         html.P('Select the mismatch value'),
+    #             #         dcc.Dropdown(options = mms_values, id = 'mms-dropdown-guide-specific', style = {'flex':'0 0 5%'}, clearable = False)
+    #             #     ]
+    #             # ),
                 
-                html.Div(
-                    html.A(
-                        html.Img(id = 'radar-img', width="100%", #height="30%", 
+    #             html.Div(
+    #                 html.A(
+    #                     html.Img(id = 'radar-img', width="100%", #height="30%", 
                         
-                        ),
+    #                     ),
                         
-                        target="_blank",
-                        id = 'link-radar'
+    #                     target="_blank",
+    #                     id = 'link-radar'
                         
-                    ),
-                    style = {'flex':'0 0 30%'}
-                ),
-                html.Div(
-                    html.A(
-                        html.Img( width="100%", #height="30%", 
+    #                 ),
+    #                 style = {'flex':'0 0 30%'}
+    #             ),
+    #             html.Div(
+    #                 html.A(
+    #                     html.Img( width="100%", #height="30%", 
                         
-                        ),
+    #                     ),
                         
-                        target="_blank",
+    #                     target="_blank",
                         
-                    ),
-                    style = {'flex':'0 0 30%'}
-                )
+    #                 ),
+    #                 style = {'flex':'0 0 30%'}
+    #             )
                 
-            ],
-            className = 'flex-view-images'
-        )
-    )
+    #         ],
+    #         className = 'flex-view-images'
+    #     )
+    # )
     return html.Div(final_list, style = {'margin':'1%'})
 
 if __name__ == '__main__':
