@@ -1,4 +1,7 @@
 # CrispritzWebApp
+Versione corrente: app_v5.py
+
+
 Installare il conda di crispritz, poi in quel conda aggiungere:
 
 
@@ -31,3 +34,25 @@ pdftoppm to create png results
 sudo apt-get install python-poppler
 ```
 Estrarre gli zip in genome_library per poter fare la ricerca con i bulges
+
+
+Dentro la cartella CrispritzWebApp, eseguire:
+```
+python3 app_v5.py
+```
+La pagina principale si trova su:
+```
+127.0.0.1:8050
+```
+Esempio di pagina wait job:
+```
+127.0.0.1:8050/load?job=3M2G83R5O9
+```
+Esempio di result summary:
+```
+127.0.0.1:8050/result?job=3M2G83R5O9
+```
+Esempio di targets per guida:
+```
+127.0.0.1:8050/result?job=3M2G83R5O9#GAGTCCGAGCAGAAGAAGAANNN
+```
