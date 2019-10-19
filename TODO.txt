@@ -150,3 +150,31 @@ Seguire immagine di Luca per tabella targets
 
 -Per velocizzare l'estrazione dei dati (comm, uniq, min_max), possiamo cambiare il nome dei chr quando creiamo il file dei targets cambiano carattteri come _ in - in modo
 da poter usare LC_ALL=C
+
+
+TODO per giovedì 24 (non tutto, il più possibile)
+Pagina principale:
+- Testare come inserire javascript in dash, per esempio cliccare una parola e far modificare il contenuto di un altro elemento della pagina
+	-Serve per esempio per inserire/cancellare gli input di esempio nella pagina principale
+-Altrimenti modificare lo stile del bottone di insert example per farlo somigliare ad un link
+-Inserire un altro bottone simile a quello di prima per cancellare l'esempio inserito, oppure usare lo stesso bottone
+	-Vedere se possibile implementare 3 idee:
+		-Cancellare tutti i valori inseriti
+		-Cancellare solo i valori che sono uguali a quelli di esempio e non quelli che sono stati modificati dall'utente
+		-Se anche un solo valore è diverso da quello di esempio, non cancellare niente
+
+Pagina dei risultati con la tabella delle guide:
+-Aggiungere possibilità di filtering e sorting della tabella (controllare https://dash.plot.ly/datatable e https://dash.plot.ly/datatable/callbacks)
+-Modificare le colonne tenendo solo CFD, On-Targets, Off-targets, Off-targets for 0-1-2-3-4...mms (in base ai mmismatches di quella ricerca).
+-Nella cella Off-targets for 0-1-2... mettere il numero di offtargets trovati per quel valore di mms, per esempio 1-12-15-50. I valori si trovano
+nel file profiling, o profiling complete se presente, ed è caricato in un dataframe quando la tabella è visualizzata, quindi si può partire da li
+per costruire la stringa da far vedere nella cella.
+-Testare se mettere un buttongroup è più bello rispetto ai bottoni attuali
+-Continuare l'implementazione per i bottoni (funzione loadColumnImages()), mettendo come input tutti i bottoni, e verificando qual è l'ultimo 
+bottone cliccato e visualizzando le immagini con quel valore di mms. 
+
+Pagina del load job
+-Quando tutti i passaggi di crispritz sono completati, compare un link per andare nella pagina results. Sarebbe meglio che ci fosse un
+reindirizzamento automatico. Quindi modificare la chiamata dell'interval per fare in modo che quando tutti e tre i processi sono completati
+si venga reindirizzati. Idea: modificare un div nascosto per segnalare che la ricerca è finita e quando il div viene modificato 
+far partire la chiamata per il change url --> potrebbe richiedere modifiche per la funzione changePage()

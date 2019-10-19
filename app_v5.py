@@ -258,10 +258,7 @@ final_list.append(
                             dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genome",) #style = {'width':'75%'})
                         ),
                         dbc.FormText('Note: Genomes enriched with variants are indicated with a \'+\' symbol', color='secondary'),
-                        # html.P('Add a genome variant', style = {'visibility':'hidden'}),
-                        # html.Div(
-                        #     dcc.Dropdown(options = var_dir,clearable = False, id = 'available-variant', style = {'width':'75%', 'visibility':'hidden'})
-                        # ),
+                        
                         html.Div(
                             [
                                 html.Div(
@@ -272,22 +269,13 @@ final_list.append(
                                         )
                                     ],
                                     style = {'flex':'0 0 50%', 'margin-top': '10%'}
-                                ),
-                                #html.P('or'),
-                                # html.Div(
-                                #     [
-                                #         html.P('Insert custom PAM'),
-                                #         dcc.Input(type = 'text', id = 'custom-pam', placeholder = 'NGG', disabled = True)
-                                #     ]
-                                # )
+                                )
                             ],
                             id = 'div-pam',
                             className = 'flex-div-pam'
                         ),
                         html.Div(
                             [
-                                # html.P(#'Send us a request to add a specific genome sequence or a variant, or download the offline version'
-                                # [html.A('Contact us', href = URL, target="_blank"),' to request new genomes availability in the dropdown list', html.P('or'), html.P('Download the offline version'),], style = {'margin-top':'10px', 'text-align':'-webkit-center', 'position': 'relative', 'top': '25%'}),
                                 html.Ul(
                                     [html.Li(
                                         [html.A('Contact us', href = URL, target="_blank"),' to request new genomes availability in the dropdown list'],
@@ -319,15 +307,6 @@ final_list.append(
                             [
                                 html.Div(
                                     [   html.P('Select the input type'),
-                                        # dbc.RadioItems(
-                                        #     options=[
-                                        #         {'label': 'Guides', 'value': 'Guides'},
-                                        #         {'label': 'Sequence', 'value': 'Sequence'}
-                                        #     ],
-                                        #     value='Guides',
-                                        #     inline = True,
-                                        #     id = 'guide-or-sequence'
-                                        # ),
                                         dbc.Tabs(
                                             [
                                                 dbc.Tab(tab_guides_content, label='Guides', tab_id= 'guide-tab'),
@@ -335,23 +314,7 @@ final_list.append(
                                             ],
                                             active_tab='guide-tab',
                                             id = 'tabs'
-                                        ),
-                                        
-                                        # html.Div(
-                                        #     [
-                                        #         html.P([
-                                        #             'Insert crRNA sequence(s), one per line.', 
-                                        #             html.P('Sequences must have the same length and be provided without the PAM sequence') ,
-                                        #             #html.Abbr('\uD83D\uDEC8', style = {'text-decoration':'none'} ,title = 'One sequence per line. All sequences must have the same lenght and PAM characters are not required')
-                                        #         ],
-                                        #         style = {'word-wrap': 'break-word'}), 
-                            
-                                        #         dcc.Textarea(id = 'text-guides', placeholder = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', style = {'width':'450px', 'height':'160px'}),
-                                        #         #html.P('Note: a maximum number of 1000 sequences can be provided'),
-                                        #         dbc.FormText('Note: a maximum number of 1000 sequences can be provided', color = 'secondary')
-                                        #     ],
-                                        #     style = {'width':'450px'} #same as text-area
-                                        # )
+                                        )
                                     ],
                                     id = 'div-guides'
                                 ),
@@ -388,9 +351,8 @@ final_list.append(
                         checklist_div,
                         dcc.Checklist(
                             options = [
-                            #{'label':'Gecko comparison', 'value':'GC', 'disabled':False},
-                            #{'label':'Reference genome comparison', 'value':'RGC', 'disabled':False},
-                            {'label':'Notify me by email','value':'email', 'disabled':False}], 
+                                {'label':'Notify me by email','value':'email', 'disabled':False}
+                            ], 
                             id = 'checklist-advanced',
                         ),
                         dbc.Fade(
@@ -434,7 +396,6 @@ index_page = html.Div(final_list, style = {'margin':'1%'})
 
 #Load Page
 final_list = []
-#final_list.append(html.H1('CRISPRitz Web Application'))
 final_list.append(
     html.Div(
         html.Div(
@@ -500,7 +461,7 @@ final_list.append(dcc.Interval(id = 'load-page-check', interval=3*1000))
 load_page = html.Div(final_list, style = {'margin':'1%'})
 
 
-#Test bootstrap page
+#Test bootstrap page, go to /test-page to see 
 final_list = []
 final_list.append(
     html.Div(
@@ -518,6 +479,7 @@ final_list.append(html.Div(id='test-div-for-button'))
 
 test_page = html.Div(final_list, style = {'margin':'1%'})
 ##################################################CALLBACKS##################################################
+#Test callbacks
 @app.callback(
     Output('test-P', 'children'), [Input('button-test1', 'n_clicks')]
 )
@@ -544,6 +506,9 @@ def test1(n):
     [State("fade", "is_in")],
 )
 def toggle_fade(selected_options, is_in):
+    '''
+    Selezionando l'opzione Notify me by email, compare una box in cui poter inserire l'email
+    '''
     if  selected_options is None:
         return False
     if 'email' in selected_options:
@@ -563,10 +528,19 @@ def toggle_fade(selected_options, is_in):
     [Input('example-parameters', 'n_clicks')]
 )
 def inDelExample(n):
+    '''
+    Bottone per inserire degli input di esempio.
+    TODO Modificare lo stile del bottone e renderlo simile ad un link
+    TODO Inserire un altro bottone con lo stesso stile per rimuovere l'input di esempio (bisogna decidere se:
+    a) cancellare tutto
+    b) cancellare solo i campi i cui valori sono uguali a quelli di esempio
+    c) se almeno un campo è diverso dal valore di esempio, non cancello nulla)
+    '''
     if n is None:
         raise PreventUpdate
     
-    #TODO mettere esempio già svolto per non caricare troppo il server
+    #TODO salvare una cartella speciale in results che abbia i risultati di questa ricerca in modo da non occupare il server con
+    # questa ricerca di esempio, ma all'utente passo già la cartella fatta (questa parte già implementata)
     return gen_dir[0]['value'], '5\'-NGG-3\'', 'GAGTCCGAGCAGAAGAAGAA', '4', '0', '0', '20','>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
 
 #Email validity
@@ -575,6 +549,9 @@ def inDelExample(n):
     [Input('example-email', 'value')]
 )
 def checkEmailValidity(val):
+    '''
+    Controlla se l'email inserita è valida, cambiando il bordo in rosso o verde
+    '''
     if val is None:
         raise PreventUpdate
 
@@ -589,6 +566,9 @@ def checkEmailValidity(val):
     [State('fade-len-guide', 'is_in')]
 )
 def resetTab(current_tab, is_in):
+    '''
+    Fa comparire/scomparire  il dropdown per la lunghezza delle guide se l'utente seleziona l'opzione Sequence
+    '''
     if current_tab is None:
         raise PreventUpdate
 
@@ -622,6 +602,11 @@ def resetTab(current_tab, is_in):
     State("modal", "is_open")]
 )
 def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, len_guide_seq, active_tab ,is_open):
+    '''
+    La funzione prende i valori dei vari campi di input e controlla che siano tutti presenti, tranne la textbox delle guide e della sequenza.
+    Se qualcuno manca, colora il suo bordo di rosso e fa uscire un avviso con l'elenco degli input mancanti. 
+    La callback si aziona anche quando l'utente clicca Close nel modal e in quel caso chiude l'avviso
+    '''
     if n is None:
         raise PreventUpdate
     if is_open is None:
@@ -704,6 +689,11 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     Note that pam parameter can be 5'-NGG-3', but the corresponding filename is 5'-NGG-3'.txt
     Pam file (5'-NGG-3'.txt) is structured as NGG 3, or TTTN -4. The created pam.txt inside the result directory add the corresponding N's
     Annotations path file is named genome_name_annotationpath.txt, where genome_name is the reference genome name
+
+    La funzione crea una cartella dal nome random per identificare il job, controlla che opzioni sono state aggiunte e salva il contatto della mail.
+    Esatre i parametri dati in input per poterli utilizzare con crispritz. Salva un file params con i parametri della ricerca. Controlla poi se 
+    un'altra ricerca è stata fatta con gli stessi parametri e nel caso copia i risultati nella cartella di questo job.
+    Fa partire lo script submit_job per eseguire crispritz.
     '''
     if n is None:
         raise PreventUpdate
@@ -892,6 +882,9 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     # State('url','search')]
 )
 def changePage( href, path, search, hash_guide):
+    '''
+    Controllo della pagina da mostrare in base all'url
+    '''
     # print('href', href)
     # print('hash', hash_guide)
     # print('pathname', path)
@@ -921,6 +914,14 @@ def changePage( href, path, search, hash_guide):
     [State('url', 'search')]
 )
 def refreshSearch(n, dir_name):
+    '''
+    Il componente Interval chiama questa funzione ogni 3 secondi. Essa controlla lo stato del lavoro e aggiorna la pagina se una parte del lavoro
+    è stata fatta.
+    Quando la ricerca è finita, visualizza un link per passare alla pagina dei risultati
+    Se il job non esiste, ritorna un avviso di errore
+    TODO sarebbe più comodo che automaticamente la pagina si reindirizzi ai risultati quando il job è fatto
+
+    '''
     if n is None:
         raise PreventUpdate     #TODO fa un controllo subito, così l'utente non deve aspettare 3 secondi per l'update
     
@@ -954,7 +955,9 @@ def refreshSearch(n, dir_name):
 #Cache are in the Cache directory
 @cache.memoize()
 def global_store(value):
-    
+    '''
+    Caching dei file targets per una miglior performance di visualizzazione
+    '''
     if value is None:
         return ''
     target = [f for f in listdir('Results/' + value) if isfile(join('Results/'+value, f)) and f.endswith('scores.txt') ]
@@ -999,6 +1002,13 @@ def global_store(value):
      State('url', 'hash')]
 )
 def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
+    '''
+    La funzione ritorna uno split dei risultati in base ad un filtering o a un sort da parte dell'utente. Inoltre aggiorna i risultati
+    visualizzati quando il bottone next page / prev page è cliccato. (Codice preso dalla pagina dash datatable sul sorting con python)
+    Inoltre carica i file targets, o scores se presente, e lo trasforma in un dataframe, cambiando il nome delle colonne per farle corrispondere
+    all'id delle colonne della tabella nella pagina.
+    Se non ci sono targets ritorna un avviso di errore
+    '''
     job_id = search.split('=')[-1]
     job_directory = 'Results/' + job_id + '/'
     guide = hash_guide.split('#')[1]
@@ -1067,6 +1077,9 @@ def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
 
 #For filtering
 def split_filter_part(filter_part):
+    '''
+    Preso dal sito di dash sul filtering datatables con python
+    '''
     for operator_type in operators:
         for operator in operator_type:
             if operator in filter_part:
@@ -1105,6 +1118,9 @@ def parse_contents(contents):
 #     [State('url', 'search')]
 # )
 def showImages(mms, search):
+    '''
+    Codice vecchio, non dovrebbe servire
+    '''
     if mms is None:
         raise PreventUpdate
     job_id = search.split('=')[-1]
@@ -1134,6 +1150,9 @@ def showImages(mms, search):
 #     [State('url', 'search'), State('url','hash')]
 # )
 def showImages(mms, search, hash_guide):
+    '''
+    Codice vecchio non dovrebbe servire
+    '''
     if mms is None:
         raise PreventUpdate
     job_id = search.split('=')[-1]
@@ -1167,6 +1186,15 @@ def showImages(mms, search, hash_guide):
     State('url', 'search')]
 )
 def loadColumnImages(n4, nAll, sel_cel, all_guides, search):
+    '''
+    Carica le immagini corrispondenti alla guida selezionata. Se non ho una cella selezionata non mostra niente.
+    La funzione carica le immagini dalla cartella Results/job_id usando una codifica, le mette all'interno di un link che 
+    fa aprire l'immagine corrispondente presente nella cartella assets/Img/job_id.
+    TODO aggiungere all'input tutti i bottoni (da 0 mismatches a 7 mismatches + bottone allImg), in modo che l'utente possa selezionare un bottone 
+    e avere solo le immagini corrispondenti a quel valore di mismatch. Per fare ciò, si usa n_clicks_timestamp per vedere l'ultimo bottone cliccato
+    e prendere le immagini corrispondeti. Al momento se un bottone non è mai stato cliccato il suo valore è 0, al momento se tutti i bottoni sono
+    a zero faccio vedere tutte le immagini, ma in futuro potrebbe cambiare, magari far vedere solo le img con 1 mms
+    '''
     if sel_cel is None :
         raise PreventUpdate
     job_id = search.split('=')[-1]
@@ -1224,7 +1252,7 @@ def loadColumnImages(n4, nAll, sel_cel, all_guides, search):
     else:
         min_mm = 0
         max_mm = int(mms) + 1
-    for i in range (min_mm, max_mm): #int(mms) + 1):
+    for i in range (min_mm, max_mm): #uso un for per comprendere anche il caso di showAllImages
         radar_img = 'summary_single_guide_' + guide + '_' + str(i) + 'mm.png'
 
         barplot_img = 'summary_histogram_' + guide + '_' + str(i) + 'mm.png'
@@ -1236,39 +1264,29 @@ def loadColumnImages(n4, nAll, sel_cel, all_guides, search):
             barplot_href = ''
         fl.append(
             html.Div(
-       
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    html.A(
-                    html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="75%", height="auto",
-                     
-                    
-                    ),
-                
-                target="_blank",
-                href = 'assets/Img/' + job_id + '/' + radar_img
-                
-            ),
-                                ),
-                                dbc.Col(
-                                    html.A(
-                    html.Img(src = barplot_src,id = 'barplot-img', width="75%", height="auto",
-                     
-                    
-                    ),
-                
-                target="_blank",
-                href = barplot_href
-                
-            )
-                                )
-                            ], 
-                        ),
-                    ]
-
-    )
+                        [
+                            dbc.Row(
+                                [
+                                    dbc.Col(
+                                        html.A(
+                                            html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()), 
+                                            id = 'barplot-img', width="75%", height="auto"
+                                            ),
+                                            target="_blank",
+                                            href = 'assets/Img/' + job_id + '/' + radar_img
+                                        ),
+                                    ),
+                                    dbc.Col(
+                                        html.A(
+                                            html.Img(src = barplot_src,id = 'barplot-img', width="75%", height="auto"),
+                                            target="_blank",
+                                            href = barplot_href
+                                        )
+                                    )
+                                ], 
+                            ),
+                        ]
+                    )
         )
         fl.append(html.Br())
         fl.append(html.Br())
@@ -1312,6 +1330,9 @@ def loadColumnImages(n4, nAll, sel_cel, all_guides, search):
     
 
 def generate_table(dataframe, id_table, max_rows=26):
+    '''
+    Per generare una html table. NOTE è diversa da una dash dataTable
+    '''
     return html.Table(
         # Header
         [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
@@ -1340,6 +1361,9 @@ def generate_table(dataframe, id_table, max_rows=26):
 
 #If the input guides are different len, select the ones with same length as the first
 def selectSameLenGuides(list_guides):
+    '''
+    Se l'utente mette guide di lunghezza diversa, la funzione prende la lunghezza della prima guida e salva solo le guide con quella lunghezza
+    '''
     selected_length = len(list_guides.split('\n')[0])
     same_len_guides_list = []
     for guide in list_guides.split('\n'):
@@ -1349,6 +1373,19 @@ def selectSameLenGuides(list_guides):
     return same_len_guides
 
 def resultPage(job_id):
+    '''
+    La funzione ritorna il layout della pagina risultati (tabella delle guide + eventuali immagini). Nella tabella delle guide
+    carico il profile ottenuto dalla ricerca. Carica inoltre l'ACFD, che è il cfd score aggregato per tutti i risultati di una singola guida.
+    Crea poi 10 bottoni: un numero pari a mismatches + 2  che sono visibili, il resto con style = {'display':'none'}, così ho sempre il numero
+    esatto di bottoni per mismatches in base ai mms dati in input nella ricerca (serve a risolvere problemi con le callback che hanno input
+    da elementi non creati. In questo caso io creo tutti i possibili bottoni ma ne rendo visibili/disponibili solo il numero corretto in base
+    ai mms).
+    TODO usare className per i bottoni e modificare lo stile, oppure vedere se è possibile usare un buttongroup. Vedere quale è meglio.
+    TODO al momento la tabella delle guide è ordinata per acfd, rendere possibile anche l'ordinamento e il filtering da parte dell'utente,
+    usare il codice presente in dash datatable filtering con python.
+    TODO al posto di avere una colonna per mms value, avere un'unica colonna come crispor, che contiene 0-1-2-..-mms e per ogni guida avere il
+    numero corrispondente di targets. Usare il dataframe caricato al momento per computare questa stringa e metterla in quella colonna. 
+    '''
     value = job_id
     job_directory = 'Results/' + job_id + '/'
     warning_message = []
@@ -1396,7 +1433,6 @@ def resultPage(job_id):
     final_list = []
 
     
-    #final_list.append(html.H1('CRISPRitz Web Application'))
     final_list.append(
         html.H3('Result Summary')
     )
@@ -1500,6 +1536,9 @@ def resultPage(job_id):
 
 
 def guidePage(job_id, guide):
+    '''
+    Crea il layuot della pagina che contiene tutti i targets della guida selezionata
+    '''
     value = job_id
     final_list = []
     final_list.append(html.P('List of Targets found for the selected guide'))
@@ -1564,44 +1603,7 @@ def guidePage(job_id, guide):
         )
     )
     final_list.append(html.Br())
-    # final_list.append(
-    #     html.Div(
-    #         [
-    #             # html.Div(
-    #             #     [
-    #             #         html.P('Select the mismatch value'),
-    #             #         dcc.Dropdown(options = mms_values, id = 'mms-dropdown-guide-specific', style = {'flex':'0 0 5%'}, clearable = False)
-    #             #     ]
-    #             # ),
-                
-    #             html.Div(
-    #                 html.A(
-    #                     html.Img(id = 'radar-img', width="100%", #height="30%", 
-                        
-    #                     ),
-                        
-    #                     target="_blank",
-    #                     id = 'link-radar'
-                        
-    #                 ),
-    #                 style = {'flex':'0 0 30%'}
-    #             ),
-    #             html.Div(
-    #                 html.A(
-    #                     html.Img( width="100%", #height="30%", 
-                        
-    #                     ),
-                        
-    #                     target="_blank",
-                        
-    #                 ),
-    #                 style = {'flex':'0 0 30%'}
-    #             )
-                
-    #         ],
-    #         className = 'flex-view-images'
-    #     )
-    # )
+    
     return html.Div(final_list, style = {'margin':'1%'})
 
 if __name__ == '__main__':

@@ -30,4 +30,4 @@ pdftoppm to create png results
 ```
 sudo apt-get install python-poppler
 ```
-
+Estrarre gli zip in genome_library per poter fare la ricerca con i bulges
