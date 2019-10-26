@@ -1,51 +1,75 @@
-#NEW: 
-#-sequence input
-#-extract guides from sequence
-#-General guide result table
-#-Spcific table with ordered offtargets for each guide
-#-Download results
+# NEW:
+# -sequence input
+# -extract guides from sequence
+# -General guide result table
+# -Spcific table with ordered offtargets for each guide
+# -Download results
 
 import dash
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
-import dash_daq as daq
+# import dash_daq as daq
 import dash_table
 from dash.exceptions import PreventUpdate
-from os import listdir                      #for getting directories
-from os.path import isfile, isdir,join      #for getting directories
+from os import listdir  # for getting directories
+from os.path import isfile, isdir, join  # for getting directories
 import subprocess
-import base64                               #for decoding upload content
-import io                                   #for decoding upload content
-import pandas as pd                         #for dash table
-import json                                 #for getting and saving report images list
+import base64  # for decoding upload content
+import io  # for decoding upload content
+import pandas as pd  # for dash table
+import json  # for getting and saving report images list
 from os import getcwd
-import time                                 #measure time for loading df table
-from flask_caching import Cache             #for cache of .targets or .scores
+import time  # measure time for loading df table
+from flask_caching import Cache  # for cache of .targets or .scores
 import os
-import string                               #for job id
-import random                               #for job id
-import sys                                  #for sys.exit()
-import filecmp                              #check if Params files are equals
+import string  # for job id
+import random  # for job id
+import sys  # for sys.exit()
+import filecmp  # check if Params files are equals
 import dash_bootstrap_components as dbc
-import collections                          #For check if guides are the same in two results
-from datetime import datetime               #For time when job submitted
-from seq_script import extract_seq, convert_pam
+import collections  # For check if guides are the same in two results
+from datetime import datetime  # For time when job submitted
 
-PAGE_SIZE = 10                     #number of entries in each page of the table in view report
+# from seq_script import extract_seq, convert_pam
+
+PAGE_SIZE = 10  # number of entries in each page of the table in view report
 URL = 'http://127.0.0.1:8050'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.title = 'CRISPRitz'
-app.config['suppress_callback_exceptions'] = True       #necessary if update element in a callback generated in another callback
+
+
+# per questo pezzo di codice mi sono riferito a <<https://dash.plot.ly/external-resources>> se vuoi darci un'occhiata
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%css%}
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+                    <div id="footer"; style=" text-align: center ">Università di Verona</div>
+        </footer>
+
+    </body>
+</html>
+'''
+
+app.config[
+    'suppress_callback_exceptions'] = True  # necessary if update element in a callback generated in another callback
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
 
 CACHE_CONFIG = {
     # try 'filesystem' if you don't want to setup redis
     'CACHE_TYPE': 'filesystem',
-    'CACHE_DIR': ('Cache')#os.environ.get('REDIS_URL', 'localhost:6379')
+    'CACHE_DIR': ('Cache')  # os.environ.get('REDIS_URL', 'localhost:6379')
 }
 cache = Cache()
 cache.init_app(app.server, config=CACHE_CONFIG)
@@ -56,40 +80,42 @@ operators = [['ge ', '>='],
              ['gt ', '>'],
              ['ne ', '!='],
              ['eq ', '='],
-             ['contains ']]     #for filtering
+             ['contains ']]  # for filtering
 
-#Dropdown available genomes
+# Dropdown available genomes
 onlydir = [f for f in listdir('Genomes') if isdir(join('Genomes', f))]
 onlydir = [x.replace('_', ' ') for x in onlydir]
 gen_dir = []
 for dir in onlydir:
-    gen_dir.append({'label': dir, 'value' : dir})
+    gen_dir.append({'label': dir, 'value': dir})
 
-#Dropdown available PAM
+# Dropdown available PAM
 onlyfile = [f for f in listdir('pam') if isfile(join('pam', f))]
-onlyfile = [x.replace('.txt', '') for x in onlyfile]            #removed .txt for better visualization
+onlyfile = [x.replace('.txt', '') for x in onlyfile]  # removed .txt for better visualization
 pam_file = []
 for pam_name in onlyfile:
     if 'NGG' in pam_name:
-        pam_file.append({'label':pam_name, 'value':pam_name})
+        pam_file.append({'label': pam_name, 'value': pam_name})
     else:
-        pam_file.append({'label': pam_name, 'value' : pam_name, 'disabled':True})
+        pam_file.append({'label': pam_name, 'value': pam_name, 'disabled': True})
 
-#Dropdown available Variants
+# Dropdown available Variants
 onlydir = [f for f in listdir('Variants') if isdir(join('Variants', f))]
 var_dir = []
 for dir in onlydir:
-    var_dir.append({'label': dir, 'value' : dir})
+    var_dir.append({'label': dir, 'value': dir})
 
-#Available mismatches and bulges
+# Available mismatches and bulges
 av_mismatches = [{'label': i, 'value': i} for i in range(0, 8)]
 av_bulges = [{'label': i, 'value': i} for i in range(0, 6)]
 av_guide_sequence = [{'label': i, 'value': i} for i in range(15, 26)]
 search_bar = dbc.Row(
     [
-        #dbc.Col(dbc.Input(type="search", placeholder="Search")),
-        dbc.Col(dbc.NavLink('HOME', active = True, href = URL, className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
-        dbc.Col(dbc.NavLink('ABOUT', active = True, href = URL, className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
+        # dbc.Col(dbc.Input(type="search", placeholder="Search")),
+        dbc.Col(dbc.NavLink('HOME', active=True, href=URL, className='testHover',
+                            style={'text-decoration': 'none', 'color': 'white', 'font-size': '1.5rem'})),
+        dbc.Col(dbc.NavLink('ABOUT', active=True, href=URL, className='testHover',
+                            style={'text-decoration': 'none', 'color': 'white', 'font-size': '1.5rem'})),
         dbc.Col(
             dbc.DropdownMenu(
                 children=[
@@ -97,20 +123,20 @@ search_bar = dbc.Row(
                     dbc.DropdownMenuItem("InfOmics/CRISPRitz", href='https://github.com/InfOmics/CRISPRitz'),
                     dbc.DropdownMenuItem("Pinellolab/CRISPRitz", href='https://github.com/pinellolab/CRISPRitz'),
                 ],
-                #nav=True,
+                # nav=True,
                 in_navbar=True,
                 label="Downloads",
-                style = {'width': '300px !important' } #'height': '400px !important' 
+                style={'width': '300px !important'}  # 'height': '400px !important'
             ),
         ),
-        dbc.Col(dbc.NavLink('CONTACTS', active = True, href = URL, className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'}))
+        dbc.Col(dbc.NavLink('CONTACTS', active=True, href=URL, className='testHover',
+                            style={'text-decoration': 'none', 'color': 'white', 'font-size': '1.5rem'}))
     ],
     no_gutters=True,
     className="ml-auto flex-nowrap mt-3 mt-md-0",
     align="center",
 )
 PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
-
 
 navbar = dbc.Navbar(
     [
@@ -119,7 +145,7 @@ navbar = dbc.Navbar(
             dbc.Row(
                 [
                     dbc.Col(html.Img(src=PLOTLY_LOGO, height="30px")),
-                    dbc.Col(dbc.NavbarBrand("CRISPRitz Web App", className="ml-2", style = {'font-size': '30px'}))
+                    dbc.Col(dbc.NavbarBrand("CRISPRitz Web App", className="ml-2", style={'font-size': '30px'}))
                 ],
                 align="center",
                 no_gutters=True,
@@ -133,28 +159,28 @@ navbar = dbc.Navbar(
     dark=True,
 )
 
-#For multipage
+# For multipage
 app.layout = html.Div([
     navbar,
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content'),
-    html.P(id = 'signal', style = {'visibility':'hidden'})
+    html.P(id='signal', style={'visibility': 'hidden'})
 ])
 
-
-
-#new final_list
+# new final_list
 final_list = []
-final_list.extend([#html.H1('CRISPRitz Web Application'),
+final_list.extend([  # html.H1('CRISPRitz Web Application'),
     html.Div(children='''
-        CRISPRitz is a software package containing 5 different tools dedicated to perform predictive analysis and result assessement on CRISPR/Cas experiments. 
+        CRISPRitz is a software package containing 5 different tools dedicated to perform predictive analysis and result assessement on CRISPR/Cas experiments.
     '''),
     html.P()])
 
 final_list.append(
     html.Div(
         [
-            html.P(['Download the offline version here: ', html.A('InfOmics/CRISPRitz', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank"), ' or ', html.A('Pinellolab/CRISPRitz', href = 'https://github.com/pinellolab/CRISPRitz', target="_blank") ])
+            html.P(['Download the offline version here: ',
+                    html.A('InfOmics/CRISPRitz', href='https://github.com/InfOmics/CRISPRitz', target="_blank"), ' or ',
+                    html.A('Pinellolab/CRISPRitz', href='https://github.com/pinellolab/CRISPRitz', target="_blank")])
         ]
     )
 )
@@ -166,7 +192,7 @@ checklist_div = html.Div(
                     id="checkbox-gecko", className="form-check-input"
                 ),
                 dbc.Label(
-                    #html.P(['Activate Gecko ', html.Abbr('comparison', title ='The results of your test guides will be compared with results obtained from a previous computed analysis on gecko library')]) ,
+                    # html.P(['Activate Gecko ', html.Abbr('comparison', title ='The results of your test guides will be compared with results obtained from a previous computed analysis on gecko library')]) ,
                     html.P('Compare your results with the Gecko library'),
                     html_for="checkbox-gecko",
                     className="form-check-label",
@@ -175,7 +201,7 @@ checklist_div = html.Div(
                     id="checkbox-ref-comp", className="form-check-input"
                 ),
                 dbc.Label(
-                    #html.P(['Activate Reference genome ', html.Abbr('comparison', title ='The results of your test guides will be compared with the results obtained from a computed analysis on the corresponding reference genome. Note: this may increase computational time')]) ,
+                    # html.P(['Activate Reference genome ', html.Abbr('comparison', title ='The results of your test guides will be compared with the results obtained from a computed analysis on the corresponding reference genome. Note: this may increase computational time')]) ,
                     html.P('Compare your results with the corresponding reference genome'),
                     html_for="checkbox-ref-comp",
                     className="form-check-label",
@@ -184,7 +210,7 @@ checklist_div = html.Div(
                     id="checkbox-example-input", className="form-check-input"
                 ),
                 dbc.Label(
-                    #html.P(['Activate Reference genome ', html.Abbr('comparison', title ='The results of your test guides will be compared with the results obtained from a computed analysis on the corresponding reference genome. Note: this may increase computational time')]) ,
+                    # html.P(['Activate Reference genome ', html.Abbr('comparison', title ='The results of your test guides will be compared with the results obtained from a computed analysis on the corresponding reference genome. Note: this may increase computational time')]) ,
                     html.P('Insert example parameters'),
                     html_for="checkbox-example-input",
                     className="form-check-label",
@@ -198,10 +224,10 @@ checklist_div = html.Div(
                 #     className="form-check-label",
                 # )
             ],
-            check = True
+            check=True
         )
     ],
-    id = 'checklist-test-div'
+    id='checklist-test-div'
 )
 
 modal = html.Div(
@@ -209,9 +235,10 @@ modal = html.Div(
         dbc.Modal(
             [
                 dbc.ModalHeader("WARNING! Missing inputs"),
-                dbc.ModalBody('The following inputs are missing, please select values before submitting the job', id = 'warning-list'),
+                dbc.ModalBody('The following inputs are missing, please select values before submitting the job',
+                              id='warning-list'),
                 dbc.ModalFooter(
-                    dbc.Button("Close", id="close" , className="modal-button")
+                    dbc.Button("Close", id="close", className="modal-button")
                 ),
             ],
             id="modal",
@@ -223,144 +250,176 @@ modal = html.Div(
 tab_guides_content = html.Div(
     [
         html.P([
-            'Insert crRNA sequence(s), one per line.', 
-            html.P('Sequences must have the same length and be provided without the PAM sequence', id = 'testP') ,
+            'Insert crRNA sequence(s), one per line.',
+            html.P('Sequences must have the same length and be provided without the PAM sequence', id='testP'),
         ],
-        style = {'word-wrap': 'break-word'}), 
+            style={'word-wrap': 'break-word'}),
 
-        dcc.Textarea(id = 'text-guides', placeholder = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', style = {'width':'450px', 'height':'160px', 'font-family':'monospace', 'font-size':'large'}),
-        #html.P('Note: a maximum number of 1000 sequences can be provided'),
-        dbc.FormText('Note: a maximum number of 1000 sequences can be provided', color = 'secondary')
+        dcc.Textarea(id='text-guides', placeholder='GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC',
+                     style={'width': '450px', 'height': '160px', 'font-family': 'monospace', 'font-size': 'large'}),
+        # html.P('Note: a maximum number of 1000 sequences can be provided'),
+        dbc.FormText('Note: a maximum number of 1000 sequences can be provided', color='secondary')
     ],
-    style = {'width':'450px'} #same as text-area
+    style={'width': '450px'}  # same as text-area
 )
 tab_sequence_content = html.Div(
     [
-        html.P(['Search crRNAs by inserting one or more genomic sequences.', html.P('Chromosome ranges can also be supplied')],
-        style = {'word-wrap': 'break-word'}), 
+        html.P(['Search crRNAs by inserting one or more genomic sequences.',
+                html.P('Chromosome ranges can also be supplied')],
+               style={'word-wrap': 'break-word'}),
 
-        dcc.Textarea(id = 'text-sequence', placeholder = '>sequence 1\nAAGTCCCAGGACTTCAGAAGagctgtgagaccttggc\n>sequence2\nchr1:11,130,540-11,130,751', style = {'width':'450px', 'height':'160px', 'font-family':'monospace', 'font-size':'large'}),
-        #html.P('Note: a maximum number of 1000 sequences can be provided'),
-        dbc.FormText('Note: a maximum number of 1000 characters can be provided', color = 'secondary')
+        dcc.Textarea(id='text-sequence',
+                     placeholder='>sequence 1\nAAGTCCCAGGACTTCAGAAGagctgtgagaccttggc\n>sequence2\nchr1:11,130,540-11,130,751',
+                     style={'width': '450px', 'height': '160px', 'font-family': 'monospace', 'font-size': 'large'}),
+        # html.P('Note: a maximum number of 1000 sequences can be provided'),
+        dbc.FormText('Note: a maximum number of 1000 characters can be provided', color='secondary')
     ],
-    style = {'width':'450px'} #same as text-area
+    style={'width': '450px'}  # same as text-area
 )
 final_list.append(
     html.Div(
         html.Div(
             [
                 modal,
-                html.Div(
-                    [
-                        html.H3('STEP 1', style = {'margin-top':'0'}), 
+                html.Div([
+
+                        html.Div([
+
+                            html.Div(
+                                html.H3('STEP 1', style={'margin-top': '0'})
+                            ),
+
+                        ], style={'width': '49%', 'display': 'inline-block'}),
+
+                        html.Div([
+                            html.Div(
+                                html.Button(html.P("Insert example parameters", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline'}), id='example-parameters',
+                                            style={ 'border': 'None', 'text-transform': 'capitalize','height':'12','font-weight': '500', 'padding': '0 0px','textcolor':'blu'}),
+
+                            ),
+
+                            html.Div(
+                                html.Button(html.P(children="Remove example parameters", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline'}), id='remove-parameters',
+                                            style={'border': 'None', 'text-transform': 'capitalize','height':'12','font-weight': '500', 'padding': '0 0px'}),
+
+
+                            )], id='example-buttons', style={'text-align': 'left','width': '49%', 'display': 'inline-block'}
+                        ),
                         html.P('Select a genome'),
                         html.Div(
-                            dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genome",) #style = {'width':'75%'})
+                            dcc.Dropdown(options=gen_dir, clearable=False, id="available-genome", )
+                            # style = {'width':'75%'})
                         ),
-                        dbc.FormText('Note: Genomes enriched with variants are indicated with a \'+\' symbol', color='secondary'),
-                        
+                        dbc.FormText('Note: Genomes enriched with variants are indicated with a \'+\' symbol',
+                                     color='secondary'),
+
                         html.Div(
                             [
                                 html.Div(
                                     [
                                         html.P('Select PAM'),
                                         html.Div(
-                                            dcc.Dropdown(options = pam_file, clearable = False, id = 'available-pam')
+                                            dcc.Dropdown(options=pam_file, clearable=False, id='available-pam')
                                         )
                                     ],
-                                    style = {'flex':'0 0 50%', 'margin-top': '10%'}
+                                    style={'flex': '0 0 50%', 'margin-top': '10%'}
                                 )
                             ],
-                            id = 'div-pam',
-                            className = 'flex-div-pam'
+                            id='div-pam',
+                            className='flex-div-pam'
                         ),
                         html.Div(
                             [
                                 html.Ul(
                                     [html.Li(
-                                        [html.A('Contact us', href = URL, target="_blank"),' to request new genomes availability in the dropdown list'],
-                                        style = {'margin-top':'5%'}
+                                        [html.A('Contact us', href=URL, target="blank"),
+                                         ' to request new genomes availability in the dropdown list'],
+                                        style={'margin-top': '5%'}
                                     ),
-                                    html.Li(
-                                        [html.A('Download', href = 'https://github.com/InfOmics/CRISPRitz'), ' the offline version for more custom parameters']
-                                    )
+                                        html.Li(
+                                            [html.A('Download', href='https://github.com/InfOmics/CRISPRitz'),
+                                             ' the offline version for more custom parameters']
+                                        )
                                     ],
-                                    style = {'list-style':'inside'}
+                                    style={'list-style': 'inside'}
                                 ),
-                                html.Div(
-                                    html.Button('Insert example parameters', id = 'example-parameters', style={'display':'inline-block'}),
-                                    style = {'text-align':'center'}
-                                )
+
+# i bottoni erano qui
                             ],
-                            style = {'height':'50%'}
+                            style={'height': '50%'}
                         ),
-                        
+
                     ],
-                    id = 'step1',
-                    style = {'flex':'0 0 30%', 'tex-align':'center'}
+                    id='step1',
+                    style={'flex': '0 0 30%', 'tex-align': 'center'}
                 ),
-                html.Div(style = {'border-right':'solid 1px white'}),
+                html.Div(style={'border-right': 'solid 1px white'}),
                 html.Div(
                     [
-                        html.H3('STEP 2', style = {'margin-top':'0'}),
+                        html.H3('STEP 2', style={'margin-top': '0'}),
                         html.Div(
                             [
                                 html.Div(
-                                    [   html.P('Select the input type'),
-                                        dbc.Tabs(
-                                            [
-                                                dbc.Tab(tab_guides_content, label='Guides', tab_id= 'guide-tab'),
-                                                dbc.Tab(tab_sequence_content, label='Sequence', tab_id = 'sequence-tab')
-                                            ],
-                                            active_tab='guide-tab',
-                                            id = 'tabs'
-                                        )
-                                    ],
-                                    id = 'div-guides'
+                                    [html.P('Select the input type'),
+                                     dbc.Tabs(
+                                         [
+                                             dbc.Tab(tab_guides_content, label='Guides', tab_id='guide-tab'),
+                                             dbc.Tab(tab_sequence_content, label='Sequence', tab_id='sequence-tab')
+                                         ],
+                                         active_tab='guide-tab',
+                                         id='tabs'
+                                     )
+                                     ],
+                                    id='div-guides'
                                 ),
                                 html.Div(
                                     [
                                         html.P('Allowed mismatches'),
-                                        dcc.Dropdown(options = av_mismatches, clearable = False, id = 'mms', style = {'width':'60px'}),
+                                        dcc.Dropdown(options=av_mismatches, clearable=False, id='mms',
+                                                     style={'width': '60px'}),
                                         html.P('Bulge DNA size'),
-                                        dcc.Dropdown(options = av_bulges, clearable = False, id = 'dna', style = {'width':'60px'}),
+                                        dcc.Dropdown(options=av_bulges, clearable=False, id='dna',
+                                                     style={'width': '60px'}),
                                         html.P('Bulge RNA size'),
-                                        dcc.Dropdown(options = av_bulges, clearable = False, id = 'rna', style = {'width':'60px'}),
+                                        dcc.Dropdown(options=av_bulges, clearable=False, id='rna',
+                                                     style={'width': '60px'}),
                                         dbc.Fade(
                                             [
                                                 html.P('crRNA length (without PAM)'),
-                                                dcc.Dropdown(options = av_guide_sequence, clearable = False, id = 'len-guide-sequence-ver', style = {'width':'60px'})
+                                                dcc.Dropdown(options=av_guide_sequence, clearable=False,
+                                                             id='len-guide-sequence-ver', style={'width': '60px'})
                                             ],
-                                            id = 'fade-len-guide', is_in= False, appear= False
+                                            id='fade-len-guide', is_in=False, appear=False
                                         )
                                     ]
                                 )
                             ],
-                            className = 'flex-step2'
+                            className='flex-step2'
                         )
 
                     ],
-                    id = 'step2',
-                    style = {'flex':'0 0 40%'}
-                    
+                    id='step2',
+                    style={'flex': '0 0 40%'}
+
                 ),
-                html.Div(style = {'border-right':'solid 1px white'}),
+                html.Div(style={'border-right': 'solid 1px white'}),
                 html.Div(
                     [
                         html.H3('Advanced Options'),
                         checklist_div,
                         dcc.Checklist(
-                            options = [
-                                {'label':'Notify me by email','value':'email', 'disabled':False}
-                            ], 
-                            id = 'checklist-advanced',
+                            options=[
+                                {'label': 'Notify me by email', 'value': 'email', 'disabled': False}
+                            ],
+                            id='checklist-advanced',
                         ),
                         dbc.Fade(
                             [
                                 dbc.FormGroup(
                                     [
                                         dbc.Label("Email", html_for="example-email"),
-                                        dbc.Input(type="email", id="example-email", placeholder="Enter email", className='exampleEmail'),
+                                        dbc.Input(type="email", id="example-email", placeholder="Enter email",
+                                                  className='exampleEmail'),
                                         # dbc.FormText(
                                         #     "Are you on email? You simply have to be these days",
                                         #     color="secondary",
@@ -368,33 +427,35 @@ final_list.append(
                                     ]
                                 )
                             ],
-                            id = 'fade', is_in= False, appear= False
+                            id='fade', is_in=False, appear=False
                         ),
-                        #html.H3('Submit', style = {'margin-top':'0'}),
+                        # html.H3('Submit', style = {'margin-top':'0'}),
                         html.Div(
                             [
-                                html.Button('Submit', id = 'check-job'),
-                                html.Button('', id = 'submit-job', style = {'visibility':'hidden'})
+                                html.Button('Submit', id='check-job'),
+                                html.Button('', id='submit-job', style={'visibility': 'hidden'})
                             ],
-                            style = {'display':'inline-block', 'margin':'0 auto'}   #style="height:55px; width:150px"
+                            style={'display': 'inline-block', 'margin': '0 auto'}  # style="height:55px; width:150px"
                         )
                     ],
-                    id = 'step3',
-                    style = {'tex-align':'center'},
-                    className = 'flex-step3'
+                    id='step3',
+                    style={'tex-align': 'center'},
+                    className='flex-step3'
                 )
             ],
-            id = 'div-steps',
-            style = {'margin':'1%'},
-            className = 'flex-div-steps'
+            id='div-steps',
+            style={'margin': '1%'},
+            className='flex-div-steps'
         ),
-        style = {'background-color':'rgba(154, 208, 150, 0.39)', 'border-radius': '10px', 'border':'1px solid black'},
-        id = 'steps-background'
+        style={'background-color': 'rgba(154, 208, 150, 0.39)', 'border-radius': '10px', 'border': '1px solid black'},
+        id='steps-background'
     )
 )
-index_page = html.Div(final_list, style = {'margin':'1%'})
 
-#Load Page
+
+index_page = html.Div(final_list, style={'margin': '1%'})
+
+# Load Page
 final_list = []
 final_list.append(
     html.Div(
@@ -403,15 +464,17 @@ final_list.append(
                 [
                     html.P('Job submitted. Copy this link to view the status and the result page '),
                     html.Div(
-                        html.P('link', id = 'job-link'),
-                        style = {'border':'2px solid', 'border-color':'blue' ,'width':'70%','display':'inline-block', 'margin':'5px'}
+                        html.P('link', id='job-link'),
+                        style={'border': '2px solid', 'border-color': 'blue', 'width': '70%', 'display': 'inline-block',
+                               'margin': '5px'}
                     )
                 ],
-                style = {'display':'inline-block'}
+                style={'display': 'inline-block'}
             ),
-            style = {'display':'inline-block','background-color':'rgba(154, 208, 150, 0.39)', 'border-radius': '10px', 'border':'1px solid black', 'width':'70%'}
+            style={'display': 'inline-block', 'background-color': 'rgba(154, 208, 150, 0.39)', 'border-radius': '10px',
+                   'border': '1px solid black', 'width': '70%'}
         ),
-        style = {'text-align':'center'}
+        style={'text-align': 'center'}
     )
 )
 
@@ -429,57 +492,59 @@ final_list.append(
                                 html.Li('Generating report')
                             ]
                         ),
-                        style = {'flex':'0 0 20%'}
+                        style={'flex': '0 0 20%'}
                     ),
                     html.Div(
                         html.Ul(
                             [
-                                html.Li('To do', style = {'color':'red'}, id = 'search-status'),
-                                html.Li('To do', style = {'color':'red'}, id = 'annotate-result-status'),
-                                html.Li('To do', style = {'color':'red'}, id = 'generate-report-status')
+                                html.Li('To do', style={'color': 'red'}, id='search-status'),
+                                html.Li('To do', style={'color': 'red'}, id='annotate-result-status'),
+                                html.Li('To do', style={'color': 'red'}, id='generate-report-status')
                             ],
-                            style = {'list-style-type':'none'}
+                            style={'list-style-type': 'none'}
                         )
                     )
                 ],
-                className = 'flex-status'
+                className='flex-status'
             ),
             html.Div(
                 [
-                    dcc.Link('View Results', style = {'visibility':'hidden'}, id = 'view-results'),
-                    html.Div(id = 'no-directory-error')
+                    dcc.Link('View Results', style={'visibility': 'hidden'}, id='view-results'),
+                    html.Div(id='no-directory-error')
                 ]
             )
         ],
-        id = 'div-status-report'
+        id='div-status-report'
     )
 )
 
-final_list.append(html.P('', id = 'done'))
+final_list.append(html.P('', id='done'))
 
-final_list.append(dcc.Interval(id = 'load-page-check', interval=3*1000))
-load_page = html.Div(final_list, style = {'margin':'1%'})
+final_list.append(dcc.Interval(id='load-page-check', interval=3 * 1000))
+load_page = html.Div(final_list, style={'margin': '1%'})
 
-
-#Test bootstrap page, go to /test-page to see 
+# Test bootstrap page, go to /test-page to see
 final_list = []
 final_list.append(
     html.Div(
-    [
-        html.P('Test P', id= 'test-P'),
-        html.Button('AA', id = 'button-test1'),
-        html.Button('BB', id = 'button-test2'),
-        html.Button('CC', id = 'button-test3'),
-        html.Button('CC10', id = 'button-test10'),
-        html.Button ('Gen callback', id = 'gen-callback')
-    ]
+        [
+            html.P('Test P', id='test-P'),
+            html.Button('AA', id='button-test1'),
+            html.Button('BB', id='button-test2'),
+            html.Button('CC', id='button-test3'),
+            html.Button('CC10', id='button-test10'),
+            html.Button('Gen callback', id='gen-callback')
+        ]
+    )
 )
-)
+
 final_list.append(html.Div(id='test-div-for-button'))
 
-test_page = html.Div(final_list, style = {'margin':'1%'})
+test_page = html.Div(final_list, style={'margin': '1%'})
+
+
 ##################################################CALLBACKS##################################################
-#Test callbacks
+# Test callbacks
 @app.callback(
     Output('test-P', 'children'), [Input('button-test1', 'n_clicks')]
 )
@@ -488,6 +553,7 @@ def test1(n):
         raise PreventUpdate
     print('btn1')
     return ''
+
 
 @app.callback(
     Output('test-div-for-button', 'children'), [Input('button-test10', 'n_clicks')]
@@ -498,8 +564,9 @@ def test1(n):
     print('btn10')
     return ''
 
+
 #################################################
-#Fade in/out email
+# Fade in/out email
 @app.callback(
     Output("fade", "is_in"),
     [Input("checklist-advanced", "value")],
@@ -509,25 +576,27 @@ def toggle_fade(selected_options, is_in):
     '''
     Selezionando l'opzione Notify me by email, compare una box in cui poter inserire l'email
     '''
-    if  selected_options is None:
+    if selected_options is None:
         return False
     if 'email' in selected_options:
         return True
     return False
 
-#Insert/Delete example input
+
+# Insert/Delete example input
 @app.callback(
     [Output('available-genome', 'value'),
-    Output('available-pam', 'value'),
-    Output('text-guides', 'value'),
-    Output('mms', 'value'),
-    Output('dna', 'value'),
-    Output('rna', 'value'),
-    Output('len-guide-sequence-ver', 'value'),
-    Output('text-sequence','value')],
-    [Input('example-parameters', 'n_clicks')]
+     Output('available-pam', 'value'),
+     Output('text-guides', 'value'),
+     Output('mms', 'value'),
+     Output('dna', 'value'),
+     Output('rna', 'value'),
+     Output('len-guide-sequence-ver', 'value'),
+     Output('text-sequence', 'value')],
+     [Input('example-parameters', 'n_clicks_timestamp'),
+     Input('remove-parameters', 'n_clicks_timestamp')]
 )
-def inDelExample(n):
+def inExample(nI, nR):
     '''
     Bottone per inserire degli input di esempio.
     TODO Modificare lo stile del bottone e renderlo simile ad un link
@@ -536,18 +605,42 @@ def inDelExample(n):
     b) cancellare solo i campi i cui valori sono uguali a quelli di esempio
     c) se almeno un campo è diverso dal valore di esempio, non cancello nulla)
     '''
-    if n is None:
-        raise PreventUpdate
-    
-    #TODO salvare una cartella speciale in results che abbia i risultati di questa ricerca in modo da non occupare il server con
-    # questa ricerca di esempio, ma all'utente passo già la cartella fatta (questa parte già implementata)
-    return gen_dir[0]['value'], '5\'-NGG-3\'', 'GAGTCCGAGCAGAAGAAGAA', '4', '0', '0', '20','>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
 
-#Email validity
+    if (nI is None) and (nR is None):
+        raise PreventUpdate
+
+    if nI is None:
+        nI = 0
+
+    if nR is None:
+        nR = 0
+
+    if nI > 0:
+        if nI > nR:
+            #print(nI, nR)
+
+            return gen_dir[0]['value'], '5\'-NGG-3\'', 'GAGTCCGAGCAGAAGAAGAA', '4', '0', '0', '20', '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
+
+
+    if nR > 0:
+        if nR > nI:
+            #print(nR, nI)
+
+            return '', '', '', '', '', '', '', ''
+
+
+
+    # TODO salvare una cartella speciale in results che abbia i risultati di questa ricerca in modo da non occupare il server con
+    # questa ricerca di esempio, ma all'utente passo già la cartella fatta (questa parte già implementata)
+    # return '', '', '', '', '', '', ''
+
+
+# Email validity
 @app.callback(
     Output('example-email', 'style'),
     [Input('example-email', 'value')]
 )
+
 def checkEmailValidity(val):
     '''
     Controlla se l'email inserita è valida, cambiando il bordo in rosso o verde
@@ -556,10 +649,11 @@ def checkEmailValidity(val):
         raise PreventUpdate
 
     if '@' in val:
-        return {'border':'1px solid #94f033', 'outline':'0'}
-    return {'border':'1px solid red'}
+        return {'border': '1px solid #94f033', 'outline': '0'}
+    return {'border': '1px solid red'}
 
-#Fade in guide len dropdown for sequence tabs version
+
+# Fade in guide len dropdown for sequence tabs version
 @app.callback(
     Output('fade-len-guide', 'is_in'),
     [Input('tabs', 'active_tab')],
@@ -577,52 +671,52 @@ def resetTab(current_tab, is_in):
     return True
 
 
-#Check input presence
+# Check input presence
 @app.callback(
     [Output('submit-job', 'n_clicks'),
-    Output('modal', 'is_open'),
-    Output('available-genome', 'className'),
-    Output('available-pam', 'className'),
-    Output('text-guides', 'style'),
-    Output('mms', 'className'),
-    Output('dna', 'className'),
-    Output('rna', 'className'),
-    Output('len-guide-sequence-ver', 'className'),
-    Output('warning-list', 'children')],
-    [Input('check-job','n_clicks'),
-    Input('close','n_clicks')],
+     Output('modal', 'is_open'),
+     Output('available-genome', 'className'),
+     Output('available-pam', 'className'),
+     Output('text-guides', 'style'),
+     Output('mms', 'className'),
+     Output('dna', 'className'),
+     Output('rna', 'className'),
+     Output('len-guide-sequence-ver', 'className'),
+     Output('warning-list', 'children')],
+    [Input('check-job', 'n_clicks'),
+     Input('close', 'n_clicks')],
     [State('available-genome', 'value'),
-    State('available-pam','value'),
-    State('text-guides', 'value'),
-    State('mms','value'),
-    State('dna','value'),
-    State('rna','value'),
-    State('len-guide-sequence-ver','value'),
-    State('tabs','active_tab'),
-    State("modal", "is_open")]
+     State('available-pam', 'value'),
+     State('text-guides', 'value'),
+     State('mms', 'value'),
+     State('dna', 'value'),
+     State('rna', 'value'),
+     State('len-guide-sequence-ver', 'value'),
+     State('tabs', 'active_tab'),
+     State("modal", "is_open")]
 )
-def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, len_guide_seq, active_tab ,is_open):
+def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, len_guide_seq, active_tab, is_open):
     '''
     La funzione prende i valori dei vari campi di input e controlla che siano tutti presenti, tranne la textbox delle guide e della sequenza.
-    Se qualcuno manca, colora il suo bordo di rosso e fa uscire un avviso con l'elenco degli input mancanti. 
+    Se qualcuno manca, colora il suo bordo di rosso e fa uscire un avviso con l'elenco degli input mancanti.
     La callback si aziona anche quando l'utente clicca Close nel modal e in quel caso chiude l'avviso
     '''
     if n is None:
         raise PreventUpdate
     if is_open is None:
         is_open = False
-    
+
     classname_red = 'missing-input'
     genome_update = None
     pam_update = None
-    text_update = {'width':'450px', 'height':'160px'}
+    text_update = {'width': '450px', 'height': '160px'}
     mms_update = None
     dna_update = None
     rna_update = None
     len_guide_update = None
     update_style = False
     miss_input_list = []
-    
+
     if genome_selected is None or genome_selected is '':
         genome_update = classname_red
         update_style = True
@@ -632,9 +726,9 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, len
         update_style = True
         miss_input_list.append('PAM')
     # if text_guides is None or text_guides is '':
-        # text_update = {'width':'450px', 'height':'160px','border': '1px solid red'}
-        # update_style = True
-        # miss_input_list.append('crRNA sequence(s)')
+    # text_update = {'width':'450px', 'height':'160px','border': '1px solid red'}
+    # update_style = True
+    # miss_input_list.append('crRNA sequence(s)')
     if mms is None or str(mms) is '':
         mms_update = classname_red
         update_style = True
@@ -658,32 +752,34 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, len
             html.P('Please fill in the values before submitting the job')
         ]
     )
-    
+
     if not update_style:
         return 1, False, genome_update, pam_update, text_update, mms_update, dna_update, rna_update, len_guide_update, miss_input
     return None, not is_open, genome_update, pam_update, text_update, mms_update, dna_update, rna_update, len_guide_update, miss_input
 
-#Submit Job, change url
+
+# Submit Job, change url
 @app.callback(
     [Output('url', 'pathname'),
-    Output('url','search')],
-    [Input('submit-job','n_clicks')],
+     Output('url', 'search')],
+    [Input('submit-job', 'n_clicks')],
     [State('url', 'href'),
-    State('available-genome', 'value'),
-    State('available-pam','value'),
-    State('text-guides', 'value'),
-    State('mms','value'),
-    State('dna','value'),
-    State('rna','value'),
-    State('checkbox-gecko','checked'),
-    State('checkbox-ref-comp', 'checked'),
-    State('checklist-advanced', 'value'),
-    State('example-email','value'),
-    State('tabs','active_tab'),
-    State('text-sequence','value'),
-    State('len-guide-sequence-ver', 'value')]
+     State('available-genome', 'value'),
+     State('available-pam', 'value'),
+     State('text-guides', 'value'),
+     State('mms', 'value'),
+     State('dna', 'value'),
+     State('rna', 'value'),
+     State('checkbox-gecko', 'checked'),
+     State('checkbox-ref-comp', 'checked'),
+     State('checklist-advanced', 'value'),
+     State('example-email', 'value'),
+     State('tabs', 'active_tab'),
+     State('text-sequence', 'value'),
+     State('len-guide-sequence-ver', 'value')]
 )
-def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_opt, genome_ref_opt, adv_opts,dest_email, active_tab, text_sequence, len_guide_sequence):      #NOTE startJob
+def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_opt, genome_ref_opt, adv_opts,
+              dest_email, active_tab, text_sequence, len_guide_sequence):  # NOTE startJob
     '''
     genome_selected can be Human genome (hg19), or Human Genome (hg19) + 1000 Genome Project, the '+' character defines the ref or enr version.
     Note that pam parameter can be 5'-NGG-3', but the corresponding filename is 5'-NGG-3'.txt
@@ -691,14 +787,14 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     Annotations path file is named genome_name_annotationpath.txt, where genome_name is the reference genome name
 
     La funzione crea una cartella dal nome random per identificare il job, controlla che opzioni sono state aggiunte e salva il contatto della mail.
-    Esatre i parametri dati in input per poterli utilizzare con crispritz. Salva un file params con i parametri della ricerca. Controlla poi se 
+    Esatre i parametri dati in input per poterli utilizzare con crispritz. Salva un file params con i parametri della ricerca. Controlla poi se
     un'altra ricerca è stata fatta con gli stessi parametri e nel caso copia i risultati nella cartella di questo job.
     Fa partire lo script submit_job per eseguire crispritz.
     '''
     if n is None:
         raise PreventUpdate
-    
-    #Check input, else give simple input
+
+    # Check input, else give simple input
     if genome_selected is None or genome_selected is '':
         genome_selected = 'hg19_ref'
     if pam is None or pam is '':
@@ -709,21 +805,21 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         text_guides = text_guides.strip()
         if len(text_guides.split('\n')) > 1000:
             text_guides = '\n'.join(text_guides.split('\n')[:1000]).strip()
-        if ( not all(len(elem) == len(text_guides.split('\n')[0]) for elem in text_guides.split('\n'))):
+        if (not all(len(elem) == len(text_guides.split('\n')[0]) for elem in text_guides.split('\n'))):
             text_guides = selectSameLenGuides(text_guides)
     if (len_guide_sequence is None or str(len_guide_sequence) is '') and ('sequence-tab' in active_tab):
         len_guide_sequence = 20
     if (text_sequence is None or text_sequence is '') and ('sequence-tab' in active_tab):
         text_sequence = '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
 
-    job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
+    job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
     result_dir = 'Results/' + job_id
-    subprocess.run(['mkdir ' + result_dir], shell = True)
-    
+    subprocess.run(['mkdir ' + result_dir], shell=True)
+
     search_index = True
     search = True
     annotation = True
-    report =  True
+    report = True
     gecko_comp = False
     ref_comparison = False
     send_email = False
@@ -733,7 +829,8 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         gecko_comp = True
     if genome_ref_opt:
         ref_comparison = True
-    if 'email' in adv_opts and dest_email is not None and len(dest_email.split('@')) > 1 and dest_email.split('@')[-1] is not '':
+    if 'email' in adv_opts and dest_email is not None and len(dest_email.split('@')) > 1 and dest_email.split('@')[
+        -1] is not '':
         send_email = True
         with open(result_dir + '/email.txt', 'w') as e:
             e.write(dest_email + '\n')
@@ -741,15 +838,14 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
             e.write(datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S") + '\n')
             e.write('Job done. Parameters: etc etc')
             e.close()
-    
-    
-    #Set parameters
+
+    # Set parameters
     genome_selected = genome_selected.replace(' ', '_')
-    genome_ref = genome_selected.split('+')[0]              #+ char to separate ref and vcf, eg Human_genome+1000_genome_project
+    genome_ref = genome_selected.split('+')[0]  # + char to separate ref and vcf, eg Human_genome+1000_genome_project
     if genome_ref == genome_selected:
         ref_comparison = False
-    #NOTE Indexed genomes names are PAM + _ + bMax + _ + genome_selected
-    
+    # NOTE Indexed genomes names are PAM + _ + bMax + _ + genome_selected
+
     pam_len = 0
     custom_pam = None
 
@@ -758,7 +854,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         index_pam_value = pam_char.split(' ')[-1]
         if int(pam_char.split(' ')[-1]) < 0:
             end_idx = int(pam_char.split(' ')[-1]) * (-1)
-            pam_char = pam_char.split(' ')[0][0 : end_idx]
+            pam_char = pam_char.split(' ')[0][0: end_idx]
             pam_len = end_idx
             pam_begin = True
         else:
@@ -766,9 +862,9 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
             pam_char = pam_char.split(' ')[0][end_idx * (-1):]
             pam_len = end_idx
             pam_begin = False
-    
+
     if 'sequence-tab' in active_tab:
-        #Extract sequence and create the guides
+        # Extract sequence and create the guides
         guides = []
         for name_and_seq in text_sequence.split('>'):
             if '' == name_and_seq:
@@ -780,7 +876,6 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
                 extracted_seq = seq.strip()
             guides.extend(convert_pam.getGuides(extracted_seq, pam_char, len_guide_sequence))
             text_guides = '\n'.join(guides).strip()
-    
 
     len_guides = len(text_guides.split('\n')[0])
     if (pam_begin):
@@ -792,7 +887,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     save_pam_file.write(pam_to_file)
     save_pam_file.close()
     pam = result_dir + '/pam.txt'
-        
+
     guides_file = result_dir + '/guides.txt'
     if text_guides is not None and text_guides is not '':
         save_guides_file = open(result_dir + '/guides.txt', 'w')
@@ -801,7 +896,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         else:
             text_guides = text_guides.replace('\n', 'N' * pam_len + '\n') + 'N' * pam_len
         save_guides_file.write(text_guides)
-        save_guides_file.close()     
+        save_guides_file.close()
 
     if (int(dna) == 0 and int(rna) == 0):
         search_index = False
@@ -818,9 +913,9 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         genome_idx = pam_char + '_' + '5' + '_' + genome_selected
     genome_idx_ref = genome_idx.split('+')[0]
 
-    #Create Params.txt file
-    with open(result_dir + '/Params.txt', 'w') as p:            #NOTE if modified, chenge also mms value in update_table function
-        p.write('Genome_selected\t' + genome_selected + '\n')         
+    # Create Params.txt file
+    with open(result_dir + '/Params.txt', 'w') as p:  # NOTE if modified, chenge also mms value in update_table function
+        p.write('Genome_selected\t' + genome_selected + '\n')
         p.write('Genome_ref\t' + genome_ref + '\n')
         if search_index:
             p.write('Genome_idx\t' + genome_idx + '\n')
@@ -835,53 +930,62 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         p.write('Ref_comp\t' + str(ref_comparison) + '\n')
         p.close()
 
-    #Check if input parameters (mms, bulges, pam, guides, genome) are the same as a previous search
+    # Check if input parameters (mms, bulges, pam, guides, genome) are the same as a previous search
     all_result_dirs = [f for f in listdir('Results') if isdir(join('Results', f))]
     all_result_dirs.remove(job_id)
-    #all_result_dirs.remove('test')
+    # all_result_dirs.remove('test')
     for check_param_dir in all_result_dirs:
         if os.path.exists('Results/' + check_param_dir + '/Params.txt'):
             if os.path.exists('Results/' + check_param_dir + '/log.txt'):
                 with open('Results/' + check_param_dir + '/log.txt') as log:
                     if ('Job\tDone' in log.read()):
-                        if (filecmp.cmp('Results/' + check_param_dir + '/Params.txt', result_dir + '/Params.txt' )):
-                                guides1 = open('Results/' + check_param_dir + '/guides.txt').read().split('\n')
-                                guides2 = open('Results/' + job_id + '/guides.txt').read().split('\n')
-                                if (collections.Counter(guides1) == collections.Counter(guides2)):
-                                    search = False
-                                    search_index = False
-                                    subprocess.run(['cp $PWD/Results/' + check_param_dir + '/' + check_param_dir + '* ' + result_dir + '/'], shell = True)
-                                    subprocess.run(['cp $PWD/Results/' + check_param_dir + '/*.png ' + result_dir + '/'], shell = True)
-                                    subprocess.run(['rename \'s/' + check_param_dir + '/' + job_id + '/g\' ' + result_dir + '/*'], shell = True)
-                                    break           
-    
-    #Annotation
-    if (not search and not search_index):
-        annotation = False      
+                        if (filecmp.cmp('Results/' + check_param_dir + '/Params.txt', result_dir + '/Params.txt')):
+                            guides1 = open('Results/' + check_param_dir + '/guides.txt').read().split('\n')
+                            guides2 = open('Results/' + job_id + '/guides.txt').read().split('\n')
+                            if (collections.Counter(guides1) == collections.Counter(guides2)):
+                                search = False
+                                search_index = False
+                                subprocess.run([
+                                                   'cp $PWD/Results/' + check_param_dir + '/' + check_param_dir + '* ' + result_dir + '/'],
+                                               shell=True)
+                                subprocess.run(['cp $PWD/Results/' + check_param_dir + '/*.png ' + result_dir + '/'],
+                                               shell=True)
+                                subprocess.run(
+                                    ['rename \'s/' + check_param_dir + '/' + job_id + '/g\' ' + result_dir + '/*'],
+                                    shell=True)
+                                break
 
-    #Generate report
+                                # Annotation
     if (not search and not search_index):
-        report = False         
-    
+        annotation = False
+
+        # Generate report
+    if (not search and not search_index):
+        report = False
+
     annotation_filepath = [f for f in listdir('./') if isfile(join('./', f)) and f.startswith(genome_ref)]
 
-    
-    subprocess.Popen(['assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
-        ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
-            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + annotation_filepath[0]
-        )
-    )], shell = True)
-    return '/load','?job=' + job_id
+    subprocess.Popen([
+                         'assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
+                                 ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(
+                             rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
+                                         ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(
+                                     ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(
+                                     send_email) + ' ' + annotation_filepath[0]
+                                 )
+                         )], shell=True)
+    return '/load', '?job=' + job_id
 
-#When url changed, load new page
+
+# When url changed, load new page
 @app.callback(
     [Output('page-content', 'children'),
-    Output('job-link', 'children')],
-    [Input('url', 'href'), Input('url','pathname'), Input('url','search')],[State('url','hash')]
-    # [State('url','pathname'), 
+     Output('job-link', 'children')],
+    [Input('url', 'href'), Input('url', 'pathname'), Input('url', 'search')], [State('url', 'hash')]
+    # [State('url','pathname'),
     # State('url','search')]
 )
-def changePage( href, path, search, hash_guide):
+def changePage(href, path, search, hash_guide):
     '''
     Controllo della pagina da mostrare in base all'url
     '''
@@ -891,7 +995,7 @@ def changePage( href, path, search, hash_guide):
     # print('search', search)
     print('hash', hash_guide)
     if path == '/load':
-        return load_page, URL + '/load' + search #NOTE change the url part when DNS are changed
+        return load_page, URL + '/load' + search  # NOTE change the url part when DNS are changed
     if path == '/result':
         job_id = search.split('=')[-1]
         if hash_guide is None or hash_guide is '':
@@ -899,17 +1003,18 @@ def changePage( href, path, search, hash_guide):
         return guidePage(job_id, hash_guide.split('#')[1]), URL + '/load' + search
     if path == '/test-page':
         return test_page, URL + '/load' + search
-   
+
     return index_page, ''
 
-#Check end job
+
+# Check end job
 @app.callback(
     [Output('view-results', 'style'),
-    Output('annotate-result-status', 'children'),
-    Output('search-status', 'children'),
-    Output('generate-report-status', 'children'),
-    Output('view-results','href'),
-    Output('no-directory-error', 'children')],
+     Output('annotate-result-status', 'children'),
+     Output('search-status', 'children'),
+     Output('generate-report-status', 'children'),
+     Output('view-results', 'href'),
+     Output('no-directory-error', 'children')],
     [Input('load-page-check', 'n_intervals')],
     [State('url', 'search')]
 )
@@ -923,36 +1028,41 @@ def refreshSearch(n, dir_name):
 
     '''
     if n is None:
-        raise PreventUpdate     #TODO fa un controllo subito, così l'utente non deve aspettare 3 secondi per l'update
-    
+        raise PreventUpdate  # TODO fa un controllo subito, così l'utente non deve aspettare 3 secondi per l'update
+
     onlydir = [f for f in listdir('Results') if isdir(join('Results', f))]
-    current_job_dir = 'Results/' +  dir_name.split('=')[-1] + '/'
+    current_job_dir = 'Results/' + dir_name.split('=')[-1] + '/'
     if dir_name.split('=')[-1] in onlydir:
         onlyfile = [f for f in listdir(current_job_dir) if isfile(join(current_job_dir, f))]
         if 'log.txt' in onlyfile:
             with open(current_job_dir + 'log.txt') as log:
                 all_done = 0
-                annotate_res_status = html.P('To do', style = {'color':'red'})
-                search_status = html.P('To do', style = {'color':'red'})
-                report_status = html.P('To do', style = {'color':'red'})
+                annotate_res_status = html.P('To do', style={'color': 'red'})
+                search_status = html.P('To do', style={'color': 'red'})
+                report_status = html.P('To do', style={'color': 'red'})
                 current_log = log.read()
                 if ('Annotation\tDone' in current_log):
-                    annotate_res_status = html.P('Done', style = {'color':'green'})
+                    annotate_res_status = html.P('Done', style={'color': 'green'})
                     all_done = all_done + 1
                 if ('Search-index\tDone' in current_log or 'Search\tDone' in current_log):
-                    search_status = html.P('Done', style = {'color':'green'})
+                    search_status = html.P('Done', style={'color': 'green'})
                     all_done = all_done + 1
                 if ('Report\tDone' in current_log):
-                    report_status = html.P('Done', style = {'color':'green'})
+                    report_status = html.P('Done', style={'color': 'green'})
                     all_done = all_done + 1
                 if all_done == 3:
-                    return {'visibility':'visible'}, annotate_res_status, search_status, report_status, '/result?job=' + dir_name.split('=')[-1], ''
+                    return {
+                               'visibility': 'visible'}, annotate_res_status, search_status, report_status, '/result?job=' + \
+                           dir_name.split('=')[-1], ''
                 else:
-                    return {'visibility':'hidden'}, annotate_res_status, search_status, report_status,'', ''
-    return {'visibility':'hidden'}, html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}), '', dbc.Alert("The selected result does not exist", color = "danger")
+                    return {'visibility': 'hidden'}, annotate_res_status, search_status, report_status, '', ''
+    return {'visibility': 'hidden'}, html.P('Not available', style={'color': 'red'}), html.P('Not available', style={
+        'color': 'red'}), html.P('Not available', style={'color': 'red'}), '', dbc.Alert(
+        "The selected result does not exist", color="danger")
 
-#Perform expensive loading of a dataframe and save result into 'global store'
-#Cache are in the Cache directory
+
+# Perform expensive loading of a dataframe and save result into 'global store'
+# Cache are in the Cache directory
 @cache.memoize()
 def global_store(value):
     '''
@@ -960,19 +1070,24 @@ def global_store(value):
     '''
     if value is None:
         return ''
-    target = [f for f in listdir('Results/' + value) if isfile(join('Results/'+value, f)) and f.endswith('scores.txt') ]
+    target = [f for f in listdir('Results/' + value) if
+              isfile(join('Results/' + value, f)) and f.endswith('scores.txt')]
     if not target:
-        target = [f for f in listdir('Results/' + value) if isfile(join('Results/'+value, f)) and f.endswith('targets.txt') ]
-    
-    df = pd.read_csv('Results/' +value + '/' + target[0], sep = '\t')
-    df.rename(columns = {"#Bulge type":'BulgeType', '#Bulge_type':'BulgeType','Bulge Size': 'BulgeSize', 'Bulge_Size': 'BulgeSize', 'Doench 2016':'Doench2016','Doench_2016':'Doench2016'}, inplace = True)
+        target = [f for f in listdir('Results/' + value) if
+                  isfile(join('Results/' + value, f)) and f.endswith('targets.txt')]
+
+    df = pd.read_csv('Results/' + value + '/' + target[0], sep='\t')
+    df.rename(columns={"#Bulge type": 'BulgeType', '#Bulge_type': 'BulgeType', 'Bulge Size': 'BulgeSize',
+                       'Bulge_Size': 'BulgeSize', 'Doench 2016': 'Doench2016', 'Doench_2016': 'Doench2016'},
+              inplace=True)
     return df
+
 
 # #Callback to populate the tab, note that it's called when the result_page is loaded (dash implementation), so we do not use raise update to block this first callback
 # @app.callback(
 #     [Output('signal','children'),
 #     Output('result-table','page_current'),
-#     Output('result-table', "sort_by"), 
+#     Output('result-table', "sort_by"),
 #     Output('result-table','filter_query')],
 #     [Input('url', 'pathname')],
 #     [State('url', 'search')]
@@ -991,14 +1106,14 @@ def global_store(value):
 #     print('ok')
 #     return job_id, 0, [], ''
 
-#Send the data when next or prev button is clicked on the result table
+# Send the data when next or prev button is clicked on the result table
 @app.callback(
     Output('result-table', 'data'),
     [Input('result-table', "page_current"),
      Input('result-table', "page_size"),
      Input('result-table', "sort_by"),
      Input('result-table', 'filter_query')],
-     [State('url', 'search'),
+    [State('url', 'search'),
      State('url', 'hash')]
 )
 def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
@@ -1016,26 +1131,26 @@ def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
     if search is None:
         raise PreventUpdate
 
-        
     filtering_expressions = filter.split(' && ')
-    #filtering_expressions.append(['{crRNA} = ' + guide])     
+    # filtering_expressions.append(['{crRNA} = ' + guide])
     df = global_store(value)
     dff = df[df['crRNA'] == guide]
     print('len index before', len(dff.index))
-    sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
-    sort_by.insert(1, {'column_id' : 'BulgeSize', 'direction': 'asc'})
-    sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
+    sort_by.insert(0, {'column_id': 'Mismatches', 'direction': 'asc'})
+    sort_by.insert(1, {'column_id': 'BulgeSize', 'direction': 'asc'})
+    sort_by.insert(2, {'column_id': 'CFD', 'direction': 'desc'})
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
 
         if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
             # these operators match pandas series operator method names
-            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)].sort_values([col['column_id'] for col in sort_by],
-            ascending=[
-                col['direction'] == 'asc'
-                for col in sort_by
-            ],
-            inplace=False)
+            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)].sort_values(
+                [col['column_id'] for col in sort_by],
+                ascending=[
+                    col['direction'] == 'asc'
+                    for col in sort_by
+                ],
+                inplace=False)
         elif operator == 'contains':
             dff = dff.loc[dff[col_name].str.contains(filter_value)]
         elif operator == 'datestartswith':
@@ -1044,9 +1159,9 @@ def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
             dff = dff.loc[dff[col_name].str.startswith(filter_value)]
 
     print('len index after', len(dff.index))
-    #NOTE sort_by: [{'column_id': 'BulgeType', 'direction': 'asc'}, {'column_id': 'crRNA', 'direction': 'asc'}]
-    #sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
-    #sort_by.insert(0, {'column_id' : 'BulgeSize', 'direction': 'asc'})
+    # NOTE sort_by: [{'column_id': 'BulgeType', 'direction': 'asc'}, {'column_id': 'crRNA', 'direction': 'asc'}]
+    # sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
+    # sort_by.insert(0, {'column_id' : 'BulgeSize', 'direction': 'asc'})
     if len(sort_by):
         dff = dff.sort_values(
             [col['column_id'] for col in sort_by],
@@ -1057,7 +1172,7 @@ def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
             inplace=False
         )
 
-    #Check if results are not 0
+    # Check if results are not 0
     warning_no_res = ''
     with open(job_directory + job_id + '.targets.txt') as t:
         no_result = False
@@ -1067,15 +1182,14 @@ def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
             no_result = True
 
     if (no_result):
-        warning_no_res = dbc.Alert("No results were found with the given parameters", color = "warning")
+        warning_no_res = dbc.Alert("No results were found with the given parameters", color="warning")
 
-     
     return dff.iloc[
-        page_current*page_size:(page_current+ 1)*page_size
-    ].to_dict('records')
+           page_current * page_size:(page_current + 1) * page_size
+           ].to_dict('records')
 
 
-#For filtering
+# For filtering
 def split_filter_part(filter_part):
     '''
     Preso dal sito di dash sul filtering datatables con python
@@ -1103,14 +1217,15 @@ def split_filter_part(filter_part):
     return [None] * 3
 
 
-#Read the uploaded file and converts into bit
+# Read the uploaded file and converts into bit
 def parse_contents(contents):
     content_type, content_string = contents.split(',')
 
     decoded = base64.b64decode(content_string)
     return decoded
 
-#Show image: Barplot
+
+# Show image: Barplot
 # @app.callback(
 #     [Output('barplot-img', 'src'),
 #     Output('link-barplot', 'href')],
@@ -1126,13 +1241,14 @@ def showImages(mms, search):
     job_id = search.split('=')[-1]
     job_directory = 'Results/' + job_id + '/'
     barplot_img = 'summary_histogram_' + str(mms) + 'mm.png'
-    try:            #NOTE serve per non generare errori se il barplot non è stato fatto
-        barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
+    try:  # NOTE serve per non generare errori se il barplot non è stato fatto
+        barplot_src = 'data:image/png;base64,{}'.format(
+            base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
         barplot_href = 'assets/Img/' + job_id + '/' + barplot_img
     except:
         barplot_src = ''
         barplot_href = ''
-    # guide = all_guides[int(sel_cel[0]['row'])]['Guide'] 
+    # guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     # radar_img = 'summary_single_guide_' + guide + '_' + str(mms) + 'mm.png'
     # try:
     #     radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
@@ -1142,7 +1258,8 @@ def showImages(mms, search):
     #     radar_href = ''
     return barplot_src, barplot_href
 
-#Show image: Radar chart
+
+# Show image: Radar chart
 # @app.callback(
 #     [Output('radar-img', 'src'),
 #     Output('link-radar', 'href')],
@@ -1164,82 +1281,83 @@ def showImages(mms, search, hash_guide):
     # except:
     #     barplot_src = ''
     #     barplot_href = ''
-    # guide = all_guides[int(sel_cel[0]['row'])]['Guide'] 
+    # guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     guide = hash_guide.split('#')[1]
     radar_img = 'summary_single_guide_' + guide + '_' + str(mms) + 'mm.png'
     try:
-        radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
+        radar_src = 'data:image/png;base64,{}'.format(
+            base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
         radar_href = 'assets/Img/' + job_id + '/' + radar_img
     except:
         radar_src = ''
         radar_href = ''
     return radar_src, radar_href
 
-#Generate column of images
+
+# Generate column of images
 @app.callback(
-    Output('all-images','children'),
-    
+    Output('all-images', 'children'),
+
     [Input('btn4', 'n_clicks_timestamp'),
-        Input('btnAll','n_clicks_timestamp')],
+     Input('btnAll', 'n_clicks_timestamp')],
     [State('general-profile-table', 'selected_cells'),
-    State('general-profile-table', 'data'),
-    State('url', 'search')]
+     State('general-profile-table', 'data'),
+     State('url', 'search')]
 )
 def loadColumnImages(n4, nAll, sel_cel, all_guides, search):
     '''
     Carica le immagini corrispondenti alla guida selezionata. Se non ho una cella selezionata non mostra niente.
-    La funzione carica le immagini dalla cartella Results/job_id usando una codifica, le mette all'interno di un link che 
+    La funzione carica le immagini dalla cartella Results/job_id usando una codifica, le mette all'interno di un link che
     fa aprire l'immagine corrispondente presente nella cartella assets/Img/job_id.
-    TODO aggiungere all'input tutti i bottoni (da 0 mismatches a 7 mismatches + bottone allImg), in modo che l'utente possa selezionare un bottone 
+    TODO aggiungere all'input tutti i bottoni (da 0 mismatches a 7 mismatches + bottone allImg), in modo che l'utente possa selezionare un bottone
     e avere solo le immagini corrispondenti a quel valore di mismatch. Per fare ciò, si usa n_clicks_timestamp per vedere l'ultimo bottone cliccato
     e prendere le immagini corrispondeti. Al momento se un bottone non è mai stato cliccato il suo valore è 0, al momento se tutti i bottoni sono
     a zero faccio vedere tutte le immagini, ma in futuro potrebbe cambiare, magari far vedere solo le img con 1 mms
     '''
-    if sel_cel is None :
+    if sel_cel is None:
         raise PreventUpdate
     job_id = search.split('=')[-1]
     job_directory = 'Results/' + job_id + '/'
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
-    
+
     with open('Results/' + job_id + '/Params.txt') as p:
-       mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
+        mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
     # test_col = html.Div(
     #     [
     #         html.Div(
     #             html.A(
     #                 html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
-                     
-                    
+
     #                 ),
-                    
+
     #                 target="_blank",
     #                 id = 'link-barplot',
     #                 href = 'assets/Img/' + job_id + '/' + radar_img
-                    
+
     #             ),
     #             style = {'flex':'0 0 30%'}
     #         ),
     #         html.Div(
     #         html.A(
     #                 html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
-                     
-                    
+
     #                 ),
-                
+
     #             target="_blank",
     #             href = 'assets/Img/' + job_id + '/' + radar_img
-                
+
     #         ),
     #         style = {'flex':'0 0 30%'}
     #     ),
-            
+
     #     ],
     #     className = 'flex-view-images'
     # )
     fl = []
     fl.append(html.Br())
     fl.append(html.H5('Focus on: ' + guide))
-    fl.append(html.P(['View all targets found with the selected guide ' , html.A('here', href = URL + '/result?job=' + job_id + '#' + guide, target = '_blank')]))
+    fl.append(html.P(['View all targets found with the selected guide ',
+                      html.A('here', href=URL + '/result?job=' + job_id + '#' + guide, target='_blank')]))
     # fl.append(test_col)
     # fl.append(test_col)
     if not n4:
@@ -1252,71 +1370,71 @@ def loadColumnImages(n4, nAll, sel_cel, all_guides, search):
     else:
         min_mm = 0
         max_mm = int(mms) + 1
-    for i in range (min_mm, max_mm): #uso un for per comprendere anche il caso di showAllImages
+    for i in range(min_mm, max_mm):  # uso un for per comprendere anche il caso di showAllImages
         radar_img = 'summary_single_guide_' + guide + '_' + str(i) + 'mm.png'
 
         barplot_img = 'summary_histogram_' + guide + '_' + str(i) + 'mm.png'
-        try:            #NOTE serve per non generare errori se il barplot non è stato fatto
-            barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
+        try:  # NOTE serve per non generare errori se il barplot non è stato fatto
+            barplot_src = 'data:image/png;base64,{}'.format(
+                base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
             barplot_href = 'assets/Img/' + job_id + '/' + barplot_img
         except:
             barplot_src = ''
             barplot_href = ''
         fl.append(
             html.Div(
+                [
+                    dbc.Row(
                         [
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        html.A(
-                                            html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()), 
-                                            id = 'barplot-img', width="75%", height="auto"
-                                            ),
-                                            target="_blank",
-                                            href = 'assets/Img/' + job_id + '/' + radar_img
-                                        ),
-                                    ),
-                                    dbc.Col(
-                                        html.A(
-                                            html.Img(src = barplot_src,id = 'barplot-img', width="75%", height="auto"),
-                                            target="_blank",
-                                            href = barplot_href
-                                        )
-                                    )
-                                ], 
+                            dbc.Col(
+                                html.A(
+                                    html.Img(src='data:image/png;base64,{}'.format(base64.b64encode(
+                                        open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),
+                                             id='barplot-img', width="75%", height="auto"
+                                             ),
+                                    target="_blank",
+                                    href='assets/Img/' + job_id + '/' + radar_img
+                                ),
                             ),
-                        ]
-                    )
+                            dbc.Col(
+                                html.A(
+                                    html.Img(src=barplot_src, id='barplot-img', width="75%", height="auto"),
+                                    target="_blank",
+                                    href=barplot_href
+                                )
+                            )
+                        ],
+                    ),
+                ]
+            )
         )
         fl.append(html.Br())
         fl.append(html.Br())
     # test_col_bootstrap = html.Div(
-       
+
     #                 [
     #                     dbc.Row(
     #                         [
     #                             dbc.Col(
     #                                 html.A(
     #                 html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
-                     
-                    
+
     #                 ),
-                
+
     #             target="_blank",
     #             href = 'assets/Img/' + job_id + '/' + radar_img
-                
+
     #         )
     #                             ),
     #                             dbc.Col(
     #                                 html.A(
     #                 html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
-                     
-                    
+
     #                 ),
-                
+
     #             target="_blank",
     #             href = 'assets/Img/' + job_id + '/' + radar_img
-                
+
     #         )
     #                             )
     #                         ]
@@ -1327,7 +1445,7 @@ def loadColumnImages(n4, nAll, sel_cel, all_guides, search):
     # fl.append(test_col_bootstrap)
     # fl.append(test_col_bootstrap)
     return fl
-    
+
 
 def generate_table(dataframe, id_table, max_rows=26):
     '''
@@ -1335,16 +1453,17 @@ def generate_table(dataframe, id_table, max_rows=26):
     '''
     return html.Table(
         # Header
-        [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
+        [html.Tr([html.Th(col) for col in dataframe.columns])] +
         # Body
         [html.Tr([
             html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
         ]) for i in range(min(len(dataframe), max_rows))],
-        style = {'display':'inline-block'},
-        id = id_table
+        style={'display': 'inline-block'},
+        id=id_table
     )
 
-#FOR BUTTON IN TABLE
+
+# FOR BUTTON IN TABLE
 # element.style {
 #     background: none;
 #     border: none;
@@ -1357,9 +1476,7 @@ def generate_table(dataframe, id_table, max_rows=26):
 # }
 
 
-
-
-#If the input guides are different len, select the ones with same length as the first
+# If the input guides are different len, select the ones with same length as the first
 def selectSameLenGuides(list_guides):
     '''
     Se l'utente mette guide di lunghezza diversa, la funzione prende la lunghezza della prima guida e salva solo le guide con quella lunghezza
@@ -1371,6 +1488,7 @@ def selectSameLenGuides(list_guides):
             same_len_guides_list.append(guide)
     same_len_guides = '\n'.join(same_len_guides_list).strip()
     return same_len_guides
+
 
 def resultPage(job_id):
     '''
@@ -1384,111 +1502,116 @@ def resultPage(job_id):
     TODO al momento la tabella delle guide è ordinata per acfd, rendere possibile anche l'ordinamento e il filtering da parte dell'utente,
     usare il codice presente in dash datatable filtering con python.
     TODO al posto di avere una colonna per mms value, avere un'unica colonna come crispor, che contiene 0-1-2-..-mms e per ogni guida avere il
-    numero corrispondente di targets. Usare il dataframe caricato al momento per computare questa stringa e metterla in quella colonna. 
+    numero corrispondente di targets. Usare il dataframe caricato al momento per computare questa stringa e metterla in quella colonna.
     '''
     value = job_id
     job_directory = 'Results/' + job_id + '/'
     warning_message = []
     if (not isdir(job_directory)):
-        return html.Div(dbc.Alert("The selected result does not exist", color = "danger"))
+        return html.Div(dbc.Alert("The selected result does not exist", color="danger"))
 
-    #Load mismatches
+    # Load mismatches
     with open('Results/' + value + '/Params.txt') as p:
-       mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
+        mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
 
     mms = int(mms[0])
-    mms_values = [{'label':i, 'value':i} for i in range(mms + 1) ]      
-    
+    mms_values = [{'label': i, 'value': i} for i in range(mms + 1)]
+
     col_profile_general = ['Total On-Targets', 'Total Off-Targets']
     for i in range(mms):
-        col_profile_general.append(str(i+1) + ' Mismatches')
+        col_profile_general.append(str(i + 1) + ' Mismatches')
     col_type = ['numeric' for i in col_profile_general]
-    
-    
-    #Load profile
+
+    # Load profile
     try:
-        profile = pd.read_csv('Results/' + value + '/' + value + '.profile_complete.xls')   #NOTE profile_complete has ',' as separator
+        profile = pd.read_csv(
+            'Results/' + value + '/' + value + '.profile_complete.xls')  # NOTE profile_complete has ',' as separator
         if len(profile.columns) == 1:
             profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls', sep='\t')
     except:
-        profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls', sep = '\t')    #NOTE profile has \t as separator or ','
+        profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls',
+                              sep='\t')  # NOTE profile has \t as separator or ','
         if len(profile.columns) == 1:
             profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls')
-    
-    columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
+
+    columns_profile_table = [{'name': 'Guide', 'id': 'Guide', 'type': 'text'},
+                             {'name': 'CFD', 'id': 'CFD', 'type': 'numeric'},
+                             {'name': 'Total On-Targets', 'id': 'Total On-Targets', 'type': 'numeric'},
+                             {'name': 'Total Off-targets', 'id': 'Total Off-Targets', 'type': 'numeric'}]
     keep_column = ['GUIDE', 'ONT', 'OFFT']
-    for i in range (mms):
-        columns_profile_table.append({'name': str(i+1) + ' Mismatches', 'id':str(i+1) + ' Mismatches', 'type':'numeric'})
-        keep_column.append(str(i+1) + 'MM')
-    columns_profile_table.append({'name':'More Info', 'id':'More Info', 'type':'text'})
+    for i in range(mms):
+        columns_profile_table.append(
+            {'name': str(i + 1) + ' Mismatches', 'id': str(i + 1) + ' Mismatches', 'type': 'numeric'})
+        keep_column.append(str(i + 1) + 'MM')
+    columns_profile_table.append({'name': 'More Info', 'id': 'More Info', 'type': 'text'})
     print(profile.columns)
     profile = profile[keep_column]
-    rename_columns = {'GUIDE':'Guide',"ONT":'Total On-Targets', 'OFFT':'Total Off-Targets'}
+    rename_columns = {'GUIDE': 'Guide', "ONT": 'Total On-Targets', 'OFFT': 'Total Off-Targets'}
     for i in range(mms):
-        rename_columns[str(i+1) + 'MM'] = str(i+1) + ' Mismatches'
+        rename_columns[str(i + 1) + 'MM'] = str(i + 1) + ' Mismatches'
 
-    profile.rename(columns = rename_columns, inplace = True)    #Now profile is Guide, Total On-targets, ...
-    #link_for_guides = [html.A('Show all...', href = URL + '/result?job=' + job_id + '#' + i, target = '_blank') for i in profile['Guide']]
-    #profile['More Info'] = link_for_guides
+    profile.rename(columns=rename_columns, inplace=True)  # Now profile is Guide, Total On-targets, ...
+    # link_for_guides = [html.A('Show all...', href = URL + '/result?job=' + job_id + '#' + i, target = '_blank') for i in profile['Guide']]
+    # profile['More Info'] = link_for_guides
     final_list = []
 
-    
     final_list.append(
         html.H3('Result Summary')
     )
-    #final_list.append(html.P('Select a Guide to view more details'))
+    # final_list.append(html.P('Select a Guide to view more details'))
     # final_list.append(html.Div(
     #         generate_table(profile, 'result-page-guide-table'),
     #         style = {'text-align':'center'}
     #     )
     # )
 
-    #load acfd for each guide   #TODO sistemare e controllare
+    # load acfd for each guide   #TODO sistemare e controllare
     with open('Results/' + value + '/acfd.txt') as a:
         acfd = a.read().strip().split('\n')
     acfd.remove('crRNA 0')
     acfd.sort()
     acfd = [float(a.split(' ')[-1]) for a in acfd]
-    acfd  = [int(round((100/(100 + x))*100)) for x in acfd]
+    acfd = [int(round((100 / (100 + x)) * 100)) for x in acfd]
     profile = profile.sort_values('Guide')
     profile['CFD'] = acfd
-    profile = profile.sort_values('CFD', ascending = False)
+    profile = profile.sort_values('CFD', ascending=False)
     final_list.append(
         html.Div(
             dash_table.DataTable(
-                id = 'general-profile-table',
+                id='general-profile-table',
                 page_size=PAGE_SIZE,
-                columns = columns_profile_table,
-                data = profile.to_dict('records'),
-                selected_cells = [{'row':0, 'column':0}]
+                columns=columns_profile_table,
+                data=profile.to_dict('records'),
+                selected_cells=[{'row': 0, 'column': 0}]
             )
-            ,id = 'div-general-profile-table')
+            , id='div-general-profile-table')
     )
 
     final_list.append(html.Br())
-    
-    #Create 10 buttons hidden and show when guide is selected, when button is pressed, show image with corresponding mm
-    for i in range (10):
-        if (i <= mms):
-            final_list.append(
-                html.Button(str(i) + ' mm',id = 'btn' + str(i)),       
-            )
-        else:
-            final_list.append(
-                html.Button(str(i) + ' mm',id = 'btn' + str(i), style = {'display':'none'}),       
-            )
-    final_list.append(
-        html.Button('Show all',id = 'btnAll'),
-    )
-    # button_group = dbc.ButtonGroup(
-    # [dbc.Button("0 Mismatches", style = {'background-color':'grey'}),
-    # dbc.Button("1 Mismatches", style = {'background-color':'grey'}),
-    # dbc.Button("2 Mismatches", style = {'background-color':'grey'}),
-    # dbc.Button("3 Mismatches", style = {'background-color':'grey'}),
-    # dbc.Button("4 Mismatches", style = {'background-color':'grey'}),
-    # dbc.Button("5 Mismatches", style = {'background-color':'grey'})]
-    # )
-    # final_list.append(button_group)
+
+    # Create 10 buttons hidden and show when guide is selected, when button is pressed, show image with corresponding mm
+    #for i in range(10):
+    #    if (i <= mms):
+    #        final_list.append(
+    #            html.Button(str(i) + ' mm', id='btn' + str(i)),
+    #        )
+    #    else:
+    #        final_list.append(
+    #            html.Button(str(i) + ' mm', id='btn' + str(i), style={'display': 'none'}),
+    #        )
+    #final_list.append(
+    #    html.Button('Show all', id='btnAll'),
+    #)
+    button_group=dbc.ButtonGroup([
+        dbc.Button("0 Mismatches", id='btn0'),
+        dbc.Button("1 Mismatches", id='btn1'),
+        dbc.Button("2 Mismatches", id='btn2'),
+        dbc.Button("3 Mismatches", id='btn3'),
+        dbc.Button("4 Mismatches", id='btn4')], className="st2")
+
+    final_list.append(button_group)
+
+    final_list.append(dbc.Button('Show all', id='btnAll',className="st1",  style={'margin-left': '5%'}))
 
     # final_list.append(
     #     html.Div(
@@ -1502,36 +1625,36 @@ def resultPage(job_id):
     #             # ),
     #             html.Div(
     #                 html.A(
-    #                     html.Img(id = 'barplot-img', width="100%", #height="30%", 
-                        
+    #                     html.Img(id = 'barplot-img', width="100%", #height="30%",
+
     #                     ),
-                        
+
     #                     target="_blank",
     #                     id = 'link-barplot'
-                        
+
     #                 ),
     #                 style = {'flex':'0 0 30%'}
     #             ),
     #             html.Div(
     #             html.A(
-    #                 html.Img( width="100%", #height="30%", 
-                    
+    #                 html.Img( width="100%", #height="30%",
+
     #                 ),
-                    
+
     #                 target="_blank",
-                    
+
     #             ),
     #             style = {'flex':'0 0 30%'}
     #         ),
-                
+
     #         ],
     #         className = 'flex-view-images'
     #     )
     # )
     final_list.append(
-        html.Div(id = 'all-images')
+        html.Div(id='all-images')
     )
-    result_page = html.Div(final_list, style = {'margin':'1%'})
+    result_page = html.Div(final_list, style={'margin': '1%'})
     return result_page
 
 
@@ -1542,19 +1665,21 @@ def guidePage(job_id, guide):
     value = job_id
     final_list = []
     final_list.append(html.P('List of Targets found for the selected guide'))
-    col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'CFD', 'Doench2016']
-    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric']
-    cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
+    col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'CFD',
+                'Doench2016']
+    col_type = ['text', 'text', 'text', 'text', 'numeric', 'text', 'numeric', 'numeric', 'numeric', 'numeric',
+                'numeric']
+    cols = [{"name": i, "id": i, 'type': t} for i, t in zip(col_list, col_type)]
     job_directory = 'Results/' + job_id + '/'
-    #Load mismatches
+    # Load mismatches
     with open('Results/' + value + '/Params.txt') as p:
-       mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
+        mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
 
     mms = int(mms[0])
-    mms_values = [{'label':i, 'value':i} for i in range(mms + 1) ]
-    global_store(job_id)    #TODO controllare se carica ogni volta o solo la prima
-    #NOTE the filtering is done automatically when the page is loaded due to the function update_table since it's triggered when the table is created, putting page_current, sort_by etc
-    #at initial values
+    mms_values = [{'label': i, 'value': i} for i in range(mms + 1)]
+    global_store(job_id)  # TODO controllare se carica ogni volta o solo la prima
+    # NOTE the filtering is done automatically when the page is loaded due to the function update_table since it's triggered when the table is created, putting page_current, sort_by etc
+    # at initial values
 
     # df = global_store(job_id)
     # dff = df
@@ -1575,11 +1700,11 @@ def guidePage(job_id, guide):
     final_list.append(
         html.Div(
             dash_table.DataTable(
-                id='result-table', 
-                columns=cols, 
-                #data = dff.to_dict('records'),
-                virtualization = True,
-                fixed_rows={ 'headers': True, 'data': 0 },
+                id='result-table',
+                columns=cols,
+                # data = dff.to_dict('records'),
+                virtualization=True,
+                fixed_rows={'headers': True, 'data': 0},
                 style_cell={'width': '150px'},
                 page_current=0,
                 page_size=PAGE_SIZE,
@@ -1591,7 +1716,7 @@ def guidePage(job_id, guide):
                 filter_query='',
                 style_table={
                     'height': '300px',
-                    #'overflowY': 'scroll',
+                    # 'overflowY': 'scroll',
                 },
                 # style_data_conditional=[{
                 #     "if": {'column_id':'BulgeType', 'filter_query' : 'BulgeType eq "RNA"'}, #{'filter_query' : 'BulgeType eq "RNA"'},
@@ -1599,17 +1724,18 @@ def guidePage(job_id, guide):
                 #     'color': 'white'
                 # }],
             ),
-            id = 'div-result-table',
+            id='div-result-table',
         )
     )
     final_list.append(html.Br())
-    
-    return html.Div(final_list, style = {'margin':'1%'})
+
+    return html.Div(final_list, style={'margin': '1%'})
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-    #app.run_server(host='0.0.0.0', debug=True, port=80)
-    cache.clear()       #delete cache when server is closed
+    # app.run_server(host='0.0.0.0', debug=True, port=80)
+    cache.clear()  # delete cache when server is closed
 
-    #BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti
-    #Iupac
+    # BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti
+    # Iupac
