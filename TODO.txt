@@ -156,10 +156,10 @@ TODO per giovedì 24 (non tutto, il più possibile)
 Pagina principale:
 - Testare come inserire javascript in dash, per esempio cliccare una parola e far modificare il contenuto di un altro elemento della pagina
 	-Serve per esempio per inserire/cancellare gli input di esempio nella pagina principale
--Altrimenti modificare lo stile del bottone di insert example per farlo somigliare ad un link
+-Altrimenti modificare lo stile del bottone di insert example per farlo somigliare ad un link	X
 -Inserire un altro bottone simile a quello di prima per cancellare l'esempio inserito, oppure usare lo stesso bottone
 	-Vedere se possibile implementare 3 idee:
-		-Cancellare tutti i valori inseriti
+		-Cancellare tutti i valori inseriti	X
 		-Cancellare solo i valori che sono uguali a quelli di esempio e non quelli che sono stati modificati dall'utente
 		-Se anche un solo valore è diverso da quello di esempio, non cancellare niente
 
@@ -178,3 +178,8 @@ Pagina del load job
 reindirizzamento automatico. Quindi modificare la chiamata dell'interval per fare in modo che quando tutti e tre i processi sono completati
 si venga reindirizzati. Idea: modificare un div nascosto per segnalare che la ricerca è finita e quando il div viene modificato 
 far partire la chiamata per il change url --> potrebbe richiedere modifiche per la funzione changePage()
+
+Funzionalità di supporto al sito
+-Creare script che controlli, una volta al giorno, se i file presenti nella cartella Results siano più vecchi di X giorni (controllando il file log.txt, dove nell'ultima riga indica quando il job è stato completato), e nel caso cancelli la cartella e la cartella corrispondente in assets/Img
+-Testare se è possibile usare Apache per controllare il download di file (eg: mettere un link nella pagina dei risultati che se cliccato fa in modo di scaricare il file .targets di quel job. Il download non deve essere gestito da Dash ma da Apache)
+	-In alternativa, pensare ad un server Ftp che però permetta di vedere solo la cartella di quel job (non vogliamo che l'utente possa andare in giro e vedere tutte le cartelle dei job disponibili sul server)
