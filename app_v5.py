@@ -33,6 +33,11 @@ from datetime import datetime  # For time when job submitted
 
 # from seq_script import extract_seq, convert_pam
 
+#this command run the subprocess for the control of the Result directory
+#p = subprocess.Popen([sys.executable, './remove_old_results.py'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+
+
 PAGE_SIZE = 10  # number of entries in each page of the table in view report
 URL = 'http://127.0.0.1:8050'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
