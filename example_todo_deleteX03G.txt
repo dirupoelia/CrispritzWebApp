@@ -1,0 +1,2 @@
+#Bulge_type	crRNA	DNA	Chromosome	Position	Direction	Mismatches	Bulge_Size
+X	GAGTCCGAGCAGAAGAAGAANNN	GAGTCCcAGCAGAAGgASgAGGG	chr22	22820692	+	3	0

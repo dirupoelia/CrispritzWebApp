@@ -45,7 +45,7 @@ for guide_row in all_guides:
     with open(result_directory + '/' + job_id + '.annotated.' + guide_row_list[0] + '.SummaryCount.txt', 'w') as scg:
         scg.write(content.strip())
 
-#Create Summary count for each guide from reference results
+#Create Summary count for each guide from reference results #BUG if user did not select comparison option
 with open(profile_file_ref) as p:
     all_guides = p.read().strip().split('\n')[1:]
 

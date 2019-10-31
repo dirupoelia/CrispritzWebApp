@@ -178,3 +178,11 @@ Pagina del load job
 reindirizzamento automatico. Quindi modificare la chiamata dell'interval per fare in modo che quando tutti e tre i processi sono completati
 si venga reindirizzati. Idea: modificare un div nascosto per segnalare che la ricerca è finita e quando il div viene modificato 
 far partire la chiamata per il change url --> potrebbe richiedere modifiche per la funzione changePage()
+
+
+
+
+-Finire immagini e tabella per la ricerca fatta 2 settimane fa, per far vedere che visualizzare tutti i risultati non è fattibile
+-Copiare i risultati di casoffinder -> creo tabella con ogni combinazione mm-bulge-guida e calcolo il numero di target trovati in quella categoria
+	-questa tabella è visualizzata dove ci sono le immagini, creo un altro bottone con label 'Summary Table'
+	-Se clicco la riga corrispondente mi apre la pagina dei targets (come quella attuale) ma visualizzo solo i target in quel range (uso grep per prendere i target e li salvo su file temporaneo)

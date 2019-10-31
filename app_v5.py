@@ -32,7 +32,7 @@ import collections                          #For check if guides are the same in
 from datetime import datetime               #For time when job submitted
 from seq_script import extract_seq, convert_pam
 
-PAGE_SIZE = 10                     #number of entries in each page of the table in view report
+PAGE_SIZE = 100                     #number of entries in each page of the table in view report
 URL = 'http://127.0.0.1:8050'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -179,16 +179,7 @@ checklist_div = html.Div(
                     html.P('Compare your results with the corresponding reference genome'),
                     html_for="checkbox-ref-comp",
                     className="form-check-label",
-                ),
-                dbc.Checkbox(
-                    id="checkbox-example-input", className="form-check-input"
-                ),
-                dbc.Label(
-                    #html.P(['Activate Reference genome ', html.Abbr('comparison', title ='The results of your test guides will be compared with the results obtained from a computed analysis on the corresponding reference genome. Note: this may increase computational time')]) ,
-                    html.P('Insert example parameters'),
-                    html_for="checkbox-example-input",
-                    className="form-check-label",
-                ),
+                )
                 # dbc.Checkbox(
                 #     id="checkbox-email", className="form-check-input"
                 # ),
@@ -896,7 +887,9 @@ def changePage( href, path, search, hash_guide):
         job_id = search.split('=')[-1]
         if hash_guide is None or hash_guide is '':
             return resultPage(job_id), URL + '/load' + search
-        return guidePage(job_id, hash_guide.split('#')[1]), URL + '/load' + search
+        if 'new' in hash_guide:
+            return guidePagev3(job_id, hash_guide.split('#')[1]), URL + '/load' + search
+        return guidePagev2(job_id, hash_guide.split('#')[1]), URL + '/load' + search
     if path == '/test-page':
         return test_page, URL + '/load' + search
    
@@ -1016,7 +1009,6 @@ def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
     if search is None:
         raise PreventUpdate
 
-        
     filtering_expressions = filter.split(' && ')
     #filtering_expressions.append(['{crRNA} = ' + guide])     
     df = global_store(value)
@@ -1024,7 +1016,7 @@ def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
     print('len index before', len(dff.index))
     sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
     sort_by.insert(1, {'column_id' : 'BulgeSize', 'direction': 'asc'})
-    sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
+    #sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
 
@@ -1179,13 +1171,25 @@ def showImages(mms, search, hash_guide):
 @app.callback(
     Output('all-images','children'),
     
-    [Input('btn4', 'n_clicks_timestamp'),
-        Input('btnAll','n_clicks_timestamp')],
-    [State('general-profile-table', 'selected_cells'),
+    [Input('btn0', 'n_clicks_timestamp'),
+    Input('btn1', 'n_clicks_timestamp'),
+    Input('btn2', 'n_clicks_timestamp'),
+    Input('btn3', 'n_clicks_timestamp'),
+    Input('btn4', 'n_clicks_timestamp'),
+    Input('btn5', 'n_clicks_timestamp'),
+    Input('btn6', 'n_clicks_timestamp'),
+    Input('btn7', 'n_clicks_timestamp'),
+    Input('btn8', 'n_clicks_timestamp'),
+    Input('btn9', 'n_clicks_timestamp'),
+    #Input('btn10', 'n_clicks_timestamp'),
+    Input('btnAll','n_clicks_timestamp'),
+    Input('btn-summary-table','n_clicks_timestamp'),
+    Input('general-profile-table', 'selected_cells')],
+    [#State('general-profile-table', 'selected_cells'),
     State('general-profile-table', 'data'),
     State('url', 'search')]
 )
-def loadColumnImages(n4, nAll, sel_cel, all_guides, search):
+def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, sel_cel, all_guides, search):
     '''
     Carica le immagini corrispondenti alla guida selezionata. Se non ho una cella selezionata non mostra niente.
     La funzione carica le immagini dalla cartella Results/job_id usando una codifica, le mette all'interno di un link che 
@@ -1203,133 +1207,152 @@ def loadColumnImages(n4, nAll, sel_cel, all_guides, search):
     
     with open('Results/' + job_id + '/Params.txt') as p:
        mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
-    # test_col = html.Div(
-    #     [
-    #         html.Div(
-    #             html.A(
-    #                 html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
-                     
-                    
-    #                 ),
-                    
-    #                 target="_blank",
-    #                 id = 'link-barplot',
-    #                 href = 'assets/Img/' + job_id + '/' + radar_img
-                    
-    #             ),
-    #             style = {'flex':'0 0 30%'}
-    #         ),
-    #         html.Div(
-    #         html.A(
-    #                 html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
-                     
-                    
-    #                 ),
-                
-    #             target="_blank",
-    #             href = 'assets/Img/' + job_id + '/' + radar_img
-                
-    #         ),
-    #         style = {'flex':'0 0 30%'}
-    #     ),
-            
-    #     ],
-    #     className = 'flex-view-images'
-    # )
+    
     fl = []
     fl.append(html.Br())
     fl.append(html.H5('Focus on: ' + guide))
     fl.append(html.P(['View all targets found with the selected guide ' , html.A('here', href = URL + '/result?job=' + job_id + '#' + guide, target = '_blank')]))
     # fl.append(test_col)
     # fl.append(test_col)
+    if not n0:
+        n0 = 0
+    if not n1:
+        n1 = 0
+    if not n2:
+        n2 = 0
+    if not n3:
+        n3 = 0
     if not n4:
         n4 = 0
+    if not n5:
+        n5 = 0
+    if not n6:
+        n6 = 0
+    if not n7:
+        n7 = 0
+    if not n8:
+        n8 = 0
+    if not n9:
+        n9 = 0
+    # if not n10:
+    #     n10 = 0
+    
     if not nAll:
         nAll = 0
-    if (int(n4) > int(nAll)):
+    if not nSumTab:
+        nSumTab = 0
+    btn_group = []
+    btn_group.append(n0)
+    btn_group.append(n1)
+    btn_group.append(n2)
+    btn_group.append(n3)
+    btn_group.append(n4)
+    btn_group.append(n5)
+    btn_group.append(n6)
+    btn_group.append(n7)
+    btn_group.append(n8)
+    btn_group.append(n9)
+    #btn_group.append(n10)
+    btn_group.append(nAll)
+    btn_group.append(nSumTab)
+    show_image = True
+    if max(btn_group) == n0:
+        min_mm = 0
+        max_mm = 1
+    elif max(btn_group) == n1:
+        min_mm = 1
+        max_mm = 2
+    elif max(btn_group) == n2:
+        min_mm = 2
+        max_mm = 3
+    elif max(btn_group) == n3:
+        min_mm = 3
+        max_mm = 4
+    elif max(btn_group) == n4:
         min_mm = 4
         max_mm = 5
-    else:
+    elif max(btn_group) == n5:
+        min_mm = 5
+        max_mm = 6
+    elif max(btn_group) == n6:
+        min_mm = 6
+        max_mm = 7
+    elif max(btn_group) == n7:
+        min_mm = 7
+        max_mm = 8
+    elif max(btn_group) == n8:
+        min_mm = 8
+        max_mm = 9
+    elif max(btn_group) == n9:
+        min_mm = 9
+        max_mm = 10
+    elif max(btn_group) == nAll:
         min_mm = 0
         max_mm = int(mms) + 1
-    for i in range (min_mm, max_mm): #uso un for per comprendere anche il caso di showAllImages
-        radar_img = 'summary_single_guide_' + guide + '_' + str(i) + 'mm.png'
+    else:
+        show_image = False
+    
+    if show_image:
+        for i in range (min_mm, max_mm): #uso un for per comprendere anche il caso di showAllImages
+            radar_img = 'summary_single_guide_' + guide + '_' + str(i) + 'mm.png'
 
-        barplot_img = 'summary_histogram_' + guide + '_' + str(i) + 'mm.png'
-        try:            #NOTE serve per non generare errori se il barplot non è stato fatto
-            barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
-            barplot_href = 'assets/Img/' + job_id + '/' + barplot_img
-        except:
-            barplot_src = ''
-            barplot_href = ''
-        fl.append(
-            html.Div(
-                        [
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        html.A(
-                                            html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()), 
-                                            id = 'barplot-img', width="75%", height="auto"
+            barplot_img = 'summary_histogram_' + guide + '_' + str(i) + 'mm.png'
+            try:            #NOTE serve per non generare errori se il barplot non è stato fatto
+                barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
+                barplot_href = 'assets/Img/' + job_id + '/' + barplot_img
+            except:
+                barplot_src = ''
+                barplot_href = ''
+
+            try:
+                radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
+            except:
+                radar_src = ''
+            try:
+                radar_href = 'assets/Img/' + job_id + '/' + radar_img
+            except:
+                radar_href = ''
+            fl.append(
+                html.Div(
+                            [
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            html.A(
+                                                html.Img(src = radar_src, id = 'barplot-img', width="75%", height="auto"),
+                                                target="_blank",
+                                                href = radar_href
                                             ),
-                                            target="_blank",
-                                            href = 'assets/Img/' + job_id + '/' + radar_img
                                         ),
-                                    ),
-                                    dbc.Col(
-                                        html.A(
-                                            html.Img(src = barplot_src,id = 'barplot-img', width="75%", height="auto"),
-                                            target="_blank",
-                                            href = barplot_href
+                                        dbc.Col(
+                                            html.A(
+                                                html.Img(src = barplot_src,id = 'barplot-img', width="75%", height="auto"),
+                                                target="_blank",
+                                                href = barplot_href
+                                            )
                                         )
-                                    )
-                                ], 
-                            ),
-                        ]
-                    )
+                                    ], 
+                                ),
+                            ]
+                        )
+            )
+            fl.append(html.Br())
+            fl.append(html.Br())
+    
+    else:
+        fl = []
+        fl.append(html.Br())
+        fl.append(html.H5('Focus on: ' + guide))
+        fl.append(html.P(['View all targets found with the selected guide ' , html.A('here', href = URL + '/result?job=' + job_id + '#' + guide, target = '_blank')]))  #TODO ultime 3 righe uguali a sopra, sistemare 
+        df = pd.read_pickle(job_directory + job_id + '_summary_result_' + guide+'.txt')
+        fl.append(html.Div(
+                generate_table(df, 'test_id_tab', guide, job_id ), style = {'text-align': 'center'}
+            )
         )
-        fl.append(html.Br())
-        fl.append(html.Br())
-    # test_col_bootstrap = html.Div(
-       
-    #                 [
-    #                     dbc.Row(
-    #                         [
-    #                             dbc.Col(
-    #                                 html.A(
-    #                 html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
-                     
-                    
-    #                 ),
-                
-    #             target="_blank",
-    #             href = 'assets/Img/' + job_id + '/' + radar_img
-                
-    #         )
-    #                             ),
-    #                             dbc.Col(
-    #                                 html.A(
-    #                 html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode()),id = 'barplot-img', width="100%", #height="30%",
-                     
-                    
-    #                 ),
-                
-    #             target="_blank",
-    #             href = 'assets/Img/' + job_id + '/' + radar_img
-                
-    #         )
-    #                             )
-    #                         ]
-    #                     ),
-    #                 ]
-
-    # )
-    # fl.append(test_col_bootstrap)
-    # fl.append(test_col_bootstrap)
     return fl
     
 
-def generate_table(dataframe, id_table, max_rows=26):
+def generate_table(dataframe, id_table, guide='', job_id='', max_rows=2600):
     '''
     Per generare una html table. NOTE è diversa da una dash dataTable
     '''
@@ -1338,7 +1361,7 @@ def generate_table(dataframe, id_table, max_rows=26):
         [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
         # Body
         [html.Tr([
-            html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
+            html.Td(html.A(dataframe.iloc[i][col],  href = 'result?job=' + job_id + '#' + guide +'new' + dataframe.iloc[i]['Bulge Type'] + str(dataframe.iloc[i]['Bulge Size']) + str(dataframe.iloc[i]['Mismatches']) , target = '_blank' )) if col == 'Guide' else  html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
         ]) for i in range(min(len(dataframe), max_rows))],
         style = {'display':'inline-block'},
         id = id_table
@@ -1409,7 +1432,7 @@ def resultPage(job_id):
     try:
         profile = pd.read_csv('Results/' + value + '/' + value + '.profile_complete.xls')   #NOTE profile_complete has ',' as separator
         if len(profile.columns) == 1:
-            profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls', sep='\t')
+            profile = pd.read_csv('Results/' + value + '/' + value + '.profile_complete.xls', sep='\t')
     except:
         profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls', sep = '\t')    #NOTE profile has \t as separator or ','
         if len(profile.columns) == 1:
@@ -1418,16 +1441,32 @@ def resultPage(job_id):
     columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
     keep_column = ['GUIDE', 'ONT', 'OFFT']
     for i in range (mms):
-        columns_profile_table.append({'name': str(i+1) + ' Mismatches', 'id':str(i+1) + ' Mismatches', 'type':'numeric'})
+        #columns_profile_table.append({'name': str(i+1) + ' Mismatches', 'id':str(i+1) + ' Mismatches', 'type':'numeric'})
         keep_column.append(str(i+1) + 'MM')
-    columns_profile_table.append({'name':'More Info', 'id':'More Info', 'type':'text'})
-    print(profile.columns)
+    
     profile = profile[keep_column]
     rename_columns = {'GUIDE':'Guide',"ONT":'Total On-Targets', 'OFFT':'Total Off-Targets'}
+    col_targetfor = 'Targets for '
     for i in range(mms):
         rename_columns[str(i+1) + 'MM'] = str(i+1) + ' Mismatches'
+        col_targetfor = col_targetfor + str(i) + '-'
+    col_targetfor = col_targetfor + str(mms)
+    col_targetfor = col_targetfor + ' mismatches'
+    columns_profile_table.append({'name': col_targetfor, 'id' : 'col_targetfor', 'type':'text'})
 
     profile.rename(columns = rename_columns, inplace = True)    #Now profile is Guide, Total On-targets, ...
+    col_to_add = []
+    tmp_col_to_add = []
+    for row in profile.itertuples():
+        for i in range (mms+1):
+            if i == 0:
+                tmp_col_to_add.append(str(profile['Total On-Targets'][row[0]]))
+            else:
+                tmp_col_to_add.append(str(profile[str(i) + ' Mismatches'][row[0]]))
+        col_to_add.append(' - '.join(tmp_col_to_add))
+        tmp_col_to_add = []
+        
+    profile['col_targetfor'] = col_to_add
     #link_for_guides = [html.A('Show all...', href = URL + '/result?job=' + job_id + '#' + i, target = '_blank') for i in profile['Guide']]
     #profile['More Info'] = link_for_guides
     final_list = []
@@ -1446,9 +1485,9 @@ def resultPage(job_id):
     #load acfd for each guide   #TODO sistemare e controllare
     with open('Results/' + value + '/acfd.txt') as a:
         acfd = a.read().strip().split('\n')
-    acfd.remove('crRNA 0')
+    #acfd.remove('crRNA 0')
     acfd.sort()
-    acfd = [float(a.split(' ')[-1]) for a in acfd]
+    acfd = [float(a.split('\t')[-1]) for a in acfd]
     acfd  = [int(round((100/(100 + x))*100)) for x in acfd]
     profile = profile.sort_values('Guide')
     profile['CFD'] = acfd
@@ -1479,6 +1518,9 @@ def resultPage(job_id):
             )
     final_list.append(
         html.Button('Show all',id = 'btnAll'),
+    )
+    final_list.append(
+        html.Button('Summary Table', id = 'btn-summary-table')
     )
     # button_group = dbc.ButtonGroup(
     # [dbc.Button("0 Mismatches", style = {'background-color':'grey'}),
@@ -1605,6 +1647,268 @@ def guidePage(job_id, guide):
     final_list.append(html.Br())
     
     return html.Div(final_list, style = {'margin':'1%'})
+
+def guidePagev2(job_id, guide):
+    '''
+    Crea il layout della pagina che contiene tutti i targets della guida selezionata, aggiornato per includere colonne PAM-creation, disruption, samples, etc
+    Il file da caricare è il total (uniq + semicommon)
+    '''
+    value = job_id
+    final_list = []
+    final_list.append(html.P('List of Targets found for the selected guide'))
+    col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq']
+    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
+    cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
+    job_directory = 'Results/' + job_id + '/'
+    #Load mismatches
+    with open('Results/' + value + '/Params.txt') as p:
+       mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
+
+    mms = int(mms[0])
+    mms_values = [{'label':i, 'value':i} for i in range(mms + 1) ]
+    global_store(job_id)    #TODO controllare se carica ogni volta o solo la prima
+    #NOTE the filtering is done automatically when the page is loaded due to the function update_table since it's triggered when the table is created, putting page_current, sort_by etc
+    #at initial values
+
+    # df = global_store(job_id)
+    # dff = df
+    # filtering_expressions = ['{crRNA} = ' + guide]
+    # for filter_part in filtering_expressions:
+    #     col_name, operator, filter_value = split_filter_part(filter_part)
+
+    #     if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+    #         # these operators match pandas series operator method names
+    #         dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
+    #     elif operator == 'contains':
+    #         dff = dff.loc[dff[col_name].str.contains(filter_value)]
+    #     elif operator == 'datestartswith':
+    #         # this is a simplification of the front-end filtering logic,
+    #         # only works with complete fields in standard format
+    #         dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+
+    final_list.append(
+        html.Div(
+            dash_table.DataTable(
+                id='result-table', 
+                columns=cols, 
+                #data = dff.to_dict('records'),
+                virtualization = True,
+                fixed_rows={ 'headers': True, 'data': 0 },
+                style_cell={'width': '150px'},
+                page_current=0,
+                page_size=PAGE_SIZE,
+                page_action='custom',
+                sort_action='custom',
+                sort_mode='multi',
+                sort_by=[],
+                filter_action='custom',
+                filter_query='',
+                style_table={
+                    'height': '300px',
+                    #'overflowY': 'scroll',
+                },
+                style_data_conditional=[
+                        {
+                        'if': {
+                                'filter_query': '{Var_uniq} eq y', 
+                                'column_id' :'BulgeType'
+                            },
+                            'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+
+                            
+                        },
+                        {
+                            'if': {
+                                    'filter_query': '{Total} eq 3',          #TODO change to {Var_uniq} eq 
+                                    'column_id' :'BulgeType'
+                                },
+                                'border-left': '5px solid rgba(26, 26, 255, 0.9)',
+
+                        }
+                        
+                ]
+                # style_data_conditional=[{
+                #     "if": {'column_id':'BulgeType', 'filter_query' : 'BulgeType eq "RNA"'}, #{'filter_query' : 'BulgeType eq "RNA"'},
+                #     "backgroundColor": "lightblue",
+                #     'color': 'white'
+                # }],
+            ),
+            id = 'div-result-table',
+        )
+    )
+    final_list.append(html.Br())
+    
+    return html.Div(final_list, style = {'margin':'1%'})
+
+@cache.memoize()
+def global_store_subset(value, bulge_t, bulge_s, mms, guide):
+    '''
+    Caching dei file targets per una miglior performance di visualizzazione
+    '''
+    if value is None:
+        return ''
+    
+    df = pd.read_csv('example_todo_delete' +bulge_t +bulge_s + mms +guide[0] +'.txt', sep = '\t')
+    df.rename(columns = {"#Bulge type":'Bulge Type', "#Bulge_type":'Bulge Type', 'Bulge_Size':'Bulge Size'}, inplace = True)
+    return df
+
+
+def guidePagev3(job_id, hash):
+    guide = hash[:hash.find('new')]
+    mms = hash[-1:]
+    bulge_s = hash[-2:-1]
+    if 'DNA' in hash:
+        bulge_t = 'DNA'
+    elif 'RNA' in hash:
+        bulge_t = 'RNA'
+    else:
+        bulge_t = 'X'
+    
+    value = job_id
+    final_list = []
+    final_list.append(html.P('List of Targets found for the selected guide'))
+    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq']
+    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
+    cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
+    job_directory = 'Results/' + job_id + '/'
+    
+    start = time.time()
+    subprocess.call(['./grep_specific_targets.sh ' + bulge_t + ' ' + bulge_s + ' ' + mms + ' ' + guide[0] + ' ' + guide[1] + ' ' + job_id], shell = True)
+    global_store_subset(job_id, bulge_t, bulge_s, mms,guide)
+    #subset_targets = pd.read_csv('example_todo_delete.txt', sep = '\t')
+    #data_dict = subset_targets.to_dict('records')
+    print('Grep e load:', time.time() - start)
+    final_list.append(
+        html.Div( 
+            dash_table.DataTable(
+                id='table-subset-target', 
+                columns=cols, 
+                #data = subset_targets.to_dict('records'),
+                virtualization = True,
+                fixed_rows={ 'headers': True, 'data': 0 },
+                style_cell={'width': '150px'},
+                page_current=0,
+                page_size=PAGE_SIZE,
+                page_action='custom',
+                sort_action='custom',
+                sort_mode='multi',
+                sort_by=[],
+                filter_action='custom',
+                filter_query='',
+                style_table={
+                    'height': '600px',
+                    #'overflowY': 'scroll',
+                }
+                
+            ),
+            id = 'div-result-table',
+        )
+    )
+    final_list.append(html.Br())
+    
+    return html.Div(final_list, style = {'margin':'1%'})
+
+#Send the data when next or prev button is clicked on the result table
+@app.callback(
+    [Output('table-subset-target', 'data'),
+    Output('table-subset-target', 'style_data_conditional')],
+    [Input('table-subset-target', "page_current"),
+     Input('table-subset-target', "page_size"),
+     Input('table-subset-target', "sort_by"),
+     Input('table-subset-target', 'filter_query')],
+     [State('url', 'search'),
+     State('url', 'hash')]
+)
+def update_table_subset(page_current, page_size, sort_by, filter, search, hash_guide):
+    '''
+    La funzione ritorna uno split dei risultati in base ad un filtering o a un sort da parte dell'utente. Inoltre aggiorna i risultati
+    visualizzati quando il bottone next page / prev page è cliccato. (Codice preso dalla pagina dash datatable sul sorting con python)
+    Inoltre carica i file targets, o scores se presente, e lo trasforma in un dataframe, cambiando il nome delle colonne per farle corrispondere
+    all'id delle colonne della tabella nella pagina.
+    Se non ci sono targets ritorna un avviso di errore
+    '''
+    job_id = search.split('=')[-1]
+    job_directory = 'Results/' + job_id + '/'
+    #guide = hash_guide.split('#')[1]
+    value = job_id
+    if search is None:
+        raise PreventUpdate
+
+    filtering_expressions = filter.split(' && ')
+    #filtering_expressions.append(['{crRNA} = ' + guide])   
+    guide = hash_guide[1:hash_guide.find('new')]
+    print('guide', guide)
+    mms = hash_guide[-1:]
+    bulge_s = hash_guide[-2:-1]
+    if 'DNA' in hash_guide:
+        bulge_t = 'DNA'
+    elif 'RNA' in hash_guide:
+        bulge_t = 'RNA'
+    else:
+        bulge_t = 'X'  
+    df = global_store_subset(value, bulge_t, bulge_s, mms, guide)
+    dff = df
+    print(dff.columns)
+    sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
+    sort_by.insert(1, {'column_id' : 'Bulge Size', 'direction': 'asc'})
+    #sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
+    for filter_part in filtering_expressions:
+        col_name, operator, filter_value = split_filter_part(filter_part)
+
+        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+            # these operators match pandas series operator method names
+            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)].sort_values([col['column_id'] for col in sort_by],
+            ascending=[
+                col['direction'] == 'asc'
+                for col in sort_by
+            ],
+            inplace=False)
+        elif operator == 'contains':
+            dff = dff.loc[dff[col_name].str.contains(filter_value)]
+        elif operator == 'datestartswith':
+            # this is a simplification of the front-end filtering logic,
+            # only works with complete fields in standard format
+            dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+
+    print('len index after', len(dff.index))
+    #NOTE sort_by: [{'column_id': 'BulgeType', 'direction': 'asc'}, {'column_id': 'crRNA', 'direction': 'asc'}]
+    #sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
+    #sort_by.insert(0, {'column_id' : 'BulgeSize', 'direction': 'asc'})
+    if len(sort_by):
+        dff = dff.sort_values(
+            [col['column_id'] for col in sort_by],
+            ascending=[
+                col['direction'] == 'asc'
+                for col in sort_by
+            ],
+            inplace=False
+        )
+   
+
+    cells_style = [
+                        {
+                        'if': {
+                                'filter_query': '{Var_uniq} eq y', 
+                                'column_id' :'Bulge Type'
+                            },
+                            'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+
+                            
+                        },
+                        {
+                            'if': {
+                                    'filter_query': '{Var_uniq} eq n',           
+                                    'column_id' :'Bulge Type'
+                                },
+                                'border-left': '5px solid rgba(26, 26, 255, 0.9)',
+
+                        }
+                        
+                ]
+    return dff.iloc[
+        page_current*page_size:(page_current+ 1)*page_size
+    ].to_dict('records'), cells_style
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)

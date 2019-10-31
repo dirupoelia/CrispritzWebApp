@@ -1,0 +1,10 @@
+Job	Start	mer 30 ott 2019, 12.20.00, CET
+Search-index	Start	mer 30 ott 2019, 12.20.00, CET
+Search-index	Done	mer 30 ott 2019, 12.20.00, CET
+Search	Start	mer 30 ott 2019, 12.20.00, CET
+Search	Done	mer 30 ott 2019, 12.20.00, CET
+Annotation	Start	mer 30 ott 2019, 12.20.00, CET
+Annotation	Done	mer 30 ott 2019, 12.20.00, CET
+Report	Start	mer 30 ott 2019, 12.20.00, CET
+Report	Done	mer 30 ott 2019, 12.20.00, CET
+Job	Done	mer 30 ott 2019, 12.20.00, CET

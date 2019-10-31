@@ -118,11 +118,23 @@ cp $PWD/$1/*.png assets/Img/$jobid/
 
 #Temp (find better way when scores will be modified), sum of cfd per guide
 #TODO put control if scores were not computed
-awk -F'\t' '{a[$2] += $9} END{for (i in a) print i, a[i]}' $1/$jobid.scores.txt > $1'/'acfd.txt
+#awk -F'\t' '{a[$2] += $9} END{for (i in a) print i, a[i]}' $1/$jobid.scores.txt > $1'/'acfd.txt
+while IFS= read -r line || [ -n "$line" ]; do 
+    python3 scores_test.py $1/$jobid.targets.txt $line
+done < $6
+
+
 
 echo 'Report\tDone\t'$(date) >> $1'/'log.txt
 
-echo 'Job\tDone\t'$(date)>> $1'/'log.txt
 if [ ${17} = 'True' ]; then
     python3 send_mail.py $1
 fi
+
+while IFS= read -r line || [ -n "$line" ]; do 
+    python3 summary_table.py $1/$jobid.targets.txt $7 $8 $9 $line $jobid
+done < $6
+
+mv $jobid'_summary_result_'* $1
+
+echo 'Job\tDone\t'$(date)>> $1'/'log.txt
