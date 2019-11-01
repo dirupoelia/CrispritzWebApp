@@ -1,0 +1,10 @@
+Genome_selected	hg19_ref+hg19_1000genomeproject
+Genome_ref	hg19_ref
+Genome_idx	NGG_2_hg19_ref+hg19_1000genomeproject
+Pam	NGG
+Max_bulges	2
+Mismatches	4
+DNA	1
+RNA	2
+Gecko	False
+Ref_comp	True

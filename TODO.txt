@@ -186,3 +186,8 @@ far partire la chiamata per il change url --> potrebbe richiedere modifiche per 
 -Copiare i risultati di casoffinder -> creo tabella con ogni combinazione mm-bulge-guida e calcolo il numero di target trovati in quella categoria
 	-questa tabella è visualizzata dove ci sono le immagini, creo un altro bottone con label 'Summary Table'
 	-Se clicco la riga corrispondente mi apre la pagina dei targets (come quella attuale) ma visualizzo solo i target in quel range (uso grep per prendere i target e li salvo su file temporaneo)
+
+
+
+-Sistemare il grep delle sequenze da vedere sulla pagina della guida specifica: al momento il txt estratto è nella cartella principale, deve essere spostato
+nella cartella del job corrispondente

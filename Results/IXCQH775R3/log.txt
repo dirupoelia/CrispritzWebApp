@@ -1,0 +1,10 @@
+Job	Start	ven 1 nov 2019, 11.56.46, CET
+Search-index	Start	ven 1 nov 2019, 11.56.46, CET
+Search-index	Done	ven 1 nov 2019, 11.58.02, CET
+Search	Start	ven 1 nov 2019, 11.58.02, CET
+Search	Done	ven 1 nov 2019, 11.58.02, CET
+Annotation	Start	ven 1 nov 2019, 11.58.02, CET
+Annotation	Done	ven 1 nov 2019, 11.59.36, CET
+Report	Start	ven 1 nov 2019, 11.59.36, CET
+Report	Done	ven 1 nov 2019, 11.59.55, CET
+Job	Done	ven 1 nov 2019, 11.59.56, CET
