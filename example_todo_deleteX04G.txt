@@ -1,0 +1,1 @@
+#Bulge type	crRNA	DNA	Chromosome	Position	Direction	Mismatches	Bulge Size	Total	Min_mismatches	Max_mismatches	Pam_disr	PAM_gen	Var_uniq	Samples

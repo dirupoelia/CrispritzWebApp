@@ -243,7 +243,19 @@ final_list.append(
                 modal,
                 html.Div(
                     [
-                        html.H3('STEP 1', style = {'margin-top':'0'}), 
+                        
+                        
+                        html.Div([
+                            html.H3('STEP 1', style = {'margin-top':'0'}),
+                            html.Div([
+                                html.P([html.Button(html.P("Insert example", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline'}), id='example-parameters',
+                                            style={ 'border': 'None', 'text-transform': 'capitalize','height':'12','font-weight': '500', 'padding': '0 0px','textcolor':'blu'}), ' - ',
+                                #html.Br(),
+                                html.Button(html.P(children="Reset", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline'}), id='remove-parameters',
+                                            style={'border': 'None', 'text-transform': 'capitalize','height':'12','font-weight': '500', 'padding': '0 0px'})])
+                            ])
+                        ], className = 'flex-div-insert-delete-example'), 
+                        
                         html.P('Select a genome'),
                         html.Div(
                             dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genome",) #style = {'width':'75%'})
@@ -278,10 +290,10 @@ final_list.append(
                                     ],
                                     style = {'list-style':'inside'}
                                 ),
-                                html.Div(
-                                    html.Button('Insert example parameters', id = 'example-parameters', style={'display':'inline-block'}),
-                                    style = {'text-align':'center'}
-                                )
+                                # html.Div(
+                                #     html.Button('Insert example parameters', id = 'example-parameters', style={'display':'inline-block'}),
+                                #     style = {'text-align':'center'}
+                                # )
                             ],
                             style = {'height':'50%'}
                         ),
@@ -338,7 +350,7 @@ final_list.append(
                 html.Div(style = {'border-right':'solid 1px white'}),
                 html.Div(
                     [
-                        html.H3('Advanced Options'),
+                        html.H3('Advanced Options', style = {'margin-top':'0px'}),
                         checklist_div,
                         dcc.Checklist(
                             options = [
@@ -506,19 +518,48 @@ def toggle_fade(selected_options, is_in):
         return True
     return False
 
-#Insert/Delete example input
+# #Insert/Delete example input
+# @app.callback(
+#     [Output('available-genome', 'value'),
+#     Output('available-pam', 'value'),
+#     Output('text-guides', 'value'),
+#     Output('mms', 'value'),
+#     Output('dna', 'value'),
+#     Output('rna', 'value'),
+#     Output('len-guide-sequence-ver', 'value'),
+#     Output('text-sequence','value')],
+#     [Input('example-parameters', 'n_clicks')]
+# )
+# def inDelExample(n):
+#     '''
+#     Bottone per inserire degli input di esempio.
+#     TODO Modificare lo stile del bottone e renderlo simile ad un link
+#     TODO Inserire un altro bottone con lo stesso stile per rimuovere l'input di esempio (bisogna decidere se:
+#     a) cancellare tutto
+#     b) cancellare solo i campi i cui valori sono uguali a quelli di esempio
+#     c) se almeno un campo è diverso dal valore di esempio, non cancello nulla)
+#     '''
+#     if n is None:
+#         raise PreventUpdate
+    
+#     #TODO salvare una cartella speciale in results che abbia i risultati di questa ricerca in modo da non occupare il server con
+#     # questa ricerca di esempio, ma all'utente passo già la cartella fatta (questa parte già implementata)
+#     return gen_dir[0]['value'], '5\'-NGG-3\'', 'GAGTCCGAGCAGAAGAAGAA', '4', '0', '0', '20','>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
+
+# Insert/Delete example input
 @app.callback(
     [Output('available-genome', 'value'),
-    Output('available-pam', 'value'),
-    Output('text-guides', 'value'),
-    Output('mms', 'value'),
-    Output('dna', 'value'),
-    Output('rna', 'value'),
-    Output('len-guide-sequence-ver', 'value'),
-    Output('text-sequence','value')],
-    [Input('example-parameters', 'n_clicks')]
+     Output('available-pam', 'value'),
+     Output('text-guides', 'value'),
+     Output('mms', 'value'),
+     Output('dna', 'value'),
+     Output('rna', 'value'),
+     Output('len-guide-sequence-ver', 'value'),
+     Output('text-sequence', 'value')],
+     [Input('example-parameters', 'n_clicks_timestamp'),
+     Input('remove-parameters', 'n_clicks_timestamp')]
 )
-def inDelExample(n):
+def inExample(nI, nR):
     '''
     Bottone per inserire degli input di esempio.
     TODO Modificare lo stile del bottone e renderlo simile ad un link
@@ -527,12 +568,35 @@ def inDelExample(n):
     b) cancellare solo i campi i cui valori sono uguali a quelli di esempio
     c) se almeno un campo è diverso dal valore di esempio, non cancello nulla)
     '''
-    if n is None:
+
+    if (nI is None) and (nR is None):
         raise PreventUpdate
-    
-    #TODO salvare una cartella speciale in results che abbia i risultati di questa ricerca in modo da non occupare il server con
+
+    if nI is None:
+        nI = 0
+
+    if nR is None:
+        nR = 0
+
+    if nI > 0:
+        if nI > nR:
+            #print(nI, nR)
+
+            return gen_dir[0]['value'], '5\'-NGG-3\'', 'GAGTCCGAGCAGAAGAAGAA', '4', '0', '0', '20', '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
+
+
+    if nR > 0:
+        if nR > nI:
+            #print(nR, nI)
+
+            return '', '', '', '', '', '', '', ''
+
+
+
+    # TODO salvare una cartella speciale in results che abbia i risultati di questa ricerca in modo da non occupare il server con
     # questa ricerca di esempio, ma all'utente passo già la cartella fatta (questa parte già implementata)
-    return gen_dir[0]['value'], '5\'-NGG-3\'', 'GAGTCCGAGCAGAAGAAGAA', '4', '0', '0', '20','>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
+    # return '', '', '', '', '', '', ''
+
 
 #Email validity
 @app.callback(
@@ -1345,6 +1409,8 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, sel
         fl.append(html.H5('Focus on: ' + guide))
         fl.append(html.P(['View all targets found with the selected guide ' , html.A('here', href = URL + '/result?job=' + job_id + '#' + guide, target = '_blank')]))  #TODO ultime 3 righe uguali a sopra, sistemare 
         df = pd.read_pickle(job_directory + job_id + '_summary_result_' + guide+'.txt')
+        print (df)
+        df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA')))].index, inplace = True)
         fl.append(html.Div(
                 generate_table(df, 'test_id_tab', guide, job_id ), style = {'text-align': 'center'}
             )
@@ -1656,8 +1722,8 @@ def guidePagev2(job_id, guide):
     value = job_id
     final_list = []
     final_list.append(html.P('List of Targets found for the selected guide'))
-    col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq']
-    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
+    col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
+    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
     cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
     job_directory = 'Results/' + job_id + '/'
     #Load mismatches
@@ -1767,8 +1833,8 @@ def guidePagev3(job_id, hash):
     value = job_id
     final_list = []
     final_list.append(html.P('List of Targets found for the selected guide'))
-    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq']
-    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
+    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
+    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
     cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
     job_directory = 'Results/' + job_id + '/'
     
@@ -1798,7 +1864,13 @@ def guidePagev3(job_id, hash):
                 style_table={
                     'height': '600px',
                     #'overflowY': 'scroll',
-                }
+                },
+                style_cell_conditional=[
+                    {
+                        'if': {'column_id': 'Samples'},
+                        'textAlign': 'left'
+                    }
+                ]
                 
             ),
             id = 'div-result-table',
