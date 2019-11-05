@@ -1,32 +1,38 @@
 import os
 import time
 import shutil
+import datetime
 
 os.chdir("./Results")
 
-months = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"]
+months = {"gen":1, "feb":2, "mar":3, "apr":4, "mag":5, "giu":6, "lug":7, "ago":8, "set":9, "ott":10, "nov":11, "dic":12}
+save_day = 3
 
 while(os.getppid()):
 
     #print(os.getppid())
-    today = time.localtime()
+    today = datetime.date.today()
+    tdelta = datetime.timedelta(days = save_day)
     for res_dir in os.listdir("./"):
 
         if res_dir[0] is not ".":
 
             log = open("./" + res_dir + "/log.txt")
 
+
             for line in log:
                 #print(line)
                 if "Job" in line and "Done" in line:
 
                     words = line.split(" ")
-                    print(months[today.tm_mon-1])
+                    year = words[3][0:4]
+                    doneday = datetime.date(int(year), int(months[words[2]]), int(words[1]))
+                    #print(today, today - tdelta)
 
-                    if (words[1] is today.tm_mday) and (words[2] is not months[today.tm_mon-1]):
+                    if doneday is today - tdelta:
 
-                        print("removed directory: "+ res_dir)
-                       # shutil.rmtree("./" + res_dir)
+                        shutil.rmtree("./" + res_dir)
+
 
             log.close()
 
