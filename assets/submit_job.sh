@@ -131,8 +131,12 @@ if [ ${17} = 'True' ]; then
     python3 send_mail.py $1
 fi
 
+
+#TODO sistemare il conteggio dei var uniq: al momento non lo fa perchè non c'è crispritz con il post processing, in futuro scegliere tra 'No' e 'Uniq' in base
+#all'opzione scelta
+type_post='No'
 while IFS= read -r line || [ -n "$line" ]; do 
-    python3 summary_table.py $1/$jobid.targets.txt $7 $8 $9 $line $jobid
+    python3 summary_table.py $1/$jobid.targets.txt $7 $8 $9 $line $jobid $type_post
 done < $6
 
 mv $jobid'_summary_result_'* $1

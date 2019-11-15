@@ -248,7 +248,7 @@ final_list.append(
                         html.Div([
                             html.H3('STEP 1', style = {'margin-top':'0'}),
                             html.Div([
-                                html.P([html.Button(html.P("Insert example", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline'}), id='example-parameters',
+                                html.P([html.Button(html.P("Load example", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline'}), id='example-parameters',
                                             style={ 'border': 'None', 'text-transform': 'capitalize','height':'12','font-weight': '500', 'padding': '0 0px','textcolor':'blu'}), ' - ',
                                 #html.Br(),
                                 html.Button(html.P(children="Reset", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline'}), id='remove-parameters',
@@ -376,8 +376,8 @@ final_list.append(
                         #html.H3('Submit', style = {'margin-top':'0'}),
                         html.Div(
                             [
-                                html.Button('Submit', id = 'check-job'),
-                                html.Button('', id = 'submit-job', style = {'visibility':'hidden'})
+                                html.Button('Submit', id = 'check-job', style = {'background-color':'skyblue'}),
+                                html.Button('', id = 'submit-job', style = {'display':'none'})
                             ],
                             style = {'display':'inline-block', 'margin':'0 auto'}   #style="height:55px; width:150px"
                         )
@@ -466,40 +466,54 @@ load_page = html.Div(final_list, style = {'margin':'1%'})
 
 #Test bootstrap page, go to /test-page to see 
 final_list = []
-final_list.append(
-    html.Div(
-    [
-        html.P('Test P', id= 'test-P'),
-        html.Button('AA', id = 'button-test1'),
-        html.Button('BB', id = 'button-test2'),
-        html.Button('CC', id = 'button-test3'),
-        html.Button('CC10', id = 'button-test10'),
-        html.Button ('Gen callback', id = 'gen-callback')
-    ]
-)
-)
+df = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t') #TODO quando lo carico, aggiungo una colonna che mi indica se è top1 o nel cluster, e mostro solo quelle top1
+exp_col = []
+close_col = []
+status_col = []     #'Top1' or 'Subcluster'
+for i in range (df.shape[0]):
+    exp_col.append('+')
+    close_col.append('-')
+    status_col.append('Top1')
+df['Open'] = exp_col
+df['Close'] = close_col
+df['Status'] = status_col
+final_list.append(dash_table.DataTable(
+    id='table-expand',
+    columns=[{"name": i, "id": i} for i in df.columns[:]],
+    data=df.to_dict('records'),
+))
 final_list.append(html.Div(id='test-div-for-button'))
 
 test_page = html.Div(final_list, style = {'margin':'1%'})
 ##################################################CALLBACKS##################################################
 #Test callbacks
-@app.callback(
-    Output('test-P', 'children'), [Input('button-test1', 'n_clicks')]
-)
-def test1(n):
-    if n is None:
-        raise PreventUpdate
-    print('btn1')
-    return ''
 
+#IDEA aggiungo colonna che mi indica se è top1 o solo parte del cluster, se l'utente clicca su +, faccio vedere anche quelle corrispondenti a quel cluster
 @app.callback(
-    Output('test-div-for-button', 'children'), [Input('button-test10', 'n_clicks')]
+    Output('table-expand', 'data'),
+    [Input('table-expand', 'active_cell')],
+    [State('table-expand', 'data')]
 )
-def test1(n):
-    if n is None:
+def expand(active_cell, data):
+    if active_cell is None:
         raise PreventUpdate
-    print('btn10')
-    return ''
+    print('Active_cell', active_cell)
+    print(data)
+    print(pd.DataFrame(data))
+    df = pd.DataFrame(data)
+    if active_cell['column_id'] == 'Open': 
+        if df.iat[active_cell['row'], -1] == 'Top1':
+            df.iat[active_cell['row'], -1] = 'Subcluster'    
+            df.loc[-1] = 'n'
+            return df.to_dict('records')
+        else:
+            raise PreventUpdate
+    elif active_cell['column_id'] == 'Close':
+        if df.iat[active_cell['row'], -1] == 'Subcluster':
+            df.iat[active_cell['row'], -1] = 'Top1'
+            df.drop(df.tail(1).index,inplace=True)
+            return df.to_dict('records')
+    raise PreventUpdate
 
 #################################################
 #Fade in/out email
@@ -1258,7 +1272,7 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, sel
     Carica le immagini corrispondenti alla guida selezionata. Se non ho una cella selezionata non mostra niente.
     La funzione carica le immagini dalla cartella Results/job_id usando una codifica, le mette all'interno di un link che 
     fa aprire l'immagine corrispondente presente nella cartella assets/Img/job_id.
-    TODO aggiungere all'input tutti i bottoni (da 0 mismatches a 7 mismatches + bottone allImg), in modo che l'utente possa selezionare un bottone 
+    TODO -> DONE aggiungere all'input tutti i bottoni (da 0 mismatches a 7 mismatches + bottone allImg), in modo che l'utente possa selezionare un bottone 
     e avere solo le immagini corrispondenti a quel valore di mismatch. Per fare ciò, si usa n_clicks_timestamp per vedere l'ultimo bottone cliccato
     e prendere le immagini corrispondeti. Al momento se un bottone non è mai stato cliccato il suo valore è 0, al momento se tutti i bottoni sono
     a zero faccio vedere tutte le immagini, ma in futuro potrebbe cambiare, magari far vedere solo le img con 1 mms
@@ -1355,7 +1369,8 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, sel
         max_mm = int(mms) + 1
     else:
         show_image = False
-    
+    if max(btn_group) == 0:
+        show_image = False
     if show_image:
         for i in range (min_mm, max_mm): #uso un for per comprendere anche il caso di showAllImages
             radar_img = 'summary_single_guide_' + guide + '_' + str(i) + 'mm.png'
@@ -1407,10 +1422,20 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, sel
         fl = []
         fl.append(html.Br())
         fl.append(html.H5('Focus on: ' + guide))
-        fl.append(html.P(['View all targets found with the selected guide ' , html.A('here', href = URL + '/result?job=' + job_id + '#' + guide, target = '_blank')]))  #TODO ultime 3 righe uguali a sopra, sistemare 
+        #fl.append(html.P(['View all targets found with the selected guide ' , html.A('here', href = URL + '/result?job=' + job_id + '#' + guide, target = '_blank')]))  #TODO ultime 3 righe uguali a sopra, sistemare 
         df = pd.read_pickle(job_directory + job_id + '_summary_result_' + guide+'.txt')
+        
+        df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | (df['Number of targets'] == 0)  ].index, inplace = True)
+        more_info_col = []
+        total_col = []
+        for i in range(df.shape[0]):
+            more_info_col.append('Show Targets')
+            total_col.append(df['Bulge Size'])
+        df[''] = more_info_col
+        df['Total'] = df['Bulge Size'] + df['Mismatches']
+        df = df.sort_values(['Total', 'Targets created by SNPs'], ascending = [True, False])
+        del df['Total']
         print (df)
-        df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA')))].index, inplace = True)
         fl.append(html.Div(
                 generate_table(df, 'test_id_tab', guide, job_id ), style = {'text-align': 'center'}
             )
@@ -1427,7 +1452,7 @@ def generate_table(dataframe, id_table, guide='', job_id='', max_rows=2600):
         [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
         # Body
         [html.Tr([
-            html.Td(html.A(dataframe.iloc[i][col],  href = 'result?job=' + job_id + '#' + guide +'new' + dataframe.iloc[i]['Bulge Type'] + str(dataframe.iloc[i]['Bulge Size']) + str(dataframe.iloc[i]['Mismatches']) , target = '_blank' )) if col == 'Guide' else  html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
+            html.Td(html.A(dataframe.iloc[i][col],  href = 'result?job=' + job_id + '#' + guide +'new' + dataframe.iloc[i]['Bulge Type'] + str(dataframe.iloc[i]['Bulge Size']) + str(dataframe.iloc[i]['Mismatches']) , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
         ]) for i in range(min(len(dataframe), max_rows))],
         style = {'display':'inline-block'},
         id = id_table
@@ -1558,6 +1583,7 @@ def resultPage(job_id):
     profile = profile.sort_values('Guide')
     profile['CFD'] = acfd
     profile = profile.sort_values('CFD', ascending = False)
+    final_list.append(html.P('Select a guide by clicking on a row to view more information'))
     final_list.append(
         html.Div(
             dash_table.DataTable(
@@ -1835,7 +1861,7 @@ def guidePagev3(job_id, hash):
     final_list.append(html.P('List of Targets found for the selected guide'))
     col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
     col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
-    cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
+    cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     job_directory = 'Results/' + job_id + '/'
     
     start = time.time()
@@ -1844,7 +1870,7 @@ def guidePagev3(job_id, hash):
     #subset_targets = pd.read_csv('example_todo_delete.txt', sep = '\t')
     #data_dict = subset_targets.to_dict('records')
     print('Grep e load:', time.time() - start)
-    final_list.append(
+    final_list.append(          #TODO add margin bottom 1rem to toggle button and prev-next buttons
         html.Div( 
             dash_table.DataTable(
                 id='table-subset-target', 
@@ -1852,6 +1878,7 @@ def guidePagev3(job_id, hash):
                 #data = subset_targets.to_dict('records'),
                 virtualization = True,
                 fixed_rows={ 'headers': True, 'data': 0 },
+                #fixed_columns = {'headers': True, 'data':1},
                 style_cell={'width': '150px'},
                 page_current=0,
                 page_size=PAGE_SIZE,
@@ -1862,7 +1889,7 @@ def guidePagev3(job_id, hash):
                 filter_action='custom',
                 filter_query='',
                 style_table={
-                    'height': '600px',
+                    'height': '600px'
                     #'overflowY': 'scroll',
                 },
                 style_cell_conditional=[
@@ -1870,7 +1897,10 @@ def guidePagev3(job_id, hash):
                         'if': {'column_id': 'Samples'},
                         'textAlign': 'left'
                     }
-                ]
+                ],
+                # css=[
+                #     {"selector": ".column-header--hide::before", "rule": 'width: "50px"'}
+                # ]
                 
             ),
             id = 'div-result-table',

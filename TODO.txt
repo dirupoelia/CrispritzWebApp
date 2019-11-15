@@ -191,3 +191,36 @@ far partire la chiamata per il change url --> potrebbe richiedere modifiche per 
 
 -Sistemare il grep delle sequenze da vedere sulla pagina della guida specifica: al momento il txt estratto è nella cartella principale, deve essere spostato
 nella cartella del job corrispondente
+
+
+
+-Creare colonna con num only var e num colonna blu nella tabella del summary guide-threshold	X
+-Bloccare/nascondere colonne dei targets 		X
+-modificare posiizone dei target con bulges per ricondurre la pos alla versiobne senza bulges
+
+-Cancellare coppie mms-bulges che hanno 0 Targets			X
+-cambaire colore hover icone ordinamento/nascondi colonna
+-Mettere bottone show all columns
+
+-Mettere avviso che se l'utente cerca con variant, popup per dire che se vuole può fare comparison con genoma riferimento
+-Colonne dinamiche in base a che tipo di ricerca è stata fatta (solo ref/solo var, var + comparazione ref (ovvero le colonne del post processing))
+
+
+-14/11
+-Tutta la riga della guida evidenziata (tabella generale guida)
+-Font e grandezza
+-Tabella guida specifica -> aggiungo colonna more info e metto i link li, li tolgo dalla guida		X
+-Ordino tabella guida specifica per bulge+mms e num massimo var uniq								X
+	-Sistemare allineamento celle
+-Pam creation evidenziare ancora di più -> se un target ha la colonna pam creation, lo evidenzio con un altro colore
+-Colore dei target su tutta la riga (più trasparente possibile), oppure allargare la banda colorate, migliorare il nome colonne, resize delle colonne
+-Help e legenda per spiegare colori e colonne
+-Tenere solo NO e elenco di tutte le PAM, non -;A-;
+-Mostrare solo top 1 del cluser, se lo clicco si apre tutto il cluster -> Idea Fare due tabelle: se clicco sul top one, sulla secodna tabella si apre il suo cluster
+-Samples: fare solo top 1, combinazione di tutti gli iupac , che se clicco si apre la riga sotto con tutte le possibili combinazioni (che hanno samples) --> Aggiungere colonna sulle guide
+ con individual smaples e metto la somma dei targets trovati su tutti i targets (calcolo fatto solo sui top 1)
+-Aggiungere colonna doench (tenere migliore)
+-Tabella guide generale ordinabile e max 100 guide per pagina
+
+-Tabella dei target dei samples: contiene solo top1 e on targets, se clicco su target viene scomposta. La scomposizione contiene solo i targets che hanno almeno 1 var e appartengono a quel sample
+-La scomposizione delle guide la faccio sui cluster: se seleziono un target si apre il cluster di quel target mostrando solo i targets con quel valore di mm-bulge (apro un sottocluster)
