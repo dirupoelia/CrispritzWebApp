@@ -481,6 +481,8 @@ final_list.append(dash_table.DataTable(
     id='table-expand',
     columns=[{"name": i, "id": i} for i in df.columns[:]],
     data=df.to_dict('records'),
+    filter_action = 'custom',
+    filter_query = '-'
 ))
 final_list.append(html.Div(id='test-div-for-button'))
 
@@ -491,15 +493,16 @@ test_page = html.Div(final_list, style = {'margin':'1%'})
 #IDEA aggiungo colonna che mi indica se è top1 o solo parte del cluster, se l'utente clicca su +, faccio vedere anche quelle corrispondenti a quel cluster
 @app.callback(
     Output('table-expand', 'data'),
-    [Input('table-expand', 'active_cell')],
-    [State('table-expand', 'data')]
+    [Input('table-expand', 'active_cell'),
+    Input('table-expand','filter_query')],
+    [State('table-expand', 'data'),
+    State('table-expand', 'filter_query')]
 )
-def expand(active_cell, data):
+def expand(active_cell, filter, data, fil_state):
     if active_cell is None:
         raise PreventUpdate
-    print('Active_cell', active_cell)
-    print(data)
-    print(pd.DataFrame(data))
+    print('Filter', filter)
+    print('Filt state', fil_state)
     df = pd.DataFrame(data)
     if active_cell['column_id'] == 'Open': 
         if df.iat[active_cell['row'], -1] == 'Top1':
@@ -515,6 +518,7 @@ def expand(active_cell, data):
             return df.to_dict('records')
     raise PreventUpdate
 
+    
 #################################################
 #Fade in/out email
 @app.callback(
