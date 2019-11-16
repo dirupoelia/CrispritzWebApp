@@ -31,7 +31,7 @@ import dash_bootstrap_components as dbc
 import collections                          #For check if guides are the same in two results
 from datetime import datetime               #For time when job submitted
 from seq_script import extract_seq, convert_pam
-
+import math                         #for math.floor
 PAGE_SIZE = 100                     #number of entries in each page of the table in view report
 URL = 'http://127.0.0.1:8050'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
@@ -466,10 +466,12 @@ load_page = html.Div(final_list, style = {'margin':'1%'})
 
 #Test bootstrap page, go to /test-page to see 
 final_list = []
-df = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t') #TODO quando lo carico, aggiungo una colonna che mi indica se è top1 o nel cluster, e mostro solo quelle top1
+df = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
 exp_col = []
 close_col = []
 status_col = []     #'Top1' or 'Subcluster'
+df.drop( df[df['top'] == 's'].index, inplace = True)
+
 for i in range (df.shape[0]):
     exp_col.append('+')
     close_col.append('-')
@@ -481,8 +483,7 @@ final_list.append(dash_table.DataTable(
     id='table-expand',
     columns=[{"name": i, "id": i} for i in df.columns[:]],
     data=df.to_dict('records'),
-    filter_action = 'custom',
-    filter_query = '-'
+    row_selectable = 'multi'
 ))
 final_list.append(html.Div(id='test-div-for-button'))
 
@@ -493,17 +494,31 @@ test_page = html.Div(final_list, style = {'margin':'1%'})
 #IDEA aggiungo colonna che mi indica se è top1 o solo parte del cluster, se l'utente clicca su +, faccio vedere anche quelle corrispondenti a quel cluster
 @app.callback(
     Output('table-expand', 'data'),
-    [Input('table-expand', 'active_cell'),
-    Input('table-expand','filter_query')],
+    #[Input('table-expand', 'active_cell')],
+    [Input('table-expand','selected_rows')],
     [State('table-expand', 'data'),
-    State('table-expand', 'filter_query')]
+    State('table-expand', 'selected_row_ids')]
 )
-def expand(active_cell, filter, data, fil_state):
+def expand(active_cell,  data, sri):
     if active_cell is None:
         raise PreventUpdate
-    print('Filter', filter)
-    print('Filt state', fil_state)
-    df = pd.DataFrame(data)
+    
+    #df = pd.DataFrame(data)
+    df = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
+    print('Sel row', active_cell)
+    
+    print('Sel row id', sri)
+    print('Data', data)
+    df.drop( df[(df['top'] == 's') & (~( df['id'].isin(sri)))].index, inplace = True)
+    # for i in range (df.shape[0]):
+    #     exp_col.append('+')
+    #     close_col.append('-')
+    #     status_col.append('Top1')
+    # df['Open'] = exp_col
+    # df['Close'] = close_col
+    # df['Status'] = status_col
+    print('df',df)
+    return df.to_dict('records')
     if active_cell['column_id'] == 'Open': 
         if df.iat[active_cell['row'], -1] == 'Top1':
             df.iat[active_cell['row'], -1] = 'Subcluster'    
