@@ -479,11 +479,22 @@ for i in range (df.shape[0]):
 df['Open'] = exp_col
 df['Close'] = close_col
 df['Status'] = status_col
+print('columns:', df.columns)
 final_list.append(dash_table.DataTable(
     id='table-expand',
     columns=[{"name": i, "id": i} for i in df.columns[:]],
     data=df.to_dict('records'),
-    row_selectable = 'multi'
+    row_selectable = 'multi',
+    style_data_conditional = [{
+                        'if': {
+                                'filter_query': '{Var_uniq} eq y', 
+                                #'column_id' :'{#Bulge type}',
+                                #'column_id' :'{Total}'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(230, 0, 0,0.65)'#'rgb(255, 102, 102)'
+                            
+                        }]
 ))
 final_list.append(html.Div(id='test-div-for-button'))
 
@@ -1818,31 +1829,28 @@ def guidePagev2(job_id, guide):
                     'height': '300px',
                     #'overflowY': 'scroll',
                 },
-                style_data_conditional=[
-                        {
-                        'if': {
-                                'filter_query': '{Var_uniq} eq y', 
-                                'column_id' :'BulgeType'
-                            },
-                            'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                # style_data_conditional=[
+                #         {
+                #         'if': {
+                #                 'filter_query': '{Var_uniq} eq y', 
+                #                 'column_id' :'BulgeType'
+                #             },
+                #             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                #             'background-color':'red'
 
                             
-                        },
-                        {
-                            'if': {
-                                    'filter_query': '{Total} eq 3',          #TODO change to {Var_uniq} eq 
-                                    'column_id' :'BulgeType'
-                                },
-                                'border-left': '5px solid rgba(26, 26, 255, 0.9)',
+                #         },
+                #         {
+                #             'if': {
+                #                     'filter_query': '{Total} eq 3',          #TODO change to {Var_uniq} eq 
+                #                     'column_id' :'BulgeType'
+                #                 },
+                #                 'border-left': '5px solid rgba(26, 26, 255, 0.9)',
 
-                        }
+                #         }
                         
-                ]
-                # style_data_conditional=[{
-                #     "if": {'column_id':'BulgeType', 'filter_query' : 'BulgeType eq "RNA"'}, #{'filter_query' : 'BulgeType eq "RNA"'},
-                #     "backgroundColor": "lightblue",
-                #     'color': 'white'
-                # }],
+                # ]
+                
             ),
             id = 'div-result-table',
         )
@@ -2010,20 +2018,20 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
                         {
                         'if': {
                                 'filter_query': '{Var_uniq} eq y', 
-                                'column_id' :'Bulge Type'
+                                #'column_id' :'Bulge Type'
                             },
-                            'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(230, 0, 0,0.65)'#'rgb(255, 102, 102)'
                             
                         },
-                        {
-                            'if': {
-                                    'filter_query': '{Var_uniq} eq n',           
-                                    'column_id' :'Bulge Type'
-                                },
-                                'border-left': '5px solid rgba(26, 26, 255, 0.9)',
+                        # {
+                        #     'if': {
+                        #             'filter_query': '{Var_uniq} eq n',           
+                        #             'column_id' :'Bulge Type'
+                        #         },
+                        #         'border-left': '5px solid rgba(26, 26, 255, 0.9)',
 
-                        }
+                        # }
                         
                 ]
     return dff.iloc[
