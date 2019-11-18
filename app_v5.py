@@ -31,8 +31,10 @@ import dash_bootstrap_components as dbc
 import collections                          #For check if guides are the same in two results
 from datetime import datetime               #For time when job submitted
 from seq_script import extract_seq, convert_pam
-import math                         #for math.floor
-PAGE_SIZE = 100                     #number of entries in each page of the table in view report
+
+#Warning symbol \u26A0
+
+PAGE_SIZE = 3                     #number of entries in each page of the table in view report
 URL = 'http://127.0.0.1:8050'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -466,6 +468,8 @@ load_page = html.Div(final_list, style = {'margin':'1%'})
 
 #Test bootstrap page, go to /test-page to see 
 final_list = []
+final_list.append(html.P('List of Targets found for the selected guide'))
+
 df = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
 exp_col = []
 close_col = []
@@ -497,10 +501,75 @@ final_list.append(dash_table.DataTable(
                         }]
 ))
 final_list.append(html.Div(id='test-div-for-button'))
-
 test_page = html.Div(final_list, style = {'margin':'1%'})
+
+#TEST PAGE 2
+final_list = []
+final_list.append(html.P('List of Targets found for the selected guide'))
+final_list.append(html.P('Select a row to view the corresponding cluster'))
+df_example = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
+#df_example.drop( df_example[df_example['top'] == 's'].index, inplace = True)
+final_list.append(dash_table.DataTable(
+    id='double-table-one',
+    columns=[{"name": i, "id": i} for i in df_example.columns[:-2]],
+    data= df_example.loc[df_example['top'] == 't'].to_dict('records'), #df_example.to_dict('records'),
+    style_data_conditional = [{
+                        'if': {
+                                'filter_query': '{Var_uniq} eq y', 
+                                #'column_id' :'{#Bulge type}',
+                                #'column_id' :'{Total}'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(230, 0, 0,0.65)'#'rgb(255, 102, 102)'
+                            
+                        }]
+))
+final_list.append(html.P())
+final_list.append(html.P())
+final_list.append(html.Div(
+    dash_table.DataTable(
+        id = 'double-table-two',
+        #columns=[{"name": i, "id": i} for i in df_example.columns[:]],
+        #fixed_rows = {'headers' : True, 'data': 0},
+        page_current=0,
+        page_size=PAGE_SIZE,
+        page_action='custom',
+        virtualization = True,
+        style_data_conditional = [{
+                        'if': {
+                                'filter_query': '{Var_uniq} eq y', 
+                                #'column_id' :'{#Bulge type}',
+                                #'column_id' :'{Total}'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(230, 0, 0,0.65)'#'rgb(255, 102, 102)'
+                            
+                        }]
+        ),
+    id = 'div-test-page2-second-table'
+    )
+)
+test_page2 = html.Div(final_list, style = {'margin':'1%'})
 ##################################################CALLBACKS##################################################
 #Test callbacks
+#Callback for test-page2
+@app.callback(
+    [Output('double-table-two', 'data'),
+    Output('double-table-two', 'columns')],
+    [Input('double-table-one', 'active_cell')],
+    [State('double-table-one', 'data')]
+)
+def loadSecondTable(active_cell, data):
+    if active_cell is None:
+        raise PreventUpdate
+    
+    
+    id_selected = data[active_cell['row']]['id']
+    
+    return df_example.loc[df_example['id'] == id_selected].to_dict('records'), [{"name": i, "id": i} for i in list(data[0].keys())[:-2]]
+
+
+
 
 #IDEA aggiungo colonna che mi indica se è top1 o solo parte del cluster, se l'utente clicca su +, faccio vedere anche quelle corrispondenti a quel cluster
 @app.callback(
@@ -510,7 +579,7 @@ test_page = html.Div(final_list, style = {'margin':'1%'})
     [State('table-expand', 'data'),
     State('table-expand', 'selected_row_ids')]
 )
-def expand(active_cell,  data, sri):
+def expand(active_cell,  data, sri):    #Callback for test-page
     if active_cell is None:
         raise PreventUpdate
     
@@ -530,19 +599,19 @@ def expand(active_cell,  data, sri):
     # df['Status'] = status_col
     print('df',df)
     return df.to_dict('records')
-    if active_cell['column_id'] == 'Open': 
-        if df.iat[active_cell['row'], -1] == 'Top1':
-            df.iat[active_cell['row'], -1] = 'Subcluster'    
-            df.loc[-1] = 'n'
-            return df.to_dict('records')
-        else:
-            raise PreventUpdate
-    elif active_cell['column_id'] == 'Close':
-        if df.iat[active_cell['row'], -1] == 'Subcluster':
-            df.iat[active_cell['row'], -1] = 'Top1'
-            df.drop(df.tail(1).index,inplace=True)
-            return df.to_dict('records')
-    raise PreventUpdate
+    # if active_cell['column_id'] == 'Open': 
+    #     if df.iat[active_cell['row'], -1] == 'Top1':
+    #         df.iat[active_cell['row'], -1] = 'Subcluster'    
+    #         df.loc[-1] = 'n'
+    #         return df.to_dict('records')
+    #     else:
+    #         raise PreventUpdate
+    # elif active_cell['column_id'] == 'Close':
+    #     if df.iat[active_cell['row'], -1] == 'Subcluster':
+    #         df.iat[active_cell['row'], -1] = 'Top1'
+    #         df.drop(df.tail(1).index,inplace=True)
+    #         return df.to_dict('records')
+    # raise PreventUpdate
 
     
 #################################################
@@ -997,9 +1066,13 @@ def changePage( href, path, search, hash_guide):
             return resultPage(job_id), URL + '/load' + search
         if 'new' in hash_guide:
             return guidePagev3(job_id, hash_guide.split('#')[1]), URL + '/load' + search
+        if '-' in hash_guide:
+            return samplePage(job_id, hash_guide.split('#')[1]), URL + '/load' + search
         return guidePagev2(job_id, hash_guide.split('#')[1]), URL + '/load' + search
     if path == '/test-page':
         return test_page, URL + '/load' + search
+    if path == '/test-page2':
+        return test_page2, URL + '/load' + search
    
     return index_page, ''
 
@@ -1292,12 +1365,13 @@ def showImages(mms, search, hash_guide):
     #Input('btn10', 'n_clicks_timestamp'),
     Input('btnAll','n_clicks_timestamp'),
     Input('btn-summary-table','n_clicks_timestamp'),
+    Input('btn-summary-samples','n_clicks_timestamp'),
     Input('general-profile-table', 'selected_cells')],
     [#State('general-profile-table', 'selected_cells'),
     State('general-profile-table', 'data'),
     State('url', 'search')]
 )
-def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, sel_cel, all_guides, search):
+def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSumSam, sel_cel, all_guides, search):
     '''
     Carica le immagini corrispondenti alla guida selezionata. Se non ho una cella selezionata non mostra niente.
     La funzione carica le immagini dalla cartella Results/job_id usando una codifica, le mette all'interno di un link che 
@@ -1319,7 +1393,7 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, sel
     fl = []
     fl.append(html.Br())
     fl.append(html.H5('Focus on: ' + guide))
-    fl.append(html.P(['View all targets found with the selected guide ' , html.A('here', href = URL + '/result?job=' + job_id + '#' + guide, target = '_blank')]))
+    #fl.append(html.P(['View all targets found with the selected guide ' , html.A('here', href = URL + '/result?job=' + job_id + '#' + guide, target = '_blank')]))
     # fl.append(test_col)
     # fl.append(test_col)
     if not n0:
@@ -1349,6 +1423,8 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, sel
         nAll = 0
     if not nSumTab:
         nSumTab = 0
+    if not nSumSam:
+        nSumSam = 0
     btn_group = []
     btn_group.append(n0)
     btn_group.append(n1)
@@ -1363,6 +1439,7 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, sel
     #btn_group.append(n10)
     btn_group.append(nAll)
     btn_group.append(nSumTab)
+    btn_group.append(nSumSam)
     show_image = True
     if max(btn_group) == n0:
         min_mm = 0
@@ -1447,7 +1524,32 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, sel
             )
             fl.append(html.Br())
             fl.append(html.Br())
-    
+    elif nSumSam > nSumTab:
+        fl = []
+        fl.append(html.Br())
+        fl.append(html.H5('Focus on: ' + guide))
+        df = pd.read_csv('sample_count_' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
+        
+        df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
+        more_info_col = []
+        for i in range(df.shape[0]):
+            more_info_col.append('Show Targets')
+        df[''] = more_info_col
+        fl.append(html.Div(
+                generate_table_samples(df, 'table-samples', guide, job_id ), style = {'text-align': 'center'}
+            )
+        )
+        fl.append(
+            html.Div(
+                [
+                    html.Button('Prev', id = 'prev-page-sample'),
+                    html.Button('Next', id = 'next-page-sample')
+                ],
+                style = {'text-align': 'center'}
+            )
+        )
+        return fl
+
     else:
         fl = []
         fl.append(html.Br())
@@ -1487,6 +1589,25 @@ def generate_table(dataframe, id_table, guide='', job_id='', max_rows=2600):
         style = {'display':'inline-block'},
         id = id_table
     )
+
+def generate_table_samples(dataframe, id_table, guide='', job_id='', max_rows=50):
+    '''
+    Per generare una html table. NOTE è diversa da una dash dataTable
+    '''
+    return html.Table(
+        # Header
+        [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
+        # Body
+        [html.Tr([
+            html.Td(html.A(dataframe.iloc[i][col],  href = 'result?job=' + job_id + '#' + guide +'-' + dataframe.iloc[i]['Sample'] , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
+        ]) for i in range(min(len(dataframe), max_rows))],
+        style = {'display':'inline-block'},
+        id = id_table
+    )
+
+
+#Callback to view next/prev page on sample table
+#TODO
 
 #FOR BUTTON IN TABLE
 # element.style {
@@ -1574,7 +1695,7 @@ def resultPage(job_id):
     col_targetfor = col_targetfor + str(mms)
     col_targetfor = col_targetfor + ' mismatches'
     columns_profile_table.append({'name': col_targetfor, 'id' : 'col_targetfor', 'type':'text'})
-
+    columns_profile_table.append({'name':'Targets in samples', 'id':'Targets in samples', 'type':'numeric'})
     profile.rename(columns = rename_columns, inplace = True)    #Now profile is Guide, Total On-targets, ...
     col_to_add = []
     tmp_col_to_add = []
@@ -1588,8 +1709,16 @@ def resultPage(job_id):
         tmp_col_to_add = []
         
     profile['col_targetfor'] = col_to_add
-    #link_for_guides = [html.A('Show all...', href = URL + '/result?job=' + job_id + '#' + i, target = '_blank') for i in profile['Guide']]
-    #profile['More Info'] = link_for_guides
+    
+
+    column_sample_total = []
+    # column_sample_uniq = []
+    # column_sample_pop = []
+    for guide in profile.Guide.unique():
+        with open ('sample_count_' + guide +'.txt', 'r') as sample_list:
+            sample_total = sample_list.readline().strip().split('\t')[1]
+            column_sample_total.append(sample_total)
+    profile['Targets in samples'] = column_sample_total
     final_list = []
 
     
@@ -1643,6 +1772,9 @@ def resultPage(job_id):
     )
     final_list.append(
         html.Button('Summary Table', id = 'btn-summary-table')
+    )
+    final_list.append(
+        html.Button('Summary Samples', id = 'btn-summary-samples')
     )
     # button_group = dbc.ButtonGroup(
     # [dbc.Button("0 Mismatches", style = {'background-color':'grey'}),
@@ -1962,7 +2094,6 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
     value = job_id
     if search is None:
         raise PreventUpdate
-
     filtering_expressions = filter.split(' && ')
     #filtering_expressions.append(['{crRNA} = ' + guide])   
     guide = hash_guide[1:hash_guide.find('new')]
@@ -2037,6 +2168,19 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
     return dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
     ].to_dict('records'), cells_style
+
+
+#Return the targets found for the selected sample
+def samplePage(job_id, hash):
+    guide = hash[:hash.find('-')]
+    sample = hash[hash.find('-') + 1:]
+
+    final_list = []
+    final_list.append(
+        html.P('List of Targets found for the selected Sample - ' + sample + ' - and guide - ' + guide + ' -')
+    )
+
+    return html.Div(final_list, style = {'margin':'1%'})
 
 
 if __name__ == '__main__':

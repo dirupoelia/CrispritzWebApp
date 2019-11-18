@@ -224,3 +224,5 @@ nella cartella del job corrispondente
 
 -Tabella dei target dei samples: contiene solo top1 e on targets, se clicco su target viene scomposta. La scomposizione contiene solo i targets che hanno almeno 1 var e appartengono a quel sample
 -La scomposizione delle guide la faccio sui cluster: se seleziono un target si apre il cluster di quel target mostrando solo i targets con quel valore di mm-bulge (apro un sottocluster)
+
+-Implementare bottone next e prev nella tabella popolazione
