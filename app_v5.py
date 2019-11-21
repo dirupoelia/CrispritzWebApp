@@ -34,7 +34,7 @@ from seq_script import extract_seq, convert_pam
 
 #Warning symbol \u26A0
 
-PAGE_SIZE = 3                     #number of entries in each page of the table in view report
+PAGE_SIZE = 100                    #number of entries in each page of the table in view report
 URL = 'http://127.0.0.1:8050'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -508,6 +508,7 @@ final_list = []
 final_list.append(html.P('List of Targets found for the selected guide'))
 final_list.append(html.P('Select a row to view the corresponding cluster'))
 df_example = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
+print('TABELLA CLUSTER', df_example)
 #df_example.drop( df_example[df_example['top'] == 's'].index, inplace = True)
 final_list.append(dash_table.DataTable(
     id='double-table-one',
@@ -544,7 +545,19 @@ final_list.append(html.Div(
                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
                             'background-color':'rgba(230, 0, 0,0.65)'#'rgb(255, 102, 102)'
                             
-                        }]
+                        },
+                        {
+                            'if': {
+                                    'filter_query': '{top} eq t',         
+                                    # 'column_id' :'BulgeType'
+                                },
+                                # 'border-left': '5px solid rgba(26, 26, 255, 0.9)',
+                                'font-weight':'bold'
+                                
+
+                        }    
+                        
+                    ]
         ),
     id = 'div-test-page2-second-table'
     )
@@ -562,7 +575,6 @@ test_page2 = html.Div(final_list, style = {'margin':'1%'})
 def loadSecondTable(active_cell, data):
     if active_cell is None:
         raise PreventUpdate
-    
     
     id_selected = data[active_cell['row']]['id']
     
@@ -1366,12 +1378,13 @@ def showImages(mms, search, hash_guide):
     Input('btnAll','n_clicks_timestamp'),
     Input('btn-summary-table','n_clicks_timestamp'),
     Input('btn-summary-samples','n_clicks_timestamp'),
+    Input('btn-summary-position', 'n_clicks_timestamp'),
     Input('general-profile-table', 'selected_cells')],
     [#State('general-profile-table', 'selected_cells'),
     State('general-profile-table', 'data'),
     State('url', 'search')]
 )
-def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSumSam, sel_cel, all_guides, search):
+def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSumSam, nSumPos, sel_cel, all_guides, search):
     '''
     Carica le immagini corrispondenti alla guida selezionata. Se non ho una cella selezionata non mostra niente.
     La funzione carica le immagini dalla cartella Results/job_id usando una codifica, le mette all'interno di un link che 
@@ -1425,6 +1438,8 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
         nSumTab = 0
     if not nSumSam:
         nSumSam = 0
+    if not nSumPos:
+        nSumPos = 0
     btn_group = []
     btn_group.append(n0)
     btn_group.append(n1)
@@ -1440,6 +1455,7 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
     btn_group.append(nAll)
     btn_group.append(nSumTab)
     btn_group.append(nSumSam)
+    btn_group.append(nSumPos)
     show_image = True
     if max(btn_group) == n0:
         min_mm = 0
@@ -1524,54 +1540,86 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
             )
             fl.append(html.Br())
             fl.append(html.Br())
-    elif nSumSam > nSumTab:
-        fl = []
-        fl.append(html.Br())
-        fl.append(html.H5('Focus on: ' + guide))
-        df = pd.read_csv('sample_count_' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
-        
-        df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
-        more_info_col = []
-        for i in range(df.shape[0]):
-            more_info_col.append('Show Targets')
-        df[''] = more_info_col
-        fl.append(html.Div(
-                generate_table_samples(df, 'table-samples', guide, job_id ), style = {'text-align': 'center'}
-            )
-        )
-        fl.append(
-            html.Div(
-                [
-                    html.Button('Prev', id = 'prev-page-sample'),
-                    html.Button('Next', id = 'next-page-sample')
-                ],
-                style = {'text-align': 'center'}
-            )
-        )
-        return fl
-
     else:
-        fl = []
-        fl.append(html.Br())
-        fl.append(html.H5('Focus on: ' + guide))
-        #fl.append(html.P(['View all targets found with the selected guide ' , html.A('here', href = URL + '/result?job=' + job_id + '#' + guide, target = '_blank')]))  #TODO ultime 3 righe uguali a sopra, sistemare 
-        df = pd.read_pickle(job_directory + job_id + '_summary_result_' + guide+'.txt')
-        
-        df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | (df['Number of targets'] == 0)  ].index, inplace = True)
-        more_info_col = []
-        total_col = []
-        for i in range(df.shape[0]):
-            more_info_col.append('Show Targets')
-            total_col.append(df['Bulge Size'])
-        df[''] = more_info_col
-        df['Total'] = df['Bulge Size'] + df['Mismatches']
-        df = df.sort_values(['Total', 'Targets created by SNPs'], ascending = [True, False])
-        del df['Total']
-        print (df)
-        fl.append(html.Div(
-                generate_table(df, 'test_id_tab', guide, job_id ), style = {'text-align': 'center'}
+        if max(btn_group) == nSumTab:
+            #Show Summary by Guide table
+            fl = []
+            fl.append(html.Br())
+            fl.append(html.H5('Focus on: ' + guide))
+            #fl.append(html.P(['View all targets found with the selected guide ' , html.A('here', href = URL + '/result?job=' + job_id + '#' + guide, target = '_blank')]))  #TODO ultime 3 righe uguali a sopra, sistemare 
+            df = pd.read_pickle(job_directory + job_id + '_summary_result_' + guide+'.txt')
+            
+            df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | (df['Number of targets'] == 0)  ].index, inplace = True)
+            more_info_col = []
+            total_col = []
+            for i in range(df.shape[0]):
+                more_info_col.append('Show Targets')
+                total_col.append(df['Bulge Size'])
+            df[''] = more_info_col
+            df['Total'] = df['Bulge Size'] + df['Mismatches']
+            df = df.sort_values(['Total', 'Targets created by SNPs'], ascending = [True, False])
+            del df['Total']
+            #print (df)
+            fl.append(html.Div(
+                    generate_table(df, 'test_id_tab', guide, job_id ), style = {'text-align': 'center'}
+                )
             )
-        )
+            return fl
+        elif max (btn_group) == nSumSam:
+            #Show Summary by Sample table
+            fl = []
+            fl.append(html.Br())
+            fl.append(html.H5('Focus on: ' + guide))
+            df = pd.read_csv('sample_count_' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)  #TODO cambiare nel nome giusto (con il job id e nella cartella giusta)
+            
+            df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
+            more_info_col = []
+            for i in range(df.shape[0]):
+                more_info_col.append('Show Targets')
+            df[''] = more_info_col
+            fl.append(html.Div(
+                    generate_table_samples(df, 'table-samples', guide, job_id ), style = {'text-align': 'center'}
+                )
+            )
+            fl.append(
+                html.Div(
+                    [
+                        html.Button('Prev', id = 'prev-page-sample'),
+                        html.Button('Next', id = 'next-page-sample')
+                    ],
+                    style = {'text-align': 'center'}
+                )
+            )
+            return fl
+        else:
+            #Show Summary by position table
+            fl = []
+            fl.append(html.Br())
+            fl.append(html.H5('Focus on: ' + guide))
+            # Colonne tabella: chr, pos, target migliore, min mm, min bulges, num target per ogni categoria di mm e bulge, show targets; ordine per total, poi mm e poi bulge
+            df = pd.read_csv('esempio_tabella_posizioni.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.tab_position.txt)
+            more_info_col = []
+            for i in range(df.shape[0]):
+                more_info_col.append('Show Targets')
+            df[''] = more_info_col
+            fl.append(
+                html.Div(
+                    [
+                        dcc.Dropdown(options = [{'label':'chr1', 'value':'chr1'},{'label':'chr3', 'value':'chr3'},{'label':'chr5', 'value':'chr5'}, {'label':'chr7', 'value':'chr7'}],
+                        id = 'dropdown-chr-table-position'),
+                        dcc.Input(placeholder = 'Start Position', id = 'input-position-start'),
+                        dcc.Input(placeholder = 'End Position', id = 'input-position-end'),
+                        html.Button('Filter', id = 'button-filter-position')
+                    ]
+                )
+            )
+            fl.append(html.Div(
+                    generate_table_position(df, 'table-position', guide, job_id ), style = {'text-align': 'center'}, id = 'div-table-position'
+                )
+            )
+            
+            return fl
+
     return fl
     
 
@@ -1605,9 +1653,56 @@ def generate_table_samples(dataframe, id_table, guide='', job_id='', max_rows=50
         id = id_table
     )
 
+def generate_table_position(dataframe, id_table, guide = '', job_id = '', max_rows = 50):
+    '''
+    Per generare una html table. NOTE è diversa da una dash dataTable
+    '''
+    return html.Table(
+        # Header
+        [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
+        # Body
+        [html.Tr([
+            html.Td(html.A(dataframe.iloc[i][col],  href = 'result?job=' + job_id + '#' + guide +'-' + str(dataframe.iloc[i]['Position']) , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
+        ]) for i in range(min(len(dataframe), max_rows))],
+        style = {'display':'inline-block'},
+        id = id_table
+    )
 
 #Callback to view next/prev page on sample table
 #TODO
+
+#Callback to filter chr from Summary by Position table
+@app.callback(
+    Output('div-table-position', 'children'),
+    [Input('button-filter-position', 'n_clicks')],
+    [State('dropdown-chr-table-position', 'value'),
+    State('input-position-start', 'value'),
+    State('input-position-end','value'),
+    State('url', 'search'),
+    State('general-profile-table', 'selected_cells'),
+    State('general-profile-table', 'data')]
+)
+def filterPositionTable(n, chr, pos_begin, pos_end, search, sel_cel, all_guides):
+    if n is None or sel_cel is None or chr is None or chr is '':
+        raise PreventUpdate
+    
+    if pos_begin is None or pos_begin is '':
+        pos_begin = 0
+    if pos_end is '':
+        pos_end = None
+    job_id = search.split('=')[-1]
+    job_directory = 'Results/' + job_id + '/'
+    guide = all_guides[int(sel_cel[0]['row'])]['Guide']
+    df = pd.read_csv('esempio_tabella_posizioni.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+    more_info_col = []
+    for i in range(df.shape[0]):
+        more_info_col.append('Show Targets')
+    df[''] = more_info_col
+    if pos_end is None:
+        df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) )].index , inplace = True)
+    else:
+        df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) | (df['Position'] > int(pos_end)))].index , inplace = True)
+    return generate_table_position(df, 'table-position', guide, job_id )
 
 #FOR BUTTON IN TABLE
 # element.style {
@@ -1771,10 +1866,13 @@ def resultPage(job_id):
         html.Button('Show all',id = 'btnAll'),
     )
     final_list.append(
-        html.Button('Summary Table', id = 'btn-summary-table')
+        html.Button('Summary by Guide', id = 'btn-summary-table')
     )
     final_list.append(
-        html.Button('Summary Samples', id = 'btn-summary-samples')
+        html.Button('Summary by Samples', id = 'btn-summary-samples')
+    )
+    final_list.append(
+        html.Button('Summary by Position', id = 'btn-summary-position')
     )
     # button_group = dbc.ButtonGroup(
     # [dbc.Button("0 Mismatches", style = {'background-color':'grey'}),
@@ -2177,9 +2275,61 @@ def samplePage(job_id, hash):
 
     final_list = []
     final_list.append(
-        html.P('List of Targets found for the selected Sample - ' + sample + ' - and guide - ' + guide + ' -')
+        #html.P('List of Targets found for the selected Sample - ' + sample + ' - and guide - ' + guide + ' -')
+        html.H3('Selected sample: ' + sample)
     )
+    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
+    df = pd.read_csv('esempio_samples_grep.' + sample + '.txt', sep = '\t', names = col_list)
+    df = df.drop(['Samples'], axis = 1)
+    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq']
 
+    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
+    cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
+    subprocess.call(['grep \'' + sample + '\' esempio_samples_grep.txt > esempio_samples_grep.' + sample + '.txt'], shell = True)
+
+    
+    final_list.append(          #TODO add margin bottom 1rem to toggle button and prev-next buttons
+        html.Div( 
+            dash_table.DataTable(
+                id='table-sample-target', 
+                columns=cols, 
+                data = df.to_dict('records'),
+                virtualization = True,
+                fixed_rows={ 'headers': True, 'data': 0 },
+                #fixed_columns = {'headers': True, 'data':1},
+                style_cell={'width': '150px'},
+                page_current=0,
+                page_size=PAGE_SIZE,
+                page_action='custom',
+                sort_action='custom',
+                sort_mode='multi',
+                sort_by=[],
+                filter_action='custom',
+                filter_query='',
+                style_table={
+                    'height': '600px'
+                    #'overflowY': 'scroll',
+                },
+                style_data_conditional=[
+                    {
+                        'if': {
+                                'filter_query': '{Var_uniq} eq y', 
+                                #'column_id' :'{#Bulge type}',
+                                #'column_id' :'{Total}'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(230, 0, 0,0.65)'#'rgb(255, 102, 102)'
+                            
+                        }
+                ],
+                # css=[
+                #     {"selector": ".column-header--hide::before", "rule": 'width: "50px"'}
+                # ]
+                
+            ),
+            id = 'div-result-table',
+        )
+    )
     return html.Div(final_list, style = {'margin':'1%'})
 
 

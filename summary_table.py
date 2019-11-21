@@ -6,6 +6,8 @@
 # sys6 is jobid
 # sys7 is type of post-process done ('No' -> no post process done, cannot count uniq_var | 'Uniq' -> post process done, can count uniq_var)
 # inserire anche numero guide
+
+#BUG nel conteggio  -> ricontrollando è stato risolto(?)
 import sys
 import numpy as np
 import pandas as pd

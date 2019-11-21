@@ -1,9 +1,0 @@
-#Guida	Target	Chr	Posizione	Mismatch	Bulge	top	id
-guida1	tar1	1	20	0	0	t	1
-guida1	tar1.1	1	20	0	0	s	1
-guida1	tar1.2	1	20	0	0	s	1
-guida1	tar1	1	30	0	0	t	2
-guida1	tar1.1	1	30	0	0	s	2
-guida1	tar1	1	40	0	0	t	3
-guida1	tar1.1	1	40	0	0	s	3
-guida1	tar1.2	1	40	0	0	s	3
