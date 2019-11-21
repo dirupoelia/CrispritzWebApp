@@ -1078,9 +1078,11 @@ def changePage( href, path, search, hash_guide):
             return resultPage(job_id), URL + '/load' + search
         if 'new' in hash_guide:
             return guidePagev3(job_id, hash_guide.split('#')[1]), URL + '/load' + search
-        if '-' in hash_guide:
+        if '-Sample-' in hash_guide:   
             return samplePage(job_id, hash_guide.split('#')[1]), URL + '/load' + search
-        return guidePagev2(job_id, hash_guide.split('#')[1]), URL + '/load' + search
+        if '-Pos-' in hash_guide:
+            return clusterPage(job_id, hash_guide.split('#')[1]), URL + '/load' + search
+        return guidePagev2(job_id, hash_guide.split('#')[1]), URL + '/load' + search    #TODO sistemare pagina di default
     if path == '/test-page':
         return test_page, URL + '/load' + search
     if path == '/test-page2':
@@ -1598,6 +1600,7 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
             fl.append(html.H5('Focus on: ' + guide))
             # Colonne tabella: chr, pos, target migliore, min mm, min bulges, num target per ogni categoria di mm e bulge, show targets; ordine per total, poi mm e poi bulge
             df = pd.read_csv('esempio_tabella_posizioni.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.tab_position.txt)
+            df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
             more_info_col = []
             for i in range(df.shape[0]):
                 more_info_col.append('Show Targets')
@@ -1610,9 +1613,38 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
                         dcc.Input(placeholder = 'Start Position', id = 'input-position-start'),
                         dcc.Input(placeholder = 'End Position', id = 'input-position-end'),
                         html.Button('Filter', id = 'button-filter-position')
-                    ]
+                    ],
+                    id = 'div-filter-position',
+                    className = 'flex-div-filter-position',
+                    style = {'width':'50%'}
                 )
             )
+            form = dbc.Form(
+                        [
+                            dbc.FormGroup(
+                                [
+                                    
+                                    dcc.Dropdown(options = [{'label':'chr1', 'value':'chr1'},{'label':'chr3', 'value':'chr3'},{'label':'chr5', 'value':'chr5'}, {'label':'chr7', 'value':'chr7'}]),
+                                ],
+                                className="mr-3",
+                            ),
+                            dbc.FormGroup(
+                                [
+                                    dbc.Input(type="password", placeholder="Start Position"),
+                                ],
+                                className="mr-3",
+                            ),
+                            dbc.FormGroup(
+                                [
+                                    dbc.Input(type="password", placeholder="End Position"),
+                                ],
+                                className="mr-3",
+                            ),
+                            dbc.Button("Filter", color="primary"),
+                        ],
+                        inline=True,
+                    )
+            fl.append(form)
             fl.append(html.Div(
                     generate_table_position(df, 'table-position', guide, job_id ), style = {'text-align': 'center'}, id = 'div-table-position'
                 )
@@ -1647,7 +1679,7 @@ def generate_table_samples(dataframe, id_table, guide='', job_id='', max_rows=50
         [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
         # Body
         [html.Tr([
-            html.Td(html.A(dataframe.iloc[i][col],  href = 'result?job=' + job_id + '#' + guide +'-' + dataframe.iloc[i]['Sample'] , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
+            html.Td(html.A(dataframe.iloc[i][col],  href = 'result?job=' + job_id + '#' + guide +'-Sample-' + dataframe.iloc[i]['Sample'] , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
         ]) for i in range(min(len(dataframe), max_rows))],
         style = {'display':'inline-block'},
         id = id_table
@@ -1662,7 +1694,7 @@ def generate_table_position(dataframe, id_table, guide = '', job_id = '', max_ro
         [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
         # Body
         [html.Tr([
-            html.Td(html.A(dataframe.iloc[i][col],  href = 'result?job=' + job_id + '#' + guide +'-' + str(dataframe.iloc[i]['Position']) , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
+            html.Td(html.A(dataframe.iloc[i][col],  href = 'result?job=' + job_id + '#' + guide +'-Pos-' + str(dataframe.iloc[i]['Chromosome']) + '-' +  str(dataframe.iloc[i]['Position']) , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
         ]) for i in range(min(len(dataframe), max_rows))],
         style = {'display':'inline-block'},
         id = id_table
@@ -1694,6 +1726,7 @@ def filterPositionTable(n, chr, pos_begin, pos_end, search, sel_cel, all_guides)
     job_directory = 'Results/' + job_id + '/'
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     df = pd.read_csv('esempio_tabella_posizioni.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+    df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
     more_info_col = []
     for i in range(df.shape[0]):
         more_info_col.append('Show Targets')
@@ -2115,6 +2148,7 @@ def guidePagev3(job_id, hash):
     
     value = job_id
     final_list = []
+    final_list.append(html.H3('Selected Guide: ' + guide))
     final_list.append(html.P('List of Targets found for the selected guide'))
     col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
     col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
@@ -2250,7 +2284,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
                                 #'column_id' :'Bulge Type'
                             },
                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(230, 0, 0,0.65)'#'rgb(255, 102, 102)'
+                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
                         },
                         # {
@@ -2270,22 +2304,24 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
 
 #Return the targets found for the selected sample
 def samplePage(job_id, hash):
-    guide = hash[:hash.find('-')]
-    sample = hash[hash.find('-') + 1:]
+    guide = hash[:hash.find('-Sample-')]
+    sample = hash[hash.rfind('-') + 1:]
 
     final_list = []
     final_list.append(
         #html.P('List of Targets found for the selected Sample - ' + sample + ' - and guide - ' + guide + ' -')
-        html.H3('Selected sample: ' + sample)
+        html.H3('Selected Sample: ' + sample)
     )
+    final_list.append(html.P('List of Targets found for the selected sample'))
     col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
+    subprocess.call(['grep \'' + sample + '\' esempio_samples_grep.txt > esempio_samples_grep.' + sample + '.txt'], shell = True)
     df = pd.read_csv('esempio_samples_grep.' + sample + '.txt', sep = '\t', names = col_list)
     df = df.drop(['Samples'], axis = 1)
     col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq']
 
     col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
-    subprocess.call(['grep \'' + sample + '\' esempio_samples_grep.txt > esempio_samples_grep.' + sample + '.txt'], shell = True)
+    
 
     
     final_list.append(          #TODO add margin bottom 1rem to toggle button and prev-next buttons
@@ -2318,7 +2354,7 @@ def samplePage(job_id, hash):
                                 #'column_id' :'{Total}'
                             },
                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(230, 0, 0,0.65)'#'rgb(255, 102, 102)'
+                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
                         }
                 ],
@@ -2332,6 +2368,72 @@ def samplePage(job_id, hash):
     )
     return html.Div(final_list, style = {'margin':'1%'})
 
+
+#Return the targets for the selected cluster
+def clusterPage(job_id, hash):
+    guide = hash[:hash.find('-Pos-')]
+    chr_pos = hash[hash.find('-Pos-') + 5:]
+    chromosome = chr_pos.split('-')[0]
+    position = chr_pos.split('-')[1]
+
+    final_list = []
+    final_list.append(
+        #html.P('List of Targets found for the selected Sample - ' + sample + ' - and guide - ' + guide + ' -')
+        html.H3('Selected Position: ' + chromosome + ' - ' + position)
+    )
+    final_list.append(html.P('List of Targets found for the selected position'))
+    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
+    subprocess.call(['grep -P \'' + chromosome + '\\t.*' + position + '\$\' cluster.sort.txt > esempio_pos_grep.' + chromosome + '_' + position + '.txt'], shell = True)
+    df = pd.read_csv('esempio_pos_grep.' + chromosome + '_' + position + '.txt', sep = '\t', names = col_list)
+    df = df.drop(['Samples'], axis = 1)
+    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq']
+
+    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
+    cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
+    
+    final_list.append(          #TODO add margin bottom 1rem to toggle button and prev-next buttons
+        html.Div( 
+            dash_table.DataTable(
+                id='table-position-target', 
+                columns=cols, 
+                data = df.to_dict('records'),
+                virtualization = True,
+                fixed_rows={ 'headers': True, 'data': 0 },
+                #fixed_columns = {'headers': True, 'data':1},
+                style_cell={'width': '150px'},
+                page_current=0,
+                page_size=PAGE_SIZE,
+                page_action='custom',
+                sort_action='custom',
+                sort_mode='multi',
+                sort_by=[],
+                filter_action='custom',
+                filter_query='',
+                style_table={
+                    'height': '600px'
+                    #'overflowY': 'scroll',
+                },
+                style_data_conditional=[
+                    {
+                        'if': {
+                                'filter_query': '{Var_uniq} eq y', 
+                                #'column_id' :'{#Bulge type}',
+                                #'column_id' :'{Total}'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                            
+                        }
+                ],
+                # css=[
+                #     {"selector": ".column-header--hide::before", "rule": 'width: "50px"'}
+                # ]
+                
+            ),
+            id = 'div-result-table',
+        )
+    )
+    return html.Div(final_list, style = {'margin':'1%'})
 
 if __name__ == '__main__':
     app.run_server(debug=True)
