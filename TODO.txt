@@ -213,7 +213,7 @@ nella cartella del job corrispondente
 -Ordino tabella guida specifica per bulge+mms e num massimo var uniq								X
 	-Sistemare allineamento celle
 -Pam creation evidenziare ancora di più -> se un target ha la colonna pam creation, lo evidenzio con un altro colore
--Colore dei target su tutta la riga (più trasparente possibile), oppure allargare la banda colorate, migliorare il nome colonne, resize delle colonne
+-Colore dei target su tutta la riga (più trasparente possibile), oppure allargare la banda colorate, migliorare il nome colonne, resize delle colonne		X
 -Help e legenda per spiegare colori e colonne
 -Tenere solo NO e elenco di tutte le PAM, non -;A-;
 -Mostrare solo top 1 del cluser, se lo clicco si apre tutto il cluster -> Idea Fare due tabelle: se clicco sul top one, sulla secodna tabella si apre il suo cluster
@@ -226,3 +226,9 @@ nella cartella del job corrispondente
 -La scomposizione delle guide la faccio sui cluster: se seleziono un target si apre il cluster di quel target mostrando solo i targets con quel valore di mm-bulge (apro un sottocluster)
 
 -Implementare bottone next e prev nella tabella popolazione
+-Filtering della posizione:
+	-Aggiungere controllo se end < begin
+	-Bottone restore original
+	-Bottone download
+-Creare tabella come nel file html
+-Fare scores

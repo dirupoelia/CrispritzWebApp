@@ -72,7 +72,7 @@ onlyfile = [f for f in listdir('pam') if isfile(join('pam', f))]
 onlyfile = [x.replace('.txt', '') for x in onlyfile]            #removed .txt for better visualization
 pam_file = []
 for pam_name in onlyfile:
-    if 'NGG' in pam_name:
+    if 'NGG' in pam_name:               #TODO modificare per selezionare solo le PAM disponibili
         pam_file.append({'label':pam_name, 'value':pam_name})
     else:
         pam_file.append({'label': pam_name, 'value' : pam_name, 'disabled':True})
@@ -1403,8 +1403,10 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     
     with open('Results/' + job_id + '/Params.txt') as p:
-       mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
-    
+        all_params = p.read()
+        mms = (next(s for s in all_params.split('\n') if 'Mismatches' in s)).split('\t')[-1]
+        genome_selected = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+
     fl = []
     fl.append(html.Br())
     fl.append(html.H5('Focus on: ' + guide))
@@ -1595,61 +1597,61 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
             return fl
         else:
             #Show Summary by position table
+
+            #Dropdown chromosomes
+            onlyfile = [f for f in listdir('Genomes/' + genome_selected) if (isfile(join('Genomes/' + genome_selected, f)) and (f.endswith('.fa') or f.endswith('.fasta')))]
+            onlyfile = [x[:x.rfind('.')] for x in onlyfile]            #removed .fa for better visualization
+            chr_file = []
+            for chr_name in onlyfile:
+                chr_file.append({'label': chr_name, 'value' : chr_name})
+
+            start_global = time.time()
             fl = []
             fl.append(html.Br())
             fl.append(html.H5('Focus on: ' + guide))
             # Colonne tabella: chr, pos, target migliore, min mm, min bulges, num target per ogni categoria di mm e bulge, show targets; ordine per total, poi mm e poi bulge
-            df = pd.read_csv('esempio_tabella_posizioni.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.tab_position.txt)
+            start_time = time.time()
+            df = pd.read_csv( job_id + '.summary_position.' + guide +'.txt', sep = '\t', nrows = 100)   #TODO cambiare nome file con quello giusto (job_id.tab_position.txt)
             df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
             more_info_col = []
             for i in range(df.shape[0]):
                 more_info_col.append('Show Targets')
             df[''] = more_info_col
+            
+            fl.append(
+                html.Div
+                    (
+                        [
+                            dbc.Row(
+                                [
+                                    dbc.Col(html.Div(dcc.Dropdown(options = chr_file, id = 'dropdown-chr-table-position', placeholder = 'Select a chromosome'))),
+                                    dbc.Col(html.Div(dcc.Input(placeholder = 'Start Position', id = 'input-position-start'))),
+                                    dbc.Col(html.Div(dcc.Input(placeholder = 'End Position', id = 'input-position-end'))),
+                                    dbc.Col(html.Div(html.Button('Filter', id = 'button-filter-position')))
+                                ]
+                            ),
+                        ],
+                        style = {'width':'50%'}
+                    )
+            )
+            print('Position dataframe ready', time.time() - start_time)
+            start_time = time.time()
+            fl.append(html.Div(
+                    generate_table_position(df, 'table-position', 1 ,guide, job_id ), style = {'text-align': 'center'}, id = 'div-table-position'
+                )
+            )
+            print('Position table ready', time.time() - start_time)
             fl.append(
                 html.Div(
                     [
-                        dcc.Dropdown(options = [{'label':'chr1', 'value':'chr1'},{'label':'chr3', 'value':'chr3'},{'label':'chr5', 'value':'chr5'}, {'label':'chr7', 'value':'chr7'}],
-                        id = 'dropdown-chr-table-position'),
-                        dcc.Input(placeholder = 'Start Position', id = 'input-position-start'),
-                        dcc.Input(placeholder = 'End Position', id = 'input-position-end'),
-                        html.Button('Filter', id = 'button-filter-position')
+                        html.Button('Prev', id = 'prev-page-position'),
+                        html.Button('Next', id = 'next-page-position')
                     ],
-                    id = 'div-filter-position',
-                    className = 'flex-div-filter-position',
-                    style = {'width':'50%'}
+                    style = {'text-align': 'center'}
                 )
             )
-            form = dbc.Form(
-                        [
-                            dbc.FormGroup(
-                                [
-                                    
-                                    dcc.Dropdown(options = [{'label':'chr1', 'value':'chr1'},{'label':'chr3', 'value':'chr3'},{'label':'chr5', 'value':'chr5'}, {'label':'chr7', 'value':'chr7'}]),
-                                ],
-                                className="mr-3",
-                            ),
-                            dbc.FormGroup(
-                                [
-                                    dbc.Input(type="password", placeholder="Start Position"),
-                                ],
-                                className="mr-3",
-                            ),
-                            dbc.FormGroup(
-                                [
-                                    dbc.Input(type="password", placeholder="End Position"),
-                                ],
-                                className="mr-3",
-                            ),
-                            dbc.Button("Filter", color="primary"),
-                        ],
-                        inline=True,
-                    )
-            fl.append(form)
-            fl.append(html.Div(
-                    generate_table_position(df, 'table-position', guide, job_id ), style = {'text-align': 'center'}, id = 'div-table-position'
-                )
-            )
-            
+            print('Else poistion section finished', time.time() - start_global)
+            fl.append(html.Div('1', id= 'div-current-page-table-position'))
             return fl
 
     return fl
@@ -1670,7 +1672,7 @@ def generate_table(dataframe, id_table, guide='', job_id='', max_rows=2600):
         id = id_table
     )
 
-def generate_table_samples(dataframe, id_table, guide='', job_id='', max_rows=50):
+def generate_table_samples(dataframe, id_table, guide='', job_id='', max_rows=10):
     '''
     Per generare una html table. NOTE è diversa da una dash dataTable
     '''
@@ -1685,17 +1687,23 @@ def generate_table_samples(dataframe, id_table, guide='', job_id='', max_rows=50
         id = id_table
     )
 
-def generate_table_position(dataframe, id_table, guide = '', job_id = '', max_rows = 50):
+def generate_table_position(dataframe, id_table, page, guide = '', job_id = '', max_rows = 10):
     '''
     Per generare una html table. NOTE è diversa da una dash dataTable
     '''
+    rows_remaining = len(dataframe) - (page - 1) * max_rows
+    # if ((page - 1) * max_rows) > len(dataframe):
+    #     page = page -2
+    #     if page < 1:
+    #         page = 1
+
     return html.Table(
         # Header
         [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
         # Body
         [html.Tr([
-            html.Td(html.A(dataframe.iloc[i][col],  href = 'result?job=' + job_id + '#' + guide +'-Pos-' + str(dataframe.iloc[i]['Chromosome']) + '-' +  str(dataframe.iloc[i]['Position']) , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
-        ]) for i in range(min(len(dataframe), max_rows))],
+            html.Td(html.A(dataframe.iloc[i + (page - 1)*max_rows][col],  href = 'result?job=' + job_id + '#' + guide +'-Pos-' + str(dataframe.iloc[i + (page - 1)*max_rows]['Chromosome']) + '-' +  str(dataframe.iloc[i + (page - 1)*max_rows]['Position']) , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i + (page - 1)*max_rows][col]) for col in dataframe.columns
+        ]) for i in range(min(rows_remaining, max_rows))],
         style = {'display':'inline-block'},
         id = id_table
     )
@@ -1703,40 +1711,111 @@ def generate_table_position(dataframe, id_table, guide = '', job_id = '', max_ro
 #Callback to view next/prev page on sample table
 #TODO
 
-#Callback to filter chr from Summary by Position table
+#Callback to filter chr from Summary by Position table, and to show next/prev page
 @app.callback(
-    Output('div-table-position', 'children'),
-    [Input('button-filter-position', 'n_clicks')],
+    [Output('div-table-position', 'children'),
+    Output('div-current-page-table-position', 'children')],
+    [Input('button-filter-position', 'n_clicks_timestamp'),
+    Input('prev-page-position','n_clicks_timestamp'),
+    Input('next-page-position', 'n_clicks_timestamp')],
     [State('dropdown-chr-table-position', 'value'),
     State('input-position-start', 'value'),
     State('input-position-end','value'),
     State('url', 'search'),
     State('general-profile-table', 'selected_cells'),
-    State('general-profile-table', 'data')]
+    State('general-profile-table', 'data'),
+    State('div-current-page-table-position', 'children')]
 )
-def filterPositionTable(n, chr, pos_begin, pos_end, search, sel_cel, all_guides):
-    if n is None or sel_cel is None or chr is None or chr is '':
+def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_cel, all_guides, current_page):
+    if sel_cel is None:
+        raise PreventUpdate
+    if nPrev is None and nNext is None and n is None:
         raise PreventUpdate
     
-    if pos_begin is None or pos_begin is '':
-        pos_begin = 0
-    if pos_end is '':
-        pos_end = None
+    if nPrev is None:
+        nPrev = 0
+    if nNext is None:
+        nNext = 0
+    if n is None:
+        n = 0
+    current_page = int(current_page)
+    btn_position_section = []
+    btn_position_section.append(n)
+    btn_position_section.append(nPrev)
+    btn_position_section.append(nNext)
     job_id = search.split('=')[-1]
     job_directory = 'Results/' + job_id + '/'
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
-    df = pd.read_csv('esempio_tabella_posizioni.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
-    df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
-    more_info_col = []
-    for i in range(df.shape[0]):
-        more_info_col.append('Show Targets')
-    df[''] = more_info_col
-    if pos_end is None:
-        df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) )].index , inplace = True)
+    if max(btn_position_section) == n:              #Last button pressed is filtering, return the first page of the filtered table
+        if pos_begin is None or pos_begin is '':
+            pos_begin = 0
+        if pos_end is '':
+            pos_end = None
+        
+        df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+        df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
+        more_info_col = []
+        for i in range(df.shape[0]):
+            more_info_col.append('Show Targets')
+        df[''] = more_info_col
+        if pos_end is None:
+            df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) )].index , inplace = True)
+        else:
+            df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) | (df['Position'] > int(pos_end)))].index , inplace = True)
+        return generate_table_position(df, 'table-position', 1,guide, job_id ), 1
     else:
-        df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) | (df['Position'] > int(pos_end)))].index , inplace = True)
-    return generate_table_position(df, 'table-position', guide, job_id )
+        # if chr:             #Last Button was Next/Prev, but i have a filter selected
+        #     raise PreventUpdate
+        # else:               #Last Button was Next/Prev, but i do not have a filter selected
+        if max(btn_position_section) == nNext:
+            current_page = current_page + 1
+            if chr:
+                if pos_begin is None or pos_begin is '':
+                    pos_begin = 0
+                if pos_end is '':
+                    pos_end = None
+                df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+            else:
+                df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t', nrows = current_page * 10)   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+            df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
+            more_info_col = []
+            for i in range(df.shape[0]):
+                more_info_col.append('Show Targets')
+            df[''] = more_info_col
+            if chr:
+                if pos_end is None:
+                    df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) )].index , inplace = True)
+                else:
+                    df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) | (df['Position'] > int(pos_end)))].index , inplace = True)
+            if ((current_page - 1) * 10) > len(df): 
+                current_page = current_page -1
+                if current_page < 1:
+                    current_page = 1
+            return generate_table_position(df, 'table-position', current_page,guide, job_id ), current_page
+        else:                       #Go to previous page
+            current_page = current_page - 1
+            if current_page < 1:
+                current_page = 1
 
+            if chr:
+                if pos_begin is None or pos_begin is '':
+                    pos_begin = 0
+                if pos_end is '':
+                    pos_end = None
+                df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+            else:
+                df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t', nrows = current_page * 10)   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+            df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
+            more_info_col = []
+            for i in range(df.shape[0]):
+                more_info_col.append('Show Targets')
+            df[''] = more_info_col
+            if chr:
+                if pos_end is None:
+                    df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) )].index , inplace = True)
+                else:
+                    df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) | (df['Position'] > int(pos_end)))].index , inplace = True)
+            return generate_table_position(df, 'table-position', current_page,guide, job_id ), current_page
 #FOR BUTTON IN TABLE
 # element.style {
 #     background: none;
@@ -2189,6 +2268,7 @@ def guidePagev3(job_id, hash):
                         'textAlign': 'left'
                     }
                 ],
+                export_format = 'csv',
                 # css=[
                 #     {"selector": ".column-header--hide::before", "rule": 'width: "50px"'}
                 # ]
@@ -2382,13 +2462,12 @@ def clusterPage(job_id, hash):
         html.H3('Selected Position: ' + chromosome + ' - ' + position)
     )
     final_list.append(html.P('List of Targets found for the selected position'))
-    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
-    subprocess.call(['grep -P \'' + chromosome + '\\t.*' + position + '\$\' cluster.sort.txt > esempio_pos_grep.' + chromosome + '_' + position + '.txt'], shell = True)
+    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Cluster Position']
+    subprocess.call(['grep -P \'' + chromosome + '\\t.*\\t' + position + '$\' cluster.sort.txt > esempio_pos_grep.' + chromosome + '_' + position + '.txt'], shell = True)
     df = pd.read_csv('esempio_pos_grep.' + chromosome + '_' + position + '.txt', sep = '\t', names = col_list)
-    df = df.drop(['Samples'], axis = 1)
-    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq']
+    #col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq']
 
-    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
+    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric' ]
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     
     final_list.append(          #TODO add margin bottom 1rem to toggle button and prev-next buttons
@@ -2425,9 +2504,7 @@ def clusterPage(job_id, hash):
                             
                         }
                 ],
-                # css=[
-                #     {"selector": ".column-header--hide::before", "rule": 'width: "50px"'}
-                # ]
+                export_format = 'csv',
                 
             ),
             id = 'div-result-table',

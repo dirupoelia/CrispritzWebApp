@@ -37,21 +37,30 @@ with open(sys.argv[1]) as targets, open(job_id + '.summary_position.' + guide + 
     for i in range(bulge):
         result.write('\tTargets ' + str(i + 1) + ' Bulge')
     result.write('\n')
-    line = targets.readline()
-    if '#' in line:
-        line = targets.readline().strip().split('\t')
-    else:
+
+    for line in targets:
         line = line.strip().split('\t')
-    
-    current_cluster = line[4] #NOTE with new version of clusterization, must use line['Cluster Position'] and not line['Position']
-    result.write(line[3] + '\t' + line[4] + '\t' + line[2] + '\t' + line[6] + '\t' + line[7])
+        if line[1].replace('-','') == guide:
+            break    
+    # line = targets.readline()
+    # if '#' in line:
+    #     line = targets.readline().strip().split('\t')
+    # else:
+    #     line = line.strip().split('\t')
+     
+    current_cluster = line[-1] #NOTE with new version of clusterization, must use line['Cluster Position'] and not line['Position']
+    result.write(line[3] + '\t' + line[-1] + '\t' + line[2] + '\t' + line[6] + '\t' + line[7])
     mms_current_line = int(line[6])
     bulge_current_line = int(line[7])
     cluster_count_mms[mms_current_line] = cluster_count_mms[mms_current_line] + 1
     cluster_count_bulges[bulge_current_line - 1] = cluster_count_bulges[bulge_current_line - 1] + 1
     for line in targets:
+        
         line = line.strip().split('\t')
-        if current_cluster == line[4]:
+        if line[1].replace('-','') != guide:
+            continue
+        
+        if current_cluster == line[-1]:
             mms_current_line = int(line[6])
             bulge_current_line = int(line[7])
             cluster_count_mms[mms_current_line] = cluster_count_mms[mms_current_line] + 1
@@ -64,8 +73,8 @@ with open(sys.argv[1]) as targets, open(job_id + '.summary_position.' + guide + 
                 result.write('\t' + str(b))
                 cluster_count_bulges = [0 for i in range (bulge)]
             result.write('\n')
-            current_cluster = line[4]
-            result.write(line[3] + '\t' + line[4] + '\t' + line[2] + '\t' + line[6] + '\t' + line[7])
+            current_cluster = line[-1]
+            result.write(line[3] + '\t' + line[-1] + '\t' + line[2] + '\t' + line[6] + '\t' + line[7])
             mms_current_line = int(line[6])
             bulge_current_line = int(line[7])
             cluster_count_mms[mms_current_line] = cluster_count_mms[mms_current_line] + 1
