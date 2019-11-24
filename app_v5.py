@@ -563,8 +563,10 @@ final_list.append(html.Div(
     )
 )
 test_page2 = html.Div(final_list, style = {'margin':'1%'})
+
 ##################################################CALLBACKS##################################################
 #Test callbacks
+
 #Callback for test-page2
 @app.callback(
     [Output('double-table-two', 'data'),
@@ -1406,6 +1408,7 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
         all_params = p.read()
         mms = (next(s for s in all_params.split('\n') if 'Mismatches' in s)).split('\t')[-1]
         genome_selected = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+        max_bulges = (next(s for s in all_params.split('\n') if 'Max_bulges' in s)).split('\t')[-1]
 
     fl = []
     fl.append(html.Br())
@@ -1612,6 +1615,7 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
             # Colonne tabella: chr, pos, target migliore, min mm, min bulges, num target per ogni categoria di mm e bulge, show targets; ordine per total, poi mm e poi bulge
             start_time = time.time()
             df = pd.read_csv( job_id + '.summary_position.' + guide +'.txt', sep = '\t', nrows = 100)   #TODO cambiare nome file con quello giusto (job_id.tab_position.txt)
+            df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.new.txt', sep = '\t') #TODO cancellare
             df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
             more_info_col = []
             for i in range(df.shape[0]):
@@ -1635,9 +1639,10 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
                     )
             )
             print('Position dataframe ready', time.time() - start_time)
+            max_bulges = '2' #TODO remove
             start_time = time.time()
             fl.append(html.Div(
-                    generate_table_position(df, 'table-position', 1 ,guide, job_id ), style = {'text-align': 'center'}, id = 'div-table-position'
+                    generate_table_position(df, 'table-position', 1 , int(mms), int(max_bulges), guide, job_id ), style = {'text-align': 'center'}, id = 'div-table-position'
                 )
             )
             print('Position table ready', time.time() - start_time)
@@ -1652,6 +1657,7 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
             )
             print('Else poistion section finished', time.time() - start_global)
             fl.append(html.Div('1', id= 'div-current-page-table-position'))
+            fl.append(html.Div(mms + '-' + max_bulges, id = 'div-mms-bulges-position', style = {'display':'none'}))
             return fl
 
     return fl
@@ -1687,26 +1693,68 @@ def generate_table_samples(dataframe, id_table, guide='', job_id='', max_rows=10
         id = id_table
     )
 
-def generate_table_position(dataframe, id_table, page, guide = '', job_id = '', max_rows = 10):
-    '''
-    Per generare una html table. NOTE è diversa da una dash dataTable
-    '''
-    rows_remaining = len(dataframe) - (page - 1) * max_rows
-    # if ((page - 1) * max_rows) > len(dataframe):
-    #     page = page -2
-    #     if page < 1:
-    #         page = 1
+# def generate_table_position(dataframe, id_table, page, guide = '', job_id = '', max_rows = 10): #NOTE v1 della tabella posizioni
+#     '''
+#     Per generare una html table. NOTE è diversa da una dash dataTable
+#     '''
+#     rows_remaining = len(dataframe) - (page - 1) * max_rows
+   
+#     return html.Table(
+#         # Header
+#         [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
+#         # Body
+#         [html.Tr([
+#             html.Td(html.A(dataframe.iloc[i + (page - 1)*max_rows][col],  href = 'result?job=' + job_id + '#' + guide +'-Pos-' + str(dataframe.iloc[i + (page - 1)*max_rows]['Chromosome']) + '-' +  str(dataframe.iloc[i + (page - 1)*max_rows]['Position']) , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i + (page - 1)*max_rows][col]) for col in dataframe.columns
+#         ]) for i in range(min(rows_remaining, max_rows))],
+#         style = {'display':'inline-block'},
+#         id = id_table
+#     )
 
-    return html.Table(
-        # Header
-        [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
-        # Body
-        [html.Tr([
-            html.Td(html.A(dataframe.iloc[i + (page - 1)*max_rows][col],  href = 'result?job=' + job_id + '#' + guide +'-Pos-' + str(dataframe.iloc[i + (page - 1)*max_rows]['Chromosome']) + '-' +  str(dataframe.iloc[i + (page - 1)*max_rows]['Position']) , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i + (page - 1)*max_rows][col]) for col in dataframe.columns
-        ]) for i in range(min(rows_remaining, max_rows))],
-        style = {'display':'inline-block'},
-        id = id_table
-    )
+def generate_table_position(dataframe, id_table, page, mms, bulges, guide = '', job_id = '', max_rows = 10): #NOTE v2 della tabella posizioni
+    rows_remaining = len(dataframe) - (page - 1) * max_rows
+    header = [html.Tr([
+        html.Th('Chromosome', rowSpan = '2', style = {'vertical-align':'middle', 'text-align':'center'}),
+        html.Th('Position', rowSpan = '2', style = {'vertical-align':'middle', 'text-align':'center'}),
+        html.Th('Best Target', rowSpan = '2', style = {'vertical-align':'middle', 'text-align':'center'}),
+        html.Th('Min Mismatch', rowSpan = '2', style = {'vertical-align':'middle', 'text-align':'center'}),
+        html.Th('Min Bulge', rowSpan = '2', style = {'vertical-align':'middle', 'text-align':'center'}),
+        html.Th('Bulge', rowSpan = '2', style = {'vertical-align':'middle', 'text-align':'center'}),
+        html.Th('Targets', colSpan = str(mms +1), style = {'vertical-align':'middle', 'text-align':'center'}),
+        html.Th('', rowSpan = '2'),
+        ])
+    ]
+    mms_header = []
+    for mm in range (mms +1):
+        mms_header.append(html.Th(str(mm), style = {'vertical-align':'middle', 'text-align':'center'}))
+    header.append(html.Tr(mms_header))
+    
+    data = []
+    for i in range(min(rows_remaining, max_rows)):
+        first_cells = [
+            html.Td(dataframe.iloc[i]['Chromosome'], rowSpan = str(bulges +1),  style = {'vertical-align':'middle', 'text-align':'center'}),
+            html.Td(dataframe.iloc[i]['Position'], rowSpan = str(bulges +1),  style = {'vertical-align':'middle', 'text-align':'center'}),
+            html.Td(dataframe.iloc[i]['Best Target'], rowSpan = str(bulges+1),  style = {'vertical-align':'middle', 'text-align':'center'}),
+            html.Td(dataframe.iloc[i]['Min Mismatch'], rowSpan = str(bulges+1),  style = {'vertical-align':'middle', 'text-align':'center'}),
+            html.Td(dataframe.iloc[i]['Min Bulge'], rowSpan = str(bulges+1),  style = {'vertical-align':'middle', 'text-align':'center'}),
+            html.Th('0 Bulge', style = {'vertical-align':'middle', 'text-align':'center'})
+        ]
+        
+        mm_cells = [html.Td(dataframe.iloc[i][col], style = {'vertical-align':'middle', 'text-align':'center'}) for col in dataframe.columns[5:5+mms+1]]
+        data.append(html.Tr(first_cells + mm_cells + [html.Td(
+                html.A('Show Targets',  href = 'result?job=' + job_id + '#' + guide +'-Pos-' + str(dataframe.iloc[i + (page - 1)*max_rows]['Chromosome']) + '-' +  str(dataframe.iloc[i + (page - 1)*max_rows]['Position']) , target = '_blank'), 
+                rowSpan = str(bulges+1), style = {'vertical-align':'middle', 'text-align':'center'})
+            ]))
+        for b in range (bulges):
+            data.append(
+                html.Tr(
+                    [html.Th(str(b +1) + ' Bulge', style = {'vertical-align':'middle', 'text-align':'center'} )]
+                    +
+                    [html.Td(dataframe.iloc[i][col]) for col in dataframe.columns[5 + (b +1) *(mms +1) : 5 + (b +1) *(mms+1) + mms +1]]
+                )
+            )
+    
+    return html.Table(header + data, style = {'display':'inline-block'}, id = id_table)
+
 
 #Callback to view next/prev page on sample table
 #TODO
@@ -1724,9 +1772,10 @@ def generate_table_position(dataframe, id_table, page, guide = '', job_id = '', 
     State('url', 'search'),
     State('general-profile-table', 'selected_cells'),
     State('general-profile-table', 'data'),
-    State('div-current-page-table-position', 'children')]
+    State('div-current-page-table-position', 'children'),
+    State('div-mms-bulges-position', 'children')]
 )
-def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_cel, all_guides, current_page):
+def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_cel, all_guides, current_page, mms_bulge):
     if sel_cel is None:
         raise PreventUpdate
     if nPrev is None and nNext is None and n is None:
@@ -1739,6 +1788,8 @@ def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_ce
     if n is None:
         n = 0
     current_page = int(current_page)
+    mms = int(mms_bulge.split('-')[0])
+    max_bulges = int(mms_bulge.split('-')[1])
     btn_position_section = []
     btn_position_section.append(n)
     btn_position_section.append(nPrev)
@@ -1751,8 +1802,11 @@ def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_ce
             pos_begin = 0
         if pos_end is '':
             pos_end = None
-        
+        if pos_end:
+            if int(pos_end) < int(pos_begin):
+                pos_end = None
         df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+        df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.new.txt', sep = '\t') #TODO cancellare
         df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
         more_info_col = []
         for i in range(df.shape[0]):
@@ -1762,7 +1816,7 @@ def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_ce
             df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) )].index , inplace = True)
         else:
             df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) | (df['Position'] > int(pos_end)))].index , inplace = True)
-        return generate_table_position(df, 'table-position', 1,guide, job_id ), 1
+        return generate_table_position(df, 'table-position', 1, mms, max_bulges,guide, job_id ), 1
     else:
         # if chr:             #Last Button was Next/Prev, but i have a filter selected
         #     raise PreventUpdate
@@ -1774,9 +1828,14 @@ def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_ce
                     pos_begin = 0
                 if pos_end is '':
                     pos_end = None
+                if pos_end:
+                    if int(pos_end) < int(pos_begin):
+                        pos_end = None
                 df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+                df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.new.txt', sep = '\t') #TODO cancellare
             else:
                 df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t', nrows = current_page * 10)   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+                df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.new.txt', sep = '\t', nrows = current_page * 10) #TODO cancellare
             df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
             more_info_col = []
             for i in range(df.shape[0]):
@@ -1791,7 +1850,7 @@ def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_ce
                 current_page = current_page -1
                 if current_page < 1:
                     current_page = 1
-            return generate_table_position(df, 'table-position', current_page,guide, job_id ), current_page
+            return generate_table_position(df, 'table-position', current_page, mms, max_bulges,guide, job_id ), current_page
         else:                       #Go to previous page
             current_page = current_page - 1
             if current_page < 1:
@@ -1802,9 +1861,14 @@ def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_ce
                     pos_begin = 0
                 if pos_end is '':
                     pos_end = None
+                if pos_end:
+                    if int(pos_end) < int(pos_begin):
+                        pos_end = None
                 df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+                df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.new.txt', sep = '\t') #TODO cancellare
             else:
                 df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t', nrows = current_page * 10)   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+                df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.new.txt', sep = '\t',nrows = current_page * 10) #TODO cancellare
             df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
             more_info_col = []
             for i in range(df.shape[0]):
@@ -1815,7 +1879,7 @@ def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_ce
                     df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) )].index , inplace = True)
                 else:
                     df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) | (df['Position'] > int(pos_end)))].index , inplace = True)
-            return generate_table_position(df, 'table-position', current_page,guide, job_id ), current_page
+            return generate_table_position(df, 'table-position', current_page, mms, max_bulges,guide, job_id ), current_page
 #FOR BUTTON IN TABLE
 # element.style {
 #     background: none;
