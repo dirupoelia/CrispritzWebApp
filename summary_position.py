@@ -4,14 +4,16 @@
 # -best target sequence
 # -min mms of cluster
 # -min bulge of cluster
-# -Total targets with 0 mm
-# -Total targets with 1 mm
+# -Total targets with 0 mm 0 bulges
+# -Total targets with 1 mm 0 bulges
 # ...
-# -Total targets with n mm
-# -Total targets with 0 bulges
-# -Total targets with 1 bulges
+# -Total targets with n mm 0 bulges
+# -Total targets with 0 mm 1 bulges
+# -Total targets with 1 mm 1 bulges
 # ...
-# -Total targets with b bulges
+# -Total targets with n mm 1 bulges
+# ...
+# -Total targets with n mm b bulges
 
 # argv1 is targets.txt ordered in clusters
 # argv2 is job_id
@@ -32,10 +34,11 @@ bulge = int(sys.argv[5])
 count_targets = [[0 for i in range (mms + 1)] for i in range (bulge + 1)]
 with open(sys.argv[1]) as targets, open(job_id + '.summary_position.' + guide + '.txt', 'w+') as result:
     result.write('#Chromosome\tPosition\tBest Target\tMin Mismatch\tMin Bulge')
-    for i in range(mms + 1):
-        result.write('\tTargets ' + str(i) + ' Mismatch')
-    for i in range(bulge):
-        result.write('\tTargets ' + str(i + 1) + ' Bulge')
+    for b in range(bulge + 1):
+        for i in range(mms + 1):
+            result.write('\tTargets ' + str(i) + 'MM' + str(b) + 'B' )
+    # for i in range(bulge):
+    #     result.write('\tTargets ' + str(i + 1) + ' Bulge')
     result.write('\n')
 
     for line in targets:
@@ -75,7 +78,8 @@ with open(sys.argv[1]) as targets, open(job_id + '.summary_position.' + guide + 
             #     result.write('\t' + str(b))
             #     cluster_count_bulges = [0 for i in range (bulge)]
             for t in count_targets:
-                result.write('\t' + str(t))
+                for t_c in t:
+                    result.write('\t' + str(t_c))
                 count_targets = [[0 for i in range (mms + 1)] for i in range (bulge + 1)]
             result.write('\n')
             current_cluster = line[-1]
@@ -91,5 +95,6 @@ with open(sys.argv[1]) as targets, open(job_id + '.summary_position.' + guide + 
     # for b in  cluster_count_bulges:
     #     result.write('\t' + str(b))
     for t in count_targets:
-            result.write('\t' + str(t))
+        for t_c in t:
+            result.write('\t' + str(t_c))
     result.write('\n')

@@ -1,3 +1,6 @@
+#Script che crea la tabella Summary by Guide, dato in input un file taregts.txt, conta il numero di taregts trovato per ogni combinazione di
+#mms-bulge. Inoltre, se è presente la colonna Var_uniq, calcola il numero di Var_uniq per quella categoria di mms-bulge
+
 #sys1 file risultati
 # sys2 mms
 # sys3 bulges DNA

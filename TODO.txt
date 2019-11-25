@@ -230,5 +230,16 @@ nella cartella del job corrispondente
 	-Aggiungere controllo se end < begin
 	-Bottone restore original
 	-Bottone download
--Creare tabella come nel file html
+-Creare tabella come nel file html	X
 -Fare scores
+
+-Download di tutto il file tramite ftp
+-Visualizzare i risultati solo del total
+	-Lasciare il common solo scaricabile
+-cluster fatti per guida
+-cambio colore al selector di dash		X (vedere opzione css della tabella delle guide)
+	-cambio anche i bordi in blu
+	-cambio colore selezione in tutte le tabelle dash datatable
+-implementare che se cancello i filtri ritorno i valori originali
+-Rivedere grep specific targets per migliorare l'estrazione se due guide sono simili
+-Fare in modo che se prendo i file dalla cartella hgetcetc non considero i file .fai

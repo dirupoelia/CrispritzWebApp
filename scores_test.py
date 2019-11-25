@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+
+#Script that calculates cfd score for targets with bulge 'X', and save the accumulated cfd score for the input guide
+# Also calculates the Doench score if the targets has bulge 'X' and 0 mms (doench = 0 if no such target exists)
+
 import time
 import pickle
 import re
@@ -7,8 +11,11 @@ import sys
 import os
 import numpy as np
 import subprocess
+import azimuth.model_comparison
+# doench_string.append(seq)
+# doench_score =  azimuth.model_comparison.predict(np.asarray(doench_string), None, None, model= model, pam_audit=False)
+# doench_score = np.around(doench_score * 100)
 
-DOENCH_SIZE = 10000
 def get_mm_pam_scores():
   try:
     mm_scores = pickle.load(open(os.path.dirname(os.path.realpath(__file__)) + '/mismatch_score.pkl', 'rb'))
@@ -69,7 +76,17 @@ iupac_code = {
           "B":("C", "G", "T"),
           "D":("A", "G", "T"),
           "H":("A", "C", "T"),
-          "V":("A", "C", "G")
+          "V":("A", "C", "G"),
+          "r":("A", "G"),
+          "y":("C", "T"),
+          "s":("G", "C"),
+          "w":("A", "T"),
+          "k":("G", "T"),
+          "m":("A", "C"),
+          "b":("C", "G", "T"),
+          "d":("A", "G", "T"),
+          "h":("A", "C", "T"),
+          "v":("A", "C", "G"),
           }
 
 start = time.time()
@@ -110,6 +127,13 @@ with open (sys.argv[1]) as result:
       #print ("guide_seq: ", guide_seq)
       
       cfd_score = calc_cfd(guide_seq, sg, pam, mm_scores, pam_scores)
+      if (target[6] == '0'):    #TODO se cambio inserendo pos cluister, devo cambiareanche qui
+        #estraggo sequenza
+        extr = subprocess.Popen 
+        extr.wait()
+
+        #prendo sequenza e tolgo pam, metto sulla funzione
+        #TODO finire
       sum_cfd = sum_cfd + cfd_score
       if cfd_score > 0.023:
         n_of_acceptable_cfd = n_of_acceptable_cfd +1  
@@ -163,9 +187,9 @@ with open (sys.argv[1]) as result:
         sum_cfd = sum_cfd + cfd_score
 
 job_id = sys.argv[1].split('/')[-1].split('.')[0]
-with open( 'Results/' + job_id + '/acfd.txt', 'a+') as res:
-  res.write(sys.argv[2] + '\t' + str(sum_cfd) + '\n')
-       
-        
+# with open( 'Results/' + job_id + '/acfd.txt', 'a+') as res:   #TODO decomment
+#   res.write(sys.argv[2] + '\t' + str(sum_cfd) + '\n')
+with open( 'test_scores.txt', 'w+') as res:
+  res.write(sys.argv[2] + '\t' + str(sum_cfd) + '\n')   #TODO comment
 
 end = time.time()
