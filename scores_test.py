@@ -12,6 +12,7 @@ import os
 import numpy as np
 import subprocess
 import azimuth.model_comparison
+import string
 # doench_string.append(seq)
 # doench_score =  azimuth.model_comparison.predict(np.asarray(doench_string), None, None, model= model, pam_audit=False)
 # doench_score = np.around(doench_score * 100)
@@ -57,12 +58,15 @@ def calc_cfd(guide_seq, sg, pam, mm_scores, pam_scores):
     
     return score
 
+tab = str.maketrans("ACTG", "TGAC")
 
+def reverse_complement_table(seq):
+    return seq.translate(tab)[::-1]
 #if __name__ == '__main__':
 
 #argv 1 = target file
 #argv2 is guide
-
+#argv3 is genome_directory (eg Genomes/hg19/)
 mm_scores, pam_scores = get_mm_pam_scores()
 
 
@@ -90,7 +94,9 @@ iupac_code = {
           }
 
 start = time.time()
-
+with open("CrispritzWebApp/azimuth/saved_models/V3_model_nopos.pickle", 'rb') as f:
+  model = pickle.load(f)
+max_doench = 0
 n_of_acceptable_cfd = 0
 sum_cfd = 0
 cfd_scores = []
@@ -129,11 +135,26 @@ with open (sys.argv[1]) as result:
       cfd_score = calc_cfd(guide_seq, sg, pam, mm_scores, pam_scores)
       if (target[6] == '0'):    #TODO se cambio inserendo pos cluister, devo cambiareanche qui
         #estraggo sequenza
-        extr = subprocess.Popen 
+        with open('bedfile_tmp.txt', 'w+') as bedfile:
+          if target[5] == '+':
+            bedfile.write(target[3] + '\t' + str(int(target[4]) - 4 ) + '\t' + str(int(target[4]) + 23 + 3 ))
+          else:
+            bedfile.write(target[3] + '\t' + str(int(target[4]) - 3 ) + '\t' + str(int(target[4]) + 23 + 4 ))
+        
+        extr = subprocess.Popen(['bedtools getfasta -fi ' + sys.argv[3] + '/' + target[3] '-bed bedfile_tmp.txt'], shell = True, stdout=subprocess.PIPE) 
         extr.wait()
+        out, err = extr.communicate()
+        out = out.decode('UTF-8')
+        if target[5] == '+':
+          sequence_doench = [out.strip().split('\n')[-1].upper()]
+        else:
+          sequence_doench = [reverse_complement_table(out.strip().split('\n')[-1].upper())]
+        doench_score =  azimuth.model_comparison.predict(np.asarray(sequence_doench), None, None, model= model, pam_audit=False)
+        doench_score = np.around(doench_score * 100)
+        if doench_score > max_doench:
+          max_doench = doench_score
+        
 
-        #prendo sequenza e tolgo pam, metto sulla funzione
-        #TODO finire
       sum_cfd = sum_cfd + cfd_score
       if cfd_score > 0.023:
         n_of_acceptable_cfd = n_of_acceptable_cfd +1  
@@ -141,6 +162,16 @@ with open (sys.argv[1]) as result:
     else:
       if "N" in off:
         continue
+      #TODO calc doench
+      # if mms == 0:
+      #   extract from var/ref genome
+      #   if has iupac:
+      #     create combinations with itertools
+      #   cal doench
+      #   get max
+
+
+
       i = 0
       for char in off:
         if char in iupac_code:
