@@ -1,4 +1,4 @@
-#Create summary count for each guide
+#Create summary count for each guide  -> Incorporated in new annotation in crispritz offline
 #Input: result directory
 #number mms
 import os

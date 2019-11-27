@@ -86,11 +86,6 @@ for pam_name in onlyfile:
     else:
         pam_file.append({'label': pam_name, 'value' : pam_name, 'disabled':True})
 
-#Dropdown available Variants
-onlydir = [f for f in listdir('Variants') if isdir(join('Variants', f))]
-var_dir = []
-for dir in onlydir:
-    var_dir.append({'label': dir, 'value' : dir})
 
 #Available mismatches and bulges
 av_mismatches = [{'label': i, 'value': i} for i in range(0, 8)]
@@ -120,7 +115,7 @@ search_bar = dbc.Row(
     className="ml-auto flex-nowrap mt-3 mt-md-0",
     align="center",
 )
-PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
+PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"    #TODO modificare logo
 
 
 navbar = dbc.Navbar(
@@ -154,7 +149,7 @@ app.layout = html.Div([
 
 
 
-#new final_list
+#Main Page
 final_list = []
 final_list.extend([#html.H1('CRISPRitz Web Application'),
     html.Div(children='''
@@ -191,14 +186,7 @@ checklist_div = html.Div(
                     html_for="checkbox-ref-comp",
                     className="form-check-label",
                 )
-                # dbc.Checkbox(
-                #     id="checkbox-email", className="form-check-input"
-                # ),
-                # dbc.Label(
-                #     'Notify me by email',
-                #     html_for="checkbox-email",
-                #     className="form-check-label",
-                # )
+                
             ],
             check = True
         )
@@ -231,7 +219,6 @@ tab_guides_content = html.Div(
         style = {'word-wrap': 'break-word'}), 
 
         dcc.Textarea(id = 'text-guides', placeholder = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', style = {'width':'450px', 'height':'160px', 'font-family':'monospace', 'font-size':'large'}),
-        #html.P('Note: a maximum number of 1000 sequences can be provided'),
         dbc.FormText('Note: a maximum number of 1000 sequences can be provided', color = 'secondary')
     ],
     style = {'width':'450px'} #same as text-area
@@ -654,34 +641,6 @@ def toggle_fade(selected_options, is_in):
         return True
     return False
 
-# #Insert/Delete example input
-# @app.callback(
-#     [Output('available-genome', 'value'),
-#     Output('available-pam', 'value'),
-#     Output('text-guides', 'value'),
-#     Output('mms', 'value'),
-#     Output('dna', 'value'),
-#     Output('rna', 'value'),
-#     Output('len-guide-sequence-ver', 'value'),
-#     Output('text-sequence','value')],
-#     [Input('example-parameters', 'n_clicks')]
-# )
-# def inDelExample(n):
-#     '''
-#     Bottone per inserire degli input di esempio.
-#     TODO Modificare lo stile del bottone e renderlo simile ad un link
-#     TODO Inserire un altro bottone con lo stesso stile per rimuovere l'input di esempio (bisogna decidere se:
-#     a) cancellare tutto
-#     b) cancellare solo i campi i cui valori sono uguali a quelli di esempio
-#     c) se almeno un campo è diverso dal valore di esempio, non cancello nulla)
-#     '''
-#     if n is None:
-#         raise PreventUpdate
-    
-#     #TODO salvare una cartella speciale in results che abbia i risultati di questa ricerca in modo da non occupare il server con
-#     # questa ricerca di esempio, ma all'utente passo già la cartella fatta (questa parte già implementata)
-#     return gen_dir[0]['value'], '5\'-NGG-3\'', 'GAGTCCGAGCAGAAGAAGAA', '4', '0', '0', '20','>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
-
 # Insert/Delete example input
 @app.callback(
     [Output('available-genome', 'value'),
@@ -698,8 +657,7 @@ def toggle_fade(selected_options, is_in):
 def inExample(nI, nR):
     '''
     Bottone per inserire degli input di esempio.
-    TODO Modificare lo stile del bottone e renderlo simile ad un link
-    TODO Inserire un altro bottone con lo stesso stile per rimuovere l'input di esempio (bisogna decidere se:
+    Bottone reset esegue il punto a), ma non cancella le spunte delle Advanced Options
     a) cancellare tutto
     b) cancellare solo i campi i cui valori sono uguali a quelli di esempio
     c) se almeno un campo è diverso dal valore di esempio, non cancello nulla)
@@ -716,15 +674,11 @@ def inExample(nI, nR):
 
     if nI > 0:
         if nI > nR:
-            #print(nI, nR)
-
             return gen_dir[0]['value'], '5\'-NGG-3\'', 'GAGTCCGAGCAGAAGAAGAA', '4', '0', '0', '20', '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
 
 
     if nR > 0:
         if nR > nI:
-            #print(nR, nI)
-
             return '', '', '', '', '', '', '', ''
 
 
@@ -882,7 +836,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     Annotations path file is named genome_name_annotationpath.txt, where genome_name is the reference genome name
 
     La funzione crea una cartella dal nome random per identificare il job, controlla che opzioni sono state aggiunte e salva il contatto della mail.
-    Esatre i parametri dati in input per poterli utilizzare con crispritz. Salva un file params con i parametri della ricerca. Controlla poi se 
+    Estrae i parametri dati in input per poterli utilizzare con crispritz. Salva un file Params.txt con i parametri della ricerca. Controlla poi se 
     un'altra ricerca è stata fatta con gli stessi parametri e nel caso copia i risultati nella cartella di questo job.
     Fa partire lo script submit_job per eseguire crispritz.
     '''
@@ -1003,7 +957,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if (search_index):
         search = False
 
-    if int(max_bulges) <= 2:
+    if int(max_bulges) <= 2:            #TODO rimuovere, sistemato con la nuova versione di crispritz
         genome_idx = pam_char + '_' + '2' + '_' + genome_selected
     else:
         genome_idx = pam_char + '_' + '5' + '_' + genome_selected
@@ -1026,7 +980,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         p.write('Ref_comp\t' + str(ref_comparison) + '\n')
         p.close()
 
-    #Check if input parameters (mms, bulges, pam, guides, genome) are the same as a previous search
+    #Check if input parameters (mms, bulges, pam, guides, genome) are the same as a previous search     #TODO per migliorare, semplicemente modificare il job id in quello della cartella con i ris già fatti
     all_result_dirs = [f for f in listdir('Results') if isdir(join('Results', f))]
     all_result_dirs.remove(job_id)
     #all_result_dirs.remove('test')
@@ -1054,12 +1008,13 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if (not search and not search_index):
         report = False         
     
-    annotation_filepath = [f for f in listdir('./') if isfile(join('./', f)) and f.startswith(genome_ref)]
+    #TODO aggiungere annotazioni per ogni genoma
+    annotation_file = [f for f in listdir('annotations/') if isfile(join('annotations/', f)) and f.startswith(genome_ref)]
 
     
     subprocess.Popen(['assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
         ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
-            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + annotation_filepath[0]
+            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + 'annotations/' + annotation_file[0]
         )
     )], shell = True)
     return '/load','?job=' + job_id
@@ -1080,14 +1035,14 @@ def changePage( href, path, search, hash_guide):
     # print('hash', hash_guide)
     # print('pathname', path)
     # print('search', search)
-    print('hash', hash_guide)
+    #print('hash', hash_guide)
     if path == '/load':
-        return load_page, URL + '/load' + search #NOTE change the url part when DNS are changed
+        return load_page, URL + '/load' + search 
     if path == '/result':
         job_id = search.split('=')[-1]
         if hash_guide is None or hash_guide is '':
             return resultPage(job_id), URL + '/load' + search
-        if 'new' in hash_guide:
+        if 'new' in hash_guide:         #TODO cambiare nome alla pagina delle guide
             return guidePagev3(job_id, hash_guide.split('#')[1]), URL + '/load' + search
         if '-Sample-' in hash_guide:   
             return samplePage(job_id, hash_guide.split('#')[1]), URL + '/load' + search
@@ -1122,7 +1077,7 @@ def refreshSearch(n, dir_name):
 
     '''
     if n is None:
-        raise PreventUpdate     #TODO fa un controllo subito, così l'utente non deve aspettare 3 secondi per l'update
+        raise PreventUpdate    
     
     onlydir = [f for f in listdir('Results') if isdir(join('Results', f))]
     current_job_dir = 'Results/' +  dir_name.split('=')[-1] + '/'
@@ -1308,70 +1263,6 @@ def parse_contents(contents):
     decoded = base64.b64decode(content_string)
     return decoded
 
-#Show image: Barplot
-# @app.callback(
-#     [Output('barplot-img', 'src'),
-#     Output('link-barplot', 'href')],
-#     [Input('mms-dropdown','value')],
-#     [State('url', 'search')]
-# )
-def showImages(mms, search):
-    '''
-    Codice vecchio, non dovrebbe servire
-    '''
-    if mms is None:
-        raise PreventUpdate
-    job_id = search.split('=')[-1]
-    job_directory = 'Results/' + job_id + '/'
-    barplot_img = 'summary_histogram_' + str(mms) + 'mm.png'
-    try:            #NOTE serve per non generare errori se il barplot non è stato fatto
-        barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
-        barplot_href = 'assets/Img/' + job_id + '/' + barplot_img
-    except:
-        barplot_src = ''
-        barplot_href = ''
-    # guide = all_guides[int(sel_cel[0]['row'])]['Guide'] 
-    # radar_img = 'summary_single_guide_' + guide + '_' + str(mms) + 'mm.png'
-    # try:
-    #     radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
-    #     radar_href = 'assets/Img/' + job_id + '/' + radar_img
-    # except:
-    #     radar_src = ''
-    #     radar_href = ''
-    return barplot_src, barplot_href
-
-#Show image: Radar chart
-# @app.callback(
-#     [Output('radar-img', 'src'),
-#     Output('link-radar', 'href')],
-#     [Input('mms-dropdown-guide-specific','value')],
-#     [State('url', 'search'), State('url','hash')]
-# )
-def showImages(mms, search, hash_guide):
-    '''
-    Codice vecchio non dovrebbe servire
-    '''
-    if mms is None:
-        raise PreventUpdate
-    job_id = search.split('=')[-1]
-    job_directory = 'Results/' + job_id + '/'
-    # barplot_img = 'summary_histogram_' + str(mms) + 'mm.png'
-    # try:            #NOTE serve per non generare errori se il barplot non è stato fatto
-    #     barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
-    #     barplot_href = 'assets/Img/' + job_id + '/' + barplot_img
-    # except:
-    #     barplot_src = ''
-    #     barplot_href = ''
-    # guide = all_guides[int(sel_cel[0]['row'])]['Guide'] 
-    guide = hash_guide.split('#')[1]
-    radar_img = 'summary_single_guide_' + guide + '_' + str(mms) + 'mm.png'
-    try:
-        radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
-        radar_href = 'assets/Img/' + job_id + '/' + radar_img
-    except:
-        radar_src = ''
-        radar_href = ''
-    return radar_src, radar_href
 
 #Generate column of images
 @app.callback(
@@ -1422,9 +1313,7 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
     fl = []
     fl.append(html.Br())
     fl.append(html.H5('Focus on: ' + guide))
-    #fl.append(html.P(['View all targets found with the selected guide ' , html.A('here', href = URL + '/result?job=' + job_id + '#' + guide, target = '_blank')]))
-    # fl.append(test_col)
-    # fl.append(test_col)
+    
     if not n0:
         n0 = 0
     if not n1:
@@ -1563,7 +1452,7 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
             fl.append(html.Br())
             fl.append(html.H5('Focus on: ' + guide))
             #fl.append(html.P(['View all targets found with the selected guide ' , html.A('here', href = URL + '/result?job=' + job_id + '#' + guide, target = '_blank')]))  #TODO ultime 3 righe uguali a sopra, sistemare 
-            df = pd.read_pickle(job_directory + job_id + '_summary_result_' + guide+'.txt')
+            df = pd.read_pickle(job_directory + job_id + '_summary_result_' + guide + '.txt')
             
             df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | (df['Number of targets'] == 0)  ].index, inplace = True)
             more_info_col = []
@@ -2051,8 +1940,6 @@ def resultPage(job_id):
     TODO usare className per i bottoni e modificare lo stile, oppure vedere se è possibile usare un buttongroup. Vedere quale è meglio.
     TODO al momento la tabella delle guide è ordinata per acfd, rendere possibile anche l'ordinamento e il filtering da parte dell'utente,
     usare il codice presente in dash datatable filtering con python.
-    TODO al posto di avere una colonna per mms value, avere un'unica colonna come crispor, che contiene 0-1-2-..-mms e per ogni guida avere il
-    numero corrispondente di targets. Usare il dataframe caricato al momento per computare questa stringa e metterla in quella colonna. 
     '''
     value = job_id
     job_directory = 'Results/' + job_id + '/'
@@ -2062,8 +1949,12 @@ def resultPage(job_id):
 
     #Load mismatches
     with open('Results/' + value + '/Params.txt') as p:
-       mms = (next(s for s in p.read().split('\n') if 'Mismatches' in s)).split('\t')[-1]
-
+        all_params = p.read()
+        mms = (next(s for s in all_params.split('\n') if 'Mismatches' in s)).split('\t')[-1]
+        genome_type = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+    
+    if '+' in genome_type:
+        genome_type = 'ref'
     mms = int(mms[0])
     mms_values = [{'label':i, 'value':i} for i in range(mms + 1) ]      
     
@@ -2082,8 +1973,19 @@ def resultPage(job_id):
         profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls', sep = '\t')    #NOTE profile has \t as separator or ','
         if len(profile.columns) == 1:
             profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls')
+    #load acfd for each guide 
+    with open('Results/' + value + '/acfd.txt') as a:
+        all_scores = a.read().strip().split('\n')
     
-    columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
+    if 'NO SCORES' not in all_scores:
+        all_scores.sort()
+        acfd = [float(a.split('\t')[1]) for a in all_scores]
+        doench = [int(a.split('\t')[2]) for a in all_scores]
+        acfd  = [int(round((100/(100 + x))*100)) for x in acfd]
+        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
+    else:
+        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
+
     keep_column = ['GUIDE', 'ONT', 'OFFT']
     for i in range (mms):
         #columns_profile_table.append({'name': str(i+1) + ' Mismatches', 'id':str(i+1) + ' Mismatches', 'type':'numeric'})
@@ -2098,7 +2000,6 @@ def resultPage(job_id):
     col_targetfor = col_targetfor + str(mms)
     col_targetfor = col_targetfor + ' mismatches'
     columns_profile_table.append({'name': col_targetfor, 'id' : 'col_targetfor', 'type':'text'})
-    columns_profile_table.append({'name':'Targets in samples', 'id':'Targets in samples', 'type':'numeric'})
     profile.rename(columns = rename_columns, inplace = True)    #Now profile is Guide, Total On-targets, ...
     col_to_add = []
     tmp_col_to_add = []
@@ -2113,38 +2014,30 @@ def resultPage(job_id):
         
     profile['col_targetfor'] = col_to_add
     
-
-    column_sample_total = []
-    # column_sample_uniq = []
-    # column_sample_pop = []
-    for guide in profile.Guide.unique():
-        with open ('sample_count_' + guide +'.txt', 'r') as sample_list:
-            sample_total = sample_list.readline().strip().split('\t')[1]
-            column_sample_total.append(sample_total)
-    profile['Targets in samples'] = column_sample_total
+    if genome_type == 'var':
+        columns_profile_table.append({'name':'Targets in samples', 'id':'Targets in samples', 'type':'numeric'})
+        column_sample_total = []
+        for guide in profile.Guide.unique():
+            with open ('sample_count_' + guide +'.txt', 'r') as sample_list:
+                sample_total = sample_list.readline().strip().split('\t')[1]
+                column_sample_total.append(sample_total)
+        profile['Targets in samples'] = column_sample_total
+    
+    
     final_list = []
 
     
     final_list.append(
         html.H3('Result Summary')
     )
-    #final_list.append(html.P('Select a Guide to view more details'))
-    # final_list.append(html.Div(
-    #         generate_table(profile, 'result-page-guide-table'),
-    #         style = {'text-align':'center'}
-    #     )
-    # )
+   
 
-    #load acfd for each guide   #TODO sistemare e controllare
-    with open('Results/' + value + '/acfd.txt') as a:
-        acfd = a.read().strip().split('\n')
-    #acfd.remove('crRNA 0')
-    acfd.sort() #TODO
-    acfd = [float(a.split('\t')[-1]) for a in acfd]
-    acfd  = [int(round((100/(100 + x))*100)) for x in acfd]
+    
     profile = profile.sort_values('Guide')
     profile['CFD'] = acfd
-    profile = profile.sort_values('CFD', ascending = False)
+    profile['Doench 2016'] = doench
+    
+    profile = profile.sort_values(['CFD', 'Doench 2016'], ascending = [False, False])
     final_list.append(html.P('Select a guide by clicking on a row to view more information'))
     final_list.append(
         html.Div(

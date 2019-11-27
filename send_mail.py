@@ -4,6 +4,9 @@
 # job link
 # date submitted job
 # parameters (not yet implemented)
+
+# argv[1] is job directory, eg Results/72C1MNXDWF
+
 import sys
 import smtplib
 from email.message import EmailMessage
