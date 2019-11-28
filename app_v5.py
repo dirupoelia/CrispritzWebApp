@@ -1011,10 +1011,13 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     #TODO aggiungere annotazioni per ogni genoma
     annotation_file = [f for f in listdir('annotations/') if isfile(join('annotations/', f)) and f.startswith(genome_ref)]
 
-    
+    genome_type = 'ref'     #Indicates if search is 'ref', 'var' or 'both'
+    if '+' in genome_selected:
+        genome_type = 'var'
     subprocess.Popen(['assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
         ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
-            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + 'annotations/' + annotation_file[0]
+            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + 'annotations/' + annotation_file[0] + 
+            ' ' + genome_type
         )
     )], shell = True)
     return '/load','?job=' + job_id

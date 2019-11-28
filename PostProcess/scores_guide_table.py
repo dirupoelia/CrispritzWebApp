@@ -250,8 +250,7 @@ with open (sys.argv[1]) as result:
 
 job_id = sys.argv[1].split('/')[-1].split('.')[0]
 
-print('guides_dict', guides_dict)
-print('guides_dict_doench', guides_dict_doench)
+
 
 with open( 'acfd.txt', 'w+') as res, open('guides.txt', 'r') as guides:
   guides = guides.read().strip().split('\n')
