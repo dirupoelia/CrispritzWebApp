@@ -17,6 +17,7 @@
 #$16 is genme_idx_ref (for genome_ref comparison if search was done with indices)   Eg genome_library/NGG_2_hg19_ref
 #$17 is send_email
 #$18 is annotation file EG annotations/hg19_ref.annotations.bed
+#$19 is genome type, can be 'ref', 'var', 'both'
 #Note that if genome_selected is not enriched, the python exe will force $15 as false
 
 jobid=$(basename $1)
@@ -128,6 +129,20 @@ echo 'PostProcess\tStart\t'$(date) >> $1'/'log.txt
 cd $1
 
 python3 ../../PostProcess/scores_guide_table.py $jobid.targets.txt ../../$used_genome_dir pam.txt
+
+#Estract common, semicommon and unique
+if [ ${19} = 'both' ]; then
+    echo 'script per semicommon'
+    #chiamata script
+fi
+
+#Clustering
+if [ ${19} != 'both' ]; then
+    python3 ../../PostProcess/cluster.dict.py $jobid.targets.txt
+else
+    python3 ../../PostProcess/cluster.dict.py $jobid.semicommon #TODO mettere nomi giusti
+    python3 ../../PostProcess/cluster.dict.py $jobid.uniq
+fi
 
 #TODO sistemare il conteggio dei var uniq: al momento non lo fa perchè non c'è crispritz con il post processing, in futuro scegliere tra 'No' e 'Uniq' in base
 #all'opzione scelta
