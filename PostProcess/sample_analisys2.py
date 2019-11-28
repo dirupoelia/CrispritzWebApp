@@ -5,7 +5,7 @@ import os
 import subprocess
 import sys
 import pandas as pd
-# argv1  is result file
+# argv1  is result file, from top1
 # argv2 is guide
 #NOTE Function only with vcf of HG38 and population info from the 20130606_sample_info.xlsx file
 guide = sys.argv[2]
