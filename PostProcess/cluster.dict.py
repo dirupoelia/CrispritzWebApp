@@ -39,8 +39,9 @@ with open (sys.argv[1]) as targets:
         try:
             guides_dict[line[1].replace('-','')].append(line)
         except:
-            guides_dict[line[1].replace('-','')] = []
+            guides_dict[line[1].replace('-','')] = [line]
         #total_targets.append(line)
+        
 print('Created \'Total\' and \'Position Cluster\' columns:', time.time() - start)
 start = time.time()
 # total_targets.sort(key = lambda x: ( x[3] , int(x[-1]) ))

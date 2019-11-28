@@ -674,7 +674,7 @@ def inExample(nI, nR):
 
     if nI > 0:
         if nI > nR:
-            return gen_dir[0]['value'], '5\'-NGG-3\'', 'GAGTCCGAGCAGAAGAAGAA', '4', '0', '0', '20', '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
+            return gen_dir[0]['value'], '5\'-NGG-3\'', 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', '4', '0', '0', '20', '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
 
 
     if nR > 0:
@@ -849,7 +849,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if pam is None or pam is '':
         pam = '5\'-NGG-3\''
     if text_guides is None or text_guides is '':
-        text_guides = 'GAGTCCGAGCAGAAGAAGAA'
+        text_guides = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC'
     else:
         text_guides = text_guides.strip()
         if len(text_guides.split('\n')) > 1000:
@@ -1289,9 +1289,10 @@ def parse_contents(contents):
     Input('general-profile-table', 'selected_cells')],
     [#State('general-profile-table', 'selected_cells'),
     State('general-profile-table', 'data'),
-    State('url', 'search')]
+    State('url', 'search'),
+    State('div-genome-type', 'children')]
 )
-def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSumSam, nSumPos, sel_cel, all_guides, search):
+def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSumSam, nSumPos, sel_cel, all_guides, search, genome_type):
     '''
     Carica le immagini corrispondenti alla guida selezionata. Se non ho una cella selezionata non mostra niente.
     La funzione carica le immagini dalla cartella Results/job_id usando una codifica, le mette all'interno di un link che 
@@ -1455,7 +1456,7 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
             fl.append(html.Br())
             fl.append(html.H5('Focus on: ' + guide))
             #fl.append(html.P(['View all targets found with the selected guide ' , html.A('here', href = URL + '/result?job=' + job_id + '#' + guide, target = '_blank')]))  #TODO ultime 3 righe uguali a sopra, sistemare 
-            df = pd.read_pickle(job_directory + job_id + '_summary_result_' + guide + '.txt')
+            df = pd.read_pickle(job_directory + job_id + '.summary_by_guide.' + guide + '.txt')
             
             df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | (df['Number of targets'] == 0)  ].index, inplace = True)
             more_info_col = []
@@ -1465,7 +1466,10 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
                 total_col.append(df['Bulge Size'])
             df[''] = more_info_col
             df['Total'] = df['Bulge Size'] + df['Mismatches']
-            df = df.sort_values(['Total', 'Targets created by SNPs'], ascending = [True, False])
+            if genome_type == 'both':
+                df = df.sort_values(['Total', 'Targets created by SNPs'], ascending = [True, False])
+            else:
+                df = df.sort_values('Total', ascending = True)
             del df['Total']
             #print (df)
             fl.append(html.Div(
@@ -1539,8 +1543,8 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
             fl.append(html.H5('Focus on: ' + guide))
             # Colonne tabella: chr, pos, target migliore, min mm, min bulges, num target per ogni categoria di mm e bulge, show targets; ordine per total, poi mm e poi bulge
             start_time = time.time()
-            df = pd.read_csv( job_id + '.summary_position.' + guide +'.txt', sep = '\t', nrows = 100)   #TODO cambiare nome file con quello giusto (job_id.tab_position.txt)
-            df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t') #TODO cancellare
+            df = pd.read_csv( job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t', nrows = 100)   
+            #df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t') #TODO cancellare
             df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
             more_info_col = []
             for i in range(df.shape[0]):
@@ -1564,7 +1568,8 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
                     )
             )
             print('Position dataframe ready', time.time() - start_time)
-            max_bulges = '2' #TODO remove
+            #max_bulges = '2' #TODO remove
+            
             start_time = time.time()
             fl.append(html.Div(
                     generate_table_position(df, 'table-position', 1 , int(mms), int(max_bulges), guide, job_id ), style = {'text-align': 'center'}, id = 'div-table-position'
@@ -1830,8 +1835,8 @@ def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_ce
         if pos_end:
             if int(pos_end) < int(pos_begin):
                 pos_end = None
-        df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
-        df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t') #TODO cancellare
+        df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+        #df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t') #TODO cancellare
         df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
         more_info_col = []
         for i in range(df.shape[0]):
@@ -1854,11 +1859,11 @@ def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_ce
                 if pos_end:
                     if int(pos_end) < int(pos_begin):
                         pos_end = None
-                df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
-                df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t') #TODO cancellare
+                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+                #df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t') #TODO cancellare
             else:
-                df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t', nrows = current_page * 10)   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
-                df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t', nrows = current_page * 10) #TODO cancellare
+                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t', nrows = current_page * 10)   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+                #df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t', nrows = current_page * 10) #TODO cancellare
             df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
             more_info_col = []
             for i in range(df.shape[0]):
@@ -1887,11 +1892,11 @@ def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_ce
                 if pos_end:
                     if int(pos_end) < int(pos_begin):
                         pos_end = None
-                df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
-                df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t') #TODO cancellare
+                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+                #df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t') #TODO cancellare
             else:
-                df = pd.read_csv(job_id + '.summary_position.' + guide +'.txt', sep = '\t', nrows = current_page * 10)   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
-                df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t',nrows = current_page * 10) #TODO cancellare
+                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t', nrows = current_page * 10)   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+                #df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t',nrows = current_page * 10) #TODO cancellare
             df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
             more_info_col = []
             for i in range(df.shape[0]):
@@ -1954,10 +1959,14 @@ def resultPage(job_id):
     with open('Results/' + value + '/Params.txt') as p:
         all_params = p.read()
         mms = (next(s for s in all_params.split('\n') if 'Mismatches' in s)).split('\t')[-1]
-        genome_type = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
-    
-    if '+' in genome_type:
-        genome_type = 'ref'
+        genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+        ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+        
+    genome_type = 'ref'
+    if '+' in genome_type_f:
+        genome_type = 'var'
+    if 'True' in ref_comp:
+        genome_type = 'both'
     mms = int(mms[0])
     mms_values = [{'label':i, 'value':i} for i in range(mms + 1) ]      
     
@@ -2073,8 +2082,11 @@ def resultPage(job_id):
     final_list.append(
         html.Button('Summary by Guide', id = 'btn-summary-table')
     )
+    style_samples = {}
+    if genome_type == 'ref':
+        style_samples = {'display':'none'}
     final_list.append(
-        html.Button('Summary by Samples', id = 'btn-summary-samples')
+        html.Button('Summary by Samples', id = 'btn-summary-samples', style = style_samples)
     )
     final_list.append(
         html.Button('Summary by Position', id = 'btn-summary-position')
@@ -2083,6 +2095,8 @@ def resultPage(job_id):
     final_list.append(
         html.Div(id = 'all-images')
     )
+
+    final_list.append(html.Div(genome_type, style = {'display':'none'}, id = 'div-genome-type'))
     result_page = html.Div(final_list, style = {'margin':'1%'})
     return result_page
 
@@ -2255,8 +2269,8 @@ def global_store_subset(value, bulge_t, bulge_s, mms, guide):
     if value is None:
         return ''
     
-    df = pd.read_csv('example_todo_delete' +bulge_t +bulge_s + mms +guide[0] +'.txt', sep = '\t')
-    df.rename(columns = {"#Bulge type":'Bulge Type', "#Bulge_type":'Bulge Type', 'Bulge_Size':'Bulge Size'}, inplace = True)
+    df = pd.read_csv( 'Results/' + value + '/' + value + '.' + bulge_t + bulge_s + mms + '.' + guide +'.txt', sep = '\t', header = None)
+    #df.rename(columns = {"#Bulge type":'Bulge Type', "#Bulge_type":'Bulge Type', 'Bulge_Size':'Bulge Size'}, inplace = True)
     return df
 
 
@@ -2272,21 +2286,39 @@ def guidePagev3(job_id, hash):
         bulge_t = 'X'
     
     value = job_id
+
+    with open('Results/' + value + '/Params.txt') as p:
+        all_params = p.read()
+        genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+        ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+        
+    genome_type = 'ref'
+    if '+' in genome_type_f:
+        genome_type = 'var'
+    if 'True' in ref_comp:
+        genome_type = 'both'
     final_list = []
     final_list.append(html.H3('Selected Guide: ' + guide))
     final_list.append(html.P('List of Targets found for the selected guide'))
-    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
-    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
+    if genome_type == 'ref':
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric']
+    elif genome_type == 'var':
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text']
+    else:
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
+        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     job_directory = 'Results/' + job_id + '/'
     
     start = time.time()
-    subprocess.call(['./grep_specific_targets.sh ' + bulge_t + ' ' + bulge_s + ' ' + mms + ' ' + guide[0] + ' ' + guide[1] + ' ' + job_id], shell = True)
+    subprocess.call(['PostProcess/./grep_specific_targets.sh ' + bulge_t + ' ' + bulge_s + ' ' + mms + ' ' + guide[0] + ' ' + guide[1] + ' ' + job_id + ' ' + guide], shell = True) #TODO migliorare
     global_store_subset(job_id, bulge_t, bulge_s, mms,guide)
     #subset_targets = pd.read_csv('example_todo_delete.txt', sep = '\t')
     #data_dict = subset_targets.to_dict('records')
     print('Grep e load:', time.time() - start)
-    final_list.append(          #TODO add margin bottom 1rem to toggle button and prev-next buttons
+    final_list.append(          
         html.Div( 
             dash_table.DataTable(
                 id='table-subset-target', 
@@ -2314,11 +2346,8 @@ def guidePagev3(job_id, hash):
                         'textAlign': 'left'
                     }
                 ],
-                export_format = 'csv',
-                # css=[
-                #     {"selector": ".column-header--hide::before", "rule": 'width: "50px"'}
-                # ]
-                
+                css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
+                export_format = 'csv'                
             ),
             id = 'div-result-table',
         )
@@ -2355,7 +2384,6 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
     filtering_expressions = filter.split(' && ')
     #filtering_expressions.append(['{crRNA} = ' + guide])   
     guide = hash_guide[1:hash_guide.find('new')]
-    print('guide', guide)
     mms = hash_guide[-1:]
     bulge_s = hash_guide[-2:-1]
     if 'DNA' in hash_guide:
@@ -2366,9 +2394,11 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
         bulge_t = 'X'  
     df = global_store_subset(value, bulge_t, bulge_s, mms, guide)
     dff = df
-    print(dff.columns)
-    sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
-    sort_by.insert(1, {'column_id' : 'Bulge Size', 'direction': 'asc'})
+    dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+        7:'Mismatches', 8:'Bulge Size', 9:'Total'} , inplace = True)
+
+    # sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
+    # sort_by.insert(1, {'column_id' : 'Bulge Size', 'direction': 'asc'})
     #sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
@@ -2388,7 +2418,6 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
             # only works with complete fields in standard format
             dff = dff.loc[dff[col_name].str.startswith(filter_value)]
 
-    print('len index after', len(dff.index))
     #NOTE sort_by: [{'column_id': 'BulgeType', 'direction': 'asc'}, {'column_id': 'crRNA', 'direction': 'asc'}]
     #sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
     #sort_by.insert(0, {'column_id' : 'BulgeSize', 'direction': 'asc'})

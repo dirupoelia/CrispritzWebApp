@@ -166,7 +166,6 @@ with open (sys.argv[1]) as result:
           guides_dict_doench[target[1]] = doench_score
 
       sum_cfd = sum_cfd + cfd_score
-      print('cfd:', cfd_score)
       try:
         guides_dict[target[1]] = guides_dict[target[1]] + cfd_score
       except:

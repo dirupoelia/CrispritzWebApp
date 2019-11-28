@@ -1,3 +1,6 @@
+#OLD, VIEW summary_by_guide_position.py FOR NEW CHANGES
+
+
 #Script for the Summary by Position table. Given in input a targets.txt ordered by clusters, for each cluster (position) it saves: 
 # -chr
 # -pos

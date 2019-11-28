@@ -28,7 +28,7 @@ used_genome_dir=$2
 echo 'Search-index\tStart\t'$(date) >> $1'/'log.txt
 if [ ${10} = 'True' ]; then
     #echo 'crispritz search-index'
-    crispritz.py search $4 $5 $6 $jobid -index -mm $7 -bDNA $8 -bRNA ${9} -t -scores $3
+    crispritz.py search $4 $5 $6 $jobid -index -mm $7 -bDNA $8 -bRNA ${9} -t #-scores $3
     mv ./$jobid.*.txt $1
     mv ./$jobid.*.xls $1
 
@@ -45,7 +45,7 @@ echo 'Search-index\tDone\t'$(date) >> $1'/'log.txt
 echo 'Search\tStart\t'$(date) >> $1'/'log.txt
 if [ ${11} = 'True' ]; then
     #echo 'crispritz search'
-    crispritz.py search $used_genome_dir $5 $6 $jobid -mm $7 -t -scores $3
+    crispritz.py search $used_genome_dir $5 $6 $jobid -mm $7 -t #-scores $3
     mv ./$jobid.*.txt $1
     mv ./$jobid.*.xls $1
     if [ ${15} = 'True' ]; then
@@ -146,14 +146,18 @@ fi
 
 #TODO sistemare il conteggio dei var uniq: al momento non lo fa perchè non c'è crispritz con il post processing, in futuro scegliere tra 'No' e 'Uniq' in base
 #all'opzione scelta
-type_post='No'
-while IFS= read -r line || [ -n "$line" ]; do 
-    python3 ./../PostProcess/summary_by_guide_table.py $1/$jobid.targets.txt $7 $8 $9 $line $jobid $type_post
-done < $6
-
-mv $jobid'_summary_result_'* $1
-
-
+if [ ${19} = 'ref' ]; then
+    type_post='No'
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
+elif [ ${19} = 'var' ]; then
+    type_post='No'
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
+    #TODO ADD sample analysis
+else
+    type_post='Uniq'
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
+    #TODO ADD sample analysis
+fi
 
 
 cd ../../

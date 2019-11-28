@@ -7,7 +7,7 @@
 # Input:
 # guide, mm, profile, extprofile, annotation_file, summaryone, summarytwo, gecko profile, gecko exons, gecko introns, gecko promoter, gecko dnase, geckoctcf
 
-
+#BUG 428 quando guida non ha trovato targets
 # Libraries
 import math
 import matplotlib

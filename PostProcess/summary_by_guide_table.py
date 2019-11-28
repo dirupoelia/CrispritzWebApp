@@ -1,3 +1,5 @@
+#OLD, VIEW summary_by_guide_position.py FOR NEW CHANGES
+
 #Script che crea la tabella Summary by Guide, dato in input un file targets.txt, conta il numero di targets trovato per ogni combinazione di
 #mms-bulge. Inoltre, se è presente la colonna Var_uniq, calcola il numero di Var_uniq per quella categoria di mms-bulge
 

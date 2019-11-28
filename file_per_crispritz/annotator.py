@@ -28,7 +28,7 @@ print("EXECUTING PRELIMINARY OPERATIONS")
 
 annotationsTree = IntervalTree()
 annotationsSet = set()
-guidesSet = set()       #NOTE/BUG if guide finds 0 targets, it will not be annotated
+guidesSet = set()       #NOTE/BUG if guide finds 0 targets, it will not be annotated -> resolved with line 133 try except
 
 for line in inAnnotationFile:
     x = line.split('\t')
@@ -127,7 +127,10 @@ with open(outputFile + '.Annotation.txt', 'w') as tempItem:
             
             tempItem.write(str(item))
             for counter in range(0,10):
-                tempItem.write('\t'+str(guideDict[str(guide_row_list[0])][item][counter]))
+                try:
+                    tempItem.write('\t'+str(guideDict[str(guide_row_list[0])][item][counter]))
+                except:
+                    tempItem.write('\t0')
             tempItem.write('\n')
               
 

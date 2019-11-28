@@ -1,0 +1,12 @@
+Job	Start	gio 28 nov 2019, 17.47.57, CET
+Search-index	Start	gio 28 nov 2019, 17.47.57, CET
+Search-index	Done	gio 28 nov 2019, 17.47.57, CET
+Search	Start	gio 28 nov 2019, 17.47.57, CET
+Search	Done	gio 28 nov 2019, 17.48.02, CET
+Annotation	Start	gio 28 nov 2019, 17.48.02, CET
+Annotation	Done	gio 28 nov 2019, 17.49.49, CET
+Report	Start	gio 28 nov 2019, 17.49.49, CET
+Report	Done	gio 28 nov 2019, 17.50.57, CET
+PostProcess	Start	gio 28 nov 2019, 17.50.57, CET
+PostProcess	Done	gio 28 nov 2019, 17.51.09, CET
+Job	Done	gio 28 nov 2019, 17.51.09, CET
