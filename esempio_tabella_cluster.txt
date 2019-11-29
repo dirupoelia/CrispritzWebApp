@@ -1,3 +1,0 @@
-#Bulge type	crRNA	DNA	Chromosome	Position	Direction	Mismatches	Bulge Size	Total	Min_mismatches	Max_mismatches	PAM_disr	PAM_gen	Var_uniq	Samples	top	id
-X	TGCTTGGTCGGCACTGATAGNNN	TGCTTGGTCGGCACTGATAGGGG	chr2	60498366	-	0	0	0	-	-	n	n	n	s1	t	1
-X	TGCTTGGTCGGCACTGATAGNNN	TGCTTGGTCGGCASTGATAGGGG	chr2	60498366	-	0	0	0	0	1	n	n	n	s1	s	1

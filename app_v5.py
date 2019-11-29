@@ -464,168 +464,168 @@ load_page = html.Div(final_list, style = {'margin':'1%'})
 
 #Test bootstrap page, go to /test-page to see 
 final_list = []
-final_list.append(html.P('List of Targets found for the selected guide'))
+# final_list.append(html.P('List of Targets found for the selected guide'))
 
-df = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
-exp_col = []
-close_col = []
-status_col = []     #'Top1' or 'Subcluster'
-df.drop( df[df['top'] == 's'].index, inplace = True)
+# df = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
+# exp_col = []
+# close_col = []
+# status_col = []     #'Top1' or 'Subcluster'
+# df.drop( df[df['top'] == 's'].index, inplace = True)
 
-for i in range (df.shape[0]):
-    exp_col.append('+')
-    close_col.append('-')
-    status_col.append('Top1')
-df['Open'] = exp_col
-df['Close'] = close_col
-df['Status'] = status_col
-print('columns:', df.columns)
-final_list.append(dash_table.DataTable(
-    id='table-expand',
-    columns=[{"name": i, "id": i} for i in df.columns[:]],
-    data=df.to_dict('records'),
-    row_selectable = 'multi',
-    style_data_conditional = [{
-                        'if': {
-                                'filter_query': '{Variant unique} eq y', 
-                                #'column_id' :'{#Bulge type}',
-                                #'column_id' :'{Total}'
-                            },
-                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(230, 0, 0,0.65)'#'rgb(255, 102, 102)'
+# for i in range (df.shape[0]):
+#     exp_col.append('+')
+#     close_col.append('-')
+#     status_col.append('Top1')
+# df['Open'] = exp_col
+# df['Close'] = close_col
+# df['Status'] = status_col
+# print('columns:', df.columns)
+# final_list.append(dash_table.DataTable(
+#     id='table-expand',
+#     columns=[{"name": i, "id": i} for i in df.columns[:]],
+#     data=df.to_dict('records'),
+#     row_selectable = 'multi',
+#     style_data_conditional = [{
+#                         'if': {
+#                                 'filter_query': '{Variant unique} eq y', 
+#                                 #'column_id' :'{#Bulge type}',
+#                                 #'column_id' :'{Total}'
+#                             },
+#                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+#                             'background-color':'rgba(230, 0, 0,0.65)'#'rgb(255, 102, 102)'
                             
-                        }]
-))
+#                         }]
+# ))
 final_list.append(html.Div(id='test-div-for-button'))
 test_page = html.Div(final_list, style = {'margin':'1%'})
 
 #TEST PAGE 2
 final_list = []
-final_list.append(html.P('List of Targets found for the selected guide'))
-final_list.append(html.P('Select a row to view the corresponding cluster'))
-df_example = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
-print('TABELLA CLUSTER', df_example)
-#df_example.drop( df_example[df_example['top'] == 's'].index, inplace = True)
-final_list.append(dash_table.DataTable(
-    id='double-table-one',
-    columns=[{"name": i, "id": i} for i in df_example.columns[:-2]],
-    data= df_example.loc[df_example['top'] == 't'].to_dict('records'), #df_example.to_dict('records'),
-    css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
+# final_list.append(html.P('List of Targets found for the selected guide'))
+# final_list.append(html.P('Select a row to view the corresponding cluster'))
+# df_example = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
+# print('TABELLA CLUSTER', df_example)
+# #df_example.drop( df_example[df_example['top'] == 's'].index, inplace = True)
+# final_list.append(dash_table.DataTable(
+#     id='double-table-one',
+#     columns=[{"name": i, "id": i} for i in df_example.columns[:-2]],
+#     data= df_example.loc[df_example['top'] == 't'].to_dict('records'), #df_example.to_dict('records'),
+#     css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
 
-    style_data_conditional = [{
-                        'if': {
-                                'filter_query': '{Variant unique} eq y', 
-                                #'column_id' :'{#Bulge type}',
-                                #'column_id' :'{Total}'
-                            },
-                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+#     style_data_conditional = [{
+#                         'if': {
+#                                 'filter_query': '{Variant unique} eq y', 
+#                                 #'column_id' :'{#Bulge type}',
+#                                 #'column_id' :'{Total}'
+#                             },
+#                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+#                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
-                        }]
-))
-final_list.append(html.P())
-final_list.append(html.P())
-final_list.append(html.Div(
-    dash_table.DataTable(
-        id = 'double-table-two',
-        #columns=[{"name": i, "id": i} for i in df_example.columns[:]],
-        #fixed_rows = {'headers' : True, 'data': 0},
-        page_current=0,
-        page_size=PAGE_SIZE,
-        page_action='custom',
-        virtualization = True,
-        css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
+#                         }]
+# ))
+# final_list.append(html.P())
+# final_list.append(html.P())
+# final_list.append(html.Div(
+#     dash_table.DataTable(
+#         id = 'double-table-two',
+#         #columns=[{"name": i, "id": i} for i in df_example.columns[:]],
+#         #fixed_rows = {'headers' : True, 'data': 0},
+#         page_current=0,
+#         page_size=PAGE_SIZE,
+#         page_action='custom',
+#         virtualization = True,
+#         css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
 
-        style_data_conditional = [{
-                        'if': {
-                                'filter_query': '{Variant unique} eq y', 
-                                #'column_id' :'{#Bulge type}',
-                                #'column_id' :'{Total}'
-                            },
-                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+#         style_data_conditional = [{
+#                         'if': {
+#                                 'filter_query': '{Variant unique} eq y', 
+#                                 #'column_id' :'{#Bulge type}',
+#                                 #'column_id' :'{Total}'
+#                             },
+#                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+#                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
-                        },
-                        {
-                            'if': {
-                                    'filter_query': '{top} eq t',         
-                                    # 'column_id' :'BulgeType'
-                                },
-                                # 'border-left': '5px solid rgba(26, 26, 255, 0.9)',
-                                'font-weight':'bold'
+#                         },
+#                         {
+#                             'if': {
+#                                     'filter_query': '{top} eq t',         
+#                                     # 'column_id' :'BulgeType'
+#                                 },
+#                                 # 'border-left': '5px solid rgba(26, 26, 255, 0.9)',
+#                                 'font-weight':'bold'
                                 
 
-                        }    
+#                         }    
                         
-                    ]
-        ),
-    id = 'div-test-page2-second-table'
-    )
-)
+#                     ]
+#         ),
+#     id = 'div-test-page2-second-table'
+#     )
+# )
 test_page2 = html.Div(final_list, style = {'margin':'1%'})
 
 ##################################################CALLBACKS##################################################
 #Test callbacks
 
-#Callback for test-page2
-@app.callback(
-    [Output('double-table-two', 'data'),
-    Output('double-table-two', 'columns')],
-    [Input('double-table-one', 'active_cell')],
-    [State('double-table-one', 'data')]
-)
-def loadSecondTable(active_cell, data):
-    if active_cell is None:
-        raise PreventUpdate
+# #Callback for test-page2
+# @app.callback(
+#     [Output('double-table-two', 'data'),
+#     Output('double-table-two', 'columns')],
+#     [Input('double-table-one', 'active_cell')],
+#     [State('double-table-one', 'data')]
+# )
+# def loadSecondTable(active_cell, data):
+#     if active_cell is None:
+#         raise PreventUpdate
     
-    id_selected = data[active_cell['row']]['id']
+#     id_selected = data[active_cell['row']]['id']
     
-    return df_example.loc[df_example['id'] == id_selected].to_dict('records'), [{"name": i, "id": i} for i in list(data[0].keys())[:-2]]
+#     return df_example.loc[df_example['id'] == id_selected].to_dict('records'), [{"name": i, "id": i} for i in list(data[0].keys())[:-2]]
 
 
 
 
-#IDEA aggiungo colonna che mi indica se è top1 o solo parte del cluster, se l'utente clicca su +, faccio vedere anche quelle corrispondenti a quel cluster
-@app.callback(
-    Output('table-expand', 'data'),
-    #[Input('table-expand', 'active_cell')],
-    [Input('table-expand','selected_rows')],
-    [State('table-expand', 'data'),
-    State('table-expand', 'selected_row_ids')]
-)
-def expand(active_cell,  data, sri):    #Callback for test-page
-    if active_cell is None:
-        raise PreventUpdate
+# #IDEA aggiungo colonna che mi indica se è top1 o solo parte del cluster, se l'utente clicca su +, faccio vedere anche quelle corrispondenti a quel cluster
+# @app.callback(
+#     Output('table-expand', 'data'),
+#     #[Input('table-expand', 'active_cell')],
+#     [Input('table-expand','selected_rows')],
+#     [State('table-expand', 'data'),
+#     State('table-expand', 'selected_row_ids')]
+# )
+# def expand(active_cell,  data, sri):    #Callback for test-page
+#     if active_cell is None:
+#         raise PreventUpdate
     
-    #df = pd.DataFrame(data)
-    df = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
-    print('Sel row', active_cell)
+#     #df = pd.DataFrame(data)
+#     df = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
+#     print('Sel row', active_cell)
     
-    print('Sel row id', sri)
-    print('Data', data)
-    df.drop( df[(df['top'] == 's') & (~( df['id'].isin(sri)))].index, inplace = True)
-    # for i in range (df.shape[0]):
-    #     exp_col.append('+')
-    #     close_col.append('-')
-    #     status_col.append('Top1')
-    # df['Open'] = exp_col
-    # df['Close'] = close_col
-    # df['Status'] = status_col
-    print('df',df)
-    return df.to_dict('records')
-    # if active_cell['column_id'] == 'Open': 
-    #     if df.iat[active_cell['row'], -1] == 'Top1':
-    #         df.iat[active_cell['row'], -1] = 'Subcluster'    
-    #         df.loc[-1] = 'n'
-    #         return df.to_dict('records')
-    #     else:
-    #         raise PreventUpdate
-    # elif active_cell['column_id'] == 'Close':
-    #     if df.iat[active_cell['row'], -1] == 'Subcluster':
-    #         df.iat[active_cell['row'], -1] = 'Top1'
-    #         df.drop(df.tail(1).index,inplace=True)
-    #         return df.to_dict('records')
-    # raise PreventUpdate
+#     print('Sel row id', sri)
+#     print('Data', data)
+#     df.drop( df[(df['top'] == 's') & (~( df['id'].isin(sri)))].index, inplace = True)
+#     # for i in range (df.shape[0]):
+#     #     exp_col.append('+')
+#     #     close_col.append('-')
+#     #     status_col.append('Top1')
+#     # df['Open'] = exp_col
+#     # df['Close'] = close_col
+#     # df['Status'] = status_col
+#     print('df',df)
+#     return df.to_dict('records')
+#     # if active_cell['column_id'] == 'Open': 
+#     #     if df.iat[active_cell['row'], -1] == 'Top1':
+#     #         df.iat[active_cell['row'], -1] = 'Subcluster'    
+#     #         df.loc[-1] = 'n'
+#     #         return df.to_dict('records')
+#     #     else:
+#     #         raise PreventUpdate
+#     # elif active_cell['column_id'] == 'Close':
+#     #     if df.iat[active_cell['row'], -1] == 'Subcluster':
+#     #         df.iat[active_cell['row'], -1] = 'Top1'
+#     #         df.drop(df.tail(1).index,inplace=True)
+#     #         return df.to_dict('records')
+#     # raise PreventUpdate
 
     
 #################################################
@@ -1836,6 +1836,7 @@ def filterSampleTable(n, nPrev, nNext, sup_pop, pop, search, sel_cel, all_guides
     State('div-current-page-table-position', 'children'),
     State('div-mms-bulges-position', 'children')]
 )#TODO test filter position con risultati filtrati
+#BUG se metto chr1 ma non clicco filtering e poi vado in next/prev il filtering è comunque applicato
 def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_cel, all_guides, current_page, mms_bulge):
     if sel_cel is None:
         raise PreventUpdate
@@ -1867,12 +1868,14 @@ def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_ce
             if int(pos_end) < int(pos_begin):
                 pos_end = None
         df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
-        #df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t') #TODO cancellare
+        
         df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
         more_info_col = []
         for i in range(df.shape[0]):
             more_info_col.append('Show Targets')
         df[''] = more_info_col
+        if chr is None or chr is '':
+            return generate_table_position(df, 'table-position', 1, mms, max_bulges,guide, job_id ), 1
         if pos_end is None:
             df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) )].index , inplace = True)
         else:
@@ -2650,4 +2653,4 @@ if __name__ == '__main__':
 
     #BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti
     #Iupac
-    #TODO se cancello il chr nel filter by position, non vedo nessun risultato -> fare in modo che metta risultati originali
+    #TODO se cancello il chr nel filter by position, non vedo nessun risultato -> fare in modo che metta risultati originali -> da controllare con risultati più grandi

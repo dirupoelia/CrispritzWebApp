@@ -1,3 +1,0 @@
-#Bulge type	crRNA	DNA	Chromosome	Position	Direction	Mismatches	Bulge Size	Total	Min_mismatches	Max_mismatches	PAM_disr	PAM_gen	Var_uniq	Samples
-DNA	CTAACAGTTGCTTTTAT-CACNNN	CcAAaAGTTGtTTTTAWGCACTGT	chr17	64501267	+	3	1	4	3	4	n	n	n	HG03762
-DNA	CTAACAGTTGCTTTTAT-CACNNN	CcAAaAGTTGtTTTTATGCACTGT	chr17	64501267	+	3	1	4	-	-	n	n	n	No samples

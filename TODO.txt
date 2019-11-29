@@ -243,3 +243,15 @@ nella cartella del job corrispondente
 -implementare che se cancello i filtri ritorno i valori originali
 -Rivedere grep specific targets per migliorare l'estrazione se due guide sono simili
 -Fare in modo che se prendo i file dalla cartella hgetcetc non considero i file .fai
+
+-Tenere solo genomi hg19 e hg38
+-Mettere 2/3 PAM
+-Libreria xlib per indexing di file (per prendere le posizioni)
+-Mettere estimated time nella pagina di load (tempi calcolati sul load example)
+-Ingrandire load example
+-Mettere tabs e non bottoni -> Graphical report, Summary by guide, summary by sample, summary by position
+-Nella tab Graph report, mettere bottoni per mms e show all
+-Nel report del sample, mettere un link per un graph report (fare redar chart per il sample selezionato. Ci posso mettere anche le info della tabella)
+-Se ho la visualizzazione dei targets che hannosamples, se clicco nella riga mi appare sotto la tabella l'elenco di questi samples, se clicco si apre in un'altra scheda
+il suo graph report
+-Creare link per download results tramite flask e lascire a nginx il download (mettere file in una cartella tipo assets)

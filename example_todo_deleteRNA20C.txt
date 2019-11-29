@@ -1,2 +1,0 @@
-#Bulge type	crRNA	DNA	Chromosome	Position	Direction	Mismatches	Bulge Size	Total	Min_mismatches	Max_mismatches	PAM_disr	PAM_gen	Var_uniq	Samples
-RNA	CTAACAGTTGCTTTTATCACNNN	CTAACAGYTG-TTTTA-SACTAG	chr5	148321957	+	0	2	2	0	2	n	n	n

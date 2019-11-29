@@ -1,0 +1,12 @@
+Job	Start	ven 29 nov 2019, 16.56.00, CET
+Search-index	Start	ven 29 nov 2019, 16.56.00, CET
+Search-index	Done	ven 29 nov 2019, 16.56.00, CET
+Search	Start	ven 29 nov 2019, 16.56.00, CET
+Search	Done	ven 29 nov 2019, 16.56.05, CET
+Annotation	Start	ven 29 nov 2019, 16.56.05, CET
+Annotation	Done	ven 29 nov 2019, 16.56.50, CET
+Report	Start	ven 29 nov 2019, 16.56.50, CET
+Report	Done	ven 29 nov 2019, 16.57.07, CET
+PostProcess	Start	ven 29 nov 2019, 16.57.07, CET
+PostProcess	Done	ven 29 nov 2019, 16.57.10, CET
+Job	Done	ven 29 nov 2019, 16.57.10, CET

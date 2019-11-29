@@ -126,11 +126,10 @@ echo 'Report\tDone\t'$(date) >> $1'/'log.txt
 #TODO scores_test will be substituted with -scores option with crispritz 2.1.2
 echo 'PostProcess\tStart\t'$(date) >> $1'/'log.txt
 cd $1
-
+echo 'Post Process start'
 python3 ../../PostProcess/scores_guide_table.py $jobid.targets.txt ../../$used_genome_dir pam.txt
 
 #Analysis for var/ref type ('both')
-
 if [ ${19} = 'both' ]; then
     #Estract common, semicommon and unique
     ../../PostProcess/./extraction.sh ref/$jobid'_ref.targets.txt' $jobid.targets.txt $jobid
@@ -147,21 +146,21 @@ if [ ${19} = 'both' ]; then
     #Top 1 extraction
     python3 ../../PostProcess/extract_top.py $jobid.total.txt $jobid # > $jobid.top_1.txt
     #Top1 expansion
-    python3 ../../PostProcess/extract_top.py ../../../my_dict_chr1.json 1 $jobid.top_1.txt  #> $jobid.top_1.samples.txt 
+    python3 ../../PostProcess/calc_samples.py ../../../my_dict_chr1.json 1 $jobid.top_1.txt  #> $jobid.top_1.samples.txt 
     #Summary samples
     while IFS= read -r line || [ -n "$line" ]; do    
         python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $line $jobid
     done < guides.txt
     #python3 ../../PostProcess/cluster.dict.py $jobid.total.txt
+    echo 'Comparison done'
 fi
-exit 1
+
 #Clustering for var and ref
 if [ ${19} != 'both' ]; then
     python3 ../../PostProcess/cluster.dict.py $jobid.targets.txt
 fi
 
-#TODO sistemare il conteggio dei var uniq: al momento non lo fa perchè non c'è crispritz con il post processing, in futuro scegliere tra 'No' e 'Uniq' in base
-#all'opzione scelta
+
 if [ ${19} = 'ref' ]; then
     type_post='No'
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
@@ -182,7 +181,7 @@ else
     #TODO ADD sample analysis
 fi
 
-
+echo 'post Process done'
 cd ../../
 echo 'PostProcess\tDone\t'$(date) >> $1'/'log.txt
 if [ ${17} = 'True' ]; then
