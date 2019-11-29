@@ -510,6 +510,8 @@ final_list.append(dash_table.DataTable(
     id='double-table-one',
     columns=[{"name": i, "id": i} for i in df_example.columns[:-2]],
     data= df_example.loc[df_example['top'] == 't'].to_dict('records'), #df_example.to_dict('records'),
+    css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
+
     style_data_conditional = [{
                         'if': {
                                 'filter_query': '{Var_uniq} eq y', 
@@ -517,7 +519,7 @@ final_list.append(dash_table.DataTable(
                                 #'column_id' :'{Total}'
                             },
                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(230, 0, 0,0.65)'#'rgb(255, 102, 102)'
+                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
                         }]
 ))
@@ -532,6 +534,8 @@ final_list.append(html.Div(
         page_size=PAGE_SIZE,
         page_action='custom',
         virtualization = True,
+        css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
+
         style_data_conditional = [{
                         'if': {
                                 'filter_query': '{Var_uniq} eq y', 
@@ -539,7 +543,7 @@ final_list.append(html.Div(
                                 #'column_id' :'{Total}'
                             },
                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(230, 0, 0,0.65)'#'rgb(255, 102, 102)'
+                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
                         },
                         {
@@ -1014,6 +1018,8 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     genome_type = 'ref'     #Indicates if search is 'ref', 'var' or 'both'
     if '+' in genome_selected:
         genome_type = 'var'
+    if ref_comparison:
+        genome_type = 'both'
     subprocess.Popen(['assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
         ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
             ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + 'annotations/' + annotation_file[0] + 
@@ -2460,7 +2466,8 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
     cells_style = [
                         {
                         'if': {
-                                'filter_query': '{Var_uniq} eq y', 
+                                'filter_query': '{Var_uniq} eq y',
+                                #'filter_query': '{Direction} eq +', 
                                 #'column_id' :'Bulge Type'
                             },
                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 

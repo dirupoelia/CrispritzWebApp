@@ -61,7 +61,7 @@ if True:
             if line[3] == 'chr' + sys.argv[2]:       
                 set_list = []
                 target_string = line[2]
-                if line[5] == '-':
+                if line[6] == '-':
                     target_string = target_string[::-1]
                 bulge_found = 0 
                 for pos, char in enumerate(target_string):
@@ -113,7 +113,7 @@ if True:
                         
                         ref = a[-3]
                         var = a[-1]
-                        print('char in pos',t[pos_snp[ele_pos]].upper())
+                        #print('char in pos',t[pos_snp[ele_pos]].upper())
                         if t[pos_snp[ele_pos]].upper() == var:
                             if samples:
                                 set_list2.append(set(samples.split(',')))
@@ -124,14 +124,14 @@ if True:
                     if set_list2:
                         #print('setlist2', set_list2)
                         common_samples = set.intersection(*set_list2)
-                        print('common_smples', common_samples)
+                       # print('common_smples', common_samples)
                         if common_samples:
                             final_result.append(','.join(common_samples))
                         else:
                             final_result.append('No common samples')
                     else:
                         final_result.append('No samples')
-                    print('final_res', final_result)
+                    # print('final_res', final_result)
                     result.write('\t'.join(final_result) + '\n')
                     
                     #print(final_result)

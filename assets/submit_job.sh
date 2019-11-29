@@ -19,7 +19,6 @@
 #$18 is annotation file EG annotations/hg19_ref.annotations.bed
 #$19 is genome type, can be 'ref', 'var', 'both'
 #Note that if genome_selected is not enriched, the python exe will force $15 as false
-
 jobid=$(basename $1)
 echo 'Job\tStart\t'$(date)> $1'/'log.txt
 used_genome_dir=$2                 
@@ -71,10 +70,10 @@ if [ ${12} = 'True' ]; then
     mv ./$jobid.Annotation*.txt $1
     if [ ${15} = 'True' ]; then
         if [ ${10} = 'True' ]; then
-            crispritz.py annotate-results $1'/ref/'$jobid'_ref.profile_complete.txt' $1'/ref/'$jobid'_ref.targets.txt' ${18} $jobid
+            crispritz.py annotate-results $1'/ref/'$jobid'_ref.profile_complete.xls' $1'/ref/'$jobid'_ref.targets.txt' ${18} $jobid
         fi
         if [ ${11} = 'True' ]; then
-            crispritz.py annotate-results $1'/ref/'$jobid'_ref.profile.txt' $1'/ref/'$jobid'_ref.targets.txt' ${18} $jobid
+            crispritz.py annotate-results $1'/ref/'$jobid'_ref.profile.xls' $1'/ref/'$jobid'_ref.targets.txt' ${18} $jobid'_ref'
         fi
         mv ./$jobid'_ref'.Annotation*.txt $1/ref
     fi
@@ -130,18 +129,32 @@ cd $1
 
 python3 ../../PostProcess/scores_guide_table.py $jobid.targets.txt ../../$used_genome_dir pam.txt
 
-#Estract common, semicommon and unique
-if [ ${19} = 'both' ]; then
-    echo 'script per semicommon'
-    #chiamata script
-fi
+#Analysis for var/ref type ('both')
 
-#Clustering
+if [ ${19} = 'both' ]; then
+    #Estract common, semicommon and unique
+    ../../PostProcess/./extraction.sh ref/$jobid'_ref.targets.txt' $jobid.targets.txt $jobid
+    #Cluster semicommon e uniq -> TODO da sistemare l'ordine dell'analisi
+    python3 ../../PostProcess/cluster.dict.py $jobid.semi_common_targets.txt
+    python3 ../../PostProcess/cluster.dict.py $jobid.unique_targets.txt
+    #Pam analysis
+    python3 ../../PostProcess/pam_analysis.py $jobid.semi_common_targets.cluster.txt pam.txt ${19}  # > $jobid.semi_common_targets.cluster.minmaxdisr.txt
+    python3 ../../PostProcess/pam_creation.py $jobid.unique_targets.cluster.txt pam.txt ../../$3 # > $jobid.unique_targets.cluster.pamcreation.txt
+    cat $jobid.unique_targets.cluster.pamcreation.txt $jobid.semi_common_targets.cluster.minmaxdisr.txt > $jobid.total.txt
+    #Summary guide, pos
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.txt $7 $8 $9 guides.txt $jobid $type_post
+    #Top 1 extraction
+    python3 ../../PostProcess/extract_top.py $jobid.total.txt $jobid # > $jobid.top_1.txt
+    #Top1 expansion
+    python3 ../../PostProcess/extract_top.py ../../../my_dict_chr1.json chr1 $jobid.top_1.txt  #> $jobid.top_1.samples.txt 
+    #
+    
+    #python3 ../../PostProcess/cluster.dict.py $jobid.total.txt
+fi
+exit 1
+#Clustering for var and ref
 if [ ${19} != 'both' ]; then
     python3 ../../PostProcess/cluster.dict.py $jobid.targets.txt
-else
-    python3 ../../PostProcess/cluster.dict.py $jobid.semicommon #TODO mettere nomi giusti
-    python3 ../../PostProcess/cluster.dict.py $jobid.uniq
 fi
 
 #TODO sistemare il conteggio dei var uniq: al momento non lo fa perchè non c'è crispritz con il post processing, in futuro scegliere tra 'No' e 'Uniq' in base
@@ -153,7 +166,7 @@ elif [ ${19} = 'var' ]; then
     type_post='No'
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
     python3 ../../PostProcess/pam_analysis.py pam.txt $jobid.targets.cluster.txt ${19}
-    #TODO ADD sample analysis
+    #TODO ADD sample analysis FINIRE
     # Extract top 1
     python3 ../../PostProcess/extract_top.py $jobid.targets.cluster.minmaxdisr.txt $jobid
     #for file in dictionary directory
@@ -161,7 +174,8 @@ elif [ ${19} = 'var' ]; then
     python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt guides.txt
 else
     type_post='Uniq'
-    python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
+    python3 ../../PostProcess/pam_analysis.py pam.txt $jobid.targets.cluster.txt ${19}
     #TODO ADD sample analysis
 fi
 

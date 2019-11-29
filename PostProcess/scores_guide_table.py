@@ -143,13 +143,13 @@ with open (sys.argv[1]) as result:
       cfd_score = calc_cfd(guide_seq, sg, pam, mm_scores, pam_scores)
       if (target[6] == '0'):    #TODO se cambio inserendo pos cluister, devo cambiareanche qui
         #estraggo sequenza
-        with open('bedfile_tmp.txt', 'w+') as bedfile:
+        with open('bedfile_tmp.bed', 'w+') as bedfile:
           if target[5] == '+':
             bedfile.write(target[3] + '\t' + str(int(target[4]) - 4 ) + '\t' + str(int(target[4]) + 23 + 3 ))
           else:
             bedfile.write(target[3] + '\t' + str(int(target[4]) - 3 ) + '\t' + str(int(target[4]) + 23 + 4 ))
         
-        extr = subprocess.Popen(['bedtools getfasta -fi ' + sys.argv[2] + '/' + target[3] + '.fa' '-bed bedfile_tmp.txt'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
+        extr = subprocess.Popen(['bedtools getfasta -fi ' + sys.argv[2] + '/' + target[3] + '.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
         extr.wait()
         out, err = extr.communicate()
         out = out.decode('UTF-8')
@@ -177,13 +177,13 @@ with open (sys.argv[1]) as result:
       if "N" in off:
         continue
       if (target[6] == '0'):
-        with open('bedfile_tmp.txt', 'w+') as bedfile:
+        with open('bedfile_tmp.bed', 'w+') as bedfile:
           if target[5] == '+':
             bedfile.write(target[3] + '\t' + str(int(target[4]) - 4 ) + '\t' + str(int(target[4]) + 23 + 3 ))
           else:
             bedfile.write(target[3] + '\t' + str(int(target[4]) - 3 ) + '\t' + str(int(target[4]) + 23 + 4 ))
         
-        extr = subprocess.Popen(['bedtools getfasta -fi ' + sys.argv[2] + '/' + target[3] + '.fa' '-bed bedfile_tmp.txt'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
+        extr = subprocess.Popen(['bedtools getfasta -fi ' + sys.argv[2] + '/' + target[3] + '.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
         extr.wait()
         out, err = extr.communicate()
         out = out.decode('UTF-8')

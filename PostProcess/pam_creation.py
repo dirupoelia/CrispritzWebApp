@@ -134,12 +134,12 @@ if not pam_at_beginning:
             for pos, char in enumerate(line[2][pam_begin:pam_end]):           
                 if char in iupac_code:
                     if line[0] == 'DNA':
-                        bulges = int(line[7])
+                        bulges = int(line[8])
                     elif line[0] == 'RNA':
-                        bulges = int(line[7]) * (-1)       
+                        bulges = int(line[8]) * (-1)       
                     else:
                         bulges = 0
-                    if line[5] == '+':
+                    if line[6] == '+':
                         # La pos (line[4] mi indica la prima lettera del target, eg la prima A in ACGCGACTAGCTACGCACGTNRG)
                         bedfile.write(line[3] + '\t' + str( int(line[4]) + guide_len + bulges + pos) + '\t' + str(int(line[4]) + guide_len + bulges + pos + 1) +'\n') 
                     else:
@@ -159,7 +159,7 @@ else:
                         bulges = int(line[7]) * (-1)        
                     else:
                         bulges = 0
-                    if line[5] == '+':
+                    if line[6] == '+':
                         # La pos (line[4] mi indica la prima lettera del target, eg la prima A in ACGCGACTAGCTACGCACGTNRG)
                         bedfile.write(line[3] + '\t' + str( int(line[4]) + pos) + '\t' + str(int(line[4]) + pos + 1) +'\n') 
                     else:
@@ -170,7 +170,7 @@ else:
 print('Created bedfile:', time.time() - start_time)
 start_time = time.time()
 bed_file = os.path.realpath('bedfile.bed')
-subprocess.call(['./ext_seq_pam_creation.sh ' + genome_dir + ' ' + bed_file], shell = True) 
+subprocess.call(['../../PostProcess/./ext_seq_pam_creation.sh ' + genome_dir + ' ' + bed_file], shell = True) 
 print('Bedtools DONE:', time.time() - start_time)
 onlyfile = [f for f in listdir('tmp_seq') if isfile(join('tmp_seq', f))]
 start_time = time.time()
@@ -203,41 +203,41 @@ with open(sys.argv[1]) as uniq, open(name_output + '.pamcreation.txt', 'w+') as 
             count22 = count22 + 1
         total_line = []
         found_creation = False
-        if int(line[4]) == 22687078:
-            print(line[2])
+        # if int(line[4]) == 22687078:
+        #     print(line[2])
         for pos, char in enumerate(line[2][pam_begin:pam_end]):  
-            if int(line[4]) == 22687078:
-                print('Char:', char)
+            # if int(line[4]) == 22687078:
+            #     print('Char:', char)
             if char in iupac_code:
                 ref_char = open_file[file_corresponding].readline().strip().upper()
                 # print('file_corresponding', file_corresponding)
                 # print('ref_char', ref_char)
                 # print('21', count21)
                 # print('22', count22)
-                if line[5] == '-':
+                if line[6] == '-':
                     ref_char = rev_comp(ref_char)
-                if int(line[4]) == 22687078:
-                    print('Ref char:' , ref_char)
+                # if int(line[4]) == 22687078:
+                #     print('Ref char:' , ref_char)
                 
                 char_to_write = iupac_code_set[pam[pos]] & iupac_code_set[ref_char]
                 
-                if int(line[4]) == 22687078:
-                    print('Char to write:', char_to_write)
+                # if int(line[4]) == 22687078:
+                #     print('Char to write:', char_to_write)
                 if not char_to_write:
                     #char_to_write =   iupac_code_set[char] - iupac_code_set[ref_char] #char_to_write
-                    if int(line[4]) == 22687078:
-                        print('Char to write2: ', char_to_write)
+                    # if int(line[4]) == 22687078:
+                    #     print('Char to write2: ', char_to_write)
                     found_creation = True
                 char_to_write = iupac_code_set[pam[pos]] & iupac_code_set[char]
                 #char_to_write = ','.join(char_to_write)
                 total_line.append(char_to_write)
             else: 
                 total_line.append(char)
-            if int(line[4]) == 22687078:
-                print('Total_line', total_line)
+            # if int(line[4]) == 22687078:
+            #     print('Total_line', total_line)
         
         #Total
-        line.append(str(int(line[6]) + int(line[7])))
+        #line.append(str(int(line[6]) + int(line[7])))
          #Min
         line.append('-')
         #max
