@@ -4,18 +4,19 @@
 import sys
 header = {'Bulge Type':0, '#Bulge Type':0, 'Bulge type':0,
         'crRNA':1, 'DNA':2,
-        'Chromosome':3, 'Position':4, 'Cluster Position':5 'Direction':6,
+        'Chromosome':3, 'Position':4, 'Cluster Position':5 ,'Direction':6,
         'Mismatches':7, 'Bulge Size':8, 'Total':9,'Min_mismatches':10, 'Max_mismatches':11,
         'PAM_disr':12, 'PAM_gen':13, 'Var_uniq':14, 'Samples':15}
 
 top_x = 1
 top_x_inserted = 0
+job_id = sys.argv[2]
 with open(sys.argv[1]) as targets, open( job_id + '.top_' + str(top_x) + '.txt', 'w+') as result:
     line = targets.readline()
     if '#' in line:
         line = targets.readline().strip().split('\t')
     else:
-        line = line.strip().split('t')
+        line = line.strip().split('\t')
     prev_position = line[header['Cluster Position']]
     result.write('\t'.join(line) + '\n')
     top_x_inserted = top_x_inserted + 1

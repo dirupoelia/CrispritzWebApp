@@ -142,13 +142,16 @@ if [ ${19} = 'both' ]; then
     python3 ../../PostProcess/pam_creation.py $jobid.unique_targets.cluster.txt pam.txt ../../$3 # > $jobid.unique_targets.cluster.pamcreation.txt
     cat $jobid.unique_targets.cluster.pamcreation.txt $jobid.semi_common_targets.cluster.minmaxdisr.txt > $jobid.total.txt
     #Summary guide, pos
-    python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.txt $7 $8 $9 guides.txt $jobid $type_post
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.txt $7 $8 $9 guides.txt $jobid 'Uniq'
+    mv $jobid.total.txt $jobid.targets.cluster.txt
     #Top 1 extraction
     python3 ../../PostProcess/extract_top.py $jobid.total.txt $jobid # > $jobid.top_1.txt
     #Top1 expansion
-    python3 ../../PostProcess/extract_top.py ../../../my_dict_chr1.json chr1 $jobid.top_1.txt  #> $jobid.top_1.samples.txt 
-    #
-    
+    python3 ../../PostProcess/extract_top.py ../../../my_dict_chr1.json 1 $jobid.top_1.txt  #> $jobid.top_1.samples.txt 
+    #Summary samples
+    while IFS= read -r line || [ -n "$line" ]; do    
+        python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $line $jobid
+    done < guides.txt
     #python3 ../../PostProcess/cluster.dict.py $jobid.total.txt
 fi
 exit 1

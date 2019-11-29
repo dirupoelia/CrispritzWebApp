@@ -487,7 +487,7 @@ final_list.append(dash_table.DataTable(
     row_selectable = 'multi',
     style_data_conditional = [{
                         'if': {
-                                'filter_query': '{Var_uniq} eq y', 
+                                'filter_query': '{Variant unique} eq y', 
                                 #'column_id' :'{#Bulge type}',
                                 #'column_id' :'{Total}'
                             },
@@ -514,7 +514,7 @@ final_list.append(dash_table.DataTable(
 
     style_data_conditional = [{
                         'if': {
-                                'filter_query': '{Var_uniq} eq y', 
+                                'filter_query': '{Variant unique} eq y', 
                                 #'column_id' :'{#Bulge type}',
                                 #'column_id' :'{Total}'
                             },
@@ -538,7 +538,7 @@ final_list.append(html.Div(
 
         style_data_conditional = [{
                         'if': {
-                                'filter_query': '{Var_uniq} eq y', 
+                                'filter_query': '{Variant unique} eq y', 
                                 #'column_id' :'{#Bulge type}',
                                 #'column_id' :'{Total}'
                             },
@@ -2211,7 +2211,7 @@ def guidePagev2(job_id, guide):
     value = job_id
     final_list = []
     final_list.append(html.P('List of Targets found for the selected guide'))
-    col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
+    col_list = ['BulgeType', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'BulgeSize', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
     col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
     cols = [{"name": i, "id": i, 'type':t} for i,t in zip(col_list, col_type)]
     job_directory = 'Results/' + job_id + '/'
@@ -2265,7 +2265,7 @@ def guidePagev2(job_id, guide):
                 # style_data_conditional=[
                 #         {
                 #         'if': {
-                #                 'filter_query': '{Var_uniq} eq y', 
+                #                 'filter_query': '{Variant unique} eq y', 
                 #                 'column_id' :'BulgeType'
                 #             },
                 #             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
@@ -2275,7 +2275,7 @@ def guidePagev2(job_id, guide):
                 #         },
                 #         {
                 #             'if': {
-                #                     'filter_query': '{Total} eq 3',          #TODO change to {Var_uniq} eq 
+                #                     'filter_query': '{Total} eq 3',          #TODO change to {Variant unique} eq 
                 #                     'column_id' :'BulgeType'
                 #                 },
                 #                 'border-left': '5px solid rgba(26, 26, 255, 0.9)',
@@ -2335,10 +2335,10 @@ def guidePagev3(job_id, hash):
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric']
     elif genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr'] 
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text']
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
         col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     job_directory = 'Results/' + job_id + '/'
@@ -2426,7 +2426,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
     df = global_store_subset(value, bulge_t, bulge_s, mms, guide)
     dff = df
     dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total'} , inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples'} , inplace = True)
 
     # sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
     # sort_by.insert(1, {'column_id' : 'Bulge Size', 'direction': 'asc'})
@@ -2466,7 +2466,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
     cells_style = [
                         {
                         'if': {
-                                'filter_query': '{Var_uniq} eq y',
+                                'filter_query': '{Variant unique} eq y',
                                 #'filter_query': '{Direction} eq +', 
                                 #'column_id' :'Bulge Type'
                             },
@@ -2476,7 +2476,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
                         },
                         # {
                         #     'if': {
-                        #             'filter_query': '{Var_uniq} eq n',           
+                        #             'filter_query': '{Variant unique} eq n',           
                         #             'column_id' :'Bulge Type'
                         #         },
                         #         'border-left': '5px solid rgba(26, 26, 255, 0.9)',
@@ -2510,11 +2510,11 @@ def samplePage(job_id, hash):
         html.H3('Selected Sample: ' + sample)
     )
     final_list.append(html.P('List of Targets found for the selected sample'))
-    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
+    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
     subprocess.call(['grep \'' + sample + '\' esempio_samples_grep.txt > esempio_samples_grep.' + sample + '.txt'], shell = True)
     df = pd.read_csv('esempio_samples_grep.' + sample + '.txt', sep = '\t', names = col_list)
     df = df.drop(['Samples'], axis = 1)
-    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq']
+    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique']
 
     col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
@@ -2546,7 +2546,7 @@ def samplePage(job_id, hash):
                 style_data_conditional=[
                     {
                         'if': {
-                                'filter_query': '{Var_uniq} eq y', 
+                                'filter_query': '{Variant unique} eq y', 
                                 #'column_id' :'{#Bulge type}',
                                 #'column_id' :'{Total}'
                             },
@@ -2588,16 +2588,17 @@ def clusterPage(job_id, hash):
     )
     final_list.append(html.P('List of Targets found for the selected position'))
     subprocess.call(['grep -P \'\\t'+ guide[0]+ '.*\\t.*\\t' + chromosome + '\\t.*\\t' + position + '\\t\' Results/' + job_id + '/' + job_id + '.targets.cluster.txt > Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.txt'], shell = True)
-    df = pd.read_csv('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.txt', sep = '\t', names = col_list)
+    
     if genome_type == 'ref':
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric']
     elif genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr'] 
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text']
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
         col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
+    df = pd.read_csv('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.txt', sep = '\t', names = col_list)
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     
     final_list.append(          
@@ -2625,7 +2626,7 @@ def clusterPage(job_id, hash):
                 style_data_conditional=[
                     {
                         'if': {
-                                'filter_query': '{Var_uniq} eq y', 
+                                'filter_query': '{Variant unique} eq y', 
                                 #'column_id' :'{#Bulge type}',
                                 #'column_id' :'{Total}'
                             },

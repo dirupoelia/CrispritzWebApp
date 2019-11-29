@@ -97,7 +97,7 @@ if True:
                     for p, el in enumerate(pos_snp):
                         t[el] = i[p]
                     target_combination.append(''.join(t))
-                print(target_combination)
+                # print(target_combination)
                 
                 
                 #print('QUI:', pos_snp_chr)
