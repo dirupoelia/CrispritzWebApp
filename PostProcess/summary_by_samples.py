@@ -5,8 +5,9 @@ import os
 import subprocess
 import sys
 import pandas as pd
-# argv1  is result file, from top1
-# argv2 is guide
+# argv1  is result file, from top1 with expanded samples
+# argv2 is guide    #TODO change into dictionary of guides
+# argv3 is job_id
 #NOTE Function only with vcf of HG38 and population info from the 20130606_sample_info.xlsx file
 guide = sys.argv[2]
 total_sample_per_guide = 0
@@ -21,7 +22,7 @@ for  pos, i in enumerate(all_samples):
 # Each sample (HG0096) has a list -> [Total targets, Var_uniq targets, Population]
 samples = dict()
 
-with open(sys.argv[1]) as sample_file, open('sample_count_' + guide + '.txt', 'w+') as result:
+with open(sys.argv[1]) as sample_file, open(sys.argv[3] + '.summary_by_samples.' + guide + '.txt', 'w+') as result:
     for line in sample_file:
         line = line.strip().split('\t')
         if '#' in line[1]:

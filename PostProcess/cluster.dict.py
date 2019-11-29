@@ -55,32 +55,33 @@ print('Start clustering')
 start_time = time.time()
 
 with open(result_name, 'w+') as result:
-
+    total_targets = []
     for k in guides_dict.keys():
-        total_list = []
+        total_targets += guides_dict[k]
+    total_list = []
 
-        first_line = guides_dict[k][0]
-        # current_chr_pos = first_line[3] + ' ' + first_line[9]
-        current_chr_pos = first_line[3] + ' ' + first_line[5]
+    first_line = total_targets[0]
+    # current_chr_pos = first_line[3] + ' ' + first_line[9]
+    current_chr_pos = first_line[3] + ' ' + first_line[5]
 
-        total_list.append([first_line])
+    total_list.append([first_line])
 
-        for line in guides_dict[k][1:]:
-            #if line[3] + ' ' + line[9] != current_chr_pos:
-            if line[3] + ' ' + line[5] != current_chr_pos:
-                # total_list[-1].sort(key = lambda x: int(x[8]))
-                total_list[-1].sort(key = lambda x: int(x[9]))
-                total_list.append([line])
-                # current_chr_pos = line[3] + ' ' + line[9]
-                current_chr_pos = line[3] + ' ' + line[5]
-            else:
-                total_list[-1].append(line)     
+    for line in total_targets[1:]:
+        #if line[3] + ' ' + line[9] != current_chr_pos:
+        if line[3] + ' ' + line[5] != current_chr_pos:
+            # total_list[-1].sort(key = lambda x: int(x[8]))
+            total_list[-1].sort(key = lambda x: int(x[9]))
+            total_list.append([line])
+            # current_chr_pos = line[3] + ' ' + line[9]
+            current_chr_pos = line[3] + ' ' + line[5]
+        else:
+            total_list[-1].append(line)     
 
-        total_list[-1].sort(key = lambda x: int(x[9]))
+    total_list[-1].sort(key = lambda x: int(x[9]))
 
-        total_list.sort(key = lambda x: int(x[0][9]))
-        for cluster in total_list:
-            for target in cluster:
-                result.write('\t'.join(target) + '\n')
+    total_list.sort(key = lambda x: int(x[0][9]))
+    for cluster in total_list:
+        for target in cluster:
+            result.write('\t'.join(target) + '\n')
 
 print("Clustering runtime: %s seconds" % (time.time() - start_time))

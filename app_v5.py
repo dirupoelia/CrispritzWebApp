@@ -1482,9 +1482,12 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
             fl = []
             fl.append(html.Br())
             fl.append(html.H5('Focus on: ' + guide))
-            df = pd.read_csv('sample_count_' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)  #TODO cambiare nel nome giusto (con il job id e nella cartella giusta)
-            
-            df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
+            if genome_type == 'both':
+                df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
+                df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
+            else:
+                df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Population'], skiprows = 1)
+                df = df.sort_values('Number of targets', ascending = False)
             more_info_col = []
             for i in range(df.shape[0]):
                 more_info_col.append('Show Targets')
@@ -1731,13 +1734,27 @@ def filterSampleTable(n, nPrev, nNext, sup_pop, pop, search, sel_cel, all_guides
     btn_sample_section.append(nNext)
     job_id = search.split('=')[-1]
     job_directory = 'Results/' + job_id + '/'
+    with open('Results/' + job_id + '/Params.txt') as p:
+        all_params = p.read()
+        genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+        ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+        
+    genome_type = 'ref'
+    if '+' in genome_type_f:
+        genome_type = 'var'
+    if 'True' in ref_comp:
+        genome_type = 'both'
+
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     if max(btn_sample_section) == n:              #Last button pressed is filtering, return the first page of the filtered table
         if (sup_pop is None or sup_pop is '') and (pop is None or pop is ''):   #No filter value selected   #TODO implementare che se cancello i filtri ritorno i valori originali
             raise PreventUpdate
-        df = pd.read_csv('sample_count_' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)  #TODO cambiare nel nome giusto (con il job id e nella cartella giusta)
-            
-        df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
+        if genome_type == 'both':
+            df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
+            df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
+        else:
+            df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Population'], skiprows = 1)
+            df = df.sort_values('Number of targets', ascending = False)
         more_info_col = []
         for i in range(df.shape[0]):
             more_info_col.append('Show Targets')
@@ -1750,8 +1767,12 @@ def filterSampleTable(n, nPrev, nNext, sup_pop, pop, search, sel_cel, all_guides
     else:
         if max(btn_sample_section) == nNext:
             current_page = current_page + 1
-            df = pd.read_csv('sample_count_' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)  #TODO cambiare nel nome giusto (con il job id e nella cartella giusta)
-            df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
+            if genome_type == 'both':
+                df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
+                df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
+            else:
+                df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Population'], skiprows = 1)
+                df = df.sort_values('Number of targets', ascending = False)
             more_info_col = []
             for i in range(df.shape[0]):
                 more_info_col.append('Show Targets')
@@ -1773,8 +1794,12 @@ def filterSampleTable(n, nPrev, nNext, sup_pop, pop, search, sel_cel, all_guides
             current_page = current_page - 1
             if current_page < 1:
                 current_page = 1
-            df = pd.read_csv('sample_count_' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)  #TODO cambiare nel nome giusto (con il job id e nella cartella giusta)
-            df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
+            if genome_type == 'both':
+                df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
+                df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
+            else:
+                df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Population'], skiprows = 1)
+                df = df.sort_values('Number of targets', ascending = False)
             more_info_col = []
             for i in range(df.shape[0]):
                 more_info_col.append('Show Targets')
@@ -2461,6 +2486,16 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
 def samplePage(job_id, hash):
     guide = hash[:hash.find('-Sample-')]
     sample = hash[hash.rfind('-') + 1:]
+    with open('Results/' + job_id + '/Params.txt') as p:
+        all_params = p.read()
+        genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+        ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+        
+    genome_type = 'ref'
+    if '+' in genome_type_f:
+        genome_type = 'var'
+    if 'True' in ref_comp:
+        genome_type = 'both'
 
     final_list = []
     final_list.append(
@@ -2530,22 +2565,35 @@ def clusterPage(job_id, hash):
     chr_pos = hash[hash.find('-Pos-') + 5:]
     chromosome = chr_pos.split('-')[0]
     position = chr_pos.split('-')[1]
-
+    with open('Results/' + job_id + '/Params.txt') as p:
+        all_params = p.read()
+        genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+        ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+        
+    genome_type = 'ref'
+    if '+' in genome_type_f:
+        genome_type = 'var'
+    if 'True' in ref_comp:
+        genome_type = 'both'
     final_list = []
     final_list.append(
-        #html.P('List of Targets found for the selected Sample - ' + sample + ' - and guide - ' + guide + ' -')
         html.H3('Selected Position: ' + chromosome + ' - ' + position)
     )
     final_list.append(html.P('List of Targets found for the selected position'))
-    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Cluster Position']
-    subprocess.call(['grep -P \'' + chromosome + '\\t.*\\t' + position + '$\' cluster.sort.txt > esempio_pos_grep.' + chromosome + '_' + position + '.txt'], shell = True)
-    df = pd.read_csv('esempio_pos_grep.' + chromosome + '_' + position + '.txt', sep = '\t', names = col_list)
-    #col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq']
-
-    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric' ]
+    subprocess.call(['grep -P \'\\t'+ guide[0]+ '.*\\t.*\\t' + chromosome + '\\t.*\\t' + position + '\\t\' Results/' + job_id + '/' + job_id + '.targets.cluster.txt > Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.txt'], shell = True)
+    df = pd.read_csv('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.txt', sep = '\t', names = col_list)
+    if genome_type == 'ref':
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric']
+    elif genome_type == 'var':
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text']
+    else:
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM_disr', 'PAM_gen', 'Var_uniq', 'Samples']
+        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     
-    final_list.append(          #TODO add margin bottom 1rem to toggle button and prev-next buttons
+    final_list.append(          
         html.Div( 
             dash_table.DataTable(
                 id='table-position-target', 
@@ -2594,3 +2642,4 @@ if __name__ == '__main__':
 
     #BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti
     #Iupac
+    #TODO se cancello il chr nel filter by position, non vedo nessun risultato -> fare in modo che metta risultati originali

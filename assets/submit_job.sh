@@ -152,7 +152,13 @@ if [ ${19} = 'ref' ]; then
 elif [ ${19} = 'var' ]; then
     type_post='No'
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
+    python3 ../../PostProcess/pam_analysis.py pam.txt $jobid.targets.cluster.txt ${19}
     #TODO ADD sample analysis
+    # Extract top 1
+    python3 ../../PostProcess/extract_top.py $jobid.targets.cluster.minmaxdisr.txt $jobid
+    #for file in dictionary directory
+    #python3 ../../PostProcess/calc_samples.py dictionary_file chrname $jobid.top_1.txt
+    python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt guides.txt
 else
     type_post='Uniq'
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
