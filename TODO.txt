@@ -255,3 +255,7 @@ nella cartella del job corrispondente
 -Se ho la visualizzazione dei targets che hannosamples, se clicco nella riga mi appare sotto la tabella l'elenco di questi samples, se clicco si apre in un'altra scheda
 il suo graph report
 -Creare link per download results tramite flask e lascire a nginx il download (mettere file in una cartella tipo assets)
+
+-COntrollo calc_sample.py
+-Mettere apertura dei file summary_by corretti: se non ho risultati per una guida, metto 'Nessun result' e non carico la tabella ma solo quella scritta.
+-Controllo summary by samples

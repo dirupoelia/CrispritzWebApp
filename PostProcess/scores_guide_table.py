@@ -7,6 +7,7 @@
 #argv 1 = target file
 #argv 2 is genome_directory (eg ../../Genomes/hg19/)
 #argv 3 is pam file -> to check if len is 23 and pam is NGG
+#argv 4 is guide file
 import time
 import pickle
 import re
@@ -21,6 +22,28 @@ import itertools
 # doench_string.append(seq)
 # doench_score =  azimuth.model_comparison.predict(np.asarray(doench_string), None, None, model= model, pam_audit=False)
 # doench_score = np.around(doench_score * 100)
+def doenchForIupac(sequence_doench, model):
+  pos_iupac = []
+  var = []
+  for pos, c in enumerate(sequence_doench):
+    if c in iupac_code:
+      pos_iupac.append(pos)
+      var.append(iupac_code[c])
+  
+  target_combination = []
+  if var:
+    for i in itertools.product(*var):
+        t = list(sequence_doench)
+        for p, el in enumerate(pos_iupac):
+            t[el] = i[p]
+        target_combination.append(''.join(t))
+  else:
+    target_combination.append(sequence_doench)
+  
+  doench_score =  azimuth.model_comparison.predict(np.asarray(target_combination), None, None, model= model, pam_audit=False)
+  doench_score = [np.around(i * 100) for i in doench_score]
+  return int(max(doench_score))
+
 
 def get_mm_pam_scores():
   try:
@@ -105,6 +128,14 @@ iupac_code = {
 
 start = time.time()
 
+enr = sys.argv[2].split('/')
+enr_str = ''
+if enr[-1]:
+  if'+' in enr[-1]:
+    enr_str = '.enriched'
+else:
+  if'+' in enr[-2]:
+    enr_str = '.enriched'
 with open( os.path.dirname(os.path.realpath(__file__)) + "/azimuth/saved_models/V3_model_nopos.pickle", 'rb') as f:
   model = pickle.load(f)
 max_doench = 0
@@ -149,16 +180,18 @@ with open (sys.argv[1]) as result:
           else:
             bedfile.write(target[3] + '\t' + str(int(target[4]) - 3 ) + '\t' + str(int(target[4]) + 23 + 4 ))
         
-        extr = subprocess.Popen(['bedtools getfasta -fi ' + sys.argv[2] + '/' + target[3] + '.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
+        extr = subprocess.Popen(['bedtools getfasta -fi ' + sys.argv[2] + '/' + target[3] +  enr_str +'.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
         extr.wait()
         out, err = extr.communicate()
         out = out.decode('UTF-8')
         if target[5] == '+':
-          sequence_doench = [out.strip().split('\n')[-1].upper()]
+          sequence_doench = out.strip().split('\n')[-1].upper()
         else:
-          sequence_doench = [reverse_complement_table(out.strip().split('\n')[-1].upper())]
-        doench_score =  azimuth.model_comparison.predict(np.asarray(sequence_doench), None, None, model= model, pam_audit=False)
-        doench_score = np.around(doench_score * 100)
+          sequence_doench = reverse_complement_table(out.strip().split('\n')[-1].upper())
+        # doench_score =  azimuth.model_comparison.predict(np.asarray(sequence_doench), None, None, model= model, pam_audit=False)
+        # doench_score = np.around(doench_score * 100)
+        # doench_score = doench_score[0]
+        doench_score = doenchForIupac(sequence_doench, model)
         try:
           if doench_score > guides_dict_doench[target[1]]:
             guides_dict_doench[target[1]] = doench_score
@@ -183,7 +216,7 @@ with open (sys.argv[1]) as result:
           else:
             bedfile.write(target[3] + '\t' + str(int(target[4]) - 3 ) + '\t' + str(int(target[4]) + 23 + 4 ))
         
-        extr = subprocess.Popen(['bedtools getfasta -fi ' + sys.argv[2] + '/' + target[3] + '.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
+        extr = subprocess.Popen(['bedtools getfasta -fi ' + sys.argv[2] + '/' + target[3] + enr_str +'.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
         extr.wait()
         out, err = extr.communicate()
         out = out.decode('UTF-8')
@@ -191,26 +224,28 @@ with open (sys.argv[1]) as result:
           sequence_doench = out.strip().split('\n')[-1].upper()
         else:
           sequence_doench = reverse_complement_table(out.strip().split('\n')[-1].upper())
-        pos_iupac = []
-        var = []
-        for pos, c in enumerate(sequence_doench):
-          if c in iupac_code:
-            pos_iupac.append(pos)
-            var.append(iupac_code[c])
+        # pos_iupac = []
+        # var = []
+        # for pos, c in enumerate(sequence_doench):
+        #   if c in iupac_code:
+        #     pos_iupac.append(pos)
+        #     var.append(iupac_code[c])
 
-        target_combination = []
-        for i in itertools.product(*var):
-            t = list(sequence_doench)
-            for p, el in enumerate(pos):
-                t[el] = i[p]
-            target_combination.append(''.join(t))
-        doench_score =  azimuth.model_comparison.predict(np.asarray(sequence_doench), None, None, model= model, pam_audit=False)
-        doench_score = [np.around(i * 100) for i in doench_score]
+        # target_combination = []
+        # for i in itertools.product(*var):
+        #     t = list(sequence_doench)
+        #     for p, el in enumerate(pos_iupac):
+        #         t[el] = i[p]
+        #     target_combination.append(''.join(t))
+        
+        # doench_score =  azimuth.model_comparison.predict(np.asarray(target_combination), None, None, model= model, pam_audit=False)
+        # doench_score = [np.around(i * 100) for i in doench_score]
+        m_doench = doenchForIupac(sequence_doench, model)
         try:
-          if max(doench_score) > guides_dict_doench[target[1]]:
-            guides_dict_doench[target[1]] = max(doench_score)
+          if m_doench > guides_dict_doench[target[1]]:
+            guides_dict_doench[target[1]] = m_doench
         except:
-          guides_dict_doench[target[1]] = max(doench_score)
+          guides_dict_doench[target[1]] = m_doench
 
       i = 0
       for char in off:
@@ -251,7 +286,7 @@ job_id = sys.argv[1].split('/')[-1].split('.')[0]
 
 
 
-with open( 'acfd.txt', 'w+') as res, open('guides.txt', 'r') as guides:
+with open( 'acfd.txt', 'w+') as res, open(sys.argv[4], 'r') as guides:
   guides = guides.read().strip().split('\n')
   for g in guides:
     if g not in guides_dict:

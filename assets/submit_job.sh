@@ -127,7 +127,7 @@ echo 'Report\tDone\t'$(date) >> $1'/'log.txt
 echo 'PostProcess\tStart\t'$(date) >> $1'/'log.txt
 cd $1
 echo 'Post Process start'
-python3 ../../PostProcess/scores_guide_table.py $jobid.targets.txt ../../$used_genome_dir pam.txt
+python3 ../../PostProcess/scores_guide_table.py $jobid.targets.txt ../../$used_genome_dir pam.txt guides.txt
 
 #Analysis for var/ref type ('both')
 if [ ${19} = 'both' ]; then
@@ -146,10 +146,12 @@ if [ ${19} = 'both' ]; then
     #Top 1 extraction
     python3 ../../PostProcess/extract_top.py $jobid.total.txt $jobid # > $jobid.top_1.txt
     #Top1 expansion
-    python3 ../../PostProcess/calc_samples.py ../../../my_dict_chr1.json 1 $jobid.top_1.txt  #> $jobid.top_1.samples.txt 
+    for dict in ../../../dictionaries/*.json; do
+        python3 ../../PostProcess/calc_samples.py $dict $jobid.top_1.txt  #> $jobid.top_1.samples.txt
+    done 
     #Summary samples
     while IFS= read -r line || [ -n "$line" ]; do    
-        python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $line $jobid
+        python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $line $jobid #-> change into $jobid.top_1.samples.txt $jobid ${19}
     done < guides.txt
     #python3 ../../PostProcess/cluster.dict.py $jobid.total.txt
     echo 'Comparison done'
@@ -167,17 +169,20 @@ if [ ${19} = 'ref' ]; then
 elif [ ${19} = 'var' ]; then
     type_post='No'
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
-    python3 ../../PostProcess/pam_analysis.py pam.txt $jobid.targets.cluster.txt ${19}
+    python3 ../../PostProcess/pam_analysis.py $jobid.targets.cluster.txt pam.txt ${19}
     #TODO ADD sample analysis FINIRE
     # Extract top 1
-    python3 ../../PostProcess/extract_top.py $jobid.targets.cluster.minmaxdisr.txt $jobid
-    #for file in dictionary directory
-    #python3 ../../PostProcess/calc_samples.py dictionary_file chrname $jobid.top_1.txt
-    python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt guides.txt
+    python3 ../../PostProcess/extract_top.py $jobid.targets.cluster.minmaxdisr.txt $jobid # > $jobid.top_1.txt
+    # Expand top 1
+    for dict in ../../../dictionaries/*.json; do
+        python3 ../../PostProcess/calc_samples.py $dict $jobid.top_1.txt  #> $jobid.top_1.samples.txt
+    done
+    # Summary by samples table
+    python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19}
 else
     type_post='Uniq'
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
-    python3 ../../PostProcess/pam_analysis.py pam.txt $jobid.targets.cluster.txt ${19}
+    python3 ../../PostProcess/pam_analysis.py $jobid.targets.cluster.txt pam.txt ${19}
     #TODO ADD sample analysis
 fi
 

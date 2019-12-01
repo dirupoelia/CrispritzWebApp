@@ -13,11 +13,11 @@ import json
 import time
 import itertools
 # argv1 is dict
-# argv2 is chr name
-# argv3 is result file
+# argv is result file
 #Load .json dict
 total_error = 0
-resu_name = sys.argv[3][:sys.argv[3].rfind('.')] + '.samples.txt'
+resu_name = sys.argv[2][:sys.argv[2].rfind('.')] + '.samples.txt'
+chr_name = sys.argv[1].split('.json')[0].split('_')[-1]
 if True:
     start_time = time.time()
     if True:
@@ -49,16 +49,18 @@ if True:
             'N':('A', 'T', 'C', 'G')
             }
     total_error = 0
-    with open (sys.argv[3]) as targets, open(resu_name,'a+') as result:
-        header = targets.readline()
+    with open (sys.argv[2]) as targets, open(resu_name,'a+') as result:
+        #header = targets.readline()
         for line in targets:
+            if '#' in line:
+                continue
             line = line.strip().split('\t')
             #returned_none = False
             pos_snp = []
             var = []
             target_combination = []
             pos_snp_chr = []
-            if line[3] == 'chr' + sys.argv[2]:       
+            if line[3] == chr_name:       
                 set_list = []
                 target_string = line[2]
                 if line[6] == '-':
@@ -68,17 +70,21 @@ if True:
                     if char == '-':
                         bulge_found = bulge_found + 1 
                     if char in iupac_code:
-                        #print(line)
                         iupac_pos = str(int(line[4]) + pos + 1 - bulge_found)
                         try:
-                            a = (datastore['chr' + sys.argv[2] + ',' + iupac_pos])   #NOTE se non ha samples, ritorna None
-                            ref_char = a[-4:][1]
-                            var_char = a[-4:][3]
-                            a = a[:-4]
+                            a = (datastore[chr_name + ',' + iupac_pos])   #NOTE se non ha samples, ritorna ;ref,var
+                            
+                            #ref_char = a[-4:][1]
+                            #var_char = a[-4:][3]
+                            ref_char = a.split(';')[-1].split(',')[0]
+                            var_char = a.split(';')[-1].split(',')[1]
+                            # a = a[:-4]
+                            a = a.split(';')[0]
                             pos_snp.append(pos)
                             pos_snp_chr.append(iupac_pos)
                             var.append((ref_char,var_char))
-                        except:
+                        except Exception as e: 
+                            print(e)
                             print('Error at ' + '\t'.join(line) + ', with char ' + char + ', at pos ', iupac_pos)
                             #sys.exit()
                             total_error = total_error + 1
@@ -104,23 +110,29 @@ if True:
                 for t in target_combination:
                     set_list2 = []
                     final_result = line.copy()
-                    final_result[2] = t
                     for ele_pos,p in enumerate(pos_snp_chr):
                         #print('pos_chr', p)
-                        a = (datastore['chr' + sys.argv[2] + ',' + p])
+                        a = (datastore[chr_name + ',' + p])
                         #print('a', a)
-                        samples = a[:-4]    #TODO modo migliore per selezionare i char ref e var dai samples, forse fare dict con ;
+                    
+                        samples = a.split(';')[0] #a[:-4] 
                         
-                        ref = a[-3]
-                        var = a[-1]
+                        ref = a.split(';')[-1].split(',')[0]
+                        var = a.split(';')[-1].split(',')[1]
+                        # if int(p) == 10353471 or int(p) == 10353474:
+                            # print(p)
+                            # print('final result', final_result)
+                            # print('Samp, ref, var: ',samples, ref, var)
                         #print('char in pos',t[pos_snp[ele_pos]].upper())
-                        if t[pos_snp[ele_pos]].upper() == var:
+                        if t[pos_snp[ele_pos]].upper() == var:      #TODO controllo qui, forse problema nella direction -?
                             if samples:
                                 set_list2.append(set(samples.split(',')))
-                            # else:
-                            #     #print('Error None ', line, a)
-                            #     set_list2.append(set())
+                            else:
+                                #print('Error None ', line, a)
+                                set_list2.append(set())
                             #     #returned_none = True 
+                        # if int(p) == 10353471 or int(p) == 10353474:
+                            # print('Set list2', set_list2 )
                     if set_list2:
                         #print('setlist2', set_list2)
                         common_samples = set.intersection(*set_list2)
@@ -132,6 +144,9 @@ if True:
                     else:
                         final_result.append('No samples')
                     # print('final_res', final_result)
+                    if line[6] == '-':
+                        t = t[::-1]
+                    final_result[2] = t
                     result.write('\t'.join(final_result) + '\n')
                     
                     #print(final_result)
