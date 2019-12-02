@@ -1,6 +1,6 @@
 '''
 Carica il dizionario, per ogni linea del file result (top1):
-estrae i samples e salva la posizione nel target e nel chr, la tupla (ref,var),
+estrae i samples e salva la posizione nel target e nel chr, la tupla (var, ref),
 crea tutte le combinazioni in target_combination
 Poi passa tutti  gli elementi di target_combination e per ogni pos
 dove c'era uno iupac controlla: se c'è un var, prende i samples e fa l'intersezione
@@ -145,14 +145,17 @@ if True:
                         if common_samples:
                             final_result.append(','.join(common_samples))
                         else:
-                            final_result.append('No common samples')
+                            # final_result.append('No common samples')
+                            final_result = []                       #DO not save results without samples
                     else:
-                        final_result.append('No samples')
+                        # final_result.append('No samples')         #DO not save results without samples
+                        final_result = []
                     # print('final_res', final_result)
                     if line[6] == '-':
                         t = t[::-1]
-                    final_result[2] = t
-                    result.write('\t'.join(final_result) + '\n')
+                    if final_result:
+                        final_result[2] = t
+                        result.write('\t'.join(final_result) + '\n')
                     
                     #print(final_result)
 

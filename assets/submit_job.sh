@@ -27,13 +27,13 @@ used_genome_dir=$2
 echo 'Search-index\tStart\t'$(date) >> $1'/'log.txt
 if [ ${10} = 'True' ]; then
     #echo 'crispritz search-index'
-    crispritz.py search $4 $5 $6 $jobid -index -mm $7 -bDNA $8 -bRNA ${9} -t #-scores $3
+    crispritz.py search $4 $5 $6 $jobid -index -mm $7 -bDNA $8 -bRNA ${9} -t -th 2#-scores $3
     mv ./$jobid.*.txt $1
     mv ./$jobid.*.xls $1
 
     if [ ${15} = 'True' ]; then
         mkdir $1'/ref'
-        crispritz.py search ${16} $5 $6 $jobid'_ref' -index -mm $7 -bDNA $8 -bRNA ${9} -t    
+        crispritz.py search ${16} $5 $6 $jobid'_ref' -index -mm $7 -bDNA $8 -bRNA ${9} -t -th 2  
         mv ./$jobid'_ref'.*.txt $1/ref
         mv ./$jobid'_ref'.*.xls $1/ref
     fi

@@ -961,10 +961,9 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if (search_index):
         search = False
 
-    if int(max_bulges) <= 2:            #TODO rimuovere, sistemato con la nuova versione di crispritz
-        genome_idx = pam_char + '_' + '2' + '_' + genome_selected
-    else:
-        genome_idx = pam_char + '_' + '5' + '_' + genome_selected
+    
+    
+    genome_idx = pam_char + '_' + '5' + '_' + genome_selected   #TODO CUSTOM: modificare per la versione UI offline
     genome_idx_ref = genome_idx.split('+')[0]
 
     #Create Params.txt file

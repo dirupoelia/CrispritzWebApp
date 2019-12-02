@@ -246,7 +246,7 @@ nella cartella del job corrispondente
 
 -Tenere solo genomi hg19 e hg38
 -Mettere 2/3 PAM
--Libreria xlib per indexing di file (per prendere le posizioni)
+-Libreria tabix per indexing di file (per prendere le posizioni)
 -Mettere estimated time nella pagina di load (tempi calcolati sul load example)
 -Ingrandire load example
 -Mettere tabs e non bottoni -> Graphical report, Summary by guide, summary by sample, summary by position
@@ -258,4 +258,29 @@ il suo graph report
 
 -Mettere apertura dei file summary_by corretti: se non ho risultati per una guida, metto 'Nessun result' e non carico la tabella ma solo quella scritta.
 
--Sistemare grep, colore tutta riga, controllo con genoma bulges, rimettere i samples nel .targets.cluster.*.txt, implementare var/ref
+-Sistemare grep, colore tutta riga, rimettere i samples nel .targets.cluster.*.txt, implementare var/ref
+
+-Per la percentuale di lavoro svolto: redirigo l'output in un file e ogni 3 sec lo leggo per vedere lo status. Se lo status non cambia, non aggiorno.
+-Parte grafica: seguire le immagini di Samuele. Metto 3 dropdown per i samples.
+-Uso fgrep e LCALL per velocizzare i grep. AWK per metter t e s nei subcluster.
+
+hg38 var
+4 mm 2 DNA 1 RNA
+Search index -> 502 sec, 3.20 GB RAM
+Annotation: 60 sec, 1.20 GB RAM
+Report: ok
+Clustering: ok (? ricontrollo) 
+Dizionario : 
+	-chr1 13 GB
+	-chr2 13 GB
+	-chr3 12 GB
+	-chr4 12 GB
+	...
+	-chr14 4 GB
+-Ordino per cromosome, poi carico chr 1 e faccio finchè non trovo il chr2, li carico il dizionario chr2 etc etc
+-Creare altra colonna con guida corretta per il grep da fare bene
+-File sample molto più grande degli altri, causa molte combinazioni, ma tempi estrazione grep accettabili (1.7 giga)
+
+
+-Top1_sample problema se ci sono tante iupac -> togliere quelle senza samples?
+-PAM disr errore se ho uno iupac come carattere che metto nel res finale, devo scomporlo e fare itertools
