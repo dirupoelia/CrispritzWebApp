@@ -178,7 +178,11 @@ elif [ ${19} = 'var' ]; then
         python3 ../../PostProcess/calc_samples.py $dict $jobid.top_1.txt  #> $jobid.top_1.samples.txt
     done
     # Summary by samples table
-    python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19}
+    python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt
+
+    #TODO rimettere i samples nel file di cluster
+    #TODO aggiungere terza/quarta voce nella pagina del load
+    #TODO controllo pagina del load il fatto che ricerca mi sa subito done
 else
     type_post='Uniq'
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.cluster.txt $7 $8 $9 guides.txt $jobid $type_post

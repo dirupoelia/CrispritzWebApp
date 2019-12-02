@@ -82,7 +82,8 @@ if True:
                             a = a.split(';')[0]
                             pos_snp.append(pos)
                             pos_snp_chr.append(iupac_pos)
-                            var.append((ref_char,var_char))
+                            #var.append((ref_char,var_char))
+                            var.append((var_char, ref_char))
                         except Exception as e: 
                             print(e)
                             print('Error at ' + '\t'.join(line) + ', with char ' + char + ', at pos ', iupac_pos)
@@ -105,7 +106,7 @@ if True:
                     target_combination.append(''.join(t))
                 # print(target_combination)
                 
-                
+                samples_already_assigned = set()
                 #print('QUI:', pos_snp_chr)
                 for t in target_combination:
                     set_list2 = []
@@ -124,7 +125,7 @@ if True:
                             # print('final result', final_result)
                             # print('Samp, ref, var: ',samples, ref, var)
                         #print('char in pos',t[pos_snp[ele_pos]].upper())
-                        if t[pos_snp[ele_pos]].upper() == var:      #TODO controllo qui, forse problema nella direction -?
+                        if t[pos_snp[ele_pos]].upper() == var:      
                             if samples:
                                 set_list2.append(set(samples.split(',')))
                             else:
@@ -136,6 +137,10 @@ if True:
                     if set_list2:
                         #print('setlist2', set_list2)
                         common_samples = set.intersection(*set_list2)
+                        common_samples = common_samples - samples_already_assigned
+                        # print('common samples', common_samples)
+                        samples_already_assigned = samples_already_assigned.union(common_samples)
+                        # print('samp already assigned', samples_already_assigned)
                        # print('common_smples', common_samples)
                         if common_samples:
                             final_result.append(','.join(common_samples))

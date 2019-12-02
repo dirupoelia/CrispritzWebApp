@@ -15,7 +15,7 @@ TODO 24/09:
 	-Poi sistemare nella chiamata che deve essere uguale al file														X
 -Sistemare menu			X
 -Sistemare email		X
--Sistemare genomi, avere solo un elenco
+-Sistemare genomi, avere solo un elenco			X
 -Non far partire l'indice e l'arricchimento, saranno già presenti sul server											X
 -Aggiungere controllo guide per vedere se i res sono già stati fatti													X
 -Bug nel generate report, se provo a fare barplot di un mms che ha 0 risultati mi da errore
@@ -23,9 +23,9 @@ TODO 24/09:
   File "/home/edirupo/.conda/envs/webapp/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 134, in <module>
     arraySummaryCountTwo[:, uppermm])/10), math.ceil(max(arraySummaryCountTwo[:, uppermm])/5))
 ValueError: arange: cannot compute length
-)
+)			X
 	-se y_range = 0 0 0, significa che non ci sono target con quei mms in ref e in enr, quindi creo plot con scritto no
-	no result. Posso usare max tra y_range e 10 per evitare errore
+	no result. Posso usare max tra y_range e 10 per evitare errore														X
 	-testarlo se almeno enr o ref ha 1+ risultati, si, se entrambi sono 0 mi da errore									X
 -Controllo se i risultati sono 0, inviare messaggio di errore/risultati 0												X
 	-migliorare grafica dei risultati a 0 e risultati che non esistono più
@@ -47,12 +47,12 @@ ValueError: arange: cannot compute length
 	-Aggiungere paramtri alla mail
 -Aggiungere tutte le pam									X
 -Collegare annotazioni con genomi esatti					X
--Aumentare dimensioni checklist
+-Aumentare dimensioni checklist								X
 
 -Creare docker con tutto
 
 27/09
--Indice genomi con 25 e con 20 (lunghezza pam) mi da stessi risultati ma posizioni diverse di 5 nei res dei 20, controllo le posizioni coi res di cas offinder (secondo genoma)
+-Indice genomi con 25 e con 20 (lunghezza pam) mi da stessi risultati ma posizioni diverse di 5 nei res dei 20, controllo le posizioni coi res di cas offinder (secondo genoma)	X
 
 
 
@@ -61,8 +61,8 @@ docker run -it my_docker [COMMAND]
 docker run -p 8080:80 my_docker python3 app_simplified_bootstrap.py
 
 30/09
--Inserire nota sotto select genome per specificare il vcf
-	-Note: genomes with a + means variants
+-Inserire nota sotto select genome per specificare il vcf			X
+	-Note: genomes with a + means variants							X
 -Cambiare il contact us in due frasi allineate con 'contact us for genome availability' e 'If you want custom genome, vcf, mms bulges etc etc download offline version (con link)' X
 -Togliere upload e mettere limite a 1000 guide			X
 -Mettere la spiegazione delle adv opts come: Compare your results with gecko library e Compare your result with ref genome		X
@@ -71,13 +71,13 @@ docker run -p 8080:80 my_docker python3 app_simplified_bootstrap.py
 -Testare docker e fare file per scaricare e sistemare i genomi
 -Cambiare icona
 
--Pe crispritz: quando trovo un target che ha + di una variante, se sono varianti di persone diverse la scarto.
+-Pe crispritz: quando trovo un target che ha + di una variante, se sono varianti di persone diverse la scarto.		X
 Alla fine per ogni targets trovato devo avere un elenco dei sample da dove sono arrivati e fare un istogramma dove indico, per ogni gruppo di sampl (1s, 2s, 3s) il numero di target trovati:
-eg.  ci sono 1000 target che hanno 3 samples
-
--Quando faccio enrich genome, mi tengo i file .alt creati, o li modifico in modo da avere anche la lista di sample da dove arrivano
+eg.  ci sono 1000 target che hanno 3 samples						X
+	
+-Quando faccio enrich genome, mi tengo i file .alt creati, o li modifico in modo da avere anche la lista di sample da dove arrivano				X
 -Dopoche ho ottenuto i targets dalla ricerca, per ogni target controllo:
-	-Se non ha iupac, non faccio nulla
+	-Se non ha iupac, non faccio nulla						X
 	-Se ha 1 iupac, controllo sul file .alt, in base alla posizione (position + posizione dello iupac), a che sample appartengono e lo aggiungo ai vari sample1.txt, sample2.txt ... file
 	-Se ha 1+ iupac, controllo il primo iupac a che sample appartengono (come sopra), poi faccio la stessa cosa col 2 iupac e così via. Faccio l'intersezione tra i vari gruppi
 	di sample trovati e se il risultato non è vuoto, aggiungo quel sample nei sample.txt rimasti nell'intersezione.
@@ -86,8 +86,8 @@ eg.  ci sono 1000 target che hanno 3 samples
 
 
 ---01/10
--Inserire una guida gìà come esempio
--Mettere 7 mms come massimo		X
+-Inserire una guida gìà come esempio		X
+-Mettere 7 mms come massimo					X
 -Inserire possibilità di mettere sequenze come crispor (con varianti!), oppure posizizioni sul genoma. Da questa sequenza estraggo la pam selezionata
 e ottengo delle guide che poi vado a cercare su genoma enr.			
 	-Aggiungere PAM inizio
@@ -96,52 +96,52 @@ e ottengo delle guide che poi vado a cercare su genoma enr.
 -Senza cliccare su view vai direttamente alla pagina
 -Result con 2 'pagine'
 	-Ho il profiling completo: per ogni soglia di mms metto la somma dei profiling su tutte le guide in quella colonna <- non mi da molte info, non lo faccio
-	-Una in cui seleziono la guida e ho il profiling di quella guida e le immagini
+	-Una in cui seleziono la guida e ho il profiling di quella guida e le immagini		X
 		-Mi copio la tabella del profiling sul sito			X
-	-Vedere come funziona doench e cfd e mettere cfd e doench su on targets, solo cfd su off targets. (vedere crispor)
-	-Se clicco su più info, compare la tabella completa di tutti gli offtargets (per quella guida), ordinate in base a (mm+bulge più basso),
+	-Vedere come funziona doench e cfd e mettere cfd e doench su on targets, solo cfd su off targets. (vedere crispor)		X
+	-Se clicco su più info, compare la tabella completa di tutti gli offtargets (per quella guida), ordinate in base a (mm+bulge più basso),		X
 	(priorità a offtargets sul gen enriched), (cfd e doench più alti -> cut efficiency più alta). Colorare con colori diversi gli offt se vengono da gen enr o ref
 	-Per colorare, se un target ha una variante allora è del gen enr, se non le ha allora del gen ref --> controllare se i ref possono avere iupac
 		-PROBLEMA: se nei targets ho uno IUPAC, 'perdo' l'informazione riguardo che lettera c'era in quel posto nel ref -> vedere se avere l'info del ref
-		è importante (allora dobbiamo distinguere -> fare due ricerche su enr e ref) oppure no (fare singola ricerca e dividere in base a presenza iupac)
+		è importante (allora dobbiamo distinguere -> fare due ricerche su enr e ref) oppure no (fare singola ricerca e dividere in base a presenza iupac)		X
 -Inserire link per scaricare tutti gli offt, lasciar gestire ad apache il tutto
 -Inserire un riassunto dei parametri della ricerca
--CFD score in notazione scientifica
+-CFD score in notazione scientifica			X
 
 -Fare un group by per ogni posizione e vedere se i ref e il var è sempre lo stesso o cambia (potrei avere 2500 A G e il resto A T)
 -Generare index genome NNN e 2 bulges su MV 
 
 -Fare script per tagliare sequenze		X
 -Fare in modo che clicco sulla guida e gli offt appaiono su una nuova scheda	X
--Doench solo per ont
--Colonna cfd per max e min value per quella guida, stessa cosa per doenc
+-Doench solo per ont						X
+-Colonna cfd per max e min value per quella guida, stessa cosa per doenc			X
 
 
 -10/08
-load example con impostazioni stardard 
+load example con impostazioni stardard 		X
 
 area score  0-1 
-cfd total
-guide details
+cfd total				X
+guide details			X
 
-list of alll targets
+list of alll targets	X
 
--Ordinare le guide nella result page da meglio a peggio, mettere CFD globale e area score, mettere come crispor i mmismatches e area score per ogni mm value
+-Ordinare le guide nella result page da meglio a peggio, mettere CFD globale e area score, mettere come crispor i mmismatches e area score per ogni mm value		X
 Se clicco sulla guida, viene selezionata e sotto appare una tabella a 2 colonne con le immagini a sx il radarchart a dx il barplot (fare per ogni guida)
 	-I file count sono così strutturati:				X fatto barplot per guida
 		-GUIDA	num_targets_inExons_0mms	num_targets_inExons_1mms	num_targets_inExons_2mms ...
--differenziare target per ref o enr (2 ricerche intanto)
+-differenziare target per ref o enr (2 ricerche intanto)		X
 Seguire immagine di Luca per tabella targets
--Far vedere che guida è stata selezionata
+-Far vedere che guida è stata selezionata					X
 -Bottone per esempio da far runnare			X
--Modificare bottone farlo bello
+-Modificare bottone farlo bello				X
 
 11-10
--Mettere bottone Insert/Delete vicino a step1
--Mettere bottone per avere le immagini con 1 mm, 2 mm, ...mms, e show all
--Mettere sotto focus on il link per vedere tutti i target di quella guida
--Filtering e ordinamento nella tabella delle guide
--Fare immagini più piccole e meglio sistemate
+-Mettere bottone Insert/Delete vicino a step1										X
+-Mettere bottone per avere le immagini con 1 mm, 2 mm, ...mms, e show all			X
+-Mettere sotto focus on il link per vedere tutti i target di quella guida			X
+-Filtering e ordinamento nella tabella delle guide									X
+-Fare immagini più piccole e meglio sistemate										X
 
 -Idea per estrarre only_enr: nella creazione dei res faccio un hash su guida+chr+pos e poi quando controllo nel enr vedo se il suo hash compare nella tabella già compilata e lo scarto
 -Vedere java hash
@@ -256,6 +256,6 @@ nella cartella del job corrispondente
 il suo graph report
 -Creare link per download results tramite flask e lascire a nginx il download (mettere file in una cartella tipo assets)
 
--COntrollo calc_sample.py
 -Mettere apertura dei file summary_by corretti: se non ho risultati per una guida, metto 'Nessun result' e non carico la tabella ma solo quella scritta.
--Controllo summary by samples
+
+-Sistemare grep, colore tutta riga, controllo con genoma bulges, rimettere i samples nel .targets.cluster.*.txt, implementare var/ref

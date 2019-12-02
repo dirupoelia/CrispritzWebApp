@@ -31,7 +31,7 @@ import dash_bootstrap_components as dbc
 import collections                          #For check if guides are the same in two results
 from datetime import datetime               #For time when job submitted
 from seq_script import extract_seq, convert_pam
-
+import re                                   #For sort chr filter values
 #Warning symbol \u26A0
 
 PAGE_SIZE = 100                    #number of entries in each page of the table in view report
@@ -1102,7 +1102,7 @@ def refreshSearch(n, dir_name):
                 if ('Annotation\tDone' in current_log):
                     annotate_res_status = html.P('Done', style = {'color':'green'})
                     all_done = all_done + 1
-                if ('Search-index\tDone' in current_log or 'Search\tDone' in current_log):
+                if ('Search-index\tDone' in current_log and 'Search\tDone' in current_log):
                     search_status = html.P('Done', style = {'color':'green'})
                     all_done = all_done + 1
                 if ('Report\tDone' in current_log):
@@ -1543,9 +1543,19 @@ def loadColumnImages(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9,  nAll, nSumTab, nSu
             onlyfile = [f for f in listdir('Genomes/' + genome_selected) if (isfile(join('Genomes/' + genome_selected, f)) and (f.endswith('.fa') or f.endswith('.fasta')))]
             onlyfile = [x[:x.rfind('.')] for x in onlyfile]            #removed .fa for better visualization
             chr_file = []
+            chr_file_unset = []
             for chr_name in onlyfile:
-                chr_file.append({'label': chr_name, 'value' : chr_name})
-
+                chr_name = chr_name.replace('.enriched', '')
+                if '_' in chr_name:
+                    chr_file_unset.append(chr_name)
+                    #  chr_file_unset.append({'label': chr_name, 'value' : chr_name})
+                else:
+                    chr_file.append(chr_name)
+                    # chr_file.append({'label': chr_name, 'value' : chr_name})
+            chr_file.sort(key = lambda s: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', s)])
+            chr_file_unset.sort(key = lambda s: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', s)])
+            chr_file += chr_file_unset
+            chr_file = [{'label': chr_name, 'value' : chr_name} for chr_name in chr_file]
             start_global = time.time()
             fl = []
             fl.append(html.Br())
@@ -2064,7 +2074,7 @@ def resultPage(job_id):
         columns_profile_table.append({'name':'Targets in samples', 'id':'Targets in samples', 'type':'numeric'})
         column_sample_total = []
         for guide in profile.Guide.unique():
-            with open ('sample_count_' + guide +'.txt', 'r') as sample_list:
+            with open ('Results/' + value + '/' + value + '.summary_by_samples.' + guide + '.txt', 'r') as sample_list:
                 sample_total = sample_list.readline().strip().split('\t')[1]
                 column_sample_total.append(sample_total)
         profile['Targets in samples'] = column_sample_total
@@ -2337,9 +2347,11 @@ def guidePagev3(job_id, hash):
     if genome_type == 'ref':
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric']
+        file_to_grep = 'targets.cluster'
     elif genome_type == 'var':
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text']
+        file_to_grep = 'targets.cluster.minmaxdisr'
     else:
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
         col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
@@ -2347,7 +2359,7 @@ def guidePagev3(job_id, hash):
     job_directory = 'Results/' + job_id + '/'
     
     start = time.time()
-    subprocess.call(['PostProcess/./grep_specific_targets.sh ' + bulge_t + ' ' + bulge_s + ' ' + mms + ' ' + guide[0] + ' ' + guide[1] + ' ' + job_id + ' ' + guide], shell = True) #TODO migliorare
+    subprocess.call(['PostProcess/./grep_specific_targets.sh ' + bulge_t + ' ' + bulge_s + ' ' + mms + ' ' + guide[0] + ' ' + guide[1] + ' ' + job_id + ' ' + guide + ' ' + file_to_grep], shell = True) #TODO migliorare
     global_store_subset(job_id, bulge_t, bulge_s, mms,guide)
     #subset_targets = pd.read_csv('example_todo_delete.txt', sep = '\t')
     #data_dict = subset_targets.to_dict('records')
@@ -2513,16 +2525,20 @@ def samplePage(job_id, hash):
         html.H3('Selected Sample: ' + sample)
     )
     final_list.append(html.P('List of Targets found for the selected sample'))
-    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
-    subprocess.call(['grep \'' + sample + '\' esempio_samples_grep.txt > esempio_samples_grep.' + sample + '.txt'], shell = True)
-    df = pd.read_csv('esempio_samples_grep.' + sample + '.txt', sep = '\t', names = col_list)
-    df = df.drop(['Samples'], axis = 1)
-    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique']
-
-    col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
-    cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
+    # col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
     
-
+    if genome_type == 'var':
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'Samples'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text']
+    else:
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
+        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
+    
+    subprocess.call(['grep \'' + sample + '\' ' + 'Results/'+ job_id + '/' + job_id + '.top_1.samples.txt > Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt' ], shell = True)
+    df = pd.read_csv('Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt', sep = '\t', names = col_list)
+    df.drop(df.columns[[-1,]], axis=1, inplace=True)         #NOTE comment to show the sample column (maybe not informative in this view)
+    del col_list[-1]                                         #NOTE comment to show the sample column (maybe not informative in this view)
+    cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     
     final_list.append(          #TODO add margin bottom 1rem to toggle button and prev-next buttons
         html.Div( 
@@ -2558,9 +2574,8 @@ def samplePage(job_id, hash):
                             
                         }
                 ],
-                # css=[
-                #     {"selector": ".column-header--hide::before", "rule": 'width: "50px"'}
-                # ]
+                css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
+                # css= [{ 'selector': 'td.row--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.row--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
                 
             ),
             id = 'div-result-table',
@@ -2590,17 +2605,21 @@ def clusterPage(job_id, hash):
         html.H3('Selected Position: ' + chromosome + ' - ' + position)
     )
     final_list.append(html.P('List of Targets found for the selected position'))
-    subprocess.call(['grep -P \'\\t'+ guide[0]+ '.*\\t.*\\t' + chromosome + '\\t.*\\t' + position + '\\t\' Results/' + job_id + '/' + job_id + '.targets.cluster.txt > Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.txt'], shell = True)
     
     if genome_type == 'ref':
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric']
+        file_to_grep = 'targets.cluster'
     elif genome_type == 'var':
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text']
+        file_to_grep = 'targets.cluster.minmaxdisr'
     else:
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
         col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
+    
+    subprocess.call(['grep -P \'\\t'+ guide[0]+ '.*\\t.*\\t' + chromosome + '\\t.*\\t' + position + '\\t\' Results/' + job_id + '/' + job_id + '.' + file_to_grep + '.txt > Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.txt'], shell = True)
+    
     df = pd.read_csv('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.txt', sep = '\t', names = col_list)
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     
@@ -2639,6 +2658,7 @@ def clusterPage(job_id, hash):
                         }
                 ],
                 export_format = 'csv',
+                css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
                 
             ),
             id = 'div-result-table',
@@ -2648,7 +2668,7 @@ def clusterPage(job_id, hash):
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-    #app.run_server(host='0.0.0.0', debug=True, port=80)
+    # app.run_server(host='0.0.0.0', debug=True, port=80)
     cache.clear()       #delete cache when server is closed
 
     #BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti
