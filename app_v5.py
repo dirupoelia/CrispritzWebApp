@@ -2666,8 +2666,8 @@ def clusterPage(job_id, hash):
     return html.Div(final_list, style = {'margin':'1%'})
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
-    # app.run_server(host='0.0.0.0', debug=True, port=80)
+    #app.run_server(debug=True)
+    app.run_server(host='0.0.0.0', debug=True, port=8080)
     cache.clear()       #delete cache when server is closed
 
     #BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti

@@ -130,7 +130,7 @@ echo 'Post Process start'
 python3 ../../PostProcess/scores_guide_table.py $jobid.targets.txt ../../$used_genome_dir pam.txt guides.txt
 
 #Analysis for var/ref type ('both')
-if [ ${19} = 'both' ]; then
+if [ ${19} = 'both' ]; then     #TODO CHECK FOR LAST COL INDICES
     #Estract common, semicommon and unique
     ../../PostProcess/./extraction.sh ref/$jobid'_ref.targets.txt' $jobid.targets.txt $jobid
     #Cluster semicommon e uniq -> TODO da sistemare l'ordine dell'analisi
@@ -146,14 +146,13 @@ if [ ${19} = 'both' ]; then
     #Top 1 extraction
     python3 ../../PostProcess/extract_top.py $jobid.total.txt $jobid # > $jobid.top_1.txt
     #Top1 expansion
-    for dict in ../../../dictionaries/*.json; do
-        python3 ../../PostProcess/calc_samples.py $dict $jobid.top_1.txt  #> $jobid.top_1.samples.txt
-    done 
+    python3 ../../PostProcess/calc_samples_faster.py ../../../dictionaries $jobid.top_1.txt  #> $jobid.top_1.samples.txt
+    
     #Summary samples
-    while IFS= read -r line || [ -n "$line" ]; do    
-        python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $line $jobid #-> change into $jobid.top_1.samples.txt $jobid ${19}
-    done < guides.txt
-    #python3 ../../PostProcess/cluster.dict.py $jobid.total.txt
+    python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt 
+
+    #Rimettere i samples nel file di cluster (solo nel top1)
+    python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.targets.cluster.minmaxdisr.txt $jobid.top_1.samples.txt  # > $jobid.final.txt
     echo 'Comparison done'
 fi
 
@@ -170,27 +169,23 @@ elif [ ${19} = 'var' ]; then
     type_post='No'
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
     python3 ../../PostProcess/pam_analysis.py $jobid.targets.cluster.txt pam.txt ${19}
-    #TODO ADD sample analysis FINIRE
     # Extract top 1
     python3 ../../PostProcess/extract_top.py $jobid.targets.cluster.minmaxdisr.txt $jobid # > $jobid.top_1.txt
     # Expand top 1
-    for dict in ../../../dictionaries/*.json; do
-        python3 ../../PostProcess/calc_samples.py $dict $jobid.top_1.txt  #> $jobid.top_1.samples.txt
-    done
+    # for dict in ../../../dictionaries/*.json; do
+    #     python3 ../../PostProcess/calc_samples.py $dict $jobid.top_1.txt  #> $jobid.top_1.samples.txt
+    # done  -> OLD version
+    python3 ../../PostProcess/calc_samples_faster.py ../../../dictionaries $jobid.top_1.txt   #> $jobid.top_1.samples.txt
+
     # Summary by samples table
     python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt
 
-    #TODO rimettere i samples nel file di cluster
+    #Rimettere i samples nel file di cluster (solo nel top1)
+    python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.targets.cluster.minmaxdisr.txt $jobid.top_1.samples.txt  # > $jobid.final.txt
     #TODO aggiungere terza/quarta voce nella pagina del load
-    #TODO controllo pagina del load il fatto che ricerca mi sa subito done
-else
-    type_post='Uniq'
-    python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
-    python3 ../../PostProcess/pam_analysis.py $jobid.targets.cluster.txt pam.txt ${19}
-    #TODO ADD sample analysis
 fi
 
-echo 'post Process done'
+echo 'Post Process done'
 cd ../../
 echo 'PostProcess\tDone\t'$(date) >> $1'/'log.txt
 if [ ${17} = 'True' ]; then
