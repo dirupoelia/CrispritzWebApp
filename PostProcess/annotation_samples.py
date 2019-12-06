@@ -34,12 +34,12 @@ import pandas as pd
 
 # samples_dict = {
     # GUIDE1 ->{
-    #     chrXposY -> [[Sample1, sample7], False]
-    #     chrXposY2 -> [[Sample5, sample7], False]
-    #     chrX2posY 3-> [[Sample10, sample11, sample30], False]
+    #     chrXposY -> [[Sample1, sample7], []]
+    #     chrXposY2 -> [[Sample5, sample7], []]
+    #     chrX2posY 3-> [[Sample10, sample11, sample30], []]
     # },
     # GUIDE2 -> {
-    #     CHRPOS -> [[Sample list], Visited]                Visited -> False, True
+    #     CHRPOS -> [[Sample list], [List visited annotations]]                List visited annotation is empty at first, but can become -> ['exon', 'promoter',...]
     # }
 # }
 samples_dict = dict()
@@ -55,12 +55,21 @@ with open(sys.argv[1]) as targets:
         try:
             samples_dict[guide][line[3] + line[4]][0] += line[-1].split(',')
         except:     
-            samples_dict[guide][line[3] + line[4]] = [line[-1].split(','), False]
+            samples_dict[guide][line[3] + line[4]] = [line[-1].split(','), []]
 
 
-print(samples_dict['CTAACAGTTGCTTTTATCACNNN']['chr2146560428'])
-print(samples_dict['TGCTTGGTCGGCACTGATAGNNN']['chr2250085897'])
-current_gcp = '000'
+# print(samples_dict['CTAACAGTTGCTTTTATCACNNN']['chr2146560428'])
+# print(samples_dict['TGCTTGGTCGGCACTGATAGNNN']['chr2250085897'])
+
+ann_list = []
+
+with open (sys.argv[3], 'r') as ann_file:
+    for line in ann_file:
+        if '-' in line[0] and 'Summary' not in line:
+            ann_list.append(line.strip()[1:])
+
+summary_sample = dict()
+
 with open (sys.argv[2]) as targets:             #Count annotation for each target
     for line in targets:
         if '#' in line:
@@ -73,30 +82,27 @@ with open (sys.argv[2]) as targets:             #Count annotation for each targe
         try:
             samples_list = samples_dict[guide][line[3] + line[4]]
         except:
-            samples_list = [[], True]
-        if samples_list[1]:
+            samples_list = [[], ann_list]
+        if line[-1] in samples_list[1]:
             continue
-        samples_dict[guide][line[3] + line[4]][1] = True
+        samples_dict[guide][line[3] + line[4]][1].append(line[-1])
         for sample in samples_list[0] :
             if sample not in annotation_dict[guide]:
-                annotation_dict[guide][sample] = dict()
+                annotation_dict[guide][sample] = dict()     #TODO errore sistemare conteggio samples tartgets
                 # print(guide, sample, line[-1], line[6])
+                summary_sample[sample] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             try:
                 annotation_dict[guide][sample][line[-1]][int(line[6])] += 1       #increase annotation count
+                summary_sample[sample][int(line[6])] += 1
             except:
                 annotation_dict[guide][sample][line[-1]] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
                 annotation_dict[guide][sample][line[-1]][int(line[6])] += 1
+                summary_sample[sample][int(line[6])] += 1
 
-ann_list = []
-
-with open (sys.argv[3], 'r') as ann_file:
-    for line in ann_file:
-        if '-' in line[0] and 'Summary' not in line:
-            ann_list.append(line.strip()[1:])
 # print(annotation_dict['CTAACAGTTGCTTTTATCACNNN'])
 
-print('HG00282', annotation_dict['CTAACAGTTGCTTTTATCACNNN']['HG00282'])
-print('NA12056',  annotation_dict['CTAACAGTTGCTTTTATCACNNN']['NA12056'])
+# print('HG00282', annotation_dict['CTAACAGTTGCTTTTATCACNNN']['HG00282'])
+# print('NA12056',  annotation_dict['CTAACAGTTGCTTTTATCACNNN']['NA12056'])
 for guide in annotation_dict:
     with open('test_count_annotation_sample.' + guide +'.samples.txt', 'w+') as result:
         for annotation in ann_list:
@@ -107,8 +113,18 @@ for guide in annotation_dict:
                     result.write('\t' + '\t'.join(str(x) for x in annotation_dict[guide][sample][annotation] ) + '\n' )
                 except:
                     result.write('\t' + '\t'.join(['0' for i in range(10)]) + '\n')
+        result.write('-Summary_Total\n')
+        for sample in annotation_dict[guide]:
+            result.write('-Summary_' + sample + '\n')
+            result.write('targets\t'.join(str(x) for x in  summary_sample[sample]) + '\n')
+            for annotation in ann_list:
+                result.write(annotation + '\t')
+                try:
+                    result.write('\t'.join(str(x) for x in annotation_dict[guide][sample][annotation] ) + '\n' )
+                except:
+                    result.write('\t'.join(['0' for i in range(10)]) + '\n')
 
-print(annotation_dict['TGCTTGGTCGGCACTGATAGNNN']['NA12056'])
+# print(annotation_dict['TGCTTGGTCGGCACTGATAGNNN']['NA12056'])
 #For each population, count total sample values
 pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/20130606_sample_info.xlsx')
 all_samples = pop_file.Sample.to_list()

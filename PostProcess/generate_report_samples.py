@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 
+# Esempio di input:
+#python 3 new_radar_chart GUIDE -mm 4 -profile profile.xls -extprofile extprofile.xls -files ... ... ... ...  -> creo radar chart
+#python 3 new_radar_chart GUIDE -mm 4 -profile profile.xls -extprofile extprofile.xls -files ... ... ... ... -sumref ... -sumenr ... -> creo radar chart + barplot di quella guida
+#python 3 new_radar_chart -mm 4  -sumref ... -sumenr ... -> creo barplot totale
+# Input:
+# guide, mm, profile, extprofile, annotation_file, summaryone, summarytwo, gecko profile, gecko exons, gecko introns, gecko promoter, gecko dnase, geckoctcf
+
 #BUG 428 quando guida non ha trovato targets
-
-'''
-Input file: annotation sample file, sample/poppulation/superpopulation name
-Output file: radarchart
-'''
-#argv 1 is pop/sample name
-# argv2 is mms 
-# argv 3 is sample annotation
-
 # Libraries
 import math
 import matplotlib
@@ -33,7 +31,7 @@ plt.style.use('seaborn-poster')
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype'] = 42
 
-only_radar = True
+only_radar = False
 radar_barplot = False
 only_barplot = False
 
@@ -47,63 +45,63 @@ else:
     lowermm = 0
     uppermm = missmatch
 
-# profile_file = sys.argv[3]
-# ext_profile_file = sys.argv[4]
-# count_dir = sys.argv[5]
-# summary_one = sys.argv[6]   
-# summary_two = sys.argv[7]   #is the same as count_dir
+profile_file = sys.argv[3]
+ext_profile_file = sys.argv[4]
+count_dir = sys.argv[5]
+summary_one = sys.argv[6]   
+summary_two = sys.argv[7]   #is the same as count_dir
 
 
-# gecko_profile_file = sys.argv[8]
-# gecko_exons = sys.argv[9]
-# gecko_introns = sys.argv[10]
-# gecko_promoter = sys.argv[11]
-# gecko_dnase = sys.argv[12]
-# gecko_ctcf = sys.argv[13]
+gecko_profile_file = sys.argv[8]
+gecko_exons = sys.argv[9]
+gecko_introns = sys.argv[10]
+gecko_promoter = sys.argv[11]
+gecko_dnase = sys.argv[12]
+gecko_ctcf = sys.argv[13]
 
-# if guide == 'no':
-#     only_barplot = True
-# elif summary_one != 'no' and summary_two != 'no':
-#     radar_barplot = True
-# else:
-#     only_radar = True
+if guide == 'no':
+    only_barplot = True
+elif summary_one != 'no' and summary_two != 'no':
+    radar_barplot = True
+else:
+    only_radar = True
 
 
 # lettura file
-# with open(profile_file) as profile:
-#     num_guides = profile.read().strip().split('\n')[1:]
-#     num_guides = len (num_guides)
-with open(sys.argv[3]) as annotation_file:
+with open(profile_file) as profile:
+    num_guides = profile.read().strip().split('\n')[1:]
+    num_guides = len (num_guides)
+with open(count_dir) as annotation_file:
     content = annotation_file.read().strip()
-    onlyfiles = content.split('-')#.split('-Summary_Total\n')[0].split('-')
-    # summary_two = content.split('-Summary_Total\n')[1]
-    # if guide == 'no':
-    #     summary_two = summary_two.strip().split('-')[0].strip().split('\n')
+    onlyfiles = content.split('-Summary_Total\n')[0].split('-')
+    summary_two = content.split('-Summary_Total\n')[1]
+    if guide == 'no':
+        summary_two = summary_two.strip().split('-')[0].strip().split('\n')
        
-    # else:
-    #     summary_two = summary_two.strip().split('-Summary_')[1:]
-    #     summary_two = [s.strip() for s in summary_two if guide in s]
-    #     if not summary_two:
-    #         print('Warning! The selected guide has no annotated results')
-    #         quit()
-    #     summary_two = summary_two[0].split('\n')[1:]
+    else:
+        summary_two = summary_two.strip().split('-Summary_')[1:]
+        summary_two = [s.strip() for s in summary_two if guide in s]
+        if not summary_two:
+            print('Warning! The selected guide has no annotated results')
+            quit()
+        summary_two = summary_two[0].split('\n')[1:]
         
 
-# if summary_one != 'no':
-#     with open(summary_one) as annotation_file:
-#         content = annotation_file.read().strip()
-#         summary_one = content.split('-Summary_Total\n')[1]
-#         if guide == 'no':
-#             summary_one = summary_one.strip().split('-')[0].strip().split('\n')
-#         else:
-#             summary_one = summary_one.strip().split('-Summary_')[1:]
-#             summary_one = [s.strip() for s in summary_one if guide in s]
-#             summary_one = summary_one[0].split('\n')[1:]
+if summary_one != 'no':
+    with open(summary_one) as annotation_file:
+        content = annotation_file.read().strip()
+        summary_one = content.split('-Summary_Total\n')[1]
+        if guide == 'no':
+            summary_one = summary_one.strip().split('-')[0].strip().split('\n')
+        else:
+            summary_one = summary_one.strip().split('-Summary_')[1:]
+            summary_one = [s.strip() for s in summary_one if guide in s]
+            summary_one = summary_one[0].split('\n')[1:]
 
 count_files = []
-# inGuidesProfileExtended = open(ext_profile_file, 'r')
-# inGuidesProfile = open(profile_file, 'r')
-# onlyfiles.sort()
+inGuidesProfileExtended = open(ext_profile_file, 'r')
+inGuidesProfile = open(profile_file, 'r')
+onlyfiles.sort()
 
 for i in onlyfiles:
     if i == '':
@@ -116,7 +114,6 @@ check_annotation_name = []
 for i in count_files:
     check_annotation_name.append(i[0].lower())
 
-gecko_profile_file = 'no'   #TODO aggiungere possibilità per il gecko
 if check_annotation_name != ['ctcf', 'dnase', 'exon', 'intron', 'promoter'] and gecko_profile_file != "no":     #NOTE if gecko annotations are updated, update the list adding the new annotations in lexico order
     print('Warning! Option \'-gecko\' can be used on files annotated with \'ctcf\', \'dnase\', \'exon\', \'intron\', \'promoter\'\nRemoving \'-gecko\' option')
     gecko_profile_file = 'no'
@@ -148,135 +145,134 @@ profileMissmatchGlobal = []
 arraySummaryCountOne = []
 arraySummaryCountTwo = []
 
-summary_one = 'no'
-summary_two = 'no'
-# if summary_one != "no" and summary_two != "no":
-#     inSummaryCountOne = summary_one #open(summary_one, "r")
-#     inSummaryCountTwo = summary_two #open(summary_two, "r")
+
+if summary_one != "no" and summary_two != "no":
+    inSummaryCountOne = summary_one #open(summary_one, "r")
+    inSummaryCountTwo = summary_two #open(summary_two, "r")
     
-#     x_ticks_labels = []
-#     n_annotation = 0
-#     mms_total = 0      #len of the array exon   0   0   0   0   0   0   0, taken from [1:]
-#     for line in inSummaryCountOne:
-#         x = line.strip().split('\t')
-#         arraySummaryCountOne.append(tuple(x[1:]))
-#         x_ticks_labels.append(x[0])
-#         n_annotation = n_annotation + 1
-#         mms_total = len(x[1:])
+    x_ticks_labels = []
+    n_annotation = 0
+    mms_total = 0      #len of the array exon   0   0   0   0   0   0   0, taken from [1:]
+    for line in inSummaryCountOne:
+        x = line.strip().split('\t')
+        arraySummaryCountOne.append(tuple(x[1:]))
+        x_ticks_labels.append(x[0])
+        n_annotation = n_annotation + 1
+        mms_total = len(x[1:])
     
 
-#     for line in inSummaryCountTwo:
-#         x = line.strip().split('\t')
-#         arraySummaryCountTwo.append(tuple(x[1:]))
-#     arraySummaryCountOne = np.array(arraySummaryCountOne, dtype=int)
-#     arraySummaryCountOne.shape = (n_annotation, mms_total)
+    for line in inSummaryCountTwo:
+        x = line.strip().split('\t')
+        arraySummaryCountTwo.append(tuple(x[1:]))
+    arraySummaryCountOne = np.array(arraySummaryCountOne, dtype=int)
+    arraySummaryCountOne.shape = (n_annotation, mms_total)
 
-#     arraySummaryCountTwo = np.array(arraySummaryCountTwo, dtype=int)
-#     arraySummaryCountTwo.shape = (n_annotation, mms_total)
+    arraySummaryCountTwo = np.array(arraySummaryCountTwo, dtype=int)
+    arraySummaryCountTwo.shape = (n_annotation, mms_total)
 
-#     percentageGain = []
-#     for row in range(0, n_annotation):
-#         for col in range(0, uppermm+1):
-#             res = max((arraySummaryCountOne[row, col]/arraySummaryCountTwo[row, col]),
-#                       (arraySummaryCountTwo[row, col]/arraySummaryCountOne[row, col]))
-#             percentageGain.append(res)
-#     percentageGain = np.array(percentageGain, dtype=float)
-#     percentageGain.shape = (n_annotation, uppermm+1)
+    percentageGain = []
+    for row in range(0, n_annotation):
+        for col in range(0, uppermm+1):
+            res = max((arraySummaryCountOne[row, col]/arraySummaryCountTwo[row, col]),
+                      (arraySummaryCountTwo[row, col]/arraySummaryCountOne[row, col]))
+            percentageGain.append(res)
+    percentageGain = np.array(percentageGain, dtype=float)
+    percentageGain.shape = (n_annotation, uppermm+1)
 
-#     intergenicGainOne = (np.sum(arraySummaryCountOne, axis=0))
-#     intergenicGainTwo = (np.sum(arraySummaryCountTwo, axis=0))
-#     intergenicGainOne.shape = (1, mms_total)
-#     intergenicGainTwo.shape = (1, mms_total)
-#     intergenicGainOne = intergenicGainOne - arraySummaryCountOne[0, :]
-#     intergenicGainTwo = intergenicGainTwo - arraySummaryCountTwo[0, :]
+    intergenicGainOne = (np.sum(arraySummaryCountOne, axis=0))
+    intergenicGainTwo = (np.sum(arraySummaryCountTwo, axis=0))
+    intergenicGainOne.shape = (1, mms_total)
+    intergenicGainTwo.shape = (1, mms_total)
+    intergenicGainOne = intergenicGainOne - arraySummaryCountOne[0, :]
+    intergenicGainTwo = intergenicGainTwo - arraySummaryCountTwo[0, :]
 
-#     # p1 = plt.bar(1, percentageGain[0, uppermm-1])
-#     # p2 = plt.bar(2, percentageGain[1, uppermm-1])
-#     # p3 = plt.bar(3, percentageGain[2, uppermm-1])
-#     # p4 = plt.bar(4, percentageGain[3, uppermm-1])
-#     # p5 = plt.bar(5, percentageGain[4, uppermm-1])
-#     # p6 = plt.bar(6, percentageGain[5, uppermm-1])
-#     # p7 = plt.bar(7, max((intergenicGainOne[0, uppermm-1]/intergenicGainTwo[0, uppermm-1]),
-#     #                     (intergenicGainTwo[0, uppermm-1]/intergenicGainOne[0, uppermm-1])))
+    # p1 = plt.bar(1, percentageGain[0, uppermm-1])
+    # p2 = plt.bar(2, percentageGain[1, uppermm-1])
+    # p3 = plt.bar(3, percentageGain[2, uppermm-1])
+    # p4 = plt.bar(4, percentageGain[3, uppermm-1])
+    # p5 = plt.bar(5, percentageGain[4, uppermm-1])
+    # p6 = plt.bar(6, percentageGain[5, uppermm-1])
+    # p7 = plt.bar(7, max((intergenicGainOne[0, uppermm-1]/intergenicGainTwo[0, uppermm-1]),
+    #                     (intergenicGainTwo[0, uppermm-1]/intergenicGainOne[0, uppermm-1])))
 
-#     ind = np.arange(0, n_annotation, 1)
-#     # print('math ceil', np.arange(0, max(arraySummaryCountTwo[:, uppermm]) + math.ceil(max(
-#     #     arraySummaryCountTwo[:, uppermm])/10), 
-#     #     math.ceil(max(arraySummaryCountTwo[:, uppermm])/5)))  #BUG if max(arraySummaryCountTwo[:, uppermm], then arange (0,0,0)
-#     no_result = False
-#     try:
-#         y_range = np.arange(0, max(arraySummaryCountTwo[:, uppermm]) + math.ceil(max(
-#             arraySummaryCountTwo[:, uppermm])/10), math.ceil(max(arraySummaryCountTwo[:, uppermm])/5))
-#     except:
-#         y_range = np.arange(0,1,1)
-#         no_result = True
-#     width = 0.5
+    ind = np.arange(0, n_annotation, 1)
+    # print('math ceil', np.arange(0, max(arraySummaryCountTwo[:, uppermm]) + math.ceil(max(
+    #     arraySummaryCountTwo[:, uppermm])/10), 
+    #     math.ceil(max(arraySummaryCountTwo[:, uppermm])/5)))  #BUG if max(arraySummaryCountTwo[:, uppermm], then arange (0,0,0)
+    no_result = False
+    try:
+        y_range = np.arange(0, max(arraySummaryCountTwo[:, uppermm]) + math.ceil(max(
+            arraySummaryCountTwo[:, uppermm])/10), math.ceil(max(arraySummaryCountTwo[:, uppermm])/5))
+    except:
+        y_range = np.arange(0,1,1)
+        no_result = True
+    width = 0.5
 
-#     p1 = plt.bar(
-#         ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
-#     p2 = plt.bar(ind, (arraySummaryCountTwo[:, uppermm]-arraySummaryCountOne[:, uppermm]),
-#                  width, bottom=arraySummaryCountOne[:, uppermm], color='#ef8a62', align='edge')
+    p1 = plt.bar(
+        ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+    p2 = plt.bar(ind, (arraySummaryCountTwo[:, uppermm]-arraySummaryCountOne[:, uppermm]),
+                 width, bottom=arraySummaryCountOne[:, uppermm], color='#ef8a62', align='edge')
 
-#     plt.legend((p1[0], p2[0]), ('Reference Genome',
-#                                 'Enriched Genome'), fontsize=30)
+    plt.legend((p1[0], p2[0]), ('Reference Genome',
+                                'Enriched Genome'), fontsize=30)
 
-#     # plt.xlim(0, len(string))
-#     # plt.set_ylim([1, 1.5])
-#     plt.title('Relative Increase Enriched/Reference Genome with ' +
-#               str(uppermm) + ' Mismatches', size=25)
-#     # plt.xlabel('Annotations')
-#     if no_result:
-#         plt.annotate('No targets found with ' + str(missmatch)  + ' mismatches', [1.35,0], size = 22) #NOTE with 0-mm print only the mm pdf; 1.35 modificare se cambia la str
-#     else:
-#         for k in range(0, n_annotation):
-#             plt.annotate('%.2fx' % percentageGain[k, uppermm], [
-#                         k+0.05, arraySummaryCountTwo[k, uppermm]+(max(arraySummaryCountTwo[:, uppermm])/100)], size=22)
-#         # plt.ylim([0, max(arraySummaryCountTwo[:, uppermm])+2000],size=25)
+    # plt.xlim(0, len(string))
+    # plt.set_ylim([1, 1.5])
+    plt.title('Relative Increase Enriched/Reference Genome with ' +
+              str(uppermm) + ' Mismatches', size=25)
+    # plt.xlabel('Annotations')
+    if no_result:
+        plt.annotate('No targets found with ' + str(missmatch)  + ' mismatches', [1.35,0], size = 22) #NOTE with 0-mm print only the mm pdf; 1.35 modificare se cambia la str
+    else:
+        for k in range(0, n_annotation):
+            plt.annotate('%.2fx' % percentageGain[k, uppermm], [
+                        k+0.05, arraySummaryCountTwo[k, uppermm]+(max(arraySummaryCountTwo[:, uppermm])/100)], size=22)
+        # plt.ylim([0, max(arraySummaryCountTwo[:, uppermm])+2000],size=25)
 
     
-#     plt.xticks(ind+0.25, x_ticks_labels, size=25)
-#     plt.yticks(y_range, size=22)
+    plt.xticks(ind+0.25, x_ticks_labels, size=25)
+    plt.yticks(y_range, size=22)
 
-#     plt.tight_layout()
-#     plt.subplots_adjust(top=0.95, bottom=0.06, left=0.1, right=0.99)
-#     if guide != 'no':
-#         plt.savefig("summary_histogram_" + str(guide) + '_' + str(uppermm) + 
-#                     "mm" + ".pdf", format="pdf")
-#     else:
-#         plt.savefig("summary_histogram_" + str(uppermm) + 
-#                     "mm" + ".pdf", format="pdf")
-#     if guide != 'no':
-#         plt.savefig("summary_histogram_" + str(guide) + '_' + str(uppermm) + 
-#                     "mm" + ".png", format="png")
-#     else:
-#         plt.savefig("summary_histogram_" + str(uppermm) + 
-#                     "mm" + ".png", format="png")
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.95, bottom=0.06, left=0.1, right=0.99)
+    if guide != 'no':
+        plt.savefig("summary_histogram_" + str(guide) + '_' + str(uppermm) + 
+                    "mm" + ".pdf", format="pdf")
+    else:
+        plt.savefig("summary_histogram_" + str(uppermm) + 
+                    "mm" + ".pdf", format="pdf")
+    if guide != 'no':
+        plt.savefig("summary_histogram_" + str(guide) + '_' + str(uppermm) + 
+                    "mm" + ".png", format="png")
+    else:
+        plt.savefig("summary_histogram_" + str(uppermm) + 
+                    "mm" + ".png", format="png")
 
 
 if guide != 'no':
     # reading extendend profile to obtain results over mismatches counts
-    for line in inGuidesProfileExtended:
-        if ">" + guide in line:
-            # print(line)
-            next(inGuidesProfileExtended)
-            # line=inGuidesProfileExtended.readline()
-            for ciao in range(0, uppermm+1):
-                line = inGuidesProfileExtended.readline()
-                count = 0
-                x = line.split('\t')
-                guidesExtendedProfile.append((x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9],
-                                              x[10], x[11], x[12], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20]))
-                for line in inGuidesProfileExtended:
-                    if count < 6:
-                        line = line.rstrip()
-                        x = line.split('\t')
-                        #y = str(x[20]).split('\n')
-                        guidesExtendedProfile.append((x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9],
-                                                      x[10], x[11], x[12], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20]))
-                        count += 1
-                    else:
-                        break
-            break
+    # for line in inGuidesProfileExtended:
+    #     if ">" + guide in line:
+    #         # print(line)
+    #         next(inGuidesProfileExtended)
+    #         # line=inGuidesProfileExtended.readline()
+    #         for ciao in range(0, uppermm+1):
+    #             line = inGuidesProfileExtended.readline()
+    #             count = 0
+    #             x = line.split('\t')
+    #             guidesExtendedProfile.append((x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9],
+    #                                           x[10], x[11], x[12], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20]))
+    #             for line in inGuidesProfileExtended:
+    #                 if count < 6:
+    #                     line = line.rstrip()
+    #                     x = line.split('\t')
+    #                     #y = str(x[20]).split('\n')
+    #                     guidesExtendedProfile.append((x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9],
+    #                                                   x[10], x[11], x[12], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20]))
+    #                     count += 1
+    #                 else:
+    #                     break
+    #         break
     arrayguidesExtendedProfile = np.array(guidesExtendedProfile, dtype=int)
     
     arrayguidesExtendedProfile.shape = (7*((uppermm-0)+1), 20)
@@ -563,6 +559,9 @@ if guide != 'no':
             table.set_fontsize(18)
             table.scale(1, 3)
             plt.axis('off')
+            plt.savefig("summary_single_guide_" + str(guide) +
+                        "_"+str(uppermm) + "mm" + ".png", format="png")
+            quit()
 
             datacount = arrayguidesExtendedProfile[missmatch*7] / \
                 (max(arrayguidesExtendedProfile[missmatch*7]))
