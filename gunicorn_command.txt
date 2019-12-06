@@ -1,0 +1,5 @@
+gunicorn app_v5:app.server
+
+aggiungere -b 80:8001 per redirigere sulla porta 8001
+oppure -b :8001
+
