@@ -2167,8 +2167,9 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
             except:
                 #create image from annotation file of samples
                 # subprocess.call([], shell = True)
-                first_img_source = ''
-                pass
+                subprocess.run(['crispritz.py generate-report ' + guide + ' -mm ' + str(mm_show) + ' -profile ' + job_directory + job_id + '.profile.xls -extprofile ' + job_directory + job_id + '.extented_profile.xls -annotation ' + job_directory + job_id + '.Annotation.txt'], shell = True)
+                first_img_source = radar_src
+                
             sample_images.append(dbc.Row(html.Br()))
             #inserire controllo tipo di c che sto inserendo per l'immagine dell'omino
             sample_images.append(
