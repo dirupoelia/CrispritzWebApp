@@ -32,7 +32,7 @@ with open(sys.argv[1]) as targets, open(sys.argv[3] + '.final.txt', 'w+') as res
             try:
                 line.append(','.join(sample_dict[line[1].replace('-','') + line[3] + line[5]]))
             except:
-                line.append('N')
+                line.append('n')
             current_pos = line[1].replace('-','') + line[3] + line[5]
         else:
             line.append('n')

@@ -70,7 +70,7 @@ if [ ${12} = 'True' ]; then
     mv ./$jobid.Annotation*.txt $1
     if [ ${15} = 'True' ]; then
         if [ ${10} = 'True' ]; then
-            crispritz.py annotate-results $1'/ref/'$jobid'_ref.profile_complete.xls' $1'/ref/'$jobid'_ref.targets.txt' ${18} $jobid
+            crispritz.py annotate-results $1'/ref/'$jobid'_ref.profile_complete.xls' $1'/ref/'$jobid'_ref.targets.txt' ${18} $jobid'_ref'
         fi
         if [ ${11} = 'True' ]; then
             crispritz.py annotate-results $1'/ref/'$jobid'_ref.profile.xls' $1'/ref/'$jobid'_ref.targets.txt' ${18} $jobid'_ref'
@@ -94,7 +94,7 @@ if [ ${13} = 'True' ]; then
     #-profile emx1.hg19.profile.xls -extprofile emx1.hg19.extended_profile.xls -exons emx1.hg19.annotated.ExonsCount.txt -introns emx1.hg19.annotated.IntronsCount.txt -dnase emx1.hg19.annotated.DNAseCount.txt -ctcf emx1.hg19.annotated.CTCFCount.txt -promoters emx1.hg19.annotated.PromotersCount.txt -gecko
     while IFS= read -r line || [ -n "$line" ]; do    
         for i in $(seq 0 $7); do 
-            
+            echo Gen-report $line mms: $i
             if [ ${14} = 'True' ]; then         #If -gecko
                 if [ ${15} = 'True' ]; then     #If genome_ref comparison
                    
@@ -109,6 +109,7 @@ if [ ${13} = 'True' ]; then
                     crispritz.py generate-report $line -mm $i -profile $jobid'.'$profile_type'.xls' -extprofile *.extended_profile.xls -annotation $jobid'.Annotation.txt'
                 fi
             fi
+            echo Report Done
         done
 
     done < guides.txt
@@ -142,17 +143,18 @@ if [ ${19} = 'both' ]; then     #TODO CHECK FOR LAST COL INDICES
     cat $jobid.unique_targets.cluster.pamcreation.txt $jobid.semi_common_targets.cluster.minmaxdisr.txt > $jobid.total.txt
     #Summary guide, pos
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.txt $7 $8 $9 guides.txt $jobid 'Uniq'
-    mv $jobid.total.txt $jobid.targets.cluster.txt
+    # mv $jobid.total.txt $jobid.targets.cluster.txt
     #Top 1 extraction
     python3 ../../PostProcess/extract_top.py $jobid.total.txt $jobid # > $jobid.top_1.txt
     #Top1 expansion
+    sort -k4,4 $jobid.top_1.txt > $jobid.top_1.sort.txt && mv $jobid.top_1.sort.txt $jobid.top_1.txt 
     python3 ../../PostProcess/calc_samples_faster.py ../../../dictionaries $jobid.top_1.txt  #> $jobid.top_1.samples.txt
     
     #Summary samples
     python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt 
 
     #Rimettere i samples nel file di cluster (solo nel top1)
-    python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.targets.cluster.minmaxdisr.txt $jobid.top_1.samples.txt  # > $jobid.final.txt
+    python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.total.txt $jobid.top_1.samples.txt $jobid  # > $jobid.final.txt
     echo 'Comparison done'
 fi
 
@@ -175,13 +177,14 @@ elif [ ${19} = 'var' ]; then
     # for dict in ../../../dictionaries/*.json; do
     #     python3 ../../PostProcess/calc_samples.py $dict $jobid.top_1.txt  #> $jobid.top_1.samples.txt
     # done  -> OLD version
+    sort -k4,4 $jobid.top_1.txt > $jobid.top_1.sort.txt && mv $jobid.top_1.sort.txt $jobid.top_1.txt 
     python3 ../../PostProcess/calc_samples_faster.py ../../../dictionaries $jobid.top_1.txt   #> $jobid.top_1.samples.txt
 
     # Summary by samples table
     python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt
 
     #Rimettere i samples nel file di cluster (solo nel top1)
-    python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.targets.cluster.minmaxdisr.txt $jobid.top_1.samples.txt  # > $jobid.final.txt
+    python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.targets.cluster.minmaxdisr.txt $jobid.top_1.samples.txt $jobid # > $jobid.final.txt
     #TODO aggiungere terza/quarta voce nella pagina del load
 fi
 

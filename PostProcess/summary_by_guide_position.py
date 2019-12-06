@@ -90,15 +90,15 @@ with open(sys.argv[1]) as targets:
             #Summar by guide
             if line[0] == 'X':
                 guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
-                if line[13] == 'y':
+                if line[14] == 'y':
                     guide_dict[line[1].replace('-','')][3][int(line[7])][int(line[8])] += 1
             elif line[0] == 'DNA':
                 guide_dict[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1
-                if line[13] == 'y':
+                if line[14] == 'y':
                     guide_dict[line[1].replace('-','')][4][int(line[7])][int(line[8])] += 1
             else:
                 guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
-                if line[13] == 'y':
+                if line[14] == 'y':
                     guide_dict[line[1].replace('-','')][5][int(line[7])][int(line[8])] += 1
             
             #Summary by position
