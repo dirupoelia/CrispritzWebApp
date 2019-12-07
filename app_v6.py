@@ -1885,9 +1885,9 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                 )
         fl.append(html.Br())
 
-        radar_img = 'summary_single_guide_' + guide + '_' + str(mms) + 'mm.png'
+        radar_img = 'summary_single_guide_' + guide + '_' + str(0) + 'mm.png' #TODO choose between 0 mm and max used mms
 
-        barplot_img = 'summary_histogram_' + guide + '_' + str(mms) + 'mm.png'
+        barplot_img = 'summary_histogram_' + guide + '_' + str(0) + 'mm.png'
         try:            #NOTE serve per non generare errori se il barplot non è stato fatto
             barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
         except:
@@ -2047,8 +2047,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
     job_id = search.split('=')[-1]
     job_directory = 'Results/' + job_id + '/'
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
-    if n0 is None and n1 is None:
-        raise PreventUpdate
+    
     #search for getting job id
     # get guide with sel_cel and all_data
     guide_images = []
@@ -2167,7 +2166,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
             except:
                 #create image from annotation file of samples
                 # subprocess.call([], shell = True)
-                subprocess.run(['crispritz.py generate-report ' + guide + ' -mm ' + str(mm_show) + ' -profile ' + job_directory + job_id + '.profile.xls -extprofile ' + job_directory + job_id + '.extented_profile.xls -annotation ' + job_directory + job_id + '.Annotation.txt'], shell = True)
+                subprocess.run(['crispritz.py generate-report ' + guide + ' -mm ' + str(mm_show) + ' -profile ' + job_directory + job_id + '.profile.xls -extprofile ' + job_directory + job_id + '.extended_profile.xls -annotation ' + job_directory + job_id + '.Annotation.txt'], shell = True)
                 first_img_source = radar_src
                 
             sample_images.append(dbc.Row(html.Br()))
@@ -2183,6 +2182,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
                         ),
                         width = 10
                     ),
+                    dbc.Col(html.P(c[1] + ': ' + c[0]))
                     # dbc.Col(
                     #     [
                     #         html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/' + c[1] + '.png', 'rb').read()).decode()), height = '80%', width = '50%'),
