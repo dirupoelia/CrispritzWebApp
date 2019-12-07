@@ -1,5 +1,5 @@
 # CrispritzWebApp
-Versione corrente: app_v5.py
+Versione corrente: app_v6.py
 
 
 Installare il conda di crispritz, poi in quel conda aggiungere:
@@ -21,7 +21,7 @@ Flask-Caching (Vengono installati anche Flask-1.1.1 Flask-Caching-1.7.2 Jinja2-2
 ```
 conda install -c conda-forge flask-caching
 ```
-Comando rename
+Comando rename - Non più usato
 ```
 sudo apt install rename
 ```
@@ -29,30 +29,30 @@ Bootstrap for dash
 ```
 conda install -c conda-forge dash-bootstrap-components
 ```
-pdftoppm to create png results
+pdftoppm to create png results - Non più usato
 ```
 sudo apt-get install python-poppler
+```
+Bedtools
+```
+https://bedtools.readthedocs.io/en/latest/content/installation.html
 ```
 Estrarre gli zip in genome_library per poter fare la ricerca con i bulges
 
 
 Dentro la cartella CrispritzWebApp, eseguire:
 ```
-python3 app_v5.py
+python3 app_v6.py
 ```
 La pagina principale si trova su:
 ```
-127.0.0.1:8050
+127.0.0.1:8080
 ```
 Esempio di pagina wait job:
 ```
-127.0.0.1:8050/load?job=3M2G83R5O9
+127.0.0.1:8050/load?job=FZU66BEVUL
 ```
 Esempio di result summary:
 ```
-127.0.0.1:8050/result?job=3M2G83R5O9
-```
-Esempio di targets per guida:
-```
-127.0.0.1:8050/result?job=3M2G83R5O9#GAGTCCGAGCAGAAGAAGAANNN
+127.0.0.1:8050/result?job=FZU66BEVUL
 ```
