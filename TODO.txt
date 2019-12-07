@@ -284,3 +284,50 @@ Dizionario :
 
 -Top1_sample problema se ci sono tante iupac -> togliere quelle senza samples?
 -PAM disr errore se ho uno iupac come carattere che metto nel res finale, devo scomporlo e fare itertools
+
+-Tabella di sample Tenere solo colonna targets created by SNP e cambiare nome in targets. Aggiungere colonne metadati e somma targets sulla popolazione e superpopolazione
+-Al posto del motif logo, mettere info del sample presa dalla tabella (in modod da avere una card con tutte le info del sample)
+-Togliere  conteggio tot targets con sample dalla tabella generale delle guide
+
+-CONTROLLARE GENOMA RIFERIMENTO CHE C'E' ANCORA IL SUM BY SAMPLE
+-Funzionamento radarchart:
+	-prendo i summary di tutte le guide, seleziono tutte le annotazioni e prendo i valori del mm in input. Ordino queste liste. Prendo il valore di quell mm della mia guida example
+	faccio sottrazione abs. Quando trovo il minimo -> valore della colonna pos
+
+	Esempio per 4 mm:
+
+-Summary_Total
+targets	0	0	6	59	708	6386	0	0	0	0
+CTCF	0	0	0	0	0	4	0	0	0	0
+dnase	0	0	3	2	40	357	0	0	0	0
+exon	0	0	0	0	27	239	0	0	0	0
+intron	0	0	0	0	0	0	0	0	0	0
+promoter	0	0	0	3	129	1161	0	0	0	0
+-Summary_CTAACAGTTGCTTTTATCACNNN
+targets	0	0	6	38	423	3974	0	0	0	0
+CTCF	0	0	0	0	0	4	0	0	0	0
+dnase	0	0	3	2	20	175	0	0	0	0
+exon	0	0	0	0	11	146	0	0	0	0
+intron	0	0	0	0	0	0	0	0	0	0
+promoter	0	0	0	0	74	571	0	0	0	0
+-Summary_TGCTTGGTCGGCACTGATAGNNN
+targets	0	0	0	21	285	2412	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnase	0	0	0	0	20	182	0	0	0	0
+exon	0	0	0	0	16	93	0	0	0	0
+intron	0	0	0	0	0	0	0	0	0	0
+promoter	0	0	0	3	55	590	0	0	0	0
+
+La tabella della sottrazione sarà, con 5 mm:
+									Targets		CTCF	dnase	exon	intron	promoter
+GUIDA1(CTAACAGTTGCTTTTATCACNNN)			3974	4		175		146		0		571
+GUIDA2(TGCTTGGTCGGCACTGATAGNNN)			2412	0		182		93		0		590
+GUIDA3...
+GUIDA4...
+
+poi ordino le colonne (crescente)
+Poi, prendo per ogni annotazione il valore della cella corrispondente nel file Annotation.txt della mia guida selezionata, eg guida 2
+e faccio la sottrazione, prendendo la distanza minore. Quando ho questa distanza prendo la pos nella tabella della sottrazione dove ho trovato il minore e faccio pos/totalnumguide
+e ottengo la colonna pos
+
+-Nella sequenza in input,eliminare tutti gli spazi o caratteri strani in input , gestire meglio '>' nome sequenza, che magari l'utente non lo mette
