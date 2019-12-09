@@ -32,7 +32,11 @@ import collections                          #For check if guides are the same in
 from datetime import datetime               #For time when job submitted
 from seq_script import extract_seq, convert_pam
 import re                                   #For sort chr filter values
+import concurrent
 #Warning symbol \u26A0
+
+
+exeggutor = concurrent.futures.ProcessPoolExecutor(max_workers=2)
 
 PAGE_SIZE = 100                    #number of entries in each page of the table in view report
 URL = 'http://127.0.0.1:8050'
@@ -1019,12 +1023,27 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         genome_type = 'var'
     if ref_comparison:
         genome_type = 'both'
+
+
+    '''''
     subprocess.Popen(['assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
         ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
             ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + 'annotations/' + annotation_file[0] + 
             ' ' + genome_type
         )
     )], shell = True)
+    
+    '''
+    command = 'assets/./submit_job.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
+        ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
+            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + 'annotations/' + annotation_file[0] +
+            ' ' + genome_type
+        )
+    )
+
+    exeggutor.submit(subprocess.run, command, shell=True)
+
+
     return '/load','?job=' + job_id
 
 #When url changed, load new page
@@ -2666,8 +2685,8 @@ def clusterPage(job_id, hash):
     return html.Div(final_list, style = {'margin':'1%'})
 
 if __name__ == '__main__':
-    #app.run_server(debug=True)
-    app.run_server(host='0.0.0.0', debug=True, port=8080)
+    app.run_server(debug=True)
+    # app.run_server(host='0.0.0.0', debug=True, port=80)
     cache.clear()       #delete cache when server is closed
 
     #BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti
