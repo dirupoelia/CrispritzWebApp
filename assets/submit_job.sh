@@ -159,7 +159,9 @@ if [ ${19} = 'both' ]; then     #TODO CHECK FOR LAST COL INDICES
 fi
 
 #Clustering for var and ref
-if [ ${19} != 'both' ]; then
+if [ ${19} = 'ref' ]; then
+    python3 ../../PostProcess/cluster.dict.py $jobid.targets.txt 'addGuide'
+elif [ ${19} = 'var' ]; then
     python3 ../../PostProcess/cluster.dict.py $jobid.targets.txt
 fi
 

@@ -19,9 +19,9 @@ with open(sys.argv[2], 'r') as top_samples:
             continue
         line = line.strip().split('\t')
         try:
-            sample_dict[line[1].replace('-','') + line[3] + line[5]] = sample_dict[line[1].replace('-','') + line[3] + line[5]].union(set(line[-1].split(',')))
+            sample_dict[line[1].replace('-','') + line[3] + line[5]] = sample_dict[line[1].replace('-','') + line[3] + line[5]].union(set(line[-2].split(',')))
         except:
-            sample_dict[line[1].replace('-','') + line[3] + line[5]] = set(line[-1].split(','))
+            sample_dict[line[1].replace('-','') + line[3] + line[5]] = set(line[-2].split(','))
        
 with open(sys.argv[1]) as targets, open(sys.argv[3] + '.final.txt', 'w+') as result:
     for line in targets:
@@ -36,5 +36,5 @@ with open(sys.argv[1]) as targets, open(sys.argv[3] + '.final.txt', 'w+') as res
             current_pos = line[1].replace('-','') + line[3] + line[5]
         else:
             line.append('n')
-        result.write('\t'.join(line) + '\n')
+        result.write('\t'.join(line) + '\t' + line[1].replace('-','') + '\n') #line[1].replace('-','') added to do better grep
 

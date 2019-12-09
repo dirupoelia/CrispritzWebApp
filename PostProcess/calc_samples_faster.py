@@ -171,7 +171,7 @@ if True:
                     t = t[::-1]
                 if final_result:
                     final_result[2] = t
-                    result.write('\t'.join(final_result) + '\n')
+                    result.write('\t'.join(final_result) + '\t' + final_result[1].replace('-','') + '\n') #final_result[1].replace('-','') for better grep
                 
                 #print(final_result)
                     

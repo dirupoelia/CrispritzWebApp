@@ -12,6 +12,8 @@
 
 #sys1 è semicommon file
 #Output column (not written): Bulge_type, Guide, Target, chr, pos, pos_cluster, direction, mms, bulge, total
+
+#sys2 is 'addGuide' or 'no' -> only for web server
 import pandas as pd
 import time
 import sys
@@ -19,6 +21,9 @@ import sys
 start = time.time()
 total_targets = []
 guides_dict = dict()
+addGuide = False                #Add real guide to last column for better grep
+if 'addGuide' in sys.argv[:]:
+    addGuide = True
 result_name = sys.argv[1][:sys.argv[1].rfind('.')] + '.cluster.txt'
 with open (sys.argv[1]) as targets:
     for line in targets:
@@ -80,8 +85,13 @@ with open(result_name, 'w+') as result:
     total_list[-1].sort(key = lambda x: int(x[9]))
 
     total_list.sort(key = lambda x: int(x[0][9]))
-    for cluster in total_list:
-        for target in cluster:
-            result.write('\t'.join(target) + '\n')
+    if addGuide:
+        for cluster in total_list:
+            for target in cluster:
+                result.write('\t'.join(target) + '\t' + target[1].replace('-','') + '\n')
+    else:
+        for cluster in total_list:
+            for target in cluster:
+                result.write('\t'.join(target) + '\n')
 
 print("Clustering runtime: %s seconds" % (time.time() - start_time))

@@ -566,435 +566,11 @@ test_page2 = html.Div(final_list, style = {'margin':'1%'})
 
 #TEST page3 for new result page
 final_list = []
-df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/solar.csv')
-final_list.append(dash_table.DataTable(
-        id='table-test-page-3',
-        columns=[{"name": i, "id": i} for i in df.columns],
-        data=df.to_dict('records'),
-        selected_cells = [{'row':0, 'column':0}],
-        style_data_conditional=[
-                    {
-                        'if': {
-                                'filter_query': '{State} eq California', 
-                                #'column_id' :'{#Bulge type}',
-                                #'column_id' :'{Total}'
-                            },
-                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
-                            
-                        }
-                ],
-        css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
 
-    )
-)
-final_list.append(html.Br())
-final_list.append(
-    dcc.Tabs(id="tabs-reports-testpage3", value='tab-summary-by-guide-testpage3', children=[
-        dcc.Tab(label='Summary by Guide', value='tab-summary-by-guide-testpage3'),
-        dcc.Tab(label='Summary by Sample', value='tab-summary-by-sample-testpage3'),
-        dcc.Tab(label='Summary by Position', value='tab-summary-by-position-testpage3'),
-        dcc.Tab(label='Graphical Summary', value='tab-summary-graphical-testpage3'),
-    ])
-)
-final_list.append(html.P('', id = 'tab-content-testpage3'))
 test_page3 = html.Div(final_list, style = {'margin':'1%'})
 
 ##################################################CALLBACKS##################################################
 #Test callbacks
-
-# Callback for test page 3
-@app.callback(
-    Output('tab-content-testpage3', 'children'),
-    [Input('tabs-reports-testpage3', 'value'),
-    Input('table-test-page-3', 'selected_cells')],
-    [State('table-test-page-3', 'data')]
-)
-def updateTabs(value, sel_cel, all_guides):
-    
-    if value is None or sel_cel is None:
-        raise PreventUpdate
-
-    if value == 'tab-summary-graphical-testpage3':
-        fl = []
-        fl.append(html.Br())
-        fl.append(html.P('Select a mismatch value'))
-        fl_buttons = []
-        mms = 4
-        for i in range (10):
-            if (i <= mms):
-                fl_buttons.append(
-                    html.Button(str(i) + ' mm',id = 'btn' + str(i)),       
-                )
-            else:
-                fl_buttons.append(
-                    html.Button(str(i) + ' mm',id = 'btn' + str(i), style = {'display':'none'}),       
-                )
-        fl.append(html.Br())
-
-        radar_img = 'radar_chart.png'
-
-        barplot_img = 'barplot.png'
-        try:            #NOTE serve per non generare errori se il barplot non è stato fatto
-            barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open(barplot_img, 'rb').read()).decode())
-        except:
-            barplot_src = ''
-        try:
-            barplot_href = ''
-        except:
-            barplot_href = ''
-
-        try:
-            radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open(radar_img, 'rb').read()).decode())
-        except:
-            radar_src = ''
-        try:
-            radar_href = 'assets/Img/' + job_id + '/' + radar_img
-        except:
-            radar_href = ''
-        #TODO if genoma selezionato è hg19/38, con varianti, allora aggiungo queste pop (se per esempio seleziono mouse, devo mettere i ceppi)
-        super_populations = [{'label':i, 'value':i} for i in population_1000gp.keys()]
-        populations = []
-        for k in population_1000gp.keys():
-            for i in population_1000gp[k]:
-                populations.append({'label':i, 'value':i})
-        fl.append(
-            html.Div(
-                [
-                    dbc.Row(
-                        [
-                            dbc.Col([    #Guide part
-                                
-                                dbc.Row(
-                                    dbc.Col(
-                                        html.Div(fl_buttons)
-                                    )
-                                ),
-                                html.Div(
-                                    [
-
-                                        dbc.Row(html.Br()),
-                                        dbc.Row(
-                                            [
-                                                dbc.Col(
-                                                    html.A(
-                                                        html.Img(src = radar_src, id = 'barplot-img-testpage3', width="75%", height="auto"),
-                                                        target="_blank",
-                                                        href = radar_href
-                                                    ),
-                                                )
-                                            ]
-                                        ),
-                                        dbc.Row(html.Br()),
-                                        dbc.Row(
-                                            [
-                                                dbc.Col(
-                                                    html.A(
-                                                        html.Img(src = barplot_src,id = 'radar-img-testpage3', width="75%", height="auto"),
-                                                        target="_blank",
-                                                        href = barplot_href
-                                                    )
-                                                )
-                                            ]
-                                        )
-                                        
-                                    ],
-                                    id = 'div-guide-image-testpage3'
-                                )
-                            ]),
-                            dbc.Col([    #Sample part
-                                
-                                dbc.Row(
-                                    [
-                                        dbc.Col(html.Div(dcc.Dropdown(options = super_populations, id = 'dropdown-superpopulation-sample-testpage3', placeholder = 'Select a Super Population'))),
-                                        dbc.Col(html.Div(dcc.Dropdown(options = populations, id = 'dropdown-population-sample-testpage3', placeholder = 'Select a Population'))),
-                                        dbc.Col(html.Div(dcc.Dropdown(options = populations, id = 'dropdown-sample-testpage3', placeholder = 'Select a Population'))),
-                                    ]
-                                ),
-                                html.Div(
-                                    [
-                                        dbc.Row(html.Br()),
-                                        dbc.Row(
-                                            [
-                                                dbc.Col(
-                                                    html.A(
-                                                        html.Img(src = radar_src, id = 'barplot-img', width="100%", height="auto"),
-                                                        target="_blank",
-                                                        href = radar_href
-                                                    ),
-                                                    width = 10
-                                                ),
-                                                dbc.Col(
-                                                    [
-                                                        html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('sample_img.png', 'rb').read()).decode())),
-                                                        html.P('SAmple X', id = 'sample-name-testpage3')
-                                                    ],
-                                                    align="center"
-                                                )
-                                            ],
-                                            no_gutters=True 
-                                        ),
-                                        dbc.Row(html.Br()),
-                                        dbc.Row(
-                                            [
-                                                dbc.Col(
-                                                    html.A(
-                                                        html.Img(src = barplot_src,id = 'barplot-img', width="75%", height="auto"),
-                                                        target="_blank",
-                                                        href = barplot_href
-                                                    )
-                                                )
-                                            ]
-                                        )
-                                    ],
-                                    id = 'div-sample-image-testpage3'
-                                )
-                            ])
-                        ]
-                    )
-                ]
-            )
-        )
-        
-        
-        
-        
-        # fl.append(
-        #     html.Div(
-        #                 [
-        #                     dbc.Row(
-        #                         [
-        #                             dbc.Col(
-        #                                 html.A(
-        #                                     html.Img(src = radar_src, id = 'barplot-img', width="75%", height="auto"),
-        #                                     target="_blank",
-        #                                     href = radar_href
-        #                                 ),
-        #                             ),
-        #                             dbc.Col(
-        #                                 html.A(
-        #                                     html.Img(src = barplot_src,id = 'barplot-img', width="75%", height="auto"),
-        #                                     target="_blank",
-        #                                     href = barplot_href
-        #                                 )
-        #                             )
-        #                         ], 
-        #                     ),
-        #                 ]
-        #             )
-        # )
-        fl.append(html.Br())
-        fl.append(html.Br())
-        return fl
-    guide = all_guides[int(sel_cel[0]['row'])]['State']
-    return guide + value
-
-# #Select figures on mms value, sample value
-# @app.callback(
-#     [Output('div-guide-image-testpage3', 'children'),
-#     Output('div-sample-image-testpage3', 'children')],
-#     [Input('btn0', 'n_clicks_timestamp'),
-#     Input('btn1', 'n_clicks_timestamp'),
-#     Input('dropdown-superpopulation-sample-testpage3', 'value'),
-#     Input('dropdown-population-sample-testpage3', 'value'),
-#     Input('dropdown-sample-testpage3', 'value')],
-#     [State('url', 'search')]
-# )
-# def updateImagesTabs(n0, n1, superpopulation, population, sample, search):
-#     # if sel_cel is None ra
-#     if n0 is None and n1 is None:
-#         raise PreventUpdate
-#     #search for getting job id
-#     # get guide with sel_cel and all_data
-#     guide_images = []
-#     sample_images = []
-    
-#     if n0 is None:
-#         n0 = 0
-#     if n1 is None:
-#         n1 = 0
-#     btn_max = []
-#     btn_max.append(n0)
-#     btn_max.append(n1)
-#     if max(btn_max) == 0:
-#         mm_show = 0
-#     if max(btn_max) == n0:
-#         mm_show = 0
-#     if max(btn_max) == n1:
-#         mm_show = 1
-    
-#     radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('radar_chart' + str(mm_show) + '.png', 'rb').read()).decode())
-#     barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('barplot' + str(mm_show) + '.png', 'rb').read()).decode())
-#     radar_href = ''
-#     barplot_href = ''
-#     guide_images.extend([
-#         # dbc.Row(
-#         #     dbc.Col(
-#         #         html.Div(fl_buttons)
-#         #     )
-#         # ),
-#         dbc.Row(html.Br()),
-#         dbc.Row(
-#             [
-#                 dbc.Col(
-#                     html.A(
-#                         html.Img(src = radar_src, id = 'barplot-img-testpage3', width="75%", height="auto"),
-#                         target="_blank",
-#                         href = radar_href
-#                     ),
-#                 )
-#             ]
-#         ),
-#         dbc.Row(html.Br()),
-#         dbc.Row(
-#             [
-#                 dbc.Col(
-#                     html.A(
-#                         html.Img(src = barplot_src,id = 'radar-img-testpage3', width="75%", height="auto"),
-#                         target="_blank",
-#                         href = barplot_href
-#                     )
-#                 )
-#             ]
-#         )
-#     ])
-#     class_images = [(sample, 'Sample'), (population, 'Population'), (superpopulation, 'Superpopulation')]
-#     # if superpopulation is None:
-#     #     superpopulation = 'nosuperpop'
-#     # if population is None:
-#     #     population = 'nopop'
-#     # if sample is None:
-#     #     sample = 'nosamp'
-#     for c in class_images:
-#         if c[0]:
-#             try:
-#                 first_img_source = 'data:image/png;base64,{}'.format(base64.b64encode(open('radar_chart' + c[0] + str(mm_show) + '.png', 'rb').read()).decode())
-#             except:
-#                 #create image from annotation file of samples
-#                 # subprocess.call([], shell = True)
-#                 pass
-#             sample_images.append(dbc.Row(html.Br()))
-#             #inserire controllo tipo di c che sto inserendo per l'immagine dell'omino
-#             sample_images.append(
-#                 dbc.Row(
-#                 [
-#                     dbc.Col(
-#                         html.A(
-#                             html.Img(src = first_img_source, id = 'barplot-img', width="100%", height="auto"),
-#                             target="_blank",
-#                             href = radar_href
-#                         ),
-#                         width = 10
-#                     ),
-#                     dbc.Col(
-#                         [
-#                             html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/' + c[1] + '.png', 'rb').read()).decode()), height = '80%', width = '50%'),
-#                             html.Div([
-#                                 html.P(c[1], id = 'category-name-testpage3', style = {'text-align': 'center'})], style = {'display':'inline-block'}),
-#                             html.Div([
-#                                 html.P(c[0], id = 'sample-name-testpage3', style = {'text-align': 'center'})
-#                             ],
-#                             style = {'display':'inline-block'} )
-#                         ],
-#                         align="center"
-#                     )
-#                 ],
-#                 no_gutters=True 
-#             ),
-#             )
-#     #Ordine è sample, population, superpopulation
-#     # try:
-#     #     first_img_source = 'data:image/png;base64,{}'.format(base64.b64encode(open('radar_chart' + sample + str(mm_show) + '.png', 'rb').read()).decode())
-#     # except:
-#     #     first_img_source = ''
-#     # try:
-#     #     second_img_source = 'data:image/png;base64,{}'.format(base64.b64encode(open('radar_chart' + population + str(mm_show) + '.png', 'rb').read()).decode())
-#     # except:
-#     #     second_img_source = ''
-#     # try:
-#     #     third_img_source = 'data:image/png;base64,{}'.format(base64.b64encode(open('radar_chart' + superpopulation + str(mm_show) + '.png', 'rb').read()).decode())
-#     # except:
-#     #     third_img_source = ''
-#     # print('first image', 'radar_chart' + sample + str(mm_show) + '.png')
-#     # print('second image', 'radar_chart' + population + str(mm_show) + '.png')
-#     # sample_images.extend(
-#     #     [
-#     #         dbc.Row(html.Br()),
-#     #         dbc.Row(
-#     #             [
-#     #                 dbc.Col(
-#     #                     html.A(
-#     #                         html.Img(src = first_img_source, id = 'barplot-img', width="100%", height="auto"),
-#     #                         target="_blank",
-#     #                         href = radar_href
-#     #                     ),
-#     #                     width = 10
-#     #                 ),
-#     #                 # dbc.Col(
-#     #                 #     [
-#     #                 #         html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('sample_img.png', 'rb').read()).decode())),
-#     #                 #         html.P('SAmple X', id = 'sample-name-testpage3')
-#     #                 #     ],
-#     #                 #     align="center"
-#     #                 # )
-#     #             ],
-#     #             no_gutters=True 
-#     #         ),
-#     #         dbc.Row(html.Br()),
-#     #         dbc.Row(
-#     #             [
-#     #                 dbc.Col(
-#     #                     html.A(
-#     #                         html.Img(src = second_img_source,id = 'barplot-img', width="100%", height="auto"),
-#     #                         target="_blank",
-#     #                         href = barplot_href
-#     #                     ),
-#     #                     width = 10
-#     #                 )
-#     #             ]
-#     #         ),
-#     #         dbc.Row(html.Br()),
-#     #         dbc.Row(
-#     #             [
-#     #                 dbc.Col(
-#     #                     html.A(
-#     #                         html.Img(src = third_img_source,id = 'barplot-img', width="100%", height="auto"),
-#     #                         target="_blank",
-#     #                         href = barplot_href
-#     #                     ),
-#     #                     width = 10
-#     #                 )
-#     #             ]
-#     #         )
-#     #     ]
-#     # )
-#     return guide_images, sample_images
-
-
-
-
-#Update color on selected row
-@app.callback(
-    Output('table-test-page-3', 'style_data_conditional'),
-    [Input('table-test-page-3', 'selected_cells')],
-    [State('table-test-page-3', 'data')]
-)
-def colorSelectedRow(sel_cel, all_guides):
-    if sel_cel is None:
-        raise PreventUpdate
-    guide = all_guides[int(sel_cel[0]['row'])]['State']
-    return [
-                    {
-                        'if': {
-                                'filter_query': '{State} eq "' + guide + '"', 
-                                #'column_id' :'{#Bulge type}',
-                                #'column_id' :'{Total}'
-                            },
-                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(0, 0, 255,0.15)'#'rgb(255, 102, 102)'
-                            
-                        }
-                ]
 
 # #Callback for test-page2
 # @app.callback(
@@ -1757,7 +1333,8 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         #Show Summary by Sample table
         if genome_type == 'both':
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
-            df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
+            df = df.sort_values('Targets created by SNPs', ascending = False)
+            df.drop(['Number of targets'], axis = 1, inplace = True)
         else:
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Population'], skiprows = 1)
             df = df.sort_values('Number of targets', ascending = False)
@@ -1765,7 +1342,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         for i in range(df.shape[0]):
             more_info_col.append('Show Targets')
         df[''] = more_info_col
-
+        
         #TODO if genoma selezionato è hg19/38, con varianti, allora aggiungo queste pop (se per esempio seleziono mouse, devo mettere i ceppi)
         super_populations = [{'label':i, 'value':i} for i in population_1000gp.keys()]
         populations = []
@@ -1830,7 +1407,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         for i in range(df.shape[0]):
             more_info_col.append('Show Targets')
         df[''] = more_info_col
-        
+        #TODO inserire failsafe se non ci sono chr, esempio elenco chr da 1 a 22
         fl.append(
             html.Div
                 (
@@ -2695,7 +2272,8 @@ def filterSampleTable(n, nPrev, nNext, sup_pop, pop, search, sel_cel, all_guides
             raise PreventUpdate
         if genome_type == 'both':
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
-            df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
+            df = df.sort_values('Targets created by SNPs', ascending = False)
+            df.drop(['Number of targets'], axis = 1, inplace = True)
         else:
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Population'], skiprows = 1)
             df = df.sort_values('Number of targets', ascending = False)
@@ -2713,7 +2291,8 @@ def filterSampleTable(n, nPrev, nNext, sup_pop, pop, search, sel_cel, all_guides
             current_page = current_page + 1
             if genome_type == 'both':
                 df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
-                df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
+                df = df.sort_values('Targets created by SNPs', ascending = False)
+                df.drop(['Number of targets'], axis = 1, inplace = True)
             else:
                 df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Population'], skiprows = 1)
                 df = df.sort_values('Number of targets', ascending = False)
@@ -2740,7 +2319,8 @@ def filterSampleTable(n, nPrev, nNext, sup_pop, pop, search, sel_cel, all_guides
                 current_page = 1
             if genome_type == 'both':
                 df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
-                df = df.sort_values(['Number of targets', 'Targets created by SNPs'], ascending = [False, True])
+                df = df.sort_values('Targets created by SNPs', ascending = False)
+                df.drop(['Number of targets'], axis = 1, inplace = True)
             else:
                 df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Population'], skiprows = 1)
                 df = df.sort_values('Number of targets', ascending = False)
@@ -3038,49 +2618,29 @@ def resultPage(job_id):
 
     final_list.append(html.Br())
     
-    final_list.append(
+    if genome_type == 'ref':
+        final_list.append(
         dcc.Tabs(id="tabs-reports", value='tab-summary-by-guide', children=[
             dcc.Tab(label='Summary by Guide', value='tab-summary-by-guide'),
-            dcc.Tab(label='Summary by Sample', value='tab-summary-by-sample'),
             dcc.Tab(label='Summary by Position', value='tab-summary-by-position'),
             dcc.Tab(label='Graphical Summary', value='tab-summary-graphical'),
         ])
     )
+        
+    else:
+        final_list.append(
+            dcc.Tabs(id="tabs-reports", value='tab-summary-by-guide', children=[
+                dcc.Tab(label='Summary by Guide', value='tab-summary-by-guide'),
+                dcc.Tab(label='Summary by Sample', value='tab-summary-by-sample'),
+                dcc.Tab(label='Summary by Position', value='tab-summary-by-position'),
+                dcc.Tab(label='Graphical Summary', value='tab-summary-graphical'),
+            ])
+        )
     final_list.append(html.Div(id = 'div-tab-content'))
 
     final_list.append(html.Div(genome_type, style = {'display':'none'}, id = 'div-genome-type'))
     result_page = html.Div(final_list, style = {'margin':'1%'})
     return result_page
-
-    #Create 10 buttons hidden and show when guide is selected, when button is pressed, show image with corresponding mm
-    # for i in range (10):
-    #     if (i <= mms):
-    #         final_list.append(
-    #             html.Button(str(i) + ' mm',id = 'btn' + str(i)),       
-    #         )
-    #     else:
-    #         final_list.append(
-    #             html.Button(str(i) + ' mm',id = 'btn' + str(i), style = {'display':'none'}),       
-    #         )
-    # final_list.append(
-    #     html.Button('Show all',id = 'btnAll'),
-    # )
-    # final_list.append(
-    #     html.Button('Summary by Guide', id = 'btn-summary-table')
-    # )
-    # style_samples = {}
-    # if genome_type == 'ref':
-    #     style_samples = {'display':'none'}
-    # final_list.append(
-    #     html.Button('Summary by Samples', id = 'btn-summary-samples', style = style_samples)
-    # )
-    # final_list.append(
-    #     html.Button('Summary by Position', id = 'btn-summary-position')
-    # )
-
-    # final_list.append(
-    #     html.Div(id = 'all-images')
-    # )
 
 
 #Update color on selected row
@@ -3337,7 +2897,7 @@ def samplePage(job_id, hash):
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
         col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
     
-    subprocess.call(['grep \'' + sample + '\' ' + 'Results/'+ job_id + '/' + job_id + '.top_1.samples.txt > Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt' ], shell = True)
+    subprocess.call(['grep \'' + sample + '\\t' + guide + '\$\' ' + 'Results/'+ job_id + '/' + job_id + '.top_1.samples.txt > Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt' ], shell = True)
     df = pd.read_csv('Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt', sep = '\t', names = col_list)
     df.drop(df.columns[[-1,]], axis=1, inplace=True)         #NOTE comment to show the sample column (maybe not informative in this view)
     del col_list[-1]                                         #NOTE comment to show the sample column (maybe not informative in this view)
@@ -3422,7 +2982,7 @@ def clusterPage(job_id, hash):
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
         col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
         file_to_grep = 'final'
-    subprocess.call(['grep -P \'\\t'+ guide[0]+ '.*\\t.*\\t' + chromosome + '\\t.*\\t' + position + '\\t\' Results/' + job_id + '/' + job_id + '.' + file_to_grep + '.txt > Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.txt'], shell = True)
+    subprocess.call(['grep -P \'\\t' + chromosome + '\\t.*\\t' + position + '\\t' + guide + '\$\' Results/' + job_id + '/' + job_id + '.' + file_to_grep + '.txt > Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.txt'], shell = True)
     
     df = pd.read_csv('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.txt', sep = '\t', names = col_list)
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
