@@ -95,12 +95,10 @@ for k in guides_dict.keys():
             result.write(k + '\t' + str(guides_dict_total[k]) + '\n')
             if sys.argv[3] == 'both':
                 for i in guides_dict[k]:
-                    result.write(i + '\t' + str(guides_dict[k][i][0]) +'\t' + str(guides_dict[k][i][1]) + '\t' + dict_pop[i] + '\t' + \
-                        guides_population_targets[k][i] + '\t' + population_1000gp[dict_pop[i]] +'\t'+guides_superpopulation_targets[guide][population_1000gp[dict_pop[i]]]  + '\n')
+                    result.write(i + '\t' + str(guides_dict[k][i][0]) +'\t' + str(guides_dict[k][i][1]) + '\t' + dict_pop[i] + '\t' + guides_population_targets[k][i] + '\t' + population_1000gp[dict_pop[i]] +'\t'+guides_superpopulation_targets[guide][population_1000gp[dict_pop[i]]]  + '\n')
             else:
                 for i in guides_dict[k]:
-                    result.write(i + '\t' + str(guides_dict[k][i][0]) + '\t' + dict_pop[i] + '\t' + \ 
-                    guides_population_targets[k][i] + '\t' + population_1000gp[dict_pop[i]] +'\t'+guides_superpopulation_targets[guide][population_1000gp[dict_pop[i]]] +'\n')
+                    result.write(i + '\t' + str(guides_dict[k][i][0]) + '\t' + dict_pop[i] + '\t' + guides_population_targets[k][i] + '\t' + population_1000gp[dict_pop[i]] +'\t'+guides_superpopulation_targets[guide][population_1000gp[dict_pop[i]]] +'\n')
 
         else:
             result.write('No samples found with ' + k + ' guide')

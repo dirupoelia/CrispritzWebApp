@@ -32,7 +32,7 @@ import re                                   #For sort chr filter values
 #Warning symbol \u26A0
 
 PAGE_SIZE = 100                    #number of entries in each page of the table in view report
-URL = 'http://127.0.0.1:8050'
+URL = 'http://crispritz.di.univr.it'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
@@ -427,7 +427,8 @@ final_list.append(
                             [
                                 html.Li('Searching crRNA'),
                                 html.Li('Annotating result'),
-                                html.Li('Generating report')
+                                html.Li('Generating report'),
+                                html.Li('Post Process data')
                             ]
                         ),
                         style = {'flex':'0 0 20%'}
@@ -437,7 +438,8 @@ final_list.append(
                             [
                                 html.Li('To do', style = {'color':'red'}, id = 'search-status'),
                                 html.Li('To do', style = {'color':'red'}, id = 'annotate-result-status'),
-                                html.Li('To do', style = {'color':'red'}, id = 'generate-report-status')
+                                html.Li('To do', style = {'color':'red'}, id = 'generate-report-status'),
+                                html.Li('To do', style = {'color':'red'}, id = 'post-process-status')
                             ],
                             style = {'list-style-type':'none'}
                         )
@@ -680,10 +682,10 @@ def inExample(nI, nR):
 
     if nR is None:
         nR = 0
-
+    
     if nI > 0:
         if nI > nR:
-            return gen_dir[0]['value'], '5\'-NGG-3\'', 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', '4', '0', '0', '20', '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
+            return 'hg38 ref+hg38 1000genomeproject', '5\'-NGG-3\'', 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', '4', '0', '0', '20', '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
 
 
     if nR > 0:
@@ -695,7 +697,17 @@ def inExample(nI, nR):
     # TODO salvare una cartella speciale in results che abbia i risultati di questa ricerca in modo da non occupare il server con
     # questa ricerca di esempio, ma all'utente passo già la cartella fatta (questa parte già implementata)
     # return '', '', '', '', '', '', ''
-
+#If selected genome has a '+', update advanced options comparison with reference
+@app.callback(
+    Output('checkbox-ref-comp', 'checked'),
+    [Input('available-genome', 'value')]
+)
+def suggestComparison(value):
+    if value is None:
+        raise PreventUpdate
+    if '+' in value:
+        return True
+    raise PreventUpdate 
 
 #Email validity
 @app.callback(
@@ -1077,6 +1089,7 @@ def changePage( href, path, search, hash_guide):
     Output('annotate-result-status', 'children'),
     Output('search-status', 'children'),
     Output('generate-report-status', 'children'),
+    Output('post-process-status', 'children'),
     Output('view-results','href'),
     Output('no-directory-error', 'children')],
     [Input('load-page-check', 'n_intervals')],
@@ -1098,27 +1111,92 @@ def refreshSearch(n, dir_name):
     current_job_dir = 'Results/' +  dir_name.split('=')[-1] + '/'
     if dir_name.split('=')[-1] in onlydir:
         onlyfile = [f for f in listdir(current_job_dir) if isfile(join(current_job_dir, f))]
+        with open(current_job_dir + 'guides.txt') as guides:
+            n_guides = len(guides.read().strip().split('\n'))
         if 'log.txt' in onlyfile:
             with open(current_job_dir + 'log.txt') as log:
                 all_done = 0
                 annotate_res_status = html.P('To do', style = {'color':'red'})
                 search_status = html.P('To do', style = {'color':'red'})
                 report_status = html.P('To do', style = {'color':'red'})
+                post_process_status = html.P('To do', style = {'color':'red'})
                 current_log = log.read()
                 if ('Annotation\tDone' in current_log):
                     annotate_res_status = html.P('Done', style = {'color':'green'})
                     all_done = all_done + 1
+                elif os.path.exists(current_job_dir + 'output.txt'):                #Extract % of search done
+                    with open(current_job_dir + 'output.txt', 'r') as output_status:
+                        line = output_status.read().strip()
+                        if 'Annotate_output' in line:
+                            if 'both' in line:
+                                last_percent = line.rfind('%')
+                                if last_percent > 0:
+                                    last_percent = line[line[:last_percent].rfind(' '): last_percent]
+                                    status_message = last_percent + '%'
+                                else:
+                                    status_message = 'Annotating...'
+
+                                steps = 'Step [1/2]'
+                                if 'Annotate_output_ref' in line:
+                                    steps = 'Step [2/2]'
+                            else:
+                                last_percent = line.rfind('%')
+                                if last_percent > 0:
+                                    last_percent = line[line[:last_percent].rfind(' '): last_percent]
+                                    status_message = last_percent + '%'
+                                else:
+                                    status_message = 'Annotating...'
+                                steps = ''
+                            annotate_res_status = html.P(status_message + ' ' + steps, style = {'color':'orange'})
+
                 if ('Search-index\tDone' in current_log and 'Search\tDone' in current_log):
                     search_status = html.P('Done', style = {'color':'green'})
                     all_done = all_done + 1
+                elif os.path.exists(current_job_dir + 'output.txt'):                #Extract % of search done 
+                    with open(current_job_dir + 'output.txt', 'r') as output_status:
+                        line = output_status.read().strip()
+                        if 'Search_output' in line:
+                            if 'both' in line:
+                                last_percent = line.rfind('%')
+                                if last_percent > 0:
+                                    last_percent = line[line[:last_percent].rfind(' '): last_percent]
+                                    search_status_message = last_percent + '%'
+                                else:
+                                    search_status_message = 'Searching...'
+
+                                steps = 'Step [1/2]'
+                                if 'Search_output_ref' in line:
+                                    steps = 'Step [2/2]'
+                                
+                                
+                            else:
+                                last_percent = line.rfind('%')
+                                if last_percent > 0:
+                                    last_percent = line[line[:last_percent].rfind(' '): last_percent]
+                                    search_status_message = last_percent + '%'
+                                else:
+                                    search_status_message = 'Searching...'
+                                steps = ''
+                            search_status = html.P(search_status_message + ' ' + steps, style = {'color':'orange'})
+
                 if ('Report\tDone' in current_log):
                     report_status = html.P('Done', style = {'color':'green'})
                     all_done = all_done + 1
-                if all_done == 3:
-                    return {'visibility':'visible'}, annotate_res_status, search_status, report_status, '/result?job=' + dir_name.split('=')[-1], ''
+                elif os.path.exists(current_job_dir + 'output.txt'):                #Extract % of search done
+                    with open(current_job_dir + 'output.txt', 'r') as output_status:
+                        line = output_status.read().strip()
+                        if 'Generate_report' in line:
+                            status_message = round((len(line.split('\n')) - 1) / n_guides, 2)
+                            report_status = html.P(str(status_message * 100) + '%', style = {'color':'orange'})
+                #TODO continuare con post process
+                if ('PostProcess\tDone' in current_log):
+                    post_process_status = html.P('Done', style = {'color':'green'})
+                    all_done = all_done + 1
+                if all_done == 4 or 'Job\tDone' in current_log:
+                    return {'visibility':'visible'}, annotate_res_status, search_status, report_status, post_process_status ,'/result?job=' + dir_name.split('=')[-1], ''
                 else:
-                    return {'visibility':'hidden'}, annotate_res_status, search_status, report_status,'', ''
-    return {'visibility':'hidden'}, html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}), '', dbc.Alert("The selected result does not exist", color = "danger")
+                    return {'visibility':'hidden'}, annotate_res_status, search_status, report_status, post_process_status,'', ''
+    return {'visibility':'hidden'}, html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}) ,'', dbc.Alert("The selected result does not exist", color = "danger")
 
 #Perform expensive loading of a dataframe and save result into 'global store'
 #Cache are in the Cache directory

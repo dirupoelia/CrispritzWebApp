@@ -2,7 +2,7 @@
 # 8 is file to grep (eg 'targets.cluster' for ref search, 'targets.cluster.minmaxdisr' for var search)
 cd Results/$6
 # grep -P '^'$1'\t'$4'[-,'$5'].*\t'$3'\t'$2'' $6.$8.txt > $6.$1$2$3.$7.txt 
-grep - P '^.*\t'$7'$'
+grep - P '^.*\t'$7'$' $6.$8.txt > $6.$1$2$3.$7.txt 
 echo 'Done'
 
 #To insert header, atm is inserted when loaded into the app

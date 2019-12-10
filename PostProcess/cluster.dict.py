@@ -9,6 +9,8 @@
 #test 3
 #Come test2, ma ogni lista è salvata in un dizionario con key = guide, per risolvere il problema di avere più guide in uno stesso cluster. 
 #Ora se in una posizione ho due guide, creo due cluster separati
+# Input 2.8 Gb -> 25 gb ram
+# Problema con 5 gb input -> forse servono 50 Gb ram
 
 #sys1 è semicommon file
 #Output column (not written): Bulge_type, Guide, Target, chr, pos, pos_cluster, direction, mms, bulge, total
