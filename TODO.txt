@@ -240,7 +240,7 @@ nella cartella del job corrispondente
 -cambio colore al selector di dash		X (vedere opzione css della tabella delle guide)
 	-cambio anche i bordi in blu
 	-cambio colore selezione in tutte le tabelle dash datatable
--implementare che se cancello i filtri ritorno i valori originali
+-implementare che se cancello i filtri ritorno i valori originali				X
 -Rivedere grep specific targets per migliorare l'estrazione se due guide sono simili
 -Fare in modo che se prendo i file dalla cartella hgetcetc non considero i file .fai
 
@@ -335,10 +335,13 @@ e ottengo la colonna pos
 -Per il radar con i sample: Prendo il summary della guida, ma fatto solo sui top 1, e poi come distanza faccio la percentuale di target in quell'annotazione del
 sample rispetto al num target dell'annotazione della guida (per indicare che se una guida ha 450 sample exon, il mio sample ha 100 target exon, allora circa il 
 25% dei target è di quel sample)
--Se l'utente seleziona genoma con +, metto in automatico la spunta su comapre with ref
+-Se l'utente seleziona genoma con +, metto in automatico la spunta su comapre with ref	X
 
 -Cambiare radar chart sample con 1-(num sample/num guide)
 -Lasciare 1 worker
 -Gen report multi
 -Spezzare clustering per guida, mettere no se targets per guida > 70kk
 -Mettere percentuale nell'annotazione
+-Aggiungere -T nell'estrazione semicommon etc
+-Risolvere problema plot con nohup
+-Togliere sample se ricerca con ref nelle immaginig

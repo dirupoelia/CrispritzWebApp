@@ -68,6 +68,13 @@ population_1000gp = {
 #List of all samples
 pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/PostProcess/20130606_sample_info.xlsx')
 all_samples = pop_file.Sample.to_list()
+all_pop = pop_file.Population.to_list()
+dict_pop = dict()
+for  pos, i in enumerate(all_pop):
+    try:
+        dict_pop[i].append(all_samples[pos])
+    except:
+        dict_pop[i] = [all_samples[pos]]
 dropdown_all_samples = [{'label': sam, 'value' : sam} for sam in all_samples]
 #Dropdown available genomes
 onlydir = [f for f in listdir('Genomes') if isdir(join('Genomes', f))]
@@ -1442,7 +1449,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                     style = {'width':'50%'}
                 )
         )
-
+        fl.append(html.Div('None,None',id = 'div-sample-filter-query', style = {'display':'none'})) #Folr keep current filter:  Superpop,Pop
         fl.append(html.Div(
                 generate_table_samples(df, 'table-samples', 1, guide, job_id ), style = {'text-align': 'center'}, id = 'div-table-samples'
             )
@@ -1502,14 +1509,14 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                     style = {'width':'50%'}
                 )
         )
-        print('Position dataframe ready', time.time() - start_time)
-        
+        # print('Position dataframe ready', time.time() - start_time)
+        fl.append(html.Div('None,None,None',id = 'div-position-filter-query', style = {'display':'none'})) #Folr keep current filter:  chr,pos_start,pos_end
         start_time = time.time()
         fl.append(html.Div(
                 generate_table_position(df, 'table-position', 1 , int(mms), int(max_bulges), guide, job_id ), style = {'text-align': 'center'}, id = 'div-table-position'
             )
         )
-        print('Position table ready', time.time() - start_time)
+        # print('Position table ready', time.time() - start_time)
         fl.append(
             html.Div(
                 [
@@ -1561,6 +1568,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         except:
             radar_href = ''
         #TODO if genoma selezionato è hg19/38, con varianti, allora aggiungo queste pop (se per esempio seleziono mouse, devo mettere i ceppi)
+        #TODO inserire un messaggio che se la ricerca è fatta sul ref, non si possono vedere le immagini coi samples
         super_populations = [{'label':i, 'value':i} for i in population_1000gp.keys()]
         populations = []
         for k in population_1000gp.keys():
@@ -1618,8 +1626,8 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                                     [
                                         dbc.Col(html.Div(dcc.Dropdown(options = super_populations, id = 'dropdown-superpopulation-sample', placeholder = 'Select a Super Population'))),
                                         dbc.Col(html.Div(dcc.Dropdown(options = populations, id = 'dropdown-population-sample', placeholder = 'Select a Population'))),
-                                        dbc.Col(html.Div(dcc.Dropdown(options = dropdown_all_samples, id = 'dropdown-sample', placeholder = 'Select a Sample'))),
-                                    ]   #TODO sample lenti nel caricamento, fare solo sample della pop
+                                        dbc.Col(html.Div(dcc.Dropdown( id = 'dropdown-sample', placeholder = 'Select a Sample'))),
+                                    ]   #NOTE sample presenti solo se seleziono la pop
                                 ),
                                 html.Div(
                                     [
@@ -2298,23 +2306,45 @@ def generate_table_position(dataframe, id_table, page, mms, bulges, guide = '', 
 def updatePopulationDrop(superpop):
     if superpop is None or superpop is '':
         raise PreventUpdate
-    return [{'label':i, 'value':i} for i in population_1000gp[superpop]], None    #TODO adjust for other population file (eg mouse)
+    return [{'label':i, 'value':i} for i in population_1000gp[superpop]], None   #TODO adjust for other population file (eg mouse)
+
+#Callback to update the sample based on population selected
+@app.callback(
+    [Output('dropdown-sample','options'),
+    Output('dropdown-sample','value')],
+    [Input('dropdown-population-sample', 'value')]
+)
+def updateSampleDrop(pop):
+    if pop is None or pop is '':
+        return [], None
+    return [{'label': sam, 'value' : sam} for sam in dict_pop[pop]], None 
+
+#Callback to update the hidden div filter
+@app.callback(
+    Output('div-sample-filter-query', 'children'),
+    [Input('button-filter-population-sample', 'n_clicks')],
+    [State('dropdown-superpopulation-sample', 'value'),
+    State('dropdown-population-sample', 'value')]
+)
+def updateSampleFilter(n, superpopulation, population):
+    if n is None:
+        raise PreventUpdate
+    return str(superpopulation) + ',' + str(population)
 
 #Callback to view next/prev page on sample table
 @app.callback(
     [Output('div-table-samples', 'children'),
     Output('div-current-page-table-samples', 'children')],
-    [Input('button-filter-population-sample', 'n_clicks_timestamp'),
-    Input('prev-page-sample', 'n_clicks_timestamp'),
-    Input('next-page-sample', 'n_clicks_timestamp')],
-    [State('dropdown-superpopulation-sample', 'value'),
-    State('dropdown-population-sample', 'value'),
+    [Input('prev-page-sample', 'n_clicks_timestamp'),
+    Input('next-page-sample', 'n_clicks_timestamp'),
+    Input('div-sample-filter-query', 'children')],
+    [State('button-filter-population-sample', 'n_clicks_timestamp'),
     State('url', 'search'),
     State('general-profile-table', 'selected_cells'),
     State('general-profile-table', 'data'),
     State('div-current-page-table-samples', 'children')]
 )
-def filterSampleTable(n, nPrev, nNext, sup_pop, pop, search, sel_cel, all_guides, current_page):
+def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, current_page):
     if sel_cel is None:
         raise PreventUpdate
     if nPrev is None and nNext is None and n is None:
@@ -2326,6 +2356,13 @@ def filterSampleTable(n, nPrev, nNext, sup_pop, pop, search, sel_cel, all_guides
         nNext = 0
     if n is None:
         n = 0
+    
+    sup_pop = filter_q.split(',')[0]
+    pop = filter_q.split(',')[1]
+    if sup_pop == 'None':
+        sup_pop = None
+    if pop == 'None':
+        pop = None
     current_page = int(current_page)
     btn_sample_section = []
     btn_sample_section.append(n)
@@ -2346,8 +2383,6 @@ def filterSampleTable(n, nPrev, nNext, sup_pop, pop, search, sel_cel, all_guides
 
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     if max(btn_sample_section) == n:              #Last button pressed is filtering, return the first page of the filtered table
-        if (sup_pop is None or sup_pop is '') and (pop is None or pop is ''):   #No filter value selected   #TODO implementare che se cancello i filtri ritorno i valori originali
-            raise PreventUpdate
         if genome_type == 'both':
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
             df = df.sort_values('Targets created by SNPs', ascending = False)
@@ -2359,6 +2394,8 @@ def filterSampleTable(n, nPrev, nNext, sup_pop, pop, search, sel_cel, all_guides
         for i in range(df.shape[0]):
             more_info_col.append('Show Targets')
         df[''] = more_info_col
+        if (sup_pop is None or sup_pop is '') and (pop is None or pop is ''):   #No filter value selected   #TODO implementare che se cancello i filtri ritorno i valori originali
+            return generate_table_samples(df, 'table-samples', 1, guide, job_id ), 1
         if pop is None or pop is '':
             df.drop(df[(~(df['Population'].isin(population_1000gp[sup_pop])))].index , inplace = True)
         else:
@@ -2414,26 +2451,39 @@ def filterSampleTable(n, nPrev, nNext, sup_pop, pop, search, sel_cel, all_guides
             return generate_table_samples(df, 'table-samples', current_page, guide, job_id ), current_page
     raise PreventUpdate
 
+#Callback to update the hidden div filter position
+@app.callback(
+    Output('div-position-filter-query', 'children'),
+    [Input('button-filter-position', 'n_clicks')],
+    [State('dropdown-chr-table-position', 'value'),
+    State('input-position-start', 'value'),
+    State('input-position-end', 'value')]
+)
+def updatePositionFilter(n, chr, pos_start, pos_end):
+    if n is None:
+        raise PreventUpdate
+    if pos_start is '':
+        pos_start = 'None'
+    if pos_end is '':
+        pos_end = 'None'
+    return str(chr) + ',' + str(pos_start) + ',' + str(pos_end)
 
 
 #Callback to filter chr from Summary by Position table, and to show next/prev page
 @app.callback(
     [Output('div-table-position', 'children'),
     Output('div-current-page-table-position', 'children')],
-    [Input('button-filter-position', 'n_clicks_timestamp'),
-    Input('prev-page-position','n_clicks_timestamp'),
-    Input('next-page-position', 'n_clicks_timestamp')],
-    [State('dropdown-chr-table-position', 'value'),
-    State('input-position-start', 'value'),
-    State('input-position-end','value'),
+    [Input('prev-page-position','n_clicks_timestamp'),
+    Input('next-page-position', 'n_clicks_timestamp'),
+    Input('div-position-filter-query', 'children')],
+    [State('button-filter-position', 'n_clicks_timestamp'),
     State('url', 'search'),
     State('general-profile-table', 'selected_cells'),
     State('general-profile-table', 'data'),
     State('div-current-page-table-position', 'children'),
     State('div-mms-bulges-position', 'children')]
-)#TODO test filter position con risultati filtrati
-#BUG se metto chr1 ma non clicco filtering e poi vado in next/prev il filtering è comunque applicato
-def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_cel, all_guides, current_page, mms_bulge):
+)
+def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, current_page, mms_bulge):
     if sel_cel is None:
         raise PreventUpdate
     if nPrev is None and nNext is None and n is None:
@@ -2445,6 +2495,18 @@ def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_ce
         nNext = 0
     if n is None:
         n = 0
+
+    filter_q = filter_q.split(',')
+    chr = filter_q[0]
+    if chr == 'None':
+        chr = None
+    pos_begin = filter_q[1]
+    if pos_begin == 'None':
+        pos_begin = None
+    pos_end = filter_q[2]
+    if pos_end == 'None':
+        pos_end = None
+    
     current_page = int(current_page)
     mms = int(mms_bulge.split('-')[0])
     max_bulges = int(mms_bulge.split('-')[1])
@@ -2463,7 +2525,7 @@ def filterPositionTable(n, nPrev, nNext, chr, pos_begin, pos_end, search, sel_ce
         if pos_end:
             if int(pos_end) < int(pos_begin):
                 pos_end = None
-        df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
+        df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')  
         
         df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
         more_info_col = []
