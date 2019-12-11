@@ -189,18 +189,18 @@ for i in onlyfile:
 #     open_file.append(open('chrX.fa_seq.txt'))
 # except:
 #     open_file.append(open('chr' + '1' + '.fa_seq.txt')) #TODO sistemare per indicare che se non ho iupac nella pam non ho questo file
-count21 = 0
-count22 = 0
+# count21 = 0
+# count22 = 0
 with open(sys.argv[1]) as uniq, open(name_output + '.pamcreation.txt', 'w+') as res:
     for line in uniq:
         if '#' in line:
             continue
         line = line.strip().split('\t')
         file_corresponding = line[3]
-        if file_corresponding == 'chr21':
-            count21 = count21 + 1
-        elif file_corresponding == 'chr22':
-            count22 = count22 + 1
+        # if file_corresponding == 'chr21':
+        #     count21 = count21 + 1
+        # elif file_corresponding == 'chr22':
+        #     count22 = count22 + 1
         total_line = []
         found_creation = False
         # if int(line[4]) == 22687078:

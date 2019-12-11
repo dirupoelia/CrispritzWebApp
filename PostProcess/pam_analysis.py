@@ -141,7 +141,7 @@ with open (sys.argv[1]) as t, open(name_output + '.minmaxdisr.txt','w+') as resu
                     pam_disr.append(diff_res)
                     found_iupac_pam = True
                 else:
-                    pam_disr.append(char)
+                    pam_disr.append(iupac_code_set[char])
                 
 
                 # if pam[pos] in iupac_code:      #both are IUPAC
