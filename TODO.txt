@@ -331,3 +331,14 @@ e faccio la sottrazione, prendendo la distanza minore. Quando ho questa distanza
 e ottengo la colonna pos
 
 -Nella sequenza in input,eliminare tutti gli spazi o caratteri strani in input , gestire meglio '>' nome sequenza, che magari l'utente non lo mette
+
+-Per il radar con i sample: Prendo il summary della guida, ma fatto solo sui top 1, e poi come distanza faccio la percentuale di target in quell'annotazione del
+sample rispetto al num target dell'annotazione della guida (per indicare che se una guida ha 450 sample exon, il mio sample ha 100 target exon, allora circa il 
+25% dei target è di quel sample)
+-Se l'utente seleziona genoma con +, metto in automatico la spunta su comapre with ref
+
+-Cambiare radar chart sample con 1-(num sample/num guide)
+-Lasciare 1 worker
+-Gen report multi
+-Spezzare clustering per guida, mettere no se targets per guida > 70kk
+-Mettere percentuale nell'annotazione

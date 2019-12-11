@@ -28,10 +28,31 @@ Eg
 import sys
 import os
 import pandas as pd
+
+#Dict for populations
+pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/20130606_sample_info.xlsx')
+all_samples = pop_file.Sample.to_list()
+all_pop = pop_file.Population.to_list()
+dict_pop = dict()
+for  pos, i in enumerate(all_samples):
+    try:
+        dict_pop[i] = all_pop[pos]        #{'S1':'POP1', 'S2':'POP1', ...}
+    except:
+        dict_pop[i] = all_pop[pos]
+
+#Dict for superpopulation
+population_1000gp = {'CHB':'EAS', 'JPT':'EAS', 'CHS':'EAS', 'CDX':'EAS', 'KHV':'EAS',
+                    'CEU':'EUR', 'TSI':'EUR', 'FIN':'EUR', 'GBR':'EUR', 'IBS':'EUR',
+                    'YRI':'AFR', 'LWK':'AFR', 'GWD':'AFR', 'MSL':'AFR', 'ESN':'AFR', 'ASW':'AFR', 'ACB':'AFR',
+                    'MXL':'AMR', 'PUR':'AMR', 'CLM':'AMR', 'PEL':'AMR',
+                    'GIH':'SAS', 'PJL':'SAS', 'BEB':'SAS', 'STU':'SAS', 'ITU':'SAS'
+}
+superpopulation = ['EAS', 'EUR', 'AFR', 'AMR','SAS']
 # argv 1 is top1.samples.txt
 # argv 2 is Annotation.targets
-# argv 3 is Annotation.txt -> to get the name of annotations
-
+# argv 3 is Annotation.txt -> to get the name of annotations    #TODO modificare meglio, prenderle direttamente dal file
+# argv 4 is result name
+result_name = sys.argv[4]
 # samples_dict = {
     # GUIDE1 ->{
     #     chrXposY -> [[Sample1, sample7], []]
@@ -61,14 +82,17 @@ with open(sys.argv[1]) as targets:
 # print(samples_dict['CTAACAGTTGCTTTTATCACNNN']['chr2146560428'])
 # print(samples_dict['TGCTTGGTCGGCACTGATAGNNN']['chr2250085897'])
 
-ann_list = []
+ann_list = []       #TODO sistemare con la nuova annotazione
 
 with open (sys.argv[3], 'r') as ann_file:
     for line in ann_file:
         if '-' in line[0] and 'Summary' not in line:
             ann_list.append(line.strip()[1:])
 
-summary_sample = dict()
+
+summary_targets_guide = dict()  #To save targets and annotation count for top 1
+dict_pop_count = dict()         #To save targets and annotations count for populations
+dict_superpop_count = dict()    #To save targets and annotations count for superpopulations
 
 with open (sys.argv[2]) as targets:             #Count annotation for each target
     for line in targets:
@@ -79,112 +103,126 @@ with open (sys.argv[2]) as targets:             #Count annotation for each targe
         
         if guide not in annotation_dict.keys():
             annotation_dict[guide] = dict()
+            summary_targets_guide[guide] = {'targets':[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
+            dict_pop_count[guide] = dict()
+            dict_superpop_count[guide] = dict()
+            for pop in set(all_pop):
+                dict_pop_count[guide][pop] = {'targets':[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
+                dict_superpop_count[guide][population_1000gp[pop]] = {'targets':[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
         try:
             samples_list = samples_dict[guide][line[3] + line[4]]
         except:
             samples_list = [[], ann_list]
-        if line[-1] in samples_list[1]:
+        if line[-1] in samples_list[1]: #if target was already counted in that annotation
             continue
-        samples_dict[guide][line[3] + line[4]][1].append(line[-1])
+        
+        #Count the annotations for the guide (only top1)
+        try:
+            summary_targets_guide[guide][line[-1]][int(line[6])] += 1
+        except:
+            summary_targets_guide[guide][line[-1]] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            summary_targets_guide[guide][line[-1]][int(line[6])] += 1
+        summary_targets_guide[guide]['targets'][int(line[6])] += 1
+        
+        samples_dict[guide][line[3] + line[4]][1].append(line[-1])  #Get list of samples in current gudie chr pos
+        visited_pop = []
+        visited_superpop = []
         for sample in samples_list[0] :
             if sample not in annotation_dict[guide]:
-                annotation_dict[guide][sample] = dict()     #TODO errore sistemare conteggio samples tartgets
+                annotation_dict[guide][sample] = {'targets':[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}     
                 # print(guide, sample, line[-1], line[6])
-                summary_sample[sample] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                
             try:
                 annotation_dict[guide][sample][line[-1]][int(line[6])] += 1       #increase annotation count
-                summary_sample[sample][int(line[6])] += 1
             except:
                 annotation_dict[guide][sample][line[-1]] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
                 annotation_dict[guide][sample][line[-1]][int(line[6])] += 1
-                summary_sample[sample][int(line[6])] += 1
-
-# print(annotation_dict['CTAACAGTTGCTTTTATCACNNN'])
-
-# print('HG00282', annotation_dict['CTAACAGTTGCTTTTATCACNNN']['HG00282'])
-# print('NA12056',  annotation_dict['CTAACAGTTGCTTTTATCACNNN']['NA12056'])
-for guide in annotation_dict:
-    with open('test_count_annotation_sample.' + guide +'.samples.txt', 'w+') as result:
-        for annotation in ann_list:
-            result.write('-' + annotation + '\n')
-            for sample in annotation_dict[guide]:
-                result.write(sample)
+            
+            if dict_pop[sample] in visited_pop:
+                continue
+            else:
+                visited_pop.append(dict_pop[sample])
+                dict_pop_count[guide][dict_pop[sample]]['targets'][int(line[6])] += 1
                 try:
-                    result.write('\t' + '\t'.join(str(x) for x in annotation_dict[guide][sample][annotation] ) + '\n' )
+                    dict_pop_count[guide][dict_pop[sample]][line[-1]][int(line[6])] += 1
                 except:
-                    result.write('\t' + '\t'.join(['0' for i in range(10)]) + '\n')
+                    dict_pop_count[guide][dict_pop[sample]][line[-1]] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                    dict_pop_count[guide][dict_pop[sample]][line[-1]][int(line[6])] += 1
+            if population_1000gp[dict_pop[sample]] in visited_superpop:
+                continue
+            else:
+                visited_superpop.append(population_1000gp[dict_pop[sample]])
+                dict_superpop_count[guide][population_1000gp[dict_pop[sample]]]['targets'][int(line[6])] += 1
+                try:
+                    dict_superpop_count[guide][population_1000gp[dict_pop[sample]]][line[-1]][int(line[6])] += 1
+                except:
+                    dict_superpop_count[guide][population_1000gp[dict_pop[sample]]][line[-1]] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                    dict_superpop_count[guide][population_1000gp[dict_pop[sample]]][line[-1]][int(line[6])] += 1
+            annotation_dict[guide][sample]['targets'][int(line[6])] += 1
+
+for guide in annotation_dict:
+    with open(result_name + '.sample_annotation.' + guide +'.samples.txt', 'w+') as result:
         result.write('-Summary_Total\n')
+        result.write('targets\t' + '\t'.join([str(x) for x in summary_targets_guide[guide]['targets']]) + '\n')
+        for annotation in ann_list:
+            try:
+                result.write(annotation + '\t' + '\t'.join([str(x) for x in summary_targets_guide[guide][annotation]]) + '\n')
+            except:
+                result.write(annotation + '\t' + '\t'.join(['0' for i in range(10)]) + '\n')
+        
+        #Write summary for each sample
         for sample in annotation_dict[guide]:
             result.write('-Summary_' + sample + '\n')
-            result.write('targets\t'.join(str(x) for x in  summary_sample[sample]) + '\n')
+            result.write('targets\t' + '\t'.join([str(x) for x in annotation_dict[guide][sample]['targets']]) + '\n')
+
             for annotation in ann_list:
-                result.write(annotation + '\t')
                 try:
-                    result.write('\t'.join(str(x) for x in annotation_dict[guide][sample][annotation] ) + '\n' )
+                    result.write(annotation + '\t' + '\t'.join([str(x) for x in annotation_dict[guide][sample][annotation]]) + '\n')
                 except:
-                    result.write('\t'.join(['0' for i in range(10)]) + '\n')
+                    result.write(annotation + '\t' + '\t'.join(['0' for i in range(10)]) + '\n')
 
-# print(annotation_dict['TGCTTGGTCGGCACTGATAGNNN']['NA12056'])
-#For each population, count total sample values
-pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/20130606_sample_info.xlsx')
-all_samples = pop_file.Sample.to_list()
-all_pop = pop_file.Population.to_list()
-dict_pop = dict()
-for  pos, i in enumerate(all_pop):
-    try:
-        dict_pop[i].append(all_samples[pos])
-    except:
-        dict_pop[i] = [all_samples[pos]]
 
-dict_pop_count = dict()
 for guide in annotation_dict:
-    with open('test_count_annotation_sample.' + guide + '.population.txt', 'w+') as result:
-        dict_pop_count[guide] = dict()
-        for population in dict_pop.keys():
-            #Initialize dict
-            dict_pop_count[guide][population] = dict()
-            for a in ann_list:
-                dict_pop_count[guide][population][a] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            #Count sum of sample for each pupulation for each annotation
-            for a in ann_list:
-                for sample in dict_pop[population]:
-                    try:
-                        dict_pop_count[guide][population][a] = [dict_pop_count[guide][population][a][i] + annotation_dict[guide][sample][a][i] for i in range(len(dict_pop_count[guide][population][a])) ]    # annotation_dict[guide][sample][a]
-                    except:
-                        dict_pop_count[guide][population][a] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            #result.write(population)
-        #Write result
-        for a in ann_list:
-            result.write('-' + a + '\n')
-            for population in dict_pop.keys():
-                if population in dict_pop_count[guide]:
-                    result.write(population)
-                    result.write('\t' + '\t'.join(str(x) for x in dict_pop_count[guide][population][a] ) + '\n')         
-            result.write('\n')
-# print(dict_pop_count)
-# print(dict_pop.keys())
-#Populations 1000 gen proj
-population_1000gp = {
-    'EAS':['CHB', 'JPT', 'CHS', 'CDX', 'KHV'],
-    'EUR':['CEU', 'TSI', 'FIN', 'GBR', 'IBS'],
-    'AFR':['YRI', 'LWK', 'GWD', 'MSL', 'ESN', 'ASW', 'ACB'],
-    'AMR':['MXL', 'PUR', 'CLM', 'PEL'],
-    'SAS':['GIH', 'PJL', 'BEB', 'STU', 'ITU']
-}
+    with open(result_name + '.sample_annotation.' + guide + '.population.txt', 'w+') as result:
+        #Write result guide general
+        result.write('-Summary_Total\n')
+        result.write('targets\t' + '\t'.join([str(x) for x in summary_targets_guide[guide]['targets']]) + '\n')
+        for annotation in ann_list:
+            try:
+                result.write(annotation + '\t' + '\t'.join([str(x) for x in summary_targets_guide[guide][annotation]]) + '\n')
+            except:
+                result.write(annotation + '\t' + '\t'.join(['0' for i in range(10)]) + '\n')
+        #Write result population
+        for population in set(all_pop):
+            result.write('-Summary_' + population + '\n')
+            result.write('targets\t' + '\t'.join([str(x) for x in dict_pop_count[guide][population]['targets']]) + '\n')
+            for annotation in ann_list:
+                try:
+                    result.write(annotation + '\t' + '\t'.join([str(x) for x in dict_pop_count[guide][population][annotation]]) + '\n')
+                except:
+                    result.write(annotation + '\t' + '\t'.join(['0' for i in range(10)]) + '\n')
+  
+
 #For each superpopulation, write sum of population
 for guide in annotation_dict:    
-    with open('test_count_annotation_sample.' + guide + '.superpopulation.txt', 'w+') as result:
-        for a in ann_list:
-            result.write('-' + a + '\n')
-            for superpopulation in population_1000gp:
-                tmp_sum = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                for population in population_1000gp[superpopulation]:
-                    try:
-                        tmp_sum = [ tmp_sum[i] + dict_pop_count[guide][population][a][i] for i in range(len(tmp_sum))]
-                    except:
-                        tmp_sum = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                result.write(superpopulation)
-                result.write('\t' + '\t'.join(str(x) for x in tmp_sum) + '\n')
-                
+    with open(result_name + '.sample_annotation.' + guide + '.superpopulation.txt', 'w+') as result:
+        #Write result guide general
+        result.write('-Summary_Total\n')
+        result.write('targets\t' + '\t'.join([str(x) for x in summary_targets_guide[guide]['targets']]) + '\n')
+        for annotation in ann_list:
+            try:
+                result.write(annotation + '\t' + '\t'.join([str(x) for x in summary_targets_guide[guide][annotation]]) + '\n')
+            except:
+                result.write(annotation + '\t' + '\t'.join(['0' for i in range(10)]) + '\n')
+        #Write result superpopulation
+        for superpop in superpopulation:
+            result.write('-Summary_' + superpop + '\n')
+            result.write('targets\t' + '\t'.join([str(x) for x in dict_superpop_count[guide][superpop]['targets']]) + '\n')
+            for annotation in ann_list:
+                try:
+                    result.write(annotation + '\t' + '\t'.join([str(x) for x in dict_superpop_count[guide][superpop][annotation]]) + '\n')
+                except:
+                    result.write(annotation + '\t' + '\t'.join(['0' for i in range(10)]) + '\n')
+            
 
             
