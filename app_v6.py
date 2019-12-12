@@ -180,7 +180,7 @@ checklist_div = html.Div(
                 ),
                 dbc.Label(
                     #html.P(['Activate Gecko ', html.Abbr('comparison', title ='The results of your test guides will be compared with results obtained from a previous computed analysis on gecko library')]) ,
-                    html.P('Compare your results with the Gecko library'),
+                    html.P('Compare your results with the GeCKO v2 library'),
                     html_for="checkbox-gecko",
                     className="form-check-label",
                 ),
@@ -946,7 +946,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         for name_and_seq in text_sequence.split('>'):
             if '' == name_and_seq:
                 continue
-            name, seq = name_and_seq.strip().split('\n')
+            name, seq = name_and_seq.strip().split('\n')    #TODO rimuovere spazi o \n interni alla sequenza, rimuovere caratteri strani
             if 'chr' in seq:
                 extracted_seq = extract_seq.extractSequence(name, seq, genome_selected.replace(' ', '_'))
             else:
@@ -1417,11 +1417,13 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
     elif value == 'tab-summary-by-sample':
         #Show Summary by Sample table
         if genome_type == 'both':
-            df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
-            df = df.sort_values('Targets created by SNPs', ascending = False)
+            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of targets', 'Targets in Sample', 'Total Targets in Population', 'Total targets in Super Population']
+            df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
+            df = df.sort_values('Targets in Sample', ascending = False)
             df.drop(['Number of targets'], axis = 1, inplace = True)
         else:
-            df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Population'], skiprows = 1)
+            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of targets', 'Total Targets in Population', 'Total targets in Super Population']
+            df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
             df = df.sort_values('Number of targets', ascending = False)
         more_info_col = []
         for i in range(df.shape[0]):
@@ -1469,7 +1471,13 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         #Show Summary by position table
 
         #Dropdown chromosomes
-        onlyfile = [f for f in listdir('Genomes/' + genome_selected) if (isfile(join('Genomes/' + genome_selected, f)) and (f.endswith('.fa') or f.endswith('.fasta')))]
+        try:
+            onlyfile = [f for f in listdir('Genomes/' + genome_selected) if (isfile(join('Genomes/' + genome_selected, f)) and (f.endswith('.fa') or f.endswith('.fasta')))]
+        except:
+            onlyfile = ['chr' + str(i) + '.fa' for i in range(1,23)]
+            onlyfile.append('chrX.fa')
+            onlyfile.append('chrY.fa')                                              #NOTE in case no chr in GENOMES/ i put 22 chr + X Y M
+            onlyfile.append('chrM.fa')
         onlyfile = [x[:x.rfind('.')] for x in onlyfile]            #removed .fa for better visualization
         chr_file = []
         chr_file_unset = []
@@ -2382,13 +2390,17 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
         genome_type = 'both'
 
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
+    if genome_type == 'both':
+        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of targets', 'Targets in Sample', 'Total Targets in Population', 'Total targets in Super Population']
+    else:
+        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of targets', 'Total Targets in Population', 'Total targets in Super Population']
     if max(btn_sample_section) == n:              #Last button pressed is filtering, return the first page of the filtered table
         if genome_type == 'both':
-            df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
-            df = df.sort_values('Targets created by SNPs', ascending = False)
+            df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
+            df = df.sort_values('Targets in Sample', ascending = False)
             df.drop(['Number of targets'], axis = 1, inplace = True)
         else:
-            df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Population'], skiprows = 1)
+            df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
             df = df.sort_values('Number of targets', ascending = False)
         more_info_col = []
         for i in range(df.shape[0]):
@@ -2405,11 +2417,11 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
         if max(btn_sample_section) == nNext:
             current_page = current_page + 1
             if genome_type == 'both':
-                df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
-                df = df.sort_values('Targets created by SNPs', ascending = False)
+                df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
+                df = df.sort_values('Targets in Sample', ascending = False)
                 df.drop(['Number of targets'], axis = 1, inplace = True)
             else:
-                df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Population'], skiprows = 1)
+                df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
                 df = df.sort_values('Number of targets', ascending = False)
             more_info_col = []
             for i in range(df.shape[0]):
@@ -2433,11 +2445,11 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
             if current_page < 1:
                 current_page = 1
             if genome_type == 'both':
-                df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Targets created by SNPs', 'Population'], skiprows = 1)
-                df = df.sort_values('Targets created by SNPs', ascending = False)
+                df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
+                df = df.sort_values('Targets in Sample', ascending = False)
                 df.drop(['Number of targets'], axis = 1, inplace = True)
             else:
-                df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = ['Sample', 'Number of targets', 'Population'], skiprows = 1)
+                df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
                 df = df.sort_values('Number of targets', ascending = False)
             more_info_col = []
             for i in range(df.shape[0]):
@@ -2728,9 +2740,7 @@ def resultPage(job_id):
         profile['Targets in samples'] = column_sample_total
     
     
-    final_list = []
-
-    
+    final_list = []    
     final_list.append(
         html.H3('Result Summary')
     )
@@ -2813,8 +2823,7 @@ def global_store_subset(value, bulge_t, bulge_s, mms, guide):
     '''
     if value is None:
         return ''
-    
-    df = pd.read_csv( 'Results/' + value + '/' + value + '.' + bulge_t + bulge_s + mms + '.' + guide +'.txt', sep = '\t', header = None)
+    df = pd.read_csv( 'Results/' + value + '/' + value + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide +'.txt', sep = '\t', header = None)
     #df.rename(columns = {"#Bulge type":'Bulge Type', "#Bulge_type":'Bulge Type', 'Bulge_Size':'Bulge Size'}, inplace = True)
     return df
 
@@ -2831,7 +2840,6 @@ def guidePagev3(job_id, hash):
         bulge_t = 'X'
     
     value = job_id
-
     with open('Results/' + value + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
@@ -2848,21 +2856,24 @@ def guidePagev3(job_id, hash):
     if genome_type == 'ref':
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric']
-        file_to_grep = 'targets.cluster'
+        file_to_grep = '.targets.cluster.txt'
     elif genome_type == 'var':
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text']
         # file_to_grep = 'targets.cluster.minmaxdisr'
-        file_to_grep = 'final'
+        file_to_grep = '.final.txt'
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
-        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
-        file_to_grep = 'final'
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
+        col_type = ['text','text','text','text','numeric','text', 'text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
+        file_to_grep = '.final.txt'
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     job_directory = 'Results/' + job_id + '/'
     
     start = time.time()
-    subprocess.call(['PostProcess/./grep_specific_targets.sh ' + bulge_t + ' ' + bulge_s + ' ' + mms + ' ' + guide[0] + ' ' + guide[1] + ' ' + job_id + ' ' + guide + ' ' + file_to_grep], shell = True) #TODO migliorare
+    guide_grep_result = job_directory + job_id + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide + '.txt'
+    if not os.path.exists(guide_grep_result):    #Example    job_id.X.0.4.guide.txt
+        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + job_directory + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + bulge_t + ' | awk \'$8==' + mms + ' && $9==' + bulge_s + '\' > ' + guide_grep_result], shell = True)
+        # subprocess.call(['PostProcess/./grep_specific_targets.sh ' + bulge_t + ' ' + bulge_s + ' ' + mms + ' ' + guide[0] + ' ' + guide[1] + ' ' + job_id + ' ' + guide + ' ' + file_to_grep], shell = True) #TODO migliorare
     global_store_subset(job_id, bulge_t, bulge_s, mms,guide)
     #subset_targets = pd.read_csv('example_todo_delete.txt', sep = '\t')
     #data_dict = subset_targets.to_dict('records')
@@ -2945,7 +2956,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
     dff = df
     dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples'} , inplace = True)
-
+    #TODO cambiare nome colonne se ref, var , both
     # sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
     # sort_by.insert(1, {'column_id' : 'Bulge Size', 'direction': 'asc'})
     #sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
@@ -3031,18 +3042,22 @@ def samplePage(job_id, hash):
     # col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
     
     if genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'Samples'] 
-        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'Samples', 'Correct Guide'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
-        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples', 'Correct Guide']
+        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text','text']
     
-    subprocess.call(['grep \'' + sample + '\\t' + guide + '\$\' ' + 'Results/'+ job_id + '/' + job_id + '.top_1.samples.txt > Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt' ], shell = True)
-    df = pd.read_csv('Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt', sep = '\t', names = col_list)
-    df.drop(df.columns[[-1,]], axis=1, inplace=True)         #NOTE comment to show the sample column (maybe not informative in this view)
-    del col_list[-1]                                         #NOTE comment to show the sample column (maybe not informative in this view)
+    file_to_grep = '.top_1.samples.txt'
+    sample_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt'
+    if not os.path.exists(sample_grep_result):    #Example    job_id.HG001.guide.txt
+        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + sample + ' > ' + sample_grep_result], shell = True)
+
+    df = pd.read_csv('Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt', sep = '\t', names = col_list, header = None)
+    df.drop(df.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
+    # df.drop(df.columns[[-1,]], axis=1, inplace=True)         #NOTE comment to show the sample column (maybe not informative in this view)
+    # del col_list[-1]                                         #NOTE comment to show the sample column (maybe not informative in this view)
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
-    
     final_list.append(          #TODO add margin bottom 1rem to toggle button and prev-next buttons
         html.Div( 
             dash_table.DataTable(
@@ -3086,6 +3101,8 @@ def samplePage(job_id, hash):
     )
     return html.Div(final_list, style = {'margin':'1%'})
 
+#TODO cache sample
+#TODO filter/sort sample
 
 #Return the targets for the selected cluster
 def clusterPage(job_id, hash):
@@ -3110,21 +3127,26 @@ def clusterPage(job_id, hash):
     final_list.append(html.P('List of Targets found for the selected position'))
     
     if genome_type == 'ref':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total'] 
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Correct Column'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric']
-        file_to_grep = 'targets.cluster'
+        file_to_grep = '.targets.cluster.txt'
     elif genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption'] 
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'Correct Column'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text']
         # file_to_grep = 'targets.cluster.minmaxdisr'
-        file_to_grep = 'final'
+        file_to_grep = '.final.txt'
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples', 'Correct Column']
         col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
-        file_to_grep = 'final'
-    subprocess.call(['grep -P \'\\t' + chromosome + '\\t.*\\t' + position + '\\t' + guide + '\$\' Results/' + job_id + '/' + job_id + '.' + file_to_grep + '.txt > Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.txt'], shell = True)
+        file_to_grep = '.final.txt'
     
-    df = pd.read_csv('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.txt', sep = '\t', names = col_list)
+    cluster_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.txt'
+    if not os.path.exists(cluster_grep_result):    #Example    job_id.chr3_100.guide.txt
+        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + cluster_grep_result], shell = True)
+      
+        
+    df = pd.read_csv('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +  '.txt', sep = '\t', names = col_list)
+    df.drop(df.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     
     final_list.append(          

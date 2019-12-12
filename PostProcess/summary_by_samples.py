@@ -19,9 +19,12 @@ import pandas as pd
 pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/20130606_sample_info.xlsx')
 all_samples = pop_file.Sample.to_list()
 all_pop = pop_file.Population.to_list()
+all_gender = pop_file.Gender.to_list()
 dict_pop = dict()
+gender_sample = dict()
 for  pos, i in enumerate(all_samples):
     dict_pop[i] = all_pop[pos]
+    gender_sample[i] = all_gender[pos]
 population_1000gp = {'CHB':'EAS', 'JPT':'EAS', 'CHS':'EAS', 'CDX':'EAS', 'KHV':'EAS',
                     'CEU':'EUR', 'TSI':'EUR', 'FIN':'EUR', 'GBR':'EUR', 'IBS':'EUR',
                     'YRI':'AFR', 'LWK':'AFR', 'GWD':'AFR', 'MSL':'AFR', 'ESN':'AFR', 'ASW':'AFR', 'ACB':'AFR',
@@ -86,7 +89,7 @@ for guide in guides_dict:
         try:
             guides_superpopulation_targets[guide][population_1000gp[p]] += guides_population_targets[guide][p]
         except:
-            guides_superpopulation_targets[guide][population_1000gp[p]] += guides_population_targets[guide][p]
+            guides_superpopulation_targets[guide][population_1000gp[p]] = guides_population_targets[guide][p]
 
 
 for k in guides_dict.keys():
@@ -95,10 +98,16 @@ for k in guides_dict.keys():
             result.write(k + '\t' + str(guides_dict_total[k]) + '\n')
             if sys.argv[3] == 'both':
                 for i in guides_dict[k]:
-                    result.write(i + '\t' + str(guides_dict[k][i][0]) +'\t' + str(guides_dict[k][i][1]) + '\t' + dict_pop[i] + '\t' + guides_population_targets[k][i] + '\t' + population_1000gp[dict_pop[i]] +'\t'+guides_superpopulation_targets[guide][population_1000gp[dict_pop[i]]]  + '\n')
+                    # result.write(i + '\t' + gender_sample[i] + '\t' + str(guides_dict[k][i][0]) + '\t' + str(guides_dict[k][i][1]) + '\t' + dict_pop[i] + '\t' + str(guides_population_targets[k][dict_pop[i]]) + 
+                    #             '\t' + population_1000gp[dict_pop[i]] +'\t' + str(guides_superpopulation_targets[guide][population_1000gp[dict_pop[i]]])  + '\n')
+                    result.write(i + '\t' + gender_sample[i] + '\t' + dict_pop[i] + '\t' + population_1000gp[dict_pop[i]] +'\t' + str(guides_dict[k][i][0]) + '\t' + str(guides_dict[k][i][1]) +
+                                '\t' + str(guides_population_targets[k][dict_pop[i]]) + '\t' + str(guides_superpopulation_targets[guide][population_1000gp[dict_pop[i]]])  + '\n')
             else:
                 for i in guides_dict[k]:
-                    result.write(i + '\t' + str(guides_dict[k][i][0]) + '\t' + dict_pop[i] + '\t' + guides_population_targets[k][i] + '\t' + population_1000gp[dict_pop[i]] +'\t'+guides_superpopulation_targets[guide][population_1000gp[dict_pop[i]]] +'\n')
+                    # result.write(i + '\t' + gender_sample[i] + '\t' + str(guides_dict[k][i][0]) + '\t' + dict_pop[i] + '\t' + str(guides_population_targets[k][dict_pop[i]]) + '\t' + population_1000gp[dict_pop[i]] + 
+                    #             '\t'+ str(guides_superpopulation_targets[guide][population_1000gp[dict_pop[i]]]) +'\n')
+                    result.write(i + '\t' + gender_sample[i] + '\t' + dict_pop[i] + '\t' + population_1000gp[dict_pop[i]] +'\t' + str(guides_dict[k][i][0]) +
+                                '\t' + str(guides_population_targets[k][dict_pop[i]]) + '\t' + str(guides_superpopulation_targets[guide][population_1000gp[dict_pop[i]]])  + '\n')
 
         else:
             result.write('No samples found with ' + k + ' guide')
