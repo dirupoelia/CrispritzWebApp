@@ -31,7 +31,7 @@ from seq_script import extract_seq, convert_pam
 import re                                   #For sort chr filter values
 #Warning symbol \u26A0
 
-PAGE_SIZE = 100                    #number of entries in each page of the table in view report
+PAGE_SIZE = 50                    #number of entries in each page of the table in view report
 URL = 'http://crispritz.di.univr.it'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -65,16 +65,25 @@ population_1000gp = {
     'AMR':['MXL', 'PUR', 'CLM', 'PEL'],
     'SAS':['GIH', 'PJL', 'BEB', 'STU', 'ITU']
 }
+dict_pop_to_superpop = {'CHB':'EAS', 'JPT':'EAS', 'CHS':'EAS', 'CDX':'EAS', 'KHV':'EAS',
+                    'CEU':'EUR', 'TSI':'EUR', 'FIN':'EUR', 'GBR':'EUR', 'IBS':'EUR',
+                    'YRI':'AFR', 'LWK':'AFR', 'GWD':'AFR', 'MSL':'AFR', 'ESN':'AFR', 'ASW':'AFR', 'ACB':'AFR',
+                    'MXL':'AMR', 'PUR':'AMR', 'CLM':'AMR', 'PEL':'AMR',
+                    'GIH':'SAS', 'PJL':'SAS', 'BEB':'SAS', 'STU':'SAS', 'ITU':'SAS'
+}
 #List of all samples
 pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/PostProcess/20130606_sample_info.xlsx')
 all_samples = pop_file.Sample.to_list()
 all_pop = pop_file.Population.to_list()
 dict_pop = dict()
+dict_sample_to_pop = dict()
 for  pos, i in enumerate(all_pop):
     try:
         dict_pop[i].append(all_samples[pos])
     except:
         dict_pop[i] = [all_samples[pos]]
+    
+    dict_sample_to_pop[all_samples[pos]] = i
 dropdown_all_samples = [{'label': sam, 'value' : sam} for sam in all_samples]
 #Dropdown available genomes
 onlydir = [f for f in listdir('Genomes') if isdir(join('Genomes', f))]
@@ -888,8 +897,18 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         len_guide_sequence = 20
     if (text_sequence is None or text_sequence is '') and ('sequence-tab' in active_tab):
         text_sequence = '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
-
-    job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
+    n_it = 10
+    len_id = 10
+    for i in range(n_it):
+        assigned_ids = [o for o in os.listdir('Results/') if os.path.isdir(os.path.join('Results/',o))]
+        job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = len_id))
+        if job_id not in assigned_ids:
+            break
+        if i > 7:
+            i = 0
+            len_id += 1 
+            if len_id > 20:
+                break
     result_dir = 'Results/' + job_id
     subprocess.run(['mkdir ' + result_dir], shell = True)
     
@@ -2863,8 +2882,8 @@ def guidePagev3(job_id, hash):
         # file_to_grep = 'targets.cluster.minmaxdisr'
         file_to_grep = '.final.txt'
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
-        col_type = ['text','text','text','text','numeric','text', 'text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples Summary']#, 'Samples']
+        col_type = ['text','text','text','text','numeric','text', 'text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']#, 'text']
         file_to_grep = '.final.txt'
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     job_directory = 'Results/' + job_id + '/'
@@ -2872,8 +2891,8 @@ def guidePagev3(job_id, hash):
     start = time.time()
     guide_grep_result = job_directory + job_id + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide + '.txt'
     if not os.path.exists(guide_grep_result):    #Example    job_id.X.0.4.guide.txt
-        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + job_directory + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + bulge_t + ' | awk \'$8==' + mms + ' && $9==' + bulge_s + '\' > ' + guide_grep_result], shell = True)
-        # subprocess.call(['PostProcess/./grep_specific_targets.sh ' + bulge_t + ' ' + bulge_s + ' ' + mms + ' ' + guide[0] + ' ' + guide[1] + ' ' + job_id + ' ' + guide + ' ' + file_to_grep], shell = True) #TODO migliorare
+        # subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + job_directory + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + bulge_t + ' | awk \'$8==' + mms + ' && $9==' + bulge_s + '\' > ' + guide_grep_result], shell = True)
+        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + job_directory + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + bulge_t + ' | awk -v mm="' + mms + '" -v b="'+bulge_s+'" -f PostProcess/extract_subcluster.awk > ' + guide_grep_result], shell = True)
     global_store_subset(job_id, bulge_t, bulge_s, mms,guide)
     #subset_targets = pd.read_csv('example_todo_delete.txt', sep = '\t')
     #data_dict = subset_targets.to_dict('records')
@@ -2897,7 +2916,7 @@ def guidePagev3(job_id, hash):
                 filter_action='custom',
                 filter_query='',
                 style_table={
-                    'height': '600px'
+                    'max-height': '600px'
                     #'overflowY': 'scroll',
                 },
                 style_cell_conditional=[
@@ -2913,6 +2932,11 @@ def guidePagev3(job_id, hash):
         )
     )
     final_list.append(html.Br())
+    final_list.append(
+        html.Div(
+            id = 'div-second-table-subset-targets'
+        )
+    )
     
     return html.Div(final_list, style = {'margin':'1%'})
 
@@ -2955,11 +2979,15 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
     df = global_store_subset(value, bulge_t, bulge_s, mms, guide)
     dff = df
     dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples'} , inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
     #TODO cambiare nome colonne se ref, var , both
     # sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
     # sort_by.insert(1, {'column_id' : 'Bulge Size', 'direction': 'asc'})
     #sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
+    
+    #Remove not top1 subcluster:
+    dff.drop( df[(df['Top Subcluster'] == 's')].index, inplace = True)
+
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
 
@@ -3003,6 +3031,16 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
                         },
+                        # {#TODO colora altro colore quelle con pam creation
+                        # 'if': {
+                        #         'filter_query': '{Chromosome} eq "chr2"',
+                        #         #'filter_query': '{Direction} eq +', 
+                        #         #'column_id' :'Bulge Type'
+                        #     },
+                        #     #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                        #     'background-color':'rgba(255, 69, 0,0.15)'#'rgb(255, 102, 102)'
+                            
+                        # },
                         # {
                         #     'if': {
                         #             'filter_query': '{Variant unique} eq n',           
@@ -3013,10 +3051,122 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
                         # }
                         
                 ]
-    return dff.iloc[
+    
+    #Calculate sample count
+    
+    data_to_send=dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
-    ].to_dict('records'), cells_style
+    ].to_dict('records')
+    for row in data_to_send:
+        summarized_sample_cell = dict()
+        for s in row['Samples'].split(','):
+            if s == 'n':
+                break
+            try:
+                summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] += 1
+            except:
+                summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] = 1
+        if summarized_sample_cell:
+            row['Samples Summary'] = ', '.join([str(summarized_sample_cell[sp]) + ' ' + sp for sp in summarized_sample_cell])
+        else:
+            row['Samples Summary'] = 'n'
 
+    return data_to_send, cells_style
+
+#Create second table for subset targets page, and show corresponding samples
+@app.callback(
+    Output('div-second-table-subset-targets', 'children'),
+    [Input('table-subset-target', 'active_cell')],
+    [State('table-subset-target', 'data'),
+    State('table-subset-target', 'columns'),
+    State('url', 'search')]
+)
+def loadFullSubsetTable(active_cel, data, cols, search):
+    if active_cel is  None:
+        raise PreventUpdate
+    fl = []
+    job_id = search.split('=')[-1]
+    #Show sample list
+    fl.append(html.Br())
+    fl.append(html.H4('Samples list'))
+    
+    sample_list = data[active_cel['row']]['Samples'].split(',')
+    for i in range(int(len(sample_list)/20) + 1):
+        fl.append(html.P(', '.join(sample_list[20*i:20*i+20])))     #TODO migliorare mettendo elenco puntato con popolazioni
+    
+    #Table for subtop cluster
+    fl.append(html.Br())
+    df = global_store_subset(job_id, data[active_cel['row']]['Bulge Type'], str(data[active_cel['row']]['Bulge Size']), str(data[active_cel['row']]['Mismatches']), data[active_cel['row']]['crRNA'])
+    df.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
+    #TODO cambiare nome colonne se ref, var , both
+    df.drop(df[(~( df['Cluster Position'] == int(data[active_cel['row']]['Cluster Position']))) | (~( df['Chromosome'] == data[active_cel['row']]['Chromosome']))].index, inplace = True)
+    print(df)
+    fl.append(
+        html.Div(
+            dash_table.DataTable(
+                id='second-table-subset-targets', 
+                columns=cols, 
+                data = df.to_dict('records'),
+                virtualization = True,
+                fixed_rows={ 'headers': True, 'data': 0 },
+                #fixed_columns = {'headers': True, 'data':1},
+                style_cell={'width': '150px'},
+                page_current=0,
+                page_size=PAGE_SIZE,
+                page_action='custom',
+                sort_action='custom',
+                sort_mode='multi',
+                sort_by=[],
+                filter_action='custom',
+                filter_query='',
+                style_table={
+                    'max-height': '600px'
+                    #'overflowY': 'scroll',
+                },
+                style_cell_conditional=[
+                    {
+                        'if': {'column_id': 'Samples'},
+                        'textAlign': 'left'
+                    }
+                ],
+                css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
+                style_data_conditional = [{
+                        'if': {
+                                'filter_query': '{Variant unique} eq y',
+                                #'filter_query': '{Direction} eq +', 
+                                #'column_id' :'Bulge Type'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                            
+                        },
+                        {#TODO colora altro colore quelle con pam creation
+                        'if': {
+                                'filter_query': '{Variant unique} eq y && {Pam creation}  != "n"',
+                                #'filter_query': '{Direction} eq +', 
+                                #'column_id' :'Bulge Type'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(255, 69, 0,0.15)'#'rgb(255, 102, 102)'
+                            
+                        },
+                        {#TODO fixare
+                        'if': {
+                                'filter_query': '{Top subcluster} eq t',         
+                                # 'column_id' :'BulgeType'
+                            },
+                            'border-left': '5px solid rgba(26, 26, 255, 0.9)',
+                            'font-weight':'bold'
+                            
+
+                        } 
+                ]         
+            ),
+        )
+    )
+
+    return  fl
 
 #Return the targets found for the selected sample
 def samplePage(job_id, hash):

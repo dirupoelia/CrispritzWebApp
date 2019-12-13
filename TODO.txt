@@ -231,7 +231,7 @@ nella cartella del job corrispondente
 	-Bottone restore original
 	-Bottone download
 -Creare tabella come nel file html	X
--Fare scores
+-Fare scores	X
 
 -Download di tutto il file tramite ftp
 -Visualizzare i risultati solo del total
@@ -241,7 +241,7 @@ nella cartella del job corrispondente
 	-cambio anche i bordi in blu
 	-cambio colore selezione in tutte le tabelle dash datatable
 -implementare che se cancello i filtri ritorno i valori originali				X
--Rivedere grep specific targets per migliorare l'estrazione se due guide sono simili
+-Rivedere grep specific targets per migliorare l'estrazione se due guide sono simili	X
 -Fare in modo che se prendo i file dalla cartella hgetcetc non considero i file .fai
 
 -Tenere solo genomi hg19 e hg38
@@ -258,11 +258,11 @@ il suo graph report
 
 -Mettere apertura dei file summary_by corretti: se non ho risultati per una guida, metto 'Nessun result' e non carico la tabella ma solo quella scritta.
 
--Sistemare grep, colore tutta riga, rimettere i samples nel .targets.cluster.*.txt, implementare var/ref
+-Sistemare grep, colore tutta riga, rimettere i samples nel .targets.cluster.*.txt, implementare var/ref	X
 
--Per la percentuale di lavoro svolto: redirigo l'output in un file e ogni 3 sec lo leggo per vedere lo status. Se lo status non cambia, non aggiorno.
+-Per la percentuale di lavoro svolto: redirigo l'output in un file e ogni 3 sec lo leggo per vedere lo status. Se lo status non cambia, non aggiorno.	X
 -Parte grafica: seguire le immagini di Samuele. Metto 3 dropdown per i samples.
--Uso fgrep e LCALL per velocizzare i grep. AWK per metter t e s nei subcluster.
+-Uso fgrep e LCALL per velocizzare i grep. AWK per metter t e s nei subcluster.	X
 
 hg38 var
 4 mm 2 DNA 1 RNA
@@ -277,15 +277,15 @@ Dizionario :
 	-chr4 12 GB
 	...
 	-chr14 4 GB
--Ordino per cromosome, poi carico chr 1 e faccio finchè non trovo il chr2, li carico il dizionario chr2 etc etc
--Creare altra colonna con guida corretta per il grep da fare bene
+-Ordino per cromosome, poi carico chr 1 e faccio finchè non trovo il chr2, li carico il dizionario chr2 etc etc	X
+-Creare altra colonna con guida corretta per il grep da fare bene	X
 -File sample molto più grande degli altri, causa molte combinazioni, ma tempi estrazione grep accettabili (1.7 giga)
 
 
--Top1_sample problema se ci sono tante iupac -> togliere quelle senza samples?
--PAM disr errore se ho uno iupac come carattere che metto nel res finale, devo scomporlo e fare itertools
+-Top1_sample problema se ci sono tante iupac -> togliere quelle senza samples?	X
+-PAM disr errore se ho uno iupac come carattere che metto nel res finale, devo scomporlo e fare itertools	X
 
--Tabella di sample Tenere solo colonna targets created by SNP e cambiare nome in targets. Aggiungere colonne metadati e somma targets sulla popolazione e superpopolazione
+-Tabella di sample Tenere solo colonna targets created by SNP e cambiare nome in targets. Aggiungere colonne metadati e somma targets sulla popolazione e superpopolazione	X
 -Al posto del motif logo, mettere info del sample presa dalla tabella (in modod da avere una card con tutte le info del sample)
 -Togliere  conteggio tot targets con sample dalla tabella generale delle guide
 
