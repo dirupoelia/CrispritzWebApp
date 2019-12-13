@@ -1395,7 +1395,7 @@ def parse_contents(contents):
     State('div-genome-type', 'children')]
 )
 def updateContentTab(value, sel_cel, all_guides, search, genome_type):
-    if value is None or sel_cel is None:
+    if value is None or sel_cel is None or not sel_cel or not all_guides:
         raise PreventUpdate
     
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
@@ -2776,11 +2776,25 @@ def resultPage(job_id):
         html.Div(
             dash_table.DataTable(
                 id = 'general-profile-table',
-                page_size=PAGE_SIZE,
+                #page_size=PAGE_SIZE,
                 columns = columns_profile_table,
                 data = profile.to_dict('records'),
                 selected_cells = [{'row':0, 'column':0}],
-                css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}]
+                css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
+                page_current= 0,
+                page_size= 10,
+                page_action='custom',
+
+                filter_action='custom',
+                filter_query='',
+
+                sort_action='custom',
+                sort_mode='multi',
+                sort_by=[],
+                style_table={
+                    'max-height': '200px'
+                    #'overflowY': 'scroll',
+                }
             )
             ,id = 'div-general-profile-table')
     )
@@ -2819,7 +2833,7 @@ def resultPage(job_id):
     [State('general-profile-table', 'data')]
 )
 def colorSelectedRow(sel_cel, all_guides):
-    if sel_cel is None:
+    if sel_cel is None or not sel_cel or not all_guides:
         raise PreventUpdate
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     return [
@@ -2834,6 +2848,109 @@ def colorSelectedRow(sel_cel, all_guides):
                 
             }
     ]
+
+# Filtering e sorting per la pagina principale delle guide
+@app.callback(
+    [Output('general-profile-table', 'data'),
+    Output('general-profile-table', 'selected_cells')],
+    [Input('general-profile-table', "page_current"),
+     Input('general-profile-table', "page_size"),
+     Input('general-profile-table', 'sort_by'),
+     Input('general-profile-table', 'filter_query')],
+    [State('url', 'search')]    
+)
+def update_table_general_profile(page_current, page_size, sort_by, filter, search):
+    job_id = search.split('=')[-1]
+    
+    with open('Results/' + job_id + '/Params.txt') as p:
+        all_params = p.read()
+        genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+        ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+        mms = int((next(s for s in all_params.split('\n') if 'Mismatches' in s)).split('\t')[-1])
+    
+        
+    genome_type = 'ref'
+    if '+' in genome_type_f:
+        genome_type = 'var'
+    if 'True' in ref_comp:
+        genome_type = 'both'
+    
+    filtering_expressions = filter.split(' && ')
+    #Get guide from guide.txt
+    with open('Results/' + job_id + '/guides.txt') as g:
+        guides = g.read().strip().split('\n')
+        guides.sort()
+
+    #load acfd for each guide 
+    with open('Results/' + job_id + '/acfd.txt') as a:
+        all_scores = a.read().strip().split('\n')
+    
+    #Load scores
+    if 'NO SCORES' not in all_scores:
+        all_scores.sort()
+        acfd = [float(a.split('\t')[1]) for a in all_scores]
+        doench = [int(a.split('\t')[2]) for a in all_scores]
+        acfd  = [int(round((100/(100 + x))*100)) for x in acfd] 
+    #     columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
+    # else:
+    #     columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
+
+    # col_targetfor = 'Targets for '
+    # for i in range(mms):
+    #     col_targetfor = col_targetfor + str(i) + '-'
+
+    # col_targetfor = col_targetfor + str(mms)
+    # col_targetfor = col_targetfor + ' mismatches'
+    # columns_profile_table.append({'name': col_targetfor, 'id' : 'col_targetfor', 'type':'text'})
+
+    #Get target counting from summary by guide -> select only bulge type X rows
+    column_on_target = []
+    column_off_target = []
+    column_sep_by_mm_value = []
+    for g in guides:
+        df_profile = pd.read_pickle('Results/' + job_id + '/' + job_id + '.summary_by_guide.' + g + '.txt')
+        column_on_target = int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Number of targets'])
+        zero_to_n_mms = df_profile[(df_profile['Bulge Type'] == 'X')]['Number of targets'].to_list()
+        column_sep_by_mm_value.append(' - '.join(str(int(x)) for x in zero_to_n_mms))
+        column_off_target.append(int(sum(zero_to_n_mms[1:])))
+    if 'NO SCORES' not in all_scores:
+        data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On Targets':column_on_target, 'Total Off Targets':column_off_target, 'col_targetfor': column_sep_by_mm_value}
+    else:
+        data_guides = {'Guide': guides, 'Total On Targets':column_on_target, 'Total Off Targets':column_off_target, 'col_targetfor': column_sep_by_mm_value}
+   
+    dff = pd.DataFrame(data_guides)
+
+            
+
+    for filter_part in filtering_expressions:
+        col_name, operator, filter_value = split_filter_part(filter_part)
+
+        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+            # these operators match pandas series operator method names
+            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
+        elif operator == 'contains':
+            dff = dff.loc[dff[col_name].str.contains(filter_value)]
+        elif operator == 'datestartswith':
+            # this is a simplification of the front-end filtering logic,
+            # only works with complete fields in standard format
+            dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+
+    if len(sort_by):
+        dff = dff.sort_values(
+            [col['column_id'] for col in sort_by],
+            ascending=[
+                col['direction'] == 'asc'
+                for col in sort_by
+            ],
+            inplace=False
+        )
+
+    #Calculate sample count
+    
+    data_to_send=dff.iloc[
+        page_current*page_size:(page_current+ 1)*page_size
+    ].to_dict('records')
+    return data_to_send, [{'row':0, 'column':0}]
 
 @cache.memoize()
 def global_store_subset(value, bulge_t, bulge_s, mms, guide):

@@ -46,3 +46,9 @@ input:invalid{
     font-family: monospace;
     font-size: large;
 }
+
+/*Change page next prev of datatable to left*/
+#general-profile-table .previous-next-container {
+    float: inherit;
+    padding:0;
+}
