@@ -74,11 +74,11 @@ with open(sys.argv[1]) as targets:
         if guide not in samples_dict:
             samples_dict[guide] = dict()
         try:
-            samples_dict[guide][line[3] + line[4]][0] += line[-1].split(',')
+            samples_dict[guide][line[3] + line[4]][0] += line[-2].split(',')
         except:     
-            samples_dict[guide][line[3] + line[4]] = [line[-1].split(','), []]
+            samples_dict[guide][line[3] + line[4]] = [line[-2].split(','), []]
 
-
+# print(samples_dict)
 # print(samples_dict['CTAACAGTTGCTTTTATCACNNN']['chr2146560428'])
 # print(samples_dict['TGCTTGGTCGGCACTGATAGNNN']['chr2250085897'])
 
@@ -115,7 +115,6 @@ with open (sys.argv[2]) as targets:             #Count annotation for each targe
             samples_list = [[], ann_list]
         if line[-1] in samples_list[1]: #if target was already counted in that annotation
             continue
-        
         #Count the annotations for the guide (only top1)
         try:
             summary_targets_guide[guide][line[-1]][int(line[6])] += 1

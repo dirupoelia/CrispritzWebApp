@@ -482,6 +482,9 @@ load_page = html.Div(final_list, style = {'margin':'1%'})
 
 #Test bootstrap page, go to /test-page to see 
 final_list = []
+radar_img = 'Results/W0Q0702F1E/test.summary_single_guide_GAGTCCGAGCAGAAGAAGAANNN_4mm.png'
+radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open(radar_img, 'rb').read()).decode())
+final_list.append(html.Img(src = radar_src, width="100%", height="auto"))
 # final_list.append(html.P('List of Targets found for the selected guide'))
 
 # df = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
@@ -1847,17 +1850,18 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
             ]
         )
     ])
-    class_images = [(sample, 'Sample'), (population, 'Population'), (superpopulation, 'Superpopulation')]
+    class_images = [(sample, 'Samples'), (population, 'Population'), (superpopulation, 'Superpopulation')]
     
     for c in class_images:
         if c[0]:
             try:
-                first_img_source = 'data:image/png;base64,{}'.format(base64.b64encode(open('radar_chart' + c[0] + str(mm_show) + '.png', 'rb').read()).decode())
+                first_img_source = 'data:image/png;base64,{}'.format(base64.b64encode(open(job_directory + 'summary_single_guide_' + c[0] +'_' +str(mm_show) + 'mm.png', 'rb').read()).decode())
             except:
                 #create image from annotation file of samples
-                # subprocess.call([], shell = True)
-                subprocess.run(['crispritz.py generate-report ' + guide + ' -mm ' + str(mm_show) + ' -profile ' + job_directory + job_id + '.profile.xls -extprofile ' + job_directory + job_id + '.extended_profile.xls -annotation ' + job_directory + job_id + '.Annotation.txt'], shell = True)
-                first_img_source = radar_src
+                subprocess.call(['cd '+job_directory +'; ../../PostProcess/radar_chart_new.py ' + guide + ' ' + str(mm_show) + ' ' + job_id + '.sample_annotation.' + guide + 
+                '.' + c[1].lower() + '.txt no no no -ws -sample ' + c[0]], shell = True)
+                # subprocess.run(['crispritz.py generate-report ' + guide + ' -mm ' + str(mm_show) + ' -profile ' + job_directory + job_id + '.profile.xls -extprofile ' + job_directory + job_id + '.extended_profile.xls -annotation ' + job_directory + job_id + '.Annotation.txt'], shell = True)
+                first_img_source = 'data:image/png;base64,{}'.format(base64.b64encode(open(job_directory + 'summary_single_guide_' + c[0] +'_' +str(mm_show) + 'mm.png', 'rb').read()).decode())
                 
             sample_images.append(dbc.Row(html.Br()))
             #inserire controllo tipo di c che sto inserendo per l'immagine dell'omino
@@ -1872,7 +1876,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
                         ),
                         width = 10
                     ),
-                    dbc.Col(html.P(c[1] + ': ' + c[0]))
+                    # dbc.Col(html.P(c[1] + ': ' + c[0]))
                     # dbc.Col(
                     #     [
                     #         html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/' + c[1] + '.png', 'rb').read()).decode()), height = '80%', width = '50%'),
@@ -2582,11 +2586,9 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
                 if pos_end:
                     if int(pos_end) < int(pos_begin):
                         pos_end = None
-                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
-                #df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t') #TODO cancellare
+                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')  
             else:
-                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t', nrows = current_page * 10)   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
-                #df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t', nrows = current_page * 10) #TODO cancellare
+                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t', nrows = current_page * 10)   
             df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
             more_info_col = []
             for i in range(df.shape[0]):
@@ -2615,11 +2617,9 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
                 if pos_end:
                     if int(pos_end) < int(pos_begin):
                         pos_end = None
-                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
-                #df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t') #TODO cancellare
+                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')  
             else:
-                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t', nrows = current_page * 10)   #TODO cambiare nome file con quello giusto (job_id.guida.tab_position.txt)
-                #df = pd.read_csv('0YT6LD1ECN.summary_position.CTAACAGTTGCTTTTATCACNNN.txt', sep = '\t',nrows = current_page * 10) #TODO cancellare
+                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t', nrows = current_page * 10)   
             df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
             more_info_col = []
             for i in range(df.shape[0]):
@@ -2859,6 +2859,8 @@ def guidePagev3(job_id, hash):
         bulge_t = 'X'
     
     value = job_id
+    if (not isdir('Results/' + job_id)):
+        return html.Div(dbc.Alert("The selected result does not exist", color = "danger"))
     with open('Results/' + value + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
@@ -3101,7 +3103,7 @@ def loadFullSubsetTable(active_cel, data, cols, search):
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
     #TODO cambiare nome colonne se ref, var , both
     df.drop(df[(~( df['Cluster Position'] == int(data[active_cel['row']]['Cluster Position']))) | (~( df['Chromosome'] == data[active_cel['row']]['Chromosome']))].index, inplace = True)
-    print(df)
+    # print(df)
     fl.append(
         html.Div(
             dash_table.DataTable(
@@ -3168,10 +3170,24 @@ def loadFullSubsetTable(active_cel, data, cols, search):
 
     return  fl
 
+@cache.memoize()
+def global_store_general(path_file_to_load):
+    '''
+    Caching dei file targets per una miglior performance di visualizzazione
+    '''
+    if path_file_to_load is None:
+        return ''
+    df = pd.read_csv( path_file_to_load , sep = '\t', header = None)
+    #df.rename(columns = {"#Bulge type":'Bulge Type', "#Bulge_type":'Bulge Type', 'Bulge_Size':'Bulge Size'}, inplace = True)
+    return df
+
 #Return the targets found for the selected sample
 def samplePage(job_id, hash):
     guide = hash[:hash.find('-Sample-')]
     sample = hash[hash.rfind('-') + 1:]
+    if (not isdir('Results/' + job_id)):
+        return html.Div(dbc.Alert("The selected result does not exist", color = "danger"))
+
     with open('Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
@@ -3192,28 +3208,30 @@ def samplePage(job_id, hash):
     # col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
     
     if genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'Samples', 'Correct Guide'] 
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption',  'Samples Summary']#'Samples', 'Correct Guide'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples', 'Correct Guide']
-        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text','text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique',  'Samples Summary']# 'Samples', 'Correct Guide']
+        col_type = ['text','text','text','text','numeric','numeric','text', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text','text']
     
     file_to_grep = '.top_1.samples.txt'
     sample_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt'
     if not os.path.exists(sample_grep_result):    #Example    job_id.HG001.guide.txt
         subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + sample + ' > ' + sample_grep_result], shell = True)
 
-    df = pd.read_csv('Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt', sep = '\t', names = col_list, header = None)
-    df.drop(df.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
+    #df = pd.read_csv('Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt', sep = '\t', names = col_list, header = None)
+    #df.drop(df.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
+    
     # df.drop(df.columns[[-1,]], axis=1, inplace=True)         #NOTE comment to show the sample column (maybe not informative in this view)
     # del col_list[-1]                                         #NOTE comment to show the sample column (maybe not informative in this view)
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
+    
     final_list.append(          #TODO add margin bottom 1rem to toggle button and prev-next buttons
         html.Div( 
             dash_table.DataTable(
                 id='table-sample-target', 
                 columns=cols, 
-                data = df.to_dict('records'),
+                #data = df.to_dict('records'),
                 virtualization = True,
                 fixed_rows={ 'headers': True, 'data': 0 },
                 #fixed_columns = {'headers': True, 'data':1},
@@ -3227,7 +3245,7 @@ def samplePage(job_id, hash):
                 filter_action='custom',
                 filter_query='',
                 style_table={
-                    'height': '600px'
+                    'max-height': '600px'
                     #'overflowY': 'scroll',
                 },
                 style_data_conditional=[
@@ -3251,8 +3269,81 @@ def samplePage(job_id, hash):
     )
     return html.Div(final_list, style = {'margin':'1%'})
 
-#TODO cache sample
-#TODO filter/sort sample
+#Filter and sorting sample targets
+@app.callback(
+    Output('table-sample-target', 'data'),
+    [Input('table-sample-target', "page_current"),
+     Input('table-sample-target', "page_size"),
+     Input('table-sample-target', 'sort_by'),
+     Input('table-sample-target', 'filter_query')],
+    [State('url', 'search'),
+     State('url', 'hash')]    
+)
+def update_table_sample(page_current, page_size, sort_by, filter, search, hash):
+    job_id = search.split('=')[-1]
+    hash = hash.split('#')[1]
+    guide = hash[:hash.find('-Sample-')]
+    sample = hash[hash.rfind('-') + 1:]
+    with open('Results/' + job_id + '/Params.txt') as p:
+        all_params = p.read()
+        genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+        ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+        
+    genome_type = 'ref'
+    if '+' in genome_type_f:
+        genome_type = 'var'
+    if 'True' in ref_comp:
+        genome_type = 'both'
+    
+    filtering_expressions = filter.split(' && ')
+    dff = global_store_general('Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt')
+
+    #TODO inserire colonne corrette in base al tipo di ricerca
+    dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
+    dff.drop(dff.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
+    for filter_part in filtering_expressions:
+        col_name, operator, filter_value = split_filter_part(filter_part)
+
+        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+            # these operators match pandas series operator method names
+            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
+        elif operator == 'contains':
+            dff = dff.loc[dff[col_name].str.contains(filter_value)]
+        elif operator == 'datestartswith':
+            # this is a simplification of the front-end filtering logic,
+            # only works with complete fields in standard format
+            dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+
+    if len(sort_by):
+        dff = dff.sort_values(
+            [col['column_id'] for col in sort_by],
+            ascending=[
+                col['direction'] == 'asc'
+                for col in sort_by
+            ],
+            inplace=False
+        )
+
+    #Calculate sample count
+    
+    data_to_send=dff.iloc[
+        page_current*page_size:(page_current+ 1)*page_size
+    ].to_dict('records')
+    for row in data_to_send:
+        summarized_sample_cell = dict()
+        for s in row['Samples'].split(','):
+            if s == 'n':
+                break
+            try:
+                summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] += 1
+            except:
+                summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] = 1
+        if summarized_sample_cell:
+            row['Samples Summary'] = ', '.join([str(summarized_sample_cell[sp]) + ' ' + sp for sp in summarized_sample_cell])
+        else:
+            row['Samples Summary'] = 'n'
+    return data_to_send
 
 #Return the targets for the selected cluster
 def clusterPage(job_id, hash):
@@ -3260,6 +3351,8 @@ def clusterPage(job_id, hash):
     chr_pos = hash[hash.find('-Pos-') + 5:]
     chromosome = chr_pos.split('-')[0]
     position = chr_pos.split('-')[1]
+    if (not isdir('Results/' + job_id)):
+        return html.Div(dbc.Alert("The selected result does not exist", color = "danger"))
     with open('Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
@@ -3281,12 +3374,12 @@ def clusterPage(job_id, hash):
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric']
         file_to_grep = '.targets.cluster.txt'
     elif genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'Correct Column'] 
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'Samples Summary']#'Samples', #'Correct Column'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text']
         # file_to_grep = 'targets.cluster.minmaxdisr'
         file_to_grep = '.final.txt'
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples', 'Correct Column']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples Summary']#'Samples', 'Correct Column']
         col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
         file_to_grep = '.final.txt'
     
@@ -3295,8 +3388,8 @@ def clusterPage(job_id, hash):
         subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + cluster_grep_result], shell = True)
       
         
-    df = pd.read_csv('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +  '.txt', sep = '\t', names = col_list)
-    df.drop(df.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
+    # df = pd.read_csv('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +  '.txt', sep = '\t', names = col_list)
+    # df.drop(df.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     
     final_list.append(          
@@ -3304,7 +3397,7 @@ def clusterPage(job_id, hash):
             dash_table.DataTable(
                 id='table-position-target', 
                 columns=cols, 
-                data = df.to_dict('records'),
+                #data = df.to_dict('records'),
                 virtualization = True,
                 fixed_rows={ 'headers': True, 'data': 0 },
                 #fixed_columns = {'headers': True, 'data':1},
@@ -3342,6 +3435,86 @@ def clusterPage(job_id, hash):
     )
     return html.Div(final_list, style = {'margin':'1%'})
 
+#Filter/sort cluster
+#Filter and sorting sample targets
+@app.callback(
+    Output('table-position-target', 'data'),
+    [Input('table-position-target', "page_current"),
+     Input('table-position-target', "page_size"),
+     Input('table-position-target', 'sort_by'),
+     Input('table-position-target', 'filter_query')],
+    [State('url', 'search'),
+     State('url', 'hash')]    
+)
+def update_table_cluster(page_current, page_size, sort_by, filter, search, hash):
+    job_id = search.split('=')[-1]
+    hash = hash.split('#')[1]
+    guide = hash[:hash.find('-Pos-')]
+    chr_pos = hash[hash.find('-Pos-') + 5:]
+    chromosome = chr_pos.split('-')[0]
+    position = chr_pos.split('-')[1]
+    
+    with open('Results/' + job_id + '/Params.txt') as p:
+        all_params = p.read()
+        genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+        ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+        
+    genome_type = 'ref'
+    if '+' in genome_type_f:
+        genome_type = 'var'
+    if 'True' in ref_comp:
+        genome_type = 'both'
+    
+    filtering_expressions = filter.split(' && ')
+    dff = global_store_general('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +  '.txt')
+
+    #TODO inserire colonne corrette in base al tipo di ricerca
+    dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
+    dff.drop(dff.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
+    for filter_part in filtering_expressions:
+        col_name, operator, filter_value = split_filter_part(filter_part)
+
+        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+            # these operators match pandas series operator method names
+            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
+        elif operator == 'contains':
+            dff = dff.loc[dff[col_name].str.contains(filter_value)]
+        elif operator == 'datestartswith':
+            # this is a simplification of the front-end filtering logic,
+            # only works with complete fields in standard format
+            dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+
+    if len(sort_by):
+        dff = dff.sort_values(
+            [col['column_id'] for col in sort_by],
+            ascending=[
+                col['direction'] == 'asc'
+                for col in sort_by
+            ],
+            inplace=False
+        )
+
+    #Calculate sample count
+    
+    data_to_send=dff.iloc[
+        page_current*page_size:(page_current+ 1)*page_size
+    ].to_dict('records')
+    for row in data_to_send:
+        summarized_sample_cell = dict()
+        for s in row['Samples'].split(','):
+            if s == 'n':
+                break
+            try:
+                summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] += 1
+            except:
+                summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] = 1
+        if summarized_sample_cell:
+            row['Samples Summary'] = ', '.join([str(summarized_sample_cell[sp]) + ' ' + sp for sp in summarized_sample_cell])
+        else:
+            row['Samples Summary'] = 'n'
+    return data_to_send
+
 if __name__ == '__main__':
     #app.run_server(debug=True)
     app.run_server(host='0.0.0.0', debug=True, port=8080)
@@ -3352,3 +3525,4 @@ if __name__ == '__main__':
     #TODO se cancello il chr nel filter by position, non vedo nessun risultato -> fare in modo che metta risultati originali -> da controllare con risultati più grandi
     #BUG quando visualizzo per samples, la colonna pam creation/ pam disruption possono risultare non accurate in quanto non ho iupac ma il
     #carattere esatto. Inoltre alcuni samples non possono esistere in quanto la pam non è NGG (o quella selezionata dall'utente)
+    #BUG nel filtering se ho, in min mismatch etc, la stringa '-', che non è considerata numero

@@ -51,13 +51,15 @@ count_dir = sys.argv[5]
 summary_one = sys.argv[6]   
 summary_two = sys.argv[7]   #is the same as count_dir
 
-
-gecko_profile_file = sys.argv[8]
-gecko_exons = sys.argv[9]
-gecko_introns = sys.argv[10]
-gecko_promoter = sys.argv[11]
-gecko_dnase = sys.argv[12]
-gecko_ctcf = sys.argv[13]
+try:
+    gecko_profile_file = sys.argv[8]
+    gecko_exons = sys.argv[9]
+    gecko_introns = sys.argv[10]
+    gecko_promoter = sys.argv[11]
+    gecko_dnase = sys.argv[12]
+    gecko_ctcf = sys.argv[13]
+except:
+    pass
 
 if guide == 'no':
     only_barplot = True
@@ -251,28 +253,28 @@ if summary_one != "no" and summary_two != "no":
 
 if guide != 'no':
     # reading extendend profile to obtain results over mismatches counts
-    # for line in inGuidesProfileExtended:
-    #     if ">" + guide in line:
-    #         # print(line)
-    #         next(inGuidesProfileExtended)
-    #         # line=inGuidesProfileExtended.readline()
-    #         for ciao in range(0, uppermm+1):
-    #             line = inGuidesProfileExtended.readline()
-    #             count = 0
-    #             x = line.split('\t')
-    #             guidesExtendedProfile.append((x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9],
-    #                                           x[10], x[11], x[12], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20]))
-    #             for line in inGuidesProfileExtended:
-    #                 if count < 6:
-    #                     line = line.rstrip()
-    #                     x = line.split('\t')
-    #                     #y = str(x[20]).split('\n')
-    #                     guidesExtendedProfile.append((x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9],
-    #                                                   x[10], x[11], x[12], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20]))
-    #                     count += 1
-    #                 else:
-    #                     break
-    #         break
+    for line in inGuidesProfileExtended:
+        if ">" + guide in line:
+            # print(line)
+            next(inGuidesProfileExtended)
+            # line=inGuidesProfileExtended.readline()
+            for ciao in range(0, uppermm+1):
+                line = inGuidesProfileExtended.readline()
+                count = 0
+                x = line.split('\t')
+                guidesExtendedProfile.append((x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9],
+                                              x[10], x[11], x[12], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20]))
+                for line in inGuidesProfileExtended:
+                    if count < 6:
+                        line = line.rstrip()
+                        x = line.split('\t')
+                        #y = str(x[20]).split('\n')
+                        guidesExtendedProfile.append((x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9],
+                                                      x[10], x[11], x[12], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20]))
+                        count += 1
+                    else:
+                        break
+            break
     arrayguidesExtendedProfile = np.array(guidesExtendedProfile, dtype=int)
     
     arrayguidesExtendedProfile.shape = (7*((uppermm-0)+1), 20)
@@ -559,7 +561,7 @@ if guide != 'no':
             table.set_fontsize(18)
             table.scale(1, 3)
             plt.axis('off')
-            plt.savefig("summary_single_guide_" + str(guide) +
+            plt.savefig("test.summary_single_guide_" + str(guide) +
                         "_"+str(uppermm) + "mm" + ".png", format="png")
             quit()
 
