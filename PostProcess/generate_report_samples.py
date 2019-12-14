@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+
+'''
+Not used
+'''
 # Esempio di input:
 #python 3 new_radar_chart GUIDE -mm 4 -profile profile.xls -extprofile extprofile.xls -files ... ... ... ...  -> creo radar chart
 #python 3 new_radar_chart GUIDE -mm 4 -profile profile.xls -extprofile extprofile.xls -files ... ... ... ... -sumref ... -sumenr ... -> creo radar chart + barplot di quella guida

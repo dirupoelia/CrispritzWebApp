@@ -12,10 +12,11 @@
 # Input 2.8 Gb -> 25 gb ram
 # Problema con 5 gb input -> forse servono 50 Gb ram
 
-#sys1 è semicommon file
-#Output column (not written): Bulge_type, Guide, Target, chr, pos, pos_cluster, direction, mms, bulge, total
-
+#sys1 è target file
 #sys2 is 'addGuide' or 'no' -> only for web server
+#sys3 is True to keep column 5 (Pos cluster) and 9 (Total) and added guide, False to do clusterization but do not report the added columns
+
+#Output column (not written): Bulge_type, Guide, Target, chr, pos, pos_cluster (optional), direction, mms, bulge, total(optional), real guide(optional)
 import pandas as pd
 import time
 import sys
@@ -26,6 +27,11 @@ guides_dict = dict()
 addGuide = False                #Add real guide to last column for better grep
 if 'addGuide' in sys.argv[:]:
     addGuide = True
+if sys.argv[3] == 'True':
+    keep_columns = True
+else:
+    keep_columns = False
+
 result_name = sys.argv[1][:sys.argv[1].rfind('.')] + '.cluster.txt'
 with open (sys.argv[1]) as targets:
     for line in targets:
@@ -62,6 +68,17 @@ print('Start clustering')
 start_time = time.time()
 
 with open(result_name, 'w+') as result:
+    if addGuide:
+        if keep_columns:
+            result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tReal Guide\n')
+        else:
+            result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\tReal Guide\n')
+    else:
+        if keep_columns:
+            result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\n')
+        else:
+            result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\n')
+
     total_targets = []
     for k in guides_dict.keys():
         total_targets += guides_dict[k]
@@ -88,12 +105,24 @@ with open(result_name, 'w+') as result:
 
     total_list.sort(key = lambda x: int(x[0][9]))
     if addGuide:
-        for cluster in total_list:
-            for target in cluster:
-                result.write('\t'.join(target) + '\t' + target[1].replace('-','') + '\n')
+        if keep_columns:
+            for cluster in total_list:
+                for target in cluster:
+                    result.write('\t'.join(target) + '\t' + target[1].replace('-','') + '\n')
+        else:
+            for cluster in total_list:
+                for target in cluster:
+                    result.write('\t'.join(target[0:5] + target[6:-1]) + '\t' + target[1].replace('-','') + '\n')
+
     else:
-        for cluster in total_list:
-            for target in cluster:
-                result.write('\t'.join(target) + '\n')
+        if keep_columns:
+            for cluster in total_list:
+                for target in cluster:
+                    result.write('\t'.join(target) + '\n')
+        else:
+            for cluster in total_list:
+                for target in cluster:
+                    result.write('\t'.join(target[0:5] + target[6:-1]) + '\n')
+
 
 print("Clustering runtime: %s seconds" % (time.time() - start_time))

@@ -75,10 +75,23 @@ start_time = time.time()
 
 print("EXECUTING ANNOTATION")
 
-outFileTargets.write("#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\tAnnotation_Type\n")
+
 
 inResult.seek(0)
-next(inResult)
+header = next(inResult)
+if 'Cluster Position' in header:
+    mm_pos = 7
+    if 'Real Guide' in header:
+        outFileTargets.write("#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tAnnotation_Type\n")
+    else:
+        outFileTargets.write("#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tReal Guide\tAnnotation_Type\n")
+
+else:
+    mm_pos = 6
+    if 'Real Guide' in header:
+        outFileTargets.write("#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\tReal Guide\tAnnotation_Type\n")
+    else:
+        outFileTargets.write("#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\tAnnotation_Type\n")
 
 lines_processed = 0
 for line in inResult:
@@ -94,8 +107,8 @@ for line in inResult:
             guideDict[str(x[1])][item]= {}
             guideDict[str(x[1])][item] = [0]*10
     #conto i target generali per mm threshold
-    totalDict['targets'][int(x[6])] += 1
-    guideDict[str(x[1])]['targets'][int(x[6])] += 1
+    totalDict['targets'][int(x[mm_pos])] += 1
+    guideDict[str(x[1])]['targets'][int(x[mm_pos])] += 1
     #faccio match su albero
     foundAnnotations = sorted(annotationsTree[int(x[4]):(int(x[4])+int(len(x[1]))+1)])
     for found in range(0, len(foundAnnotations)):
@@ -103,8 +116,8 @@ for line in inResult:
         guideSplit = guide.split('\t')
         if(str(guideSplit[0]) == str(x[3])):
             outFileTargets.write(line.rstrip() + '\t' + str(guideSplit[1]) + "\n")
-            guideDict[str(x[1])][guideSplit[1]][int(x[6])] += 1
-            totalDict[guideSplit[1]][int(x[6])] += 1
+            guideDict[str(x[1])][guideSplit[1]][int(x[mm_pos])] += 1
+            totalDict[guideSplit[1]][int(x[mm_pos])] += 1
 
     lines_processed +=1
     if lines_processed % (mod_tot_line) == 0:

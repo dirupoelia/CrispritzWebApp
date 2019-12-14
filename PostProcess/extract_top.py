@@ -14,6 +14,7 @@ job_id = sys.argv[2]
 with open(sys.argv[1]) as targets, open( job_id + '.top_' + str(top_x) + '.txt', 'w+') as result:
     line = targets.readline()
     if '#' in line:
+        result.write(line)  #header
         line = targets.readline().strip().split('\t')
     else:
         line = line.strip().split('\t')
