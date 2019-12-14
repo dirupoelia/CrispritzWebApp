@@ -1,6 +1,6 @@
 '''
 Script that annotatets the samples, in order to have a fast generate-report
-Input file is job_id.top_1.samples, job_id.Annotations.targets., job_id.Annotation.txt
+Input file is job_id.top_1.samples, job_id.Annotations.targets., job_id.Annotation.txt, result name
 Create a dict for the guides, that contains a dict for the samples, that contains a dict for the annotatio category
 Eg 
 {
@@ -170,10 +170,12 @@ for guide in annotation_dict:
                 result.write(annotation + '\t' + '\t'.join(['0' for i in range(10)]) + '\n')
         
         #Write summary for each sample
-        for sample in annotation_dict[guide]:
+        for sample in all_samples:#annotation_dict[guide]:
             result.write('-Summary_' + sample + '\n')
-            result.write('targets\t' + '\t'.join([str(x) for x in annotation_dict[guide][sample]['targets']]) + '\n')
-
+            try:
+                result.write('targets\t' + '\t'.join([str(x) for x in annotation_dict[guide][sample]['targets']]) + '\n')
+            except:
+                result.write('targets' + '\t' + '\t'.join(['0' for i in range(10)]) + '\n')
             for annotation in ann_list:
                 try:
                     result.write(annotation + '\t' + '\t'.join([str(x) for x in annotation_dict[guide][sample][annotation]]) + '\n')
@@ -194,7 +196,10 @@ for guide in annotation_dict:
         #Write result population
         for population in set(all_pop):
             result.write('-Summary_' + population + '\n')
-            result.write('targets\t' + '\t'.join([str(x) for x in dict_pop_count[guide][population]['targets']]) + '\n')
+            try:
+                result.write('targets\t' + '\t'.join([str(x) for x in dict_pop_count[guide][population]['targets']]) + '\n')
+            except:
+                result.write('targets' + '\t' + '\t'.join(['0' for i in range(10)]) + '\n')
             for annotation in ann_list:
                 try:
                     result.write(annotation + '\t' + '\t'.join([str(x) for x in dict_pop_count[guide][population][annotation]]) + '\n')
@@ -216,7 +221,10 @@ for guide in annotation_dict:
         #Write result superpopulation
         for superpop in superpopulation:
             result.write('-Summary_' + superpop + '\n')
-            result.write('targets\t' + '\t'.join([str(x) for x in dict_superpop_count[guide][superpop]['targets']]) + '\n')
+            try:
+                result.write('targets\t' + '\t'.join([str(x) for x in dict_superpop_count[guide][superpop]['targets']]) + '\n')
+            except:
+                result.write('targets' + '\t' + '\t'.join(['0' for i in range(10)]) + '\n')
             for annotation in ann_list:
                 try:
                     result.write(annotation + '\t' + '\t'.join([str(x) for x in dict_superpop_count[guide][superpop][annotation]]) + '\n')

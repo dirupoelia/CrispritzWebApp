@@ -173,10 +173,44 @@ if [ ${19} = 'both' ]; then     #TODO CHECK FOR LAST COL INDICES
     echo 'Start summary by samples'
     python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt 
     echo 'End summary by samples'
+    #Annotazioni per samples, pop, superpop
+    echo 'Start annotation samples'
+    python3 ../../PostProcess/annotation_samples.py $jobid.top_1.samples.txt $jobid.Annotation.targets.txt $jobid.Annotation.txt $jobid
+    echo 'End annotation samples'
     #Rimettere i samples nel file di cluster (solo nel top1)
     echo 'Start creating final file'
     python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.total.txt $jobid.top_1.samples.txt $jobid  # > $jobid.final.txt
     echo 'End creating final file'
+
+    # #TODO sistemare fare script unico
+    # python3 ../../PostProcess/cluster.dict.py ref/$jobid'_ref'.targets.txt #jobid_ref.targets.cluster.txt
+    # python3 ../../PostProcess/extract_top.py ref/$jobid'_ref'.targets.cluster.txt $jobid'_ref' # > $jobid_ref.top_1.txt
+    # python3 ../../file_per_crispritz/annotator.py ../../${18} $jobid'_ref'.top_1.txt $jobid'_ref' # $jobid'_ref'.Annotation.summary.txt
+    # python3 ../../PostProcess/tmp_top1_annotation.py $jobid ./
+    # python3 ../../PostProcess/tmp_top1_annotation.py $jobid'_ref' ./ref/
+    # if [ ${13} = 'True' ]; then
+    # echo 'Generate_report' >  output.txt
+    # proc=$(($7 + 1))
+    # while IFS= read -r line || [ -n "$line" ]; do    
+    #     if [ ${14} = 'True' ]; then         #If -gecko
+    #         if [ ${15} = 'True' ]; then     #If genome_ref comparison
+                
+    #             printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/radar_chart_new.py  $line % $jobid'.tmp_res.txt' *.extended_profile.xls $jobid'_ref'.Annotation.summary.txt  /home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/gecko/
+
+    #         else
+    #             printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/radar_chart_new.py  $line % $jobid'.tmp_res.txt' *.extended_profile.xls /home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/gecko/
+
+    #         fi
+    #     else
+    #         if [ ${15} = 'True' ]; then     #If genome_ref comparison
+    #             printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/radar_chart_new.py  $line % $jobid'.tmp_res.txt' *.extended_profile.xls $jobid'_ref'.Annotation.summary.txt no
+    #         else
+    #             printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/radar_chart_new.py  $line % $jobid'.tmp_res.txt' *.extended_profile.xls no  
+    #         fi
+    #     fi
+    #     echo $line >> output.txt
+    # done < guides.txt
+    # fi
 fi
 
 #Clustering for var and ref
@@ -213,12 +247,47 @@ elif [ ${19} = 'var' ]; then
     python3 ../../PostProcess/calc_samples_faster.py ../../../dictionaries $jobid.top_1.txt   #> $jobid.top_1.samples.txt
     echo 'End calc samples'
     # Summary by samples table
+    echo 'Start summary by samples'
     python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt
-
+    echo 'End summary by samples'
+    echo 'Start annotation samples'
+    python3 ../../PostProcess/annotation_samples.py $jobid.top_1.samples.txt $jobid.Annotation.targets.txt $jobid.Annotation.txt $jobid
+    echo 'End annotation samples'
     #Rimettere i samples nel file di cluster (solo nel top1)
     echo 'Start creating final file'
     python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.targets.cluster.minmaxdisr.txt $jobid.top_1.samples.txt $jobid # > $jobid.final.txt
     echo 'End creating final file'
+
+    # #TODO sistemare fare script unico
+    
+    # python3 ../../PostProcess/tmp_top1_annotation.py $jobid ./
+    # python3 ../../PostProcess/tmp_top1_annotation.py $jobid'_ref' ./ref/
+    # if [ ${13} = 'True' ]; then
+    # echo 'Generate_report' >  output.txt
+    # proc=$(($7 + 1))
+    # while IFS= read -r line || [ -n "$line" ]; do    
+    #     if [ ${14} = 'True' ]; then         #If -gecko
+    #         if [ ${15} = 'True' ]; then     #If genome_ref comparison
+                
+    #             printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/radar_chart_new.py  $line % $jobid'.tmp_res.txt' *.extended_profile.xls ref/$jobid'_ref.tmp_res.txt'  /home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/gecko/
+
+    #         else
+    #             printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/radar_chart_new.py  $line % $jobid'.tmp_res.txt' *.extended_profile.xls /home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/gecko/
+
+    #         fi
+    #     else
+    #         if [ ${15} = 'True' ]; then     #If genome_ref comparison
+    #             printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/radar_chart_new.py  $line % $jobid'.tmp_res.txt' *.extended_profile.xls ref/$jobid'_ref.tmp_res.txt' no
+    #         else
+    #             printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/radar_chart_new.py  $line % $jobid'.tmp_res.txt' *.extended_profile.xls no  
+    #         fi
+    #     fi
+    #     echo $line >> output.txt
+    # done < guides.txt
+  
+    # fi
+
+    
     #TODO aggiungere terza/quarta voce nella pagina del load
 fi
 

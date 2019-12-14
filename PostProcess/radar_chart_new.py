@@ -5,6 +5,7 @@ import math
 import matplotlib
 matplotlib.use("TkAgg")
 matplotlib.use('Agg')
+
 from matplotlib import pyplot as plt
 from matplotlib import patches as mpatches
 import pandas as pd
@@ -63,10 +64,12 @@ if web_server:
     file_extension = 'png'
 
 radarchart_sample = False
+guide_name_for_sample = ''
 if '-sample' in sys.argv[:]:
     sample_name = sys.argv.index('-sample')
     sample_name = sys.argv[sample_name + 1]
     radarchart_sample = True
+    guide_name_for_sample = guide
     guide = 'no'
 
 summary_two = []        #NOTE summary_two is the summary of the variant genome
@@ -100,13 +103,13 @@ if annotation_ref != 'no':
                     break
                 summary_one.append(line.strip())
 
-
+uppermm = mm
 if summary_one  and summary_two :           #DO BARPLOT
     inSummaryCountOne = summary_one #open(summary_one, "r")
     inSummaryCountTwo = summary_two #open(summary_two, "r")
     arraySummaryCountOne = []
     arraySummaryCountTwo = []
-    uppermm = mm
+    
     x_ticks_labels = []
     n_annotation = 0
     mms_total = 0      #len of the array exon   0   0   0   0   0   0   0, taken from [1:]
@@ -208,9 +211,8 @@ if summary_one  and summary_two :           #DO BARPLOT
 
 
 check_annotation_name = []
-for i in summary_one:
+for i in summary_two:
     check_annotation_name.append(i.split('\t')[0].lower())
-
 if set(check_annotation_name) != set(['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']) and gecko_dir != "no":     #NOTE if gecko annotations are updated, update the list adding the new annotations 
     print('Warning! Option \'-gecko\' can be used on files annotated with \'ctcf\', \'dnase\', \'exon\', \'intron\', \'promoter\'\nRemoving \'-gecko\' option')
     gecko_dir = 'no'
@@ -456,7 +458,7 @@ if guide != 'no':       #DO RADAR CHART
     plt.savefig("summary_single_guide_" + str(guide) +
                 "_"+str(mm) + "mm" + "." + file_extension, format=file_extension)
 
-elif radarchart_sample:   #TODO radarchart for sample
+elif radarchart_sample:   #Radarchart for sample
     #summary_two contains counting of total, change variable name to summary_total
     summary_total = summary_two.copy()
     #Extract counting for total
@@ -472,13 +474,16 @@ elif radarchart_sample:   #TODO radarchart for sample
                 summary_two.append(line.strip())
         
     #Calculate distances
-    diff_dict= {'targets':[round(1 - round(int(summary_two[0].split('\t')[mm + 1]) / int(summary_total[0].split('\t')[mm + 1]),2),2), summary_two[0].split('\t')[mm + 1]]}
+    if int(summary_total[0].split('\t')[mm + 1]) > 0:
+        diff_dict= {'targets':[round(1 - round(int(summary_two[0].split('\t')[mm + 1]) / int(summary_total[0].split('\t')[mm + 1]),2),2), summary_two[0].split('\t')[mm + 1]]}
+    else:
+        diff_dict= {'targets': [1.0,summary_two[0].split('\t')[mm + 1] ]}
     for pos, annotation in enumerate(summary_two[1:], 1):
         annotation = annotation.split('\t')
         if int(summary_total[pos].split('\t')[mm + 1]) > 0:
             diff_dict[annotation[0]]=[round(1 - round(int(annotation[mm + 1]) / int(summary_total[pos].split('\t')[mm + 1]),2),2), annotation[mm + 1]]
         else:
-            diff_dict[annotation[0]] = [0, annotation[mm + 1]]
+            diff_dict[annotation[0]] = [1.0, annotation[mm + 1]]
     #Create data for radarchart
     data_for_df = {'group': ['A'], 'General':diff_dict['targets'][0]}
     data_for_table_df = [diff_dict['targets']]
@@ -559,6 +564,6 @@ elif radarchart_sample:   #TODO radarchart for sample
                         right=0.99, wspace=0.12)
 
     plt.savefig("summary_single_guide_" + str(sample_name) +
-                "_"+str(mm) + "mm" + "." + file_extension, format=file_extension)
+                "_"+ guide_name_for_sample + '_' + str(mm) + "mm" + "." + file_extension, format=file_extension)
     
 

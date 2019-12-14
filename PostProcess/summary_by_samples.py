@@ -47,13 +47,15 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
             if guide not in guides_dict:
                 guides_dict[guide] = dict()
                 guides_dict_total[guide] = 0
-
+                guides_population_targets[guide] = dict()       #{GUIDE -> {POP->count,POP2 -> count}, GUIDE2 -> {POP1 -> count}}
+                guides_superpopulation_targets[guide] = dict()  #{GUIDE -> {SUPOP->count,SUPOP2 -> count}, GUIDE2 -> {SUPOP1 -> count}}
             words = line[-2].split(',')
             
             if current_chr_pos != line[3]+line[4]:
                 guides_dict_total[guide] += 1
                 current_chr_pos = line[3]+line[4]
-
+            checked_pop = []
+            checked_superpop = []
             for word in words:
                 try:
                     guides_dict[guide][word][0] += 1
@@ -62,52 +64,53 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
                 if sys.argv[3] == 'both':
                     if 'y' in line[-3]:
                         guides_dict[guide][word][1] += 1
+                #NOTE se voglio contare solo gli y il codice sotto lo idento una volta
+                if dict_pop[word] not in checked_pop:       #I wanna count the target only once even if multiple samples of the same pop are in line[-2]
+                    checked_pop.append(dict_pop[word])
+                    try:
+                        guides_population_targets[guide][dict_pop[word]] += 1
+                    except:     #First time seeing this population
+                        guides_population_targets[guide][dict_pop[word]] = 1  
+                if  population_1000gp[dict_pop[word]] not in checked_superpop:
+                    checked_superpop.append(population_1000gp[dict_pop[word]])
+                    try:
+                        guides_superpopulation_targets[guide][population_1000gp[dict_pop[word]]] += 1
+                    except:
+                        guides_superpopulation_targets[guide][population_1000gp[dict_pop[word]]] = 1
 
 with open(sys.argv[4], 'r') as g_file:
     for line in g_file:
         line = line.strip()
         if line not in guides_dict:
-            guides_dict[line] = None
-            guides_dict_total[line] = None
-
-#Sum for population
-index_sum = 0
-if sys.argv[3] == 'both':
-    index_sum = 1
-for guide in guides_dict:
-    guides_population_targets[guide] = dict()
-    for s in guides_dict[guide]:
-        try:
-            guides_population_targets[guide][dict_pop[s]] += guides_dict[guide][i][index_sum]
-        except:
-            guides_population_targets[guide][dict_pop[s]] = guides_dict[guide][i][index_sum]
-
-#Sum for superpopulation
-for guide in guides_dict:
-    guides_superpopulation_targets[guide] = dict()  
-    for p in guides_population_targets[guide]:
-        try:
-            guides_superpopulation_targets[guide][population_1000gp[p]] += guides_population_targets[guide][p]
-        except:
-            guides_superpopulation_targets[guide][population_1000gp[p]] = guides_population_targets[guide][p]
+            with open(sys.argv[2] + '.summary_by_samples.' + line + '.txt', 'w+') as result:
+                result.write('No samples found with ' + line + ' guide')
 
 
 for k in guides_dict.keys():
     with open(sys.argv[2] + '.summary_by_samples.' + k + '.txt', 'w+') as result:
-        if guides_dict[k]:
-            result.write(k + '\t' + str(guides_dict_total[k]) + '\n')
-            if sys.argv[3] == 'both':
-                for i in guides_dict[k]:
-                    # result.write(i + '\t' + gender_sample[i] + '\t' + str(guides_dict[k][i][0]) + '\t' + str(guides_dict[k][i][1]) + '\t' + dict_pop[i] + '\t' + str(guides_population_targets[k][dict_pop[i]]) + 
-                    #             '\t' + population_1000gp[dict_pop[i]] +'\t' + str(guides_superpopulation_targets[guide][population_1000gp[dict_pop[i]]])  + '\n')
-                    result.write(i + '\t' + gender_sample[i] + '\t' + dict_pop[i] + '\t' + population_1000gp[dict_pop[i]] +'\t' + str(guides_dict[k][i][0]) + '\t' + str(guides_dict[k][i][1]) +
-                                '\t' + str(guides_population_targets[k][dict_pop[i]]) + '\t' + str(guides_superpopulation_targets[guide][population_1000gp[dict_pop[i]]])  + '\n')
-            else:
-                for i in guides_dict[k]:
-                    # result.write(i + '\t' + gender_sample[i] + '\t' + str(guides_dict[k][i][0]) + '\t' + dict_pop[i] + '\t' + str(guides_population_targets[k][dict_pop[i]]) + '\t' + population_1000gp[dict_pop[i]] + 
-                    #             '\t'+ str(guides_superpopulation_targets[guide][population_1000gp[dict_pop[i]]]) +'\n')
-                    result.write(i + '\t' + gender_sample[i] + '\t' + dict_pop[i] + '\t' + population_1000gp[dict_pop[i]] +'\t' + str(guides_dict[k][i][0]) +
-                                '\t' + str(guides_population_targets[k][dict_pop[i]]) + '\t' + str(guides_superpopulation_targets[guide][population_1000gp[dict_pop[i]]])  + '\n')
+        result.write(k + '\t' + str(guides_dict_total[k]) + '\n')
+        if sys.argv[3] == 'both':
+            for i in all_samples:
+                if i not in guides_dict[k]:
+                    guides_dict[k][i] = [0,0]
+                if dict_pop[i] not in guides_population_targets[k]:
+                    guides_population_targets[k][dict_pop[i]] = 0
+                if population_1000gp[dict_pop[i]] not in guides_superpopulation_targets[k]:
+                    guides_superpopulation_targets[k][population_1000gp[dict_pop[i]]] = 0
 
+
+                result.write(i + '\t' + gender_sample[i] + '\t' + dict_pop[i] + '\t' + population_1000gp[dict_pop[i]] +'\t' + str(guides_dict[k][i][0]) + '\t' + str(guides_dict[k][i][1]) +
+                            '\t' + str(guides_population_targets[k][dict_pop[i]]) + '\t' + 
+                            str(guides_superpopulation_targets[k][population_1000gp[dict_pop[i]]])  + '\n')
         else:
-            result.write('No samples found with ' + k + ' guide')
+            for i in all_samples:
+                if i not in guides_dict[k]:
+                    guides_dict[k][i] = [0,0]
+                if dict_pop[i] not in guides_population_targets[k]:
+                    guides_population_targets[k][dict_pop[i]] = 0
+                if population_1000gp[dict_pop[i]] not in guides_superpopulation_targets[k]:
+                    guides_superpopulation_targets[k][population_1000gp[dict_pop[i]]] = 0
+
+                result.write(i + '\t' + gender_sample[i] + '\t' + dict_pop[i] + '\t' + population_1000gp[dict_pop[i]] +'\t' + str(guides_dict[k][i][0]) +
+                            '\t' + str(guides_population_targets[k][dict_pop[i]]) + '\t' + str(guides_superpopulation_targets[k][population_1000gp[dict_pop[i]]])  + '\n')
+
