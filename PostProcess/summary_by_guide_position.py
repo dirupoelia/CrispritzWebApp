@@ -39,7 +39,7 @@
 import sys
 import numpy as np
 import pandas as pd
-
+import subprocess
 class Cluster:
     def __init__(self, info, count):
         self.info = info            #[chr, pos, target, min mms, min bulge]
@@ -51,6 +51,9 @@ class Cluster:
             for t_c in t:
                 tmp += '\t' + str(t_c)
         return self.info + tmp
+    
+    def get_info(self):
+        return self.info
 
     
 
@@ -173,11 +176,26 @@ with open(sys.argv[1]) as targets:
                 tab_summary.to_pickle(sys.argv[6] + '.summary_by_guide.' + guide +'.txt')
 
 for guide in guide_d_cluster.keys():
-    with open(sys.argv[6] + '.summary_by_position.' + guide + '.txt', 'w+') as result:
-        result.write('#Chromosome\tPosition\tBest Target\tMin Mismatch\tMin Bulge')
+    with open(sys.argv[6] + '.summary_by_position.' + guide + '.tmp.txt', 'w+') as result: #Since cluster are not in order (first cluster of uniq,
+        #then cluster of semi common, i create the temp file, sort by total, mms, bulges)
+        header = ['#Chromosome','Position','Best Target','Min Mismatch','Min Bulge']
+        # result.write('#Chromosome\tPosition\tBest Target\tMin Mismatch\tMin Bulge')
         for b in range(bulge + 1):
             for i in range(mms + 1):
-                result.write('\tTargets ' + str(i) + 'MM' + str(b) + 'B' )
-        result.write('\n')
+                header.append('Targets ' + str(i) + 'MM' + str(b) + 'B' )
+                # result.write('\tTargets ' + str(i) + 'MM' + str(b) + 'B' )
+        header.append('Total')
+        # result.write('\tTotal\n')
+        #result.write('\t'.join(header) + '\n')
+        header_str = '\t'.join(header)
+        sort_positions = [str(header.index('Total') +1) , str(header.index('Min Mismatch') + 1), str(header.index('Min Bulge') + 1)]
         for i in guide_d_cluster[guide]: 
-            result.write(i.to_string() + '\n')
+            result.write(i.to_string() + '\t' + str(int(i.get_info().split('\t')[3]) + int(i.get_info().split('\t')[4])) + '\n')
+    sorting = subprocess.Popen(['sort -n -k' + sort_positions[0] + ',' + sort_positions[0] + ' -k' + sort_positions[1] + ',' + sort_positions[1]
+            + ' -k' + sort_positions[2] + ',' + sort_positions[2] + ' ' + sys.argv[6] + '.summary_by_position.' + guide + '.tmp.txt > ' +
+            sys.argv[6] + '.summary_by_position.' + guide + '.txt;' +
+            ' echo \"' + header_str + '\" | cat - ' +
+            sys.argv[6] + '.summary_by_position.' + guide + '.txt > tmp.' + sys.argv[6] + '.' + guide + ' && mv tmp.' + sys.argv[6] + '.' + guide
+            + ' ' +  sys.argv[6] + '.summary_by_position.' + guide + '.txt; ' + 
+            'rm ' +  sys.argv[6] + '.summary_by_position.' + guide + '.tmp.txt'  ], shell = True)
+    sorting.wait()

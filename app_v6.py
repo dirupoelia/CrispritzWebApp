@@ -2567,9 +2567,9 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
         column_sep_by_mm_value.append(' - '.join(str(int(x)) for x in zero_to_n_mms))
         column_off_target.append(int(sum(zero_to_n_mms[1:])))
     if 'NO SCORES' not in all_scores:
-        data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On Targets':column_on_target, 'Total Off Targets':column_off_target, 'col_targetfor': column_sep_by_mm_value}
+        data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On-Targets':column_on_target, 'Total Off-Targets':column_off_target, 'col_targetfor': column_sep_by_mm_value}
     else:
-        data_guides = {'Guide': guides, 'Total On Targets':column_on_target, 'Total Off Targets':column_off_target, 'col_targetfor': column_sep_by_mm_value}
+        data_guides = {'Guide': guides, 'Total On-Targets':column_on_target, 'Total Off-Targets':column_off_target, 'col_targetfor': column_sep_by_mm_value}
    
     dff = pd.DataFrame(data_guides)
 

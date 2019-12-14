@@ -1223,3 +1223,100 @@ _tkinter.TclError: couldn't connect to display "localhost:10.0"
     
                                            ^
 SyntaxError: unexpected EOF while parsing
+[2019-12-14 01:44:32 +0000] [24096] [INFO] Starting gunicorn 19.9.0
+[2019-12-14 01:44:32 +0000] [24096] [INFO] Listening at: http://0.0.0.0:8080 (24096)
+[2019-12-14 01:44:32 +0000] [24096] [INFO] Using worker: sync
+[2019-12-14 01:44:32 +0000] [24099] [INFO] Booting worker with pid: 24099
+Post Process start
+Start Scoring
+End Scoring
+Start creation semicommon, common, unique
+End creation semicommon, common, unique
+Start cluster semicommon
+Created 'Total' and 'Position Cluster' columns: 0.10341858863830566
+Targets sorted: 0.059599876403808594
+Start clustering
+Clustering runtime: 0.09343266487121582 seconds
+End cluster semicommon
+Start cluster unique
+Created 'Total' and 'Position Cluster' columns: 0.018909692764282227
+Targets sorted: 0.008061885833740234
+Start clustering
+Clustering runtime: 0.018958091735839844 seconds
+End cluster unique
+Start pam analysis
+End pam analysis
+Start pam creation
+sed: can't read tmp_seq/*_seq.txt: No such file or directory
+Created bedfile: 0.009814739227294922
+Bedtools DONE: 0.15612220764160156
+Done 0.022519588470458984
+End pam creation
+Start summary by guide and position
+End summary by guide and position
+Start top 1 extraction
+End top 1 extraction
+Start sort
+End sort
+Start calc samples
+Done  no
+Load chr1 done 46.163607120513916
+Done  chr1
+Load chr10 done 28.612308740615845
+Done  chr10
+Load chr11 done 27.823382139205933
+Done  chr11
+Load chr12 done 25.12108039855957
+Done  chr12
+Load chr13 done 19.074084758758545
+Done  chr13
+Load chr14 done 15.762165069580078
+Done  chr14
+Load chr15 done 14.436400651931763
+Done  chr15
+Load chr16 done 15.59135913848877
+Done  chr16
+Load chr17 done 12.521554470062256
+Done  chr17
+Load chr18 done 14.196123600006104
+Done  chr18
+Load chr19 done 11.024899959564209
+Done  chr19
+Load chr2 done 44.24290132522583
+Done  chr2
+Load chr20 done 11.68869161605835
+Done  chr20
+Load chr21 done 7.113102674484253
+Done  chr21
+Load chr22 done 6.0980064868927
+Done  chr22
+Load chr3 done 36.289313077926636
+Done  chr3
+Load chr4 done 39.834675550460815
+Done  chr4
+Load chr5 done 31.997490644454956
+Done  chr5
+Load chr6 done 34.05757546424866
+Done  chr6
+Load chr7 done 30.016159772872925
+Done  chr7
+Load chr8 done 28.12888526916504
+Done  chr8
+Load chr9 done 21.177967309951782
+Done  chr9
+Load chrX done 1.1695542335510254
+Done
+0
+End calc samples
+Start summary by samples
+End summary by samples
+Start annotation samples
+End annotation samples
+Start creating final file
+End creating final file
+Post Process done
+[2019-12-14 04:37:58 +0000] [24096] [CRITICAL] WORKER TIMEOUT (pid:24099)
+[2019-12-14 04:38:56 +0000] [25068] [INFO] Booting worker with pid: 25068
+[2019-12-14 11:20:29 +0000] [24096] [INFO] Handling signal: term
+[2019-12-14 11:20:29 +0000] [25068] [INFO] Worker exiting (pid: 25068)
+[2019-12-14 11:20:30 +0000] [24096] [INFO] Shutting down: Master
