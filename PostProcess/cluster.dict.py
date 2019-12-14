@@ -13,9 +13,9 @@
 # Problema con 5 gb input -> forse servono 50 Gb ram
 
 #sys1 è target file
-#sys2 is 'addGuide' or 'no' -> only for web server
+#sys2 is 'addGuide' or 'no' -> only for web server, only for search with only ref
 #sys3 is True to keep column 5 (Pos cluster) and 9 (Total) and added guide, False to do clusterization but do not report the added columns
-
+#sys4 is True if cluster only (no append of Total column or adding of Cluster position, because already present), False otherwise
 #Output column (not written): Bulge_type, Guide, Target, chr, pos, pos_cluster (optional), direction, mms, bulge, total(optional), real guide(optional)
 import pandas as pd
 import time
@@ -33,29 +33,37 @@ else:
     keep_columns = False
 
 result_name = sys.argv[1][:sys.argv[1].rfind('.')] + '.cluster.txt'
+cluster_only = False
+if sys.argv[4] == 'True':
+    cluster_only = True
+
 with open (sys.argv[1]) as targets:
     for line in targets:
         if '#' in line:
             continue
         line = line.strip().split('\t')
-        line.append(str(int(line[6]) + int(line[7])))
-        if line[5] == '+':
-            if line[0] == 'DNA':
-                # line.append(str(int(line[4]) + int(line[7])))
-                line.insert(5, str(int(line[4]) + int(line[7])))
+        if not cluster_only:
+            line.append(str(int(line[6]) + int(line[7])))
+            if line[5] == '+':
+                if line[0] == 'DNA':
+                    # line.append(str(int(line[4]) + int(line[7])))
+                    line.insert(5, str(int(line[4]) + int(line[7])))
+                else:
+                    # line.append(str(int(line[4]) - int(line[7])))
+                    line.insert(5,str(int(line[4]) - int(line[7])))
             else:
-                # line.append(str(int(line[4]) - int(line[7])))
-                line.insert(5,str(int(line[4]) - int(line[7])))
-        else:
-            # line.append(line[4])
-            line.insert(5, line[4])
+                # line.append(line[4])
+                line.insert(5, line[4])
         try:
             guides_dict[line[1].replace('-','')].append(line)
         except:
             guides_dict[line[1].replace('-','')] = [line]
         #total_targets.append(line)
-        
-print('Created \'Total\' and \'Position Cluster\' columns:', time.time() - start)
+
+if not cluster_only:
+    print('Created \'Total\' and \'Position Cluster\' columns:', time.time() - start)
+else:
+    print('Loaded targets: ', time.time() - start)
 start = time.time()
 # total_targets.sort(key = lambda x: ( x[3] , int(x[-1]) ))
 for k in guides_dict.keys():

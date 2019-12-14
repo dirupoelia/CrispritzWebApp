@@ -26,7 +26,13 @@ outFileSummary = open(outputFile + '.Annotation.summary.txt', 'w')  # outfile op
 process = subprocess.Popen(['wc', '-l', resultsFile], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 out, err = process.communicate()
 total_line = int(out.decode('UTF-8').split(' ')[0])
-mod_tot_line = int(total_line/10)
+if total_line < 2:
+    print('WARNING! Input file has no targets')
+    sys.exit()
+if total_line < 10:
+    mod_tot_line = 1
+else:
+    mod_tot_line = int(total_line/10)
 #VARIABLE INIT
 guideDict = {}
 totalDict = {}

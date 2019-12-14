@@ -1,6 +1,6 @@
 '''
 Script that annotatets the samples, in order to have a fast generate-report
-Input file is job_id.top_1.samples, job_id.Annotations.targets., job_id.Annotation.txt, result name
+Input file is job_id.top_1.samples, job_id.Annotations.targets., job_id.Annotation.summary.txt, result name
 Create a dict for the guides, that contains a dict for the samples, that contains a dict for the annotatio category
 Eg 
 {
@@ -23,8 +23,10 @@ Eg
     }
 }
 '''
-#TODO testare
-
+# argv 1 is top1.samples.txt
+# argv 2 is Annotation.targets
+# argv 3 is Annotation.summary.txt -> to get the name of annotations    #TODO modificare meglio, prenderle direttamente dal file
+# argv 4 is result name
 import sys
 import os
 import pandas as pd
@@ -48,10 +50,7 @@ population_1000gp = {'CHB':'EAS', 'JPT':'EAS', 'CHS':'EAS', 'CDX':'EAS', 'KHV':'
                     'GIH':'SAS', 'PJL':'SAS', 'BEB':'SAS', 'STU':'SAS', 'ITU':'SAS'
 }
 superpopulation = ['EAS', 'EUR', 'AFR', 'AMR','SAS']
-# argv 1 is top1.samples.txt
-# argv 2 is Annotation.targets
-# argv 3 is Annotation.txt -> to get the name of annotations    #TODO modificare meglio, prenderle direttamente dal file
-# argv 4 is result name
+
 result_name = sys.argv[4]
 # samples_dict = {
     # GUIDE1 ->{
@@ -82,12 +81,16 @@ with open(sys.argv[1]) as targets:
 # print(samples_dict['CTAACAGTTGCTTTTATCACNNN']['chr2146560428'])
 # print(samples_dict['TGCTTGGTCGGCACTGATAGNNN']['chr2250085897'])
 
-ann_list = []       #TODO sistemare con la nuova annotazione
+ann_list = []       #TODO better way to get annotation name
 
 with open (sys.argv[3], 'r') as ann_file:
+    next(ann_file) #Skip -Summary_Total line
+    next(ann_file) #Skip targets 0 0 0 ... line
     for line in ann_file:
-        if '-' in line[0] and 'Summary' not in line:
-            ann_list.append(line.strip()[1:])
+        if '-Summary' in line:
+            break
+        ann_list.append(line.strip().split('\t')[0])
+        
 
 
 summary_targets_guide = dict()  #To save targets and annotation count for top 1
@@ -117,11 +120,11 @@ with open (sys.argv[2]) as targets:             #Count annotation for each targe
             continue
         #Count the annotations for the guide (only top1)
         try:
-            summary_targets_guide[guide][line[-1]][int(line[6])] += 1
+            summary_targets_guide[guide][line[-1]][int(line[7])] += 1
         except:
             summary_targets_guide[guide][line[-1]] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            summary_targets_guide[guide][line[-1]][int(line[6])] += 1
-        summary_targets_guide[guide]['targets'][int(line[6])] += 1
+            summary_targets_guide[guide][line[-1]][int(line[7])] += 1
+        summary_targets_guide[guide]['targets'][int(line[7])] += 1
         
         samples_dict[guide][line[3] + line[4]][1].append(line[-1])  #Get list of samples in current gudie chr pos
         visited_pop = []
@@ -132,32 +135,32 @@ with open (sys.argv[2]) as targets:             #Count annotation for each targe
                 # print(guide, sample, line[-1], line[6])
                 
             try:
-                annotation_dict[guide][sample][line[-1]][int(line[6])] += 1       #increase annotation count
+                annotation_dict[guide][sample][line[-1]][int(line[7])] += 1       #increase annotation count
             except:
                 annotation_dict[guide][sample][line[-1]] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                annotation_dict[guide][sample][line[-1]][int(line[6])] += 1
+                annotation_dict[guide][sample][line[-1]][int(line[7])] += 1
             
             if dict_pop[sample] in visited_pop:
                 continue
             else:
                 visited_pop.append(dict_pop[sample])
-                dict_pop_count[guide][dict_pop[sample]]['targets'][int(line[6])] += 1
+                dict_pop_count[guide][dict_pop[sample]]['targets'][int(line[7])] += 1
                 try:
-                    dict_pop_count[guide][dict_pop[sample]][line[-1]][int(line[6])] += 1
+                    dict_pop_count[guide][dict_pop[sample]][line[-1]][int(line[7])] += 1
                 except:
                     dict_pop_count[guide][dict_pop[sample]][line[-1]] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                    dict_pop_count[guide][dict_pop[sample]][line[-1]][int(line[6])] += 1
+                    dict_pop_count[guide][dict_pop[sample]][line[-1]][int(line[7])] += 1
             if population_1000gp[dict_pop[sample]] in visited_superpop:
                 continue
             else:
                 visited_superpop.append(population_1000gp[dict_pop[sample]])
-                dict_superpop_count[guide][population_1000gp[dict_pop[sample]]]['targets'][int(line[6])] += 1
+                dict_superpop_count[guide][population_1000gp[dict_pop[sample]]]['targets'][int(line[7])] += 1
                 try:
-                    dict_superpop_count[guide][population_1000gp[dict_pop[sample]]][line[-1]][int(line[6])] += 1
+                    dict_superpop_count[guide][population_1000gp[dict_pop[sample]]][line[-1]][int(line[7])] += 1
                 except:
                     dict_superpop_count[guide][population_1000gp[dict_pop[sample]]][line[-1]] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                    dict_superpop_count[guide][population_1000gp[dict_pop[sample]]][line[-1]][int(line[6])] += 1
-            annotation_dict[guide][sample]['targets'][int(line[6])] += 1
+                    dict_superpop_count[guide][population_1000gp[dict_pop[sample]]][line[-1]][int(line[7])] += 1
+            annotation_dict[guide][sample]['targets'][int(line[7])] += 1
 
 for guide in annotation_dict:
     with open(result_name + '.sample_annotation.' + guide +'.samples.txt', 'w+') as result:

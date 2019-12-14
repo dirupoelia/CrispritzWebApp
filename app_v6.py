@@ -1140,8 +1140,11 @@ def refreshSearch(n, dir_name):
     current_job_dir = 'Results/' +  dir_name.split('=')[-1] + '/'
     if dir_name.split('=')[-1] in onlydir:
         onlyfile = [f for f in listdir(current_job_dir) if isfile(join(current_job_dir, f))]
-        with open(current_job_dir + 'guides.txt') as guides:
-            n_guides = len(guides.read().strip().split('\n'))
+        if os.path.exists(current_job_dir + 'guides.txt'):
+            with open(current_job_dir + 'guides.txt') as guides:
+                n_guides = len(guides.read().strip().split('\n'))
+        else:
+            n_guides = -1
         if 'log.txt' in onlyfile:
             with open(current_job_dir + 'log.txt') as log:
                 all_done = 0
@@ -1215,8 +1218,11 @@ def refreshSearch(n, dir_name):
                     with open(current_job_dir + 'output.txt', 'r') as output_status:
                         line = output_status.read().strip()
                         if 'Generate_report' in line:
-                            status_message = round((len(line.split('\n')) - 1) / n_guides, 2)
-                            report_status = html.P(str(status_message * 100) + '%', style = {'color':'orange'})
+                            if n_guides < 0:
+                                report_status = html.P('Generating Report...', style = {'color':'orange'}) 
+                            else:
+                                status_message = round((len(line.split('\n')) - 1) / n_guides, 2)
+                                report_status = html.P(str(status_message * 100) + '%', style = {'color':'orange'})
                 #TODO continuare con post process
                 if ('PostProcess\tDone' in current_log):
                     post_process_status = html.P('Done', style = {'color':'green'})
@@ -2947,7 +2953,10 @@ def global_store_general(path_file_to_load):
     '''
     if path_file_to_load is None:
         return ''
-    df = pd.read_csv( path_file_to_load , sep = '\t', header = None)
+    if os.path.getsize(path_file_to_load) > 0: 
+        df = pd.read_csv( path_file_to_load , sep = '\t', header = None)
+    else:
+        df = None
     #df.rename(columns = {"#Bulge type":'Bulge Type', "#Bulge_type":'Bulge Type', 'Bulge_Size':'Bulge Size'}, inplace = True)
     return df
 
@@ -3067,7 +3076,8 @@ def update_table_sample(page_current, page_size, sort_by, filter, search, hash):
     
     filtering_expressions = filter.split(' && ')
     dff = global_store_general('Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt')
-
+    if dff is None:
+        raise PreventUpdate
     #TODO inserire colonne corrette in base al tipo di ricerca
     dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
@@ -3237,7 +3247,8 @@ def update_table_cluster(page_current, page_size, sort_by, filter, search, hash)
     
     filtering_expressions = filter.split(' && ')
     dff = global_store_general('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +  '.txt')
-
+    if dff is None:
+        raise PreventUpdate
     #TODO inserire colonne corrette in base al tipo di ricerca
     dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)

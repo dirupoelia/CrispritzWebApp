@@ -116,6 +116,7 @@ with open (sys.argv[1]) as t, open(name_output + '.minmaxdisr.txt','w+') as resu
         header += '\tPAM_gen\tVar_uniq'
     header += '\n'
     result.write(header)
+    next(t) #Skip header
     for line in t:
         found_iupac = False
         found_iupac_pam = False
