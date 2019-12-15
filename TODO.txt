@@ -343,8 +343,15 @@ sample rispetto al num target dell'annotazione della guida (per indicare che se 
 -Spezzare clustering per guida, mettere no se targets per guida > 50kk
 	-Rimuovere guida e segnalare l'utente
 -Mettere percentuale nell'annotazione
--Aggiungere -T nell'estrazione semicommon etc
--Risolvere problema plot con nohup
+-Aggiungere -T nell'estrazione semicommon etc	X
+-Risolvere problema plot con nohup	X
 -Togliere sample se ricerca con ref nelle immaginig
 -Se due job hhano lo stesso params e la cache non è stata cancellata, se uno cerca X00 l'altro avrà quel res e non il suo
 -Controllo colore tabella
+
+-Creare clustering per guide con >50kk
+-Cambiare nome colonne in base al tipo di ricerca
+	-Togliere visual sample con ricerca ref
+-Aggiungere workers
+-Aggiungere pagina di help
+-Sistemare bug immagini e bottoni

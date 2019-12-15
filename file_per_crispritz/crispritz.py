@@ -431,13 +431,14 @@ def generateReport():
 	if '-sample' in sys.argv[:]:
 		sample_name = sys.argv.index('-sample')
 		sample_name = sys.argv[sample_name + 1]
-		sample_name = '-sample ' + sample_name
+		sample_opt = '-sample'
 	else:
 		sample_name = ''
+		sample_opt = ''
 	# subprocess.run([corrected_origin_path + 'Python_Scripts/Plot/radar_chart.py', str(guide), str(mm), str(profileFile), str(extProfileFile), str(countdir), str(summaryOne), str(summaryTwo),
 	# 				str(geckoProfile), str(geckoExonsCount), str(geckoIntronsCount), str(geckoPromotersCount), str(geckoDNAseCount), str(geckoCTCFCount)])
 	subprocess.run([corrected_origin_path + 'Python_Scripts/Plot/radar_chart.py', str(guide), str(mm), str(summaryTwo), str(extProfileFile), str(summaryOne),
-					str(geckoProfile), web_server, sample_name])
+					str(geckoProfile), web_server, sample_opt, sample_name])
 
 def processData():
 	'''

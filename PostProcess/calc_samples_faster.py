@@ -8,6 +8,7 @@ Poi passa tutti  gli elementi di target_combination e per ogni pos
 dove c'era uno iupac controlla: se c'è un var, prende i samples e fa l'intersezione
 
 '''
+#Test, creo anche un file dove per ogni target ho l'unione dei samples, serve per l'annotazione
 
 import gzip
 import sys
@@ -20,6 +21,7 @@ import os
 #Load .json dict
 total_error = 0
 resu_name = sys.argv[2][:sys.argv[2].rfind('.')] + '.samples.txt'
+test_resu_name = sys.argv[2][:sys.argv[2].rfind('.')] + '.samples.all.txt' #Put in a line all the samples, not the intersection, keep original line
 chr_name = sys.argv[1].split('.json')[0].split('_')[-1]
 
 current_chr = 'no'
@@ -55,7 +57,7 @@ if True:
             'N':('A', 'T', 'C', 'G')
             }
     total_error = 0
-    with open (sys.argv[2]) as targets, open(resu_name,'w+') as result:
+    with open (sys.argv[2]) as targets, open(resu_name,'w+') as result, open(test_resu_name, 'w+') as test_result:
         for line in targets:
             if '#' in line:
                 continue
@@ -112,7 +114,12 @@ if True:
                         set_list.append(set())
                         #pass
                         #returned_none = True
-            
+            #TEST save line and union of all samples
+            union_sample = list(set().union(*set_list))
+            if union_sample:
+                test_result.write('\t'.join(line) + '\t' + ','.join(union_sample) + '\t' + line[1].replace('-','') +'\n')
+            else:
+                test_result.write('\t'.join(line) + '\t' + 'n' + '\t' +line[1].replace('-','') + '\n')
             #Create all combinations
             for i in itertools.product(*var):
                 t = list(target_string)

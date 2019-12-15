@@ -62,6 +62,8 @@ result_name = sys.argv[4]
     #     CHRPOS -> [[Sample list], [List visited annotations]]                List visited annotation is empty at first, but can become -> ['exon', 'promoter',...]
     # }
 # }
+test_dict = {'GAGTCCGAGCAGAAGAAGAANNN':{0:0,1:0,2:0,3:0,4:0,5:0,6:0}, 'CCATCGGTGGCCGTTTGCCCNNN':{0:0,1:0,2:0,3:0,4:0,5:0,6:0}}
+
 samples_dict = dict()
 annotation_dict = dict()
 with open(sys.argv[1]) as targets:
@@ -69,6 +71,9 @@ with open(sys.argv[1]) as targets:
         if '#' in line:
             continue
         line = line.strip().split('\t')
+        if line[-2] == 'n':
+            test_dict[line[1].replace('-','')][int(line[7])] +=1
+            continue
         guide = line[1].replace('-','')
         if guide not in samples_dict:
             samples_dict[guide] = dict()
@@ -76,7 +81,7 @@ with open(sys.argv[1]) as targets:
             samples_dict[guide][line[3] + line[4]][0] += line[-2].split(',')
         except:     
             samples_dict[guide][line[3] + line[4]] = [line[-2].split(','), []]
-
+print(test_dict)
 # print(samples_dict)
 # print(samples_dict['CTAACAGTTGCTTTTATCACNNN']['chr2146560428'])
 # print(samples_dict['TGCTTGGTCGGCACTGATAGNNN']['chr2250085897'])
@@ -112,6 +117,13 @@ with open (sys.argv[2]) as targets:             #Count annotation for each targe
             for pop in set(all_pop):
                 dict_pop_count[guide][pop] = {'targets':[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
                 dict_superpop_count[guide][population_1000gp[pop]] = {'targets':[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
+        
+        # try:
+        #     summary_targets_guide[guide][line[-1]][int(line[7])] += 1
+        # except:
+        #     summary_targets_guide[guide][line[-1]] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        #     summary_targets_guide[guide][line[-1]][int(line[7])] += 1
+        # summary_targets_guide[guide]['targets'][int(line[7])] += 1
         try:
             samples_list = samples_dict[guide][line[3] + line[4]]
         except:

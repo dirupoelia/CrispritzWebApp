@@ -172,7 +172,7 @@ with open (sys.argv[1]) as result:
       #print ("guide_seq: ", guide_seq)
       
       cfd_score = calc_cfd(guide_seq, sg, pam, mm_scores, pam_scores)
-      if (target[6] == '0'):    #TODO se cambio inserendo pos cluister, devo cambiareanche qui
+      if (target[7] == '0'):    #TODO se cambio inserendo pos cluister, devo cambiareanche qui, da 6 a 7 (con colonna pos cluster)
         #estraggo sequenza
         with open('bedfile_tmp.bed', 'w+') as bedfile:
           if target[5] == '+':
@@ -209,7 +209,7 @@ with open (sys.argv[1]) as result:
     else:
       if "N" in off:
         continue
-      if (target[6] == '0'):
+      if (target[7] == '0'):  #NOTE change from 6 to 7 if input file has cluster position column
         with open('bedfile_tmp.bed', 'w+') as bedfile:
           if target[5] == '+':
             bedfile.write(target[3] + '\t' + str(int(target[4]) - 4 ) + '\t' + str(int(target[4]) + 23 + 3 ))

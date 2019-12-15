@@ -1,0 +1,1322 @@
+Running on http://0.0.0.0:8080/
+Debugger PIN: 896-195-928
+ * Serving Flask app "app_v6" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+Running on http://0.0.0.0:8080/
+Debugger PIN: 080-079-737
+ATTENTION! You have to generate the index of "/attachedvolume/CrispritzWebApp/genome_library/NGG_5_hg38_ref+hg38_1000genomeproject" with "/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/pam.txt", before the search using index!
+mv: cannot stat './3YC22Z1LCQ.*.txt': No such file or directory
+mv: cannot stat './3YC22Z1LCQ.*.xls': No such file or directory
+ATTENTION! You have to generate the index of "/attachedvolume/CrispritzWebApp/genome_library/NGG_5_hg38_ref" with "/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/pam.txt", before the search using index!
+mv: cannot stat './3YC22Z1LCQ_ref.*.txt': No such file or directory
+mv: cannot stat './3YC22Z1LCQ_ref.*.xls': No such file or directory
+READING INPUT FILES
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Annotator/annotator.py", line 17, in <module>
+    inResult = open(resultsFile, "r")  # resultfile open
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.targets.txt'
+Annotation START
+Annotation END
+Annotation runtime: 0.08936238288879395 seconds
+mv: cannot stat './3YC22Z1LCQ.Annotation*.txt': No such file or directory
+READING INPUT FILES
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Annotator/annotator.py", line 17, in <module>
+    inResult = open(resultsFile, "r")  # resultfile open
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/ref/3YC22Z1LCQ_ref.targets.txt'
+Annotation START
+Annotation END
+Annotation runtime: 0.04984927177429199 seconds
+mv: cannot stat './3YC22Z1LCQ_ref.Annotation*.txt': No such file or directory
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 0
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 71, in <module>
+    with open(profile_file) as profile:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.profile_complete.xls'
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 1
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 71, in <module>
+    with open(profile_file) as profile:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.profile_complete.xls'
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 2
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 71, in <module>
+    with open(profile_file) as profile:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.profile_complete.xls'
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 3
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 71, in <module>
+    with open(profile_file) as profile:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.profile_complete.xls'
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 4
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 71, in <module>
+    with open(profile_file) as profile:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.profile_complete.xls'
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 5
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 71, in <module>
+    with open(profile_file) as profile:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.profile_complete.xls'
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 6
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 71, in <module>
+    with open(profile_file) as profile:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.profile_complete.xls'
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 0
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 71, in <module>
+    with open(profile_file) as profile:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.profile_complete.xls'
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 1
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 71, in <module>
+    with open(profile_file) as profile:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.profile_complete.xls'
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 2
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 71, in <module>
+    with open(profile_file) as profile:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.profile_complete.xls'
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 3
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 71, in <module>
+    with open(profile_file) as profile:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.profile_complete.xls'
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 4
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 71, in <module>
+    with open(profile_file) as profile:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.profile_complete.xls'
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 5
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 71, in <module>
+    with open(profile_file) as profile:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.profile_complete.xls'
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 6
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 71, in <module>
+    with open(profile_file) as profile:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/3YC22Z1LCQ.profile_complete.xls'
+Report Done
+cp: cannot stat '/attachedvolume/CrispritzWebApp/Results/3YC22Z1LCQ/*.png': No such file or directory
+Post Process start
+Traceback (most recent call last):
+  File "../../PostProcess/scores_guide_table.py", line 147, in <module>
+    with open (sys.argv[1]) as result:
+FileNotFoundError: [Errno 2] No such file or directory: '3YC22Z1LCQ.targets.txt'
+sort: cannot read: ref/3YC22Z1LCQ_ref.targets.txt: No such file or directory
+sort: cannot read: 3YC22Z1LCQ.targets.txt: No such file or directory
+awk: fatal: cannot open file `ref/3YC22Z1LCQ_ref.targets.txt' for reading (No such file or directory)
+grep: 3YC22Z1LCQ.targets.txt: No such file or directory
+grep: ref/3YC22Z1LCQ_ref.targets.txt: No such file or directory
+Created 'Total' and 'Position Cluster' columns: 4.410743713378906e-05
+Targets sorted: 1.1920928955078125e-06
+Start clustering
+Traceback (most recent call last):
+  File "../../PostProcess/cluster.dict.py", line 68, in <module>
+    first_line = total_targets[0]
+IndexError: list index out of range
+Created 'Total' and 'Position Cluster' columns: 6.842613220214844e-05
+Targets sorted: 1.430511474609375e-06
+Start clustering
+Traceback (most recent call last):
+  File "../../PostProcess/cluster.dict.py", line 68, in <module>
+    first_line = total_targets[0]
+IndexError: list index out of range
+sed: can't read tmp_seq/*_seq.txt: No such file or directory
+Created bedfile: 6.365776062011719e-05
+Bedtools DONE: 0.05433511734008789
+Done 0.000171661376953125
+Traceback (most recent call last):
+  File "../../PostProcess/extract_top.py", line 20, in <module>
+    prev_position = line[header['Cluster Position']]
+IndexError: list index out of range
+Done
+0
+  File "../../PostProcess/summary_by_samples.py", line 102
+    result.write(i + '\t' + str(guides_dict[k][i][0]) + '\t' + dict_pop[i] + '\t' + \ 
+                                                                                     ^
+SyntaxError: unexpected character after line continuation character
+Comparison done
+Post Process done
+USED THREADS 1
+Search START
+Search END
+Search runtime: 244.10790467262268 seconds
+USED THREADS 1
+Search START
+Search END
+Search runtime: 6.290485620498657 seconds
+Annotation START
+Annotation END
+Annotation runtime: 34.820945501327515 seconds
+READING INPUT FILES
+EXECUTING PRELIMINARY OPERATIONS
+PRELIMINARY OPERATIONS COMPLETED IN: 44.5956757068634 seconds
+EXECUTING ANNOTATION
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Annotator/annotator.py", line 72, in <module>
+    totalDict['targets'][int(x[6])] += 1
+IndexError: list index out of range
+Annotation START
+Annotation END
+Annotation runtime: 48.829514265060425 seconds
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 0
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 74, in <module>
+    with open(count_dir) as annotation_file:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/5XGC6YO01Z.Annotation.txt'
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 1
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 74, in <module>
+    with open(count_dir) as annotation_file:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/5XGC6YO01Z.Annotation.txt'
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 2
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 74, in <module>
+    with open(count_dir) as annotation_file:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/5XGC6YO01Z.Annotation.txt'
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 3
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 74, in <module>
+    with open(count_dir) as annotation_file:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/5XGC6YO01Z.Annotation.txt'
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 4
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 74, in <module>
+    with open(count_dir) as annotation_file:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/5XGC6YO01Z.Annotation.txt'
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 5
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 74, in <module>
+    with open(count_dir) as annotation_file:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/5XGC6YO01Z.Annotation.txt'
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 6
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 74, in <module>
+    with open(count_dir) as annotation_file:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/5XGC6YO01Z.Annotation.txt'
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 0
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 74, in <module>
+    with open(count_dir) as annotation_file:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/5XGC6YO01Z.Annotation.txt'
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 1
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 74, in <module>
+    with open(count_dir) as annotation_file:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/5XGC6YO01Z.Annotation.txt'
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 2
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 74, in <module>
+    with open(count_dir) as annotation_file:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/5XGC6YO01Z.Annotation.txt'
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 3
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 74, in <module>
+    with open(count_dir) as annotation_file:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/5XGC6YO01Z.Annotation.txt'
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 4
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 74, in <module>
+    with open(count_dir) as annotation_file:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/5XGC6YO01Z.Annotation.txt'
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 5
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 74, in <module>
+    with open(count_dir) as annotation_file:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/5XGC6YO01Z.Annotation.txt'
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 6
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 74, in <module>
+    with open(count_dir) as annotation_file:
+FileNotFoundError: [Errno 2] No such file or directory: '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/5XGC6YO01Z.Annotation.txt'
+Report Done
+cp: cannot stat '/attachedvolume/CrispritzWebApp/Results/5XGC6YO01Z/*.png': No such file or directory
+Post Process start
+Terminated
+Traceback (most recent call last):
+  File "../../PostProcess/cluster.dict.py", line 33, in <module>
+    line.append(str(int(line[6]) + int(line[7])))
+IndexError: list index out of range
+Running on http://0.0.0.0:8080/
+Debugger PIN: 638-835-110
+ * Serving Flask app "app_v6" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+Running on http://0.0.0.0:8080/
+Debugger PIN: 212-097-938
+USED THREADS 1
+ANALYZING CHROMOSOME chrM (Total progress: 1.3%)
+ANALYZING CHROMOSOME chr8 (Total progress: 2.7%)
+ANALYZING CHROMOSOME chr3 (Total progress: 4.0%)
+ANALYZING CHROMOSOME chr2 (Total progress: 5.3%)
+ANALYZING CHROMOSOME chr16 (Total progress: 6.7%)
+ANALYZING CHROMOSOME chr22 (Total progress: 8.0%)
+ANALYZING CHROMOSOME chr17 (Total progress: 9.3%)
+ANALYZING CHROMOSOME chr1 (Total progress: 10.7%)
+ANALYZING CHROMOSOME chr7 (Total progress: 12.0%)
+ANALYZING CHROMOSOME chr6 (Total progress: 13.3%)
+ANALYZING CHROMOSOME chrY (Total progress: 14.7%)
+ANALYZING CHROMOSOME chr4 (Total progress: 16.0%)
+ANALYZING CHROMOSOME chr20 (Total progress: 17.3%)
+ANALYZING CHROMOSOME chr18 (Total progress: 18.7%)
+ANALYZING CHROMOSOME chr5 (Total progress: 20.0%)
+ANALYZING CHROMOSOME chr9 (Total progress: 21.3%)
+ANALYZING CHROMOSOME chr19 (Total progress: 22.7%)
+ANALYZING CHROMOSOME chr12 (Total progress: 24.0%)
+ANALYZING CHROMOSOME chr21 (Total progress: 25.3%)
+ANALYZING CHROMOSOME chrX (Total progress: 26.7%)
+ANALYZING CHROMOSOME chr13 (Total progress: 28.0%)
+ANALYZING CHROMOSOME chrX (Total progress: 29.3%)
+ANALYZING CHROMOSOME chr15 (Total progress: 30.7%)
+ANALYZING CHROMOSOME chrX (Total progress: 32.0%)
+ANALYZING CHROMOSOME chr7 (Total progress: 33.3%)
+ANALYZING CHROMOSOME chr1 (Total progress: 34.7%)
+ANALYZING CHROMOSOME chr1 (Total progress: 36.0%)
+ANALYZING CHROMOSOME chr1 (Total progress: 37.3%)
+ANALYZING CHROMOSOME chr14 (Total progress: 38.7%)
+ANALYZING CHROMOSOME chr17 (Total progress: 40.0%)
+ANALYZING CHROMOSOME chr19 (Total progress: 41.3%)
+ANALYZING CHROMOSOME chr10 (Total progress: 42.7%)
+ANALYZING CHROMOSOME chr1 (Total progress: 44.0%)
+ANALYZING CHROMOSOME chr1 (Total progress: 45.3%)
+ANALYZING CHROMOSOME chr2 (Total progress: 46.7%)
+ANALYZING CHROMOSOME chr5 (Total progress: 48.0%)
+ANALYZING CHROMOSOME chr3 (Total progress: 49.3%)
+ANALYZING CHROMOSOME chr6 (Total progress: 50.7%)
+ANALYZING CHROMOSOME chr17 (Total progress: 52.0%)
+ANALYZING CHROMOSOME chr9 (Total progress: 53.3%)
+ANALYZING CHROMOSOME chr2 (Total progress: 54.7%)
+ANALYZING CHROMOSOME chr4 (Total progress: 56.0%)
+ANALYZING CHROMOSOME chr2 (Total progress: 57.3%)
+ANALYZING CHROMOSOME chr12 (Total progress: 58.7%)
+ANALYZING CHROMOSOME chr7 (Total progress: 60.0%)
+ANALYZING CHROMOSOME chr10 (Total progress: 61.3%)
+ANALYZING CHROMOSOME chr16 (Total progress: 62.7%)
+ANALYZING CHROMOSOME chr9 (Total progress: 64.0%)
+ANALYZING CHROMOSOME chr8 (Total progress: 65.3%)
+ANALYZING CHROMOSOME chr11 (Total progress: 66.7%)
+ANALYZING CHROMOSOME chr2 (Total progress: 68.0%)
+ANALYZING CHROMOSOME chr15 (Total progress: 69.3%)
+ANALYZING CHROMOSOME chr5 (Total progress: 70.7%)
+ANALYZING CHROMOSOME chr4 (Total progress: 72.0%)
+ANALYZING CHROMOSOME chr16 (Total progress: 73.3%)
+ANALYZING CHROMOSOME chr3 (Total progress: 74.7%)
+ANALYZING CHROMOSOME chr12 (Total progress: 76.0%)
+ANALYZING CHROMOSOME chr7 (Total progress: 77.3%)
+ANALYZING CHROMOSOME chr6 (Total progress: 78.7%)
+ANALYZING CHROMOSOME chr3 (Total progress: 80.0%)
+ANALYZING CHROMOSOME chr2 (Total progress: 81.3%)
+ANALYZING CHROMOSOME chr5 (Total progress: 82.7%)
+ANALYZING CHROMOSOME chr22 (Total progress: 84.0%)
+ANALYZING CHROMOSOME chr4 (Total progress: 85.3%)
+ANALYZING CHROMOSOME chr3 (Total progress: 86.7%)
+ANALYZING CHROMOSOME chr10 (Total progress: 88.0%)
+ANALYZING CHROMOSOME chr18 (Total progress: 89.3%)
+ANALYZING CHROMOSOME chr11 (Total progress: 90.7%)
+ANALYZING CHROMOSOME chr11 (Total progress: 92.0%)
+ANALYZING CHROMOSOME chr14 (Total progress: 93.3%)
+ANALYZING CHROMOSOME chr8 (Total progress: 94.7%)
+ANALYZING CHROMOSOME chr6 (Total progress: 96.0%)
+ANALYZING CHROMOSOME chr20 (Total progress: 97.3%)
+ANALYZING CHROMOSOME chr13 (Total progress: 98.7%)
+ANALYZING CHROMOSOME chr8 (Total progress: 100.0%)
+-----------------------
+TOTAL TIME:	1046.9
+Search START
+Search END
+Search runtime: 1047.0872731208801 seconds
+USED THREADS 1
+ANALYZING CHROMOSOME chr16 (Total progress: 1.4%)
+ANALYZING CHROMOSOME chrM (Total progress: 2.8%)
+ANALYZING CHROMOSOME chr22 (Total progress: 4.2%)
+ANALYZING CHROMOSOME chr17 (Total progress: 5.6%)
+ANALYZING CHROMOSOME chr7 (Total progress: 7.0%)
+ANALYZING CHROMOSOME chr6 (Total progress: 8.5%)
+ANALYZING CHROMOSOME chr4 (Total progress: 9.9%)
+ANALYZING CHROMOSOME chr5 (Total progress: 11.3%)
+ANALYZING CHROMOSOME chrY (Total progress: 12.7%)
+ANALYZING CHROMOSOME chr20 (Total progress: 14.1%)
+ANALYZING CHROMOSOME chr18 (Total progress: 15.5%)
+ANALYZING CHROMOSOME chr9 (Total progress: 16.9%)
+ANALYZING CHROMOSOME chr19 (Total progress: 18.3%)
+ANALYZING CHROMOSOME chr12 (Total progress: 19.7%)
+ANALYZING CHROMOSOME chr13 (Total progress: 21.1%)
+ANALYZING CHROMOSOME chr2 (Total progress: 22.5%)
+ANALYZING CHROMOSOME chr15 (Total progress: 23.9%)
+ANALYZING CHROMOSOME chr21 (Total progress: 25.4%)
+ANALYZING CHROMOSOME chr10 (Total progress: 26.8%)
+ANALYZING CHROMOSOME chr3 (Total progress: 28.2%)
+ANALYZING CHROMOSOME chr14 (Total progress: 29.6%)
+ANALYZING CHROMOSOME chr8 (Total progress: 31.0%)
+ANALYZING CHROMOSOME chr11 (Total progress: 32.4%)
+ANALYZING CHROMOSOME chrX (Total progress: 33.8%)
+ANALYZING CHROMOSOME chr1 (Total progress: 35.2%)
+ANALYZING CHROMOSOME chr7 (Total progress: 36.6%)
+ANALYZING CHROMOSOME chr1 (Total progress: 38.0%)
+ANALYZING CHROMOSOME chrX (Total progress: 39.4%)
+ANALYZING CHROMOSOME chr1 (Total progress: 40.8%)
+ANALYZING CHROMOSOME chr1 (Total progress: 42.3%)
+ANALYZING CHROMOSOME chr19 (Total progress: 43.7%)
+ANALYZING CHROMOSOME chr7 (Total progress: 45.1%)
+ANALYZING CHROMOSOME chr3 (Total progress: 46.5%)
+ANALYZING CHROMOSOME chr17 (Total progress: 47.9%)
+ANALYZING CHROMOSOME chr4 (Total progress: 49.3%)
+ANALYZING CHROMOSOME chr17 (Total progress: 50.7%)
+ANALYZING CHROMOSOME chr5 (Total progress: 52.1%)
+ANALYZING CHROMOSOME chr5 (Total progress: 53.5%)
+ANALYZING CHROMOSOME chr2 (Total progress: 54.9%)
+ANALYZING CHROMOSOME chr2 (Total progress: 56.3%)
+ANALYZING CHROMOSOME chr6 (Total progress: 57.7%)
+ANALYZING CHROMOSOME chr9 (Total progress: 59.2%)
+ANALYZING CHROMOSOME chrX (Total progress: 60.6%)
+ANALYZING CHROMOSOME chr4 (Total progress: 62.0%)
+ANALYZING CHROMOSOME chr2 (Total progress: 63.4%)
+ANALYZING CHROMOSOME chr12 (Total progress: 64.8%)
+ANALYZING CHROMOSOME chr16 (Total progress: 66.2%)
+ANALYZING CHROMOSOME chr16 (Total progress: 67.6%)
+ANALYZING CHROMOSOME chr8 (Total progress: 69.0%)
+ANALYZING CHROMOSOME chr6 (Total progress: 70.4%)
+ANALYZING CHROMOSOME chr10 (Total progress: 71.8%)
+ANALYZING CHROMOSOME chr9 (Total progress: 73.2%)
+ANALYZING CHROMOSOME chr1 (Total progress: 74.6%)
+ANALYZING CHROMOSOME chr11 (Total progress: 76.1%)
+ANALYZING CHROMOSOME chr3 (Total progress: 77.5%)
+ANALYZING CHROMOSOME chr15 (Total progress: 78.9%)
+ANALYZING CHROMOSOME chr7 (Total progress: 80.3%)
+ANALYZING CHROMOSOME chr2 (Total progress: 81.7%)
+ANALYZING CHROMOSOME chr12 (Total progress: 83.1%)
+ANALYZING CHROMOSOME chr22 (Total progress: 84.5%)
+ANALYZING CHROMOSOME chr5 (Total progress: 85.9%)
+ANALYZING CHROMOSOME chr10 (Total progress: 87.3%)
+ANALYZING CHROMOSOME chr4 (Total progress: 88.7%)
+ANALYZING CHROMOSOME chr3 (Total progress: 90.1%)
+ANALYZING CHROMOSOME chr14 (Total progress: 91.5%)
+ANALYZING CHROMOSOME chr11 (Total progress: 93.0%)
+ANALYZING CHROMOSOME chr18 (Total progress: 94.4%)
+ANALYZING CHROMOSOME chr8 (Total progress: 95.8%)
+ANALYZING CHROMOSOME chr6 (Total progress: 97.2%)
+ANALYZING CHROMOSOME chr20 (Total progress: 98.6%)
+ANALYZING CHROMOSOME chr13 (Total progress: 100.0%)
+-----------------------
+TOTAL TIME:	676.0
+Search START
+Search END
+Search runtime: 676.2512967586517 seconds
+READING INPUT FILES
+EXECUTING PRELIMINARY OPERATIONS
+PRELIMINARY OPERATIONS COMPLETED IN: 91.8437852859497 seconds
+EXECUTING ANNOTATION
+ANNOTATION COMPLETED IN: 3851.7568838596344 seconds
+Annotation START
+Annotation END
+Annotation runtime: 3945.24058842659 seconds
+READING INPUT FILES
+EXECUTING PRELIMINARY OPERATIONS
+PRELIMINARY OPERATIONS COMPLETED IN: 79.52752900123596 seconds
+EXECUTING ANNOTATION
+ANNOTATION COMPLETED IN: 3004.7443511486053 seconds
+Annotation START
+Annotation END
+Annotation runtime: 3086.2200407981873 seconds
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 0
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 1
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 2
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 3
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 4
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 5
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Report Done
+Gen-report GAGTCCGAGCAGAAGAAGAANNN mms: 6
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 0
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 1
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 2
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 3
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 4
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 5
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Report Done
+Gen-report CCATCGGTGGCCGTTTGCCCNNN mms: 6
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Report Done
+cp: cannot stat '/attachedvolume/CrispritzWebApp/Results/060XEUO5FA/*.png': No such file or directory
+Post Process start
+Killed
+Created 'Total' and 'Position Cluster' columns: 24.668080806732178
+Targets sorted: 18.338733196258545
+Start clustering
+Clustering runtime: 30.076960802078247 seconds
+Traceback (most recent call last):
+  File "../../PostProcess/pam_analysis.py", line 113, in <module>
+    with open (sys.argv[1]) as t, open(name_output + '.minmaxdisr.txt','w+') as result:
+FileNotFoundError: [Errno 2] No such file or directory: '060XEUO5FA.semi_common_targets.cluster.txt'
+Created bedfile: 13.91393780708313
+Bedtools DONE: 249.27043962478638
+Done 23.884138107299805
+cat: 060XEUO5FA.semi_common_targets.cluster.minmaxdisr.txt: No such file or directory
+Done  no
+Load chr1 done 47.61862587928772
+Done  chr1
+Load chr10 done 60.486541986465454
+Done  chr10
+Load chr11 done 24.56412148475647
+Done  chr11
+Load chr12 done 23.465553283691406
+Done  chr12
+Load chr13 done 17.71970772743225
+Done  chr13
+Load chr14 done 15.136357545852661
+Done  chr14
+Load chr15 done 14.088372230529785
+Done  chr15
+Load chr16 done 13.915454149246216
+Done  chr16
+Load chr17 done 13.629623413085938
+Done  chr17
+Load chr18 done 28.918143272399902
+Done  chr18
+Load chr19 done 10.5966477394104
+Done  chr19
+Load chr2 done 41.524840116500854
+Done  chr2
+Load chr20 done 11.699318408966064
+Done  chr20
+Load chr21 done 6.631728887557983
+Done  chr21
+Load chr22 done 5.9447410106658936
+Done  chr22
+Load chr3 done 34.25722026824951
+Done  chr3
+Load chr4 done 37.4564266204834
+Done  chr4
+Load chr5 done 37.84691023826599
+Done  chr5
+Load chr6 done 33.141812324523926
+Done  chr6
+Load chr7 done 27.32978057861328
+Done  chr7
+Load chr8 done 29.941924333572388
+Done  chr8
+Load chr9 done 21.616442918777466
+Done  chr9
+Load chrX done 1.2929551601409912
+Done
+0
+  File "../../PostProcess/summary_by_samples.py", line 102
+    result.write(i + '\t' + str(guides_dict[k][i][0]) + '\t' + dict_pop[i] + '\t' + \ 
+                                                                                     ^
+SyntaxError: unexpected character after line continuation character
+Comparison done
+Post Process done
+grep: P: No such file or directory
+grep: ^.*\tCCATCGGTGGCCGTTTGCCCNNN$: No such file or directory
+Done
+Running on http://0.0.0.0:8080/
+Debugger PIN: 747-226-082
+ * Serving Flask app "app_v6" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+Running on http://0.0.0.0:8080/
+Debugger PIN: 301-966-246
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+Running on http://0.0.0.0:8080/
+Debugger PIN: 792-568-529
+ * Serving Flask app "app_v6" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+Running on http://0.0.0.0:8080/
+Debugger PIN: 806-122-267
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:11.0"
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:11.0"
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:11.0"
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:11.0"
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:11.0"
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:11.0"
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:11.0"
+Traceback (most recent call last):
+  File "/home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/radar_chart.py", line 212, in <module>
+    ind, arraySummaryCountOne[:, uppermm], width, color='#67a9cf', align='edge')
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 2432, in bar
+    return gca().bar(
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 919, in gca
+    return gcf().gca(**kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:11.0"
+cp: cannot stat '/attachedvolume/CrispritzWebApp/Results/UTQQZSOQTC/*.png': No such file or directory
+Post Process start
+Start Scoring
+End Scoring
+Start creation semicommon, common, unique
+End creation semicommon, common, unique
+Start cluster semicommon
+Created 'Total' and 'Position Cluster' columns: 0.00018906593322753906
+Targets sorted: 3.0279159545898438e-05
+Start clustering
+Clustering runtime: 0.00017714500427246094 seconds
+End cluster semicommon
+Start cluster unique
+Created 'Total' and 'Position Cluster' columns: 0.00013780593872070312
+Targets sorted: 1.4781951904296875e-05
+Start clustering
+Clustering runtime: 0.00013756752014160156 seconds
+End cluster unique
+Start pam analysis
+End pam analysis
+Start pam creation
+sed: can't read tmp_seq/*_seq.txt: No such file or directory
+Created bedfile: 0.00010824203491210938
+Bedtools DONE: 0.06409358978271484
+Done 0.00030803680419921875
+End pam creation
+Start summary by guide and position
+End summary by guide and position
+Start top 1 extraction
+End top 1 extraction
+Start sort
+End sort
+Start calc samples
+Done  no
+Load chr1 done 46.51590943336487
+Done  chr1
+Load chr10 done 28.379915714263916
+Done  chr10
+Load chr12 done 25.81100368499756
+Done  chr12
+Load chr14 done 16.338154554367065
+Done  chr14
+Load chr15 done 14.288306474685669
+Done  chr15
+Load chr17 done 14.391988754272461
+Done  chr17
+Load chr18 done 14.136595726013184
+Done  chr18
+Load chr19 done 11.564424514770508
+Done  chr19
+Load chr2 done 43.99834227561951
+Done  chr2
+Load chr22 done 7.4558775424957275
+Done  chr22
+Load chr4 done 37.16130542755127
+Done  chr4
+Load chr5 done 30.70114493370056
+Done  chr5
+Load chr6 done 33.59951329231262
+Done  chr6
+Load chr7 done 29.840176820755005
+Done  chr7
+Load chr8 done 27.669607162475586
+Done  chr8
+Load chrX done 1.2995738983154297
+Done
+0
+End calc samples
+Start summary by samples
+Traceback (most recent call last):
+  File "../../PostProcess/summary_by_samples.py", line 81, in <module>
+    guides_population_targets[guide][dict_pop[s]] += guides_dict[guide][i][index_sum]
+KeyError: 'ACB'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "../../PostProcess/summary_by_samples.py", line 83, in <module>
+    guides_population_targets[guide][dict_pop[s]] = guides_dict[guide][i][index_sum]
+KeyError: 'NA21144'
+End summary by samples
+Start annotation samples
+End annotation samples
+Start creating final file
+End creating final file
+Post Process done
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+Traceback (most recent call last):
+  File "../../PostProcess/radar_chart_new.py", line 479, in <module>
+    diff_dict= {'targets': [0,summary_two[0].split('\t')[mm + 1] ]}
+IndexError: list index out of range
+['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']
+Traceback (most recent call last):
+  File "../../PostProcess/radar_chart_new.py", line 479, in <module>
+    diff_dict= {'targets': [0,summary_two[0].split('\t')[mm + 1] ]}
+IndexError: list index out of range
+Running on http://0.0.0.0:8080/
+Debugger PIN: 812-932-908
+ * Serving Flask app "app_v6" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+Running on http://0.0.0.0:8080/
+Debugger PIN: 837-133-013
+Post Process start
+Start Scoring
+End Scoring
+Start creation semicommon, common, unique
+End creation semicommon, common, unique
+Start cluster semicommon
+Created 'Total' and 'Position Cluster' columns: 0.00018215179443359375
+Targets sorted: 2.956390380859375e-05
+Start clustering
+Clustering runtime: 0.00017261505126953125 seconds
+End cluster semicommon
+Start cluster unique
+Created 'Total' and 'Position Cluster' columns: 0.00011849403381347656
+Targets sorted: 1.4781951904296875e-05
+Start clustering
+Clustering runtime: 0.00013113021850585938 seconds
+End cluster unique
+Start pam analysis
+End pam analysis
+Start pam creation
+sed: can't read tmp_seq/*_seq.txt: No such file or directory
+Created bedfile: 0.00010275840759277344
+Bedtools DONE: 0.1394329071044922
+Done 0.0002913475036621094
+End pam creation
+Start summary by guide and position
+End summary by guide and position
+Start top 1 extraction
+End top 1 extraction
+Start sort
+End sort
+Start calc samples
+Done  no
+Load chr1 done 46.30724883079529
+Done  chr1
+Load chr10 done 29.25919222831726
+Done  chr10
+Load chr12 done 25.14979076385498
+Done  chr12
+Load chr14 done 16.54977583885193
+Done  chr14
+Load chr15 done 13.743457794189453
+Done  chr15
+Load chr17 done 12.926878452301025
+Done  chr17
+Load chr18 done 14.343872785568237
+Done  chr18
+Load chr19 done 11.387142419815063
+Done  chr19
+Load chr2 done 44.107096910476685
+Done  chr2
+Load chr22 done 7.22676157951355
+Done  chr22
+Load chr4 done 36.86855220794678
+Done  chr4
+Load chr5 done 33.067450284957886
+Done  chr5
+Load chr6 done 33.437724351882935
+Done  chr6
+Load chr7 done 30.1164493560791
+Done  chr7
+Load chr8 done 28.473079681396484
+Done  chr8
+Load chrX done 1.3084311485290527
+Done
+0
+End calc samples
+Start summary by samples
+Traceback (most recent call last):
+  File "../../PostProcess/summary_by_samples.py", line 81, in <module>
+    guides_population_targets[guide][dict_pop[s]] += guides_dict[guide][i][index_sum]
+KeyError: 'GWD'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "../../PostProcess/summary_by_samples.py", line 83, in <module>
+    guides_population_targets[guide][dict_pop[s]] = guides_dict[guide][i][index_sum]
+KeyError: 'NA21144'
+End summary by samples
+Start annotation samples
+End annotation samples
+Start creating final file
+End creating final file
+Post Process done
+Traceback (most recent call last):
+  File "../../PostProcess/radar_chart_new.py", line 512, in <module>
+    ax = plt.subplot(2, 2, 1, polar=True)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 1068, in subplot
+    fig = gcf()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Traceback (most recent call last):
+  File "../../PostProcess/radar_chart_new.py", line 512, in <module>
+    ax = plt.subplot(2, 2, 1, polar=True)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 1068, in subplot
+    fig = gcf()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+Traceback (most recent call last):
+  File "../../PostProcess/radar_chart_new.py", line 512, in <module>
+    ax = plt.subplot(2, 2, 1, polar=True)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 1068, in subplot
+    fig = gcf()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 603, in gcf
+    return figure()
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/pyplot.py", line 545, in figure
+    **kwargs)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backend_bases.py", line 3259, in new_figure_manager
+    return cls.new_figure_manager_given_figure(num, fig)
+  File "/home/ubuntu/miniconda3/lib/python3.6/site-packages/matplotlib/backends/_backend_tk.py", line 950, in new_figure_manager_given_figure
+    window = tk.Tk(className="matplotlib")
+  File "/home/ubuntu/miniconda3/lib/python3.6/tkinter/__init__.py", line 2023, in __init__
+    self.tk = _tkinter.create(screenName, baseName, className, interactive, wantobjects, useTk, sync, use)
+_tkinter.TclError: couldn't connect to display "localhost:10.0"
+  File "/attachedvolume/CrispritzWebApp/app_v6.py", line 1468
+    
+                                           ^
+SyntaxError: unexpected EOF while parsing
+[2019-12-14 01:44:32 +0000] [24096] [INFO] Starting gunicorn 19.9.0
+[2019-12-14 01:44:32 +0000] [24096] [INFO] Listening at: http://0.0.0.0:8080 (24096)
+[2019-12-14 01:44:32 +0000] [24096] [INFO] Using worker: sync
+[2019-12-14 01:44:32 +0000] [24099] [INFO] Booting worker with pid: 24099
+Post Process start
+Start Scoring
+End Scoring
+Start creation semicommon, common, unique
+End creation semicommon, common, unique
+Start cluster semicommon
+Created 'Total' and 'Position Cluster' columns: 0.10341858863830566
+Targets sorted: 0.059599876403808594
+Start clustering
+Clustering runtime: 0.09343266487121582 seconds
+End cluster semicommon
+Start cluster unique
+Created 'Total' and 'Position Cluster' columns: 0.018909692764282227
+Targets sorted: 0.008061885833740234
+Start clustering
+Clustering runtime: 0.018958091735839844 seconds
+End cluster unique
+Start pam analysis
+End pam analysis
+Start pam creation
+sed: can't read tmp_seq/*_seq.txt: No such file or directory
+Created bedfile: 0.009814739227294922
+Bedtools DONE: 0.15612220764160156
+Done 0.022519588470458984
+End pam creation
+Start summary by guide and position
+End summary by guide and position
+Start top 1 extraction
+End top 1 extraction
+Start sort
+End sort
+Start calc samples
+Done  no
+Load chr1 done 46.163607120513916
+Done  chr1
+Load chr10 done 28.612308740615845
+Done  chr10
+Load chr11 done 27.823382139205933
+Done  chr11
+Load chr12 done 25.12108039855957
+Done  chr12
+Load chr13 done 19.074084758758545
+Done  chr13
+Load chr14 done 15.762165069580078
+Done  chr14
+Load chr15 done 14.436400651931763
+Done  chr15
+Load chr16 done 15.59135913848877
+Done  chr16
+Load chr17 done 12.521554470062256
+Done  chr17
+Load chr18 done 14.196123600006104
+Done  chr18
+Load chr19 done 11.024899959564209
+Done  chr19
+Load chr2 done 44.24290132522583
+Done  chr2
+Load chr20 done 11.68869161605835
+Done  chr20
+Load chr21 done 7.113102674484253
+Done  chr21
+Load chr22 done 6.0980064868927
+Done  chr22
+Load chr3 done 36.289313077926636
+Done  chr3
+Load chr4 done 39.834675550460815
+Done  chr4
+Load chr5 done 31.997490644454956
+Done  chr5
+Load chr6 done 34.05757546424866
+Done  chr6
+Load chr7 done 30.016159772872925
+Done  chr7
+Load chr8 done 28.12888526916504
+Done  chr8
+Load chr9 done 21.177967309951782
+Done  chr9
+Load chrX done 1.1695542335510254
+Done
+0
+End calc samples
+Start summary by samples
+End summary by samples
+Start annotation samples
+End annotation samples
+Start creating final file
+End creating final file
+Post Process done
+[2019-12-14 04:37:58 +0000] [24096] [CRITICAL] WORKER TIMEOUT (pid:24099)
+[2019-12-14 04:38:56 +0000] [25068] [INFO] Booting worker with pid: 25068
+[2019-12-14 11:20:29 +0000] [24096] [INFO] Handling signal: term
+[2019-12-14 11:20:29 +0000] [25068] [INFO] Worker exiting (pid: 25068)
+[2019-12-14 11:20:30 +0000] [24096] [INFO] Shutting down: Master

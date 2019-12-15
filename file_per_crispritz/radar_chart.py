@@ -66,11 +66,13 @@ if web_server:
 radarchart_sample = False
 guide_name_for_sample = ''
 if '-sample' in sys.argv[:]:
+    
     sample_name = sys.argv.index('-sample')
     sample_name = sys.argv[sample_name + 1]
     radarchart_sample = True
     guide_name_for_sample = guide
     guide = 'no'
+
 
 summary_two = []        #NOTE summary_two is the summary of the variant genome
 summary_one = []        #NOTE summary one is the summary of the reference genome
@@ -218,7 +220,7 @@ if set(check_annotation_name) != set(['targets', 'ctcf', 'dnase', 'exon', 'intro
     gecko_dir = 'no'
 
 complete_matrix = []  
-table_dict = dict()            
+table_dict = dict()    
 if guide != 'no':       #DO RADAR CHART
     if gecko_dir != 'no':       
         #do process for gecko -> annotations file before 08/12/2019
@@ -474,16 +476,18 @@ elif radarchart_sample:   #Radarchart for sample
                 summary_two.append(line.strip())
         
     #Calculate distances
+    # print('num target: targets', summary_total[0].split('\t')[mm + 1])
     if int(summary_total[0].split('\t')[mm + 1]) > 0:
         diff_dict= {'targets':[round(1 - round(int(summary_two[0].split('\t')[mm + 1]) / int(summary_total[0].split('\t')[mm + 1]),2),2), summary_two[0].split('\t')[mm + 1]]}
     else:
-        diff_dict= {'targets': [1.0,summary_two[0].split('\t')[mm + 1] ]}
+        diff_dict= {'targets': [0.0,summary_two[0].split('\t')[mm + 1] ]}
     for pos, annotation in enumerate(summary_two[1:], 1):
         annotation = annotation.split('\t')
+        # print('numtarget:', annotation,summary_total[pos].split('\t')[mm + 1] )
         if int(summary_total[pos].split('\t')[mm + 1]) > 0:
             diff_dict[annotation[0]]=[round(1 - round(int(annotation[mm + 1]) / int(summary_total[pos].split('\t')[mm + 1]),2),2), annotation[mm + 1]]
         else:
-            diff_dict[annotation[0]] = [1.0, annotation[mm + 1]]
+            diff_dict[annotation[0]] = [0.0, annotation[mm + 1]]
     #Create data for radarchart
     data_for_df = {'group': ['A'], 'General':diff_dict['targets'][0]}
     data_for_table_df = [diff_dict['targets']]
@@ -544,7 +548,7 @@ elif radarchart_sample:   #Radarchart for sample
     # Fill area
     ax.fill(angles, values, 'b', alpha=0.1)
 
-    columns = ('Position', '# Targets')
+    columns = ('Dissimilarity', '# Targets')
     
     #Create table plot
     plt.subplot(2, 2, 2)

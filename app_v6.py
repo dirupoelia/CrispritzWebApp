@@ -420,9 +420,10 @@ final_list.append(
                 [
                     html.P('Job submitted. Copy this link to view the status and the result page '),
                     html.Div(
-                        html.P('link', id = 'job-link'),
-                        style = {'border':'2px solid', 'border-color':'blue' ,'width':'70%','display':'inline-block', 'margin':'5px'}
-                    )
+                        html.P('link', id = 'job-link', style = {'margin-top':'0.75rem', 'font-size':'large'}),
+                        style = {'border-radius':'5px','border':'2px solid', 'border-color':'blue' ,'width':'100%','display':'inline-block', 'margin':'5px'}
+                    ),
+                    html.P('Results will be kept available for 3 days')
                 ],
                 style = {'display':'inline-block'}
             ),
@@ -1418,7 +1419,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
     fl.append(html.Br())
     fl.append(html.H5('Focus on: ' + guide))
 
-    if value == 'tab-summary-by-guide':
+    if value == 'tab-summary-by-guide': #BUG se cambio guida selezionata due volte mi cambia il mms mettendo a 0, provare con un div nascosto
         #Show Summary by Guide table
        
         df = pd.read_pickle(job_directory + job_id + '.summary_by_guide.' + guide + '.txt')
@@ -1857,15 +1858,17 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
         )
     ])
     class_images = [(sample, 'Samples'), (population, 'Population'), (superpopulation, 'Superpopulation')]
-    
+    print('qui')
     for c in class_images:
         if c[0]:
             try:
-                first_img_source = 'data:image/png;base64,{}'.format(base64.b64encode(open(job_directory + 'summary_single_guide_' + c[0] +'_' +str(mm_show) + 'mm.png', 'rb').read()).decode())
+                first_img_source = 'data:image/png;base64,{}'.format(base64.b64encode(open(job_directory + 'summary_single_guide_' + c[0] +'_' + guide + '_' + str(mm_show) + 'mm.png', 'rb').read()).decode())
             except:
                 #create image from annotation file of samples
-                subprocess.call(['cd '+job_directory +'; ../../PostProcess/radar_chart_new.py ' + guide + ' ' + str(mm_show) + ' ' + job_id + '.sample_annotation.' + guide + 
-                '.' + c[1].lower() + '.txt no no no -ws -sample ' + c[0]], shell = True)
+                subprocess.call(['cd '+job_directory +';'+
+                ' crispritz.py generate-report ' + guide + ' -mm ' + str(mm_show) + ' -annotation ' + job_id + '.sample_annotation.' + guide +
+                '.' + c[1].lower() + '.txt -ws -sample ' + c[0]], shell = True)
+                
                 copy_img = subprocess.Popen(['cp ' + job_directory + 'summary_single_guide_' + c[0] +'_' + guide + '_' + str(mm_show) + 'mm.png assets/Img/' + job_id], shell = True)
                 copy_img.wait() #BUG se metto il copia link, mi si ricarica la pagina, forse il problema non c'è se uso gnicorn
                 first_img_source = 'data:image/png;base64,{}'.format(base64.b64encode(open(job_directory + 'summary_single_guide_' + c[0] +'_' + guide + '_' + str(mm_show) + 'mm.png', 'rb').read()).decode())
@@ -3299,6 +3302,7 @@ def update_table_cluster(page_current, page_size, sort_by, filter, search, hash)
 if __name__ == '__main__':
     #app.run_server(debug=True)
     app.run_server(host='0.0.0.0', debug=True, port=8080)
+    #app.run_server(host='0.0.0.0',  port=8080) #NOTE to not reload the page when creating new images in graphical report
     cache.clear()       #delete cache when server is closed
 
     #BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti

@@ -67,7 +67,7 @@ echo 'Annotate_output '${19} >  output.txt
 #Cluster for targets
 if [ ${19} = 'ref' ]; then
     echo 'Start cluster ref'
-    python3 ../../PostProcess/cluster.dict.py $jobid.targets.txt 'addGuide' 'True'  # > $jobid.targets.cluster.txt
+    python3 ../../PostProcess/cluster.dict.py $jobid.targets.txt 'addGuide' 'True' 'False' # > $jobid.targets.cluster.txt
     echo 'End cluster ref'
 
     echo 'Start extraction top1 ref'
@@ -201,7 +201,7 @@ if [ ${19} = 'both' ]; then     #TODO CHECK FOR LAST COL INDICES
     echo 'End pam creation'
     cat $jobid.unique_targets.cluster.pamcreation.txt $jobid.semi_common_targets.cluster.minmaxdisr.txt > $jobid.total.txt
     
-    #Summary guide, pos
+    #Summary guide, pos #NOTE the script automatically counts only for top subclusters
     echo 'Start summary by guide and position'
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.txt $7 $8 $9 guides.txt $jobid 'Uniq'
     echo 'End summary by guide and position'
@@ -232,37 +232,12 @@ if [ ${19} = 'both' ]; then     #TODO CHECK FOR LAST COL INDICES
     echo 'Start creating final file'
     python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.total.txt $jobid.top_1.samples.txt $jobid  # > $jobid.final.txt
     echo 'End creating final file'
-
-    
 fi
 
-#######################TMP
-echo 'Post Process done'
-
-echo 'PostProcess\tDone\t'$(date) >> log.txt
-cd ../../
-echo 'Job\tDone\t'$(date)>> $1'/'log.txt
-
-
-
-########################
-
-
-exit 1
-#Clustering for var and ref
-if [ ${19} = 'ref' ]; then
-    echo 'Start cluster ref'
-    python3 ../../PostProcess/cluster.dict.py $jobid.targets.txt 'addGuide'
-    echo 'End cluster ref'
-elif [ ${19} = 'var' ]; then
-    echo 'Start cluster var'
-    python3 ../../PostProcess/cluster.dict.py $jobid.targets.txt
-    echo 'End cluster var'
-fi
-
+#Analysis for ref and var type searches
 
 if [ ${19} = 'ref' ]; then
-    type_post='No'
+    type_post='No'      #TODO decide if summary done on top1 or target.cluster
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
 elif [ ${19} = 'var' ]; then
     type_post='No'
@@ -271,6 +246,7 @@ elif [ ${19} = 'var' ]; then
     echo 'Start pam analysis'
     python3 ../../PostProcess/pam_analysis.py $jobid.targets.cluster.txt pam.txt ${19}
     echo 'End pam analysis'
+    
     # Extract top 1
     echo 'Start extract top1'
     python3 ../../PostProcess/extract_top.py $jobid.targets.cluster.minmaxdisr.txt $jobid # > $jobid.top_1.txt
@@ -282,6 +258,7 @@ elif [ ${19} = 'var' ]; then
     echo 'Start calc samples'
     python3 ../../PostProcess/calc_samples_faster.py ../../../dictionaries $jobid.top_1.txt   #> $jobid.top_1.samples.txt
     echo 'End calc samples'
+    
     # Summary by samples table
     echo 'Start summary by samples'
     python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt
@@ -293,35 +270,6 @@ elif [ ${19} = 'var' ]; then
     echo 'Start creating final file'
     python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.targets.cluster.minmaxdisr.txt $jobid.top_1.samples.txt $jobid # > $jobid.final.txt
     echo 'End creating final file'
-
-    # #TODO sistemare fare script unico
-    
-    # python3 ../../PostProcess/tmp_top1_annotation.py $jobid ./
-    # python3 ../../PostProcess/tmp_top1_annotation.py $jobid'_ref' ./ref/
-    # if [ ${13} = 'True' ]; then
-    # echo 'Generate_report' >  output.txt
-    # proc=$(($7 + 1))
-    # while IFS= read -r line || [ -n "$line" ]; do    
-    #     if [ ${14} = 'True' ]; then         #If -gecko
-    #         if [ ${15} = 'True' ]; then     #If genome_ref comparison
-                
-    #             printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/radar_chart_new.py  $line % $jobid'.tmp_res.txt' *.extended_profile.xls ref/$jobid'_ref.tmp_res.txt'  /home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/gecko/
-
-    #         else
-    #             printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/radar_chart_new.py  $line % $jobid'.tmp_res.txt' *.extended_profile.xls /home/ubuntu/miniconda3/opt/crispritz/Python_Scripts/Plot/gecko/
-
-    #         fi
-    #     else
-    #         if [ ${15} = 'True' ]; then     #If genome_ref comparison
-    #             printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/radar_chart_new.py  $line % $jobid'.tmp_res.txt' *.extended_profile.xls ref/$jobid'_ref.tmp_res.txt' no
-    #         else
-    #             printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/radar_chart_new.py  $line % $jobid'.tmp_res.txt' *.extended_profile.xls no  
-    #         fi
-    #     fi
-    #     echo $line >> output.txt
-    # done < guides.txt
-  
-    # fi
 
     
     #TODO aggiungere terza/quarta voce nella pagina del load
