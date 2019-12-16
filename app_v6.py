@@ -35,11 +35,11 @@ import concurrent                           #For workers and queue
 exeggutor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
 
 PAGE_SIZE = 50                    #number of entries in each page of the table in view report
-URL = 'http://crispritz.di.univr.it'
+URL = 'http://crispritz.di.univr.it:8080'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-app.title = 'CRISPRitz'
+app.title = 'PersonalCRISPRitz'
 app.config['suppress_callback_exceptions'] = True       #necessary if update element in a callback generated in another callback
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
@@ -114,7 +114,7 @@ search_bar = dbc.Row(
     [
         #dbc.Col(dbc.Input(type="search", placeholder="Search")),
         dbc.Col(dbc.NavLink('HOME', active = True, href = URL, className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
-        dbc.Col(dbc.NavLink('ABOUT', active = True, href = URL, className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
+        dbc.Col(dbc.NavLink('ABOUT', active = True, href = URL + '/about', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
         dbc.Col(
             dbc.DropdownMenu(
                 children=[
@@ -144,7 +144,7 @@ navbar = dbc.Navbar(
             dbc.Row(
                 [
                     dbc.Col(html.Img(src=PLOTLY_LOGO, height="30px")),
-                    dbc.Col(dbc.NavbarBrand("CRISPRitz Web App", className="ml-2", style = {'font-size': '30px'}))
+                    dbc.Col(dbc.NavbarBrand("PersonalCRISPRitz", className="ml-2", style = {'font-size': '30px'}))
                 ],
                 align="center",
                 no_gutters=True,
@@ -265,15 +265,15 @@ final_list.append(
                         html.Div([
                             html.H3('STEP 1', style = {'margin-top':'0'}),
                             html.Div([
-                                html.P([html.Button(html.P("Load example", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline'}), id='example-parameters',
+                                html.P([html.Button(html.P("Load example", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline', 'font-size':'initial'}), id='example-parameters',
                                             style={ 'border': 'None', 'text-transform': 'capitalize','height':'12','font-weight': '500', 'padding': '0 0px','textcolor':'blu'}), ' - ',
                                 #html.Br(),
-                                html.Button(html.P(children="Reset", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline'}), id='remove-parameters',
+                                html.Button(html.P(children="Reset", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline','font-size':'initial'}), id='remove-parameters',
                                             style={'border': 'None', 'text-transform': 'capitalize','height':'12','font-weight': '500', 'padding': '0 0px'})])
                             ])
                         ], className = 'flex-div-insert-delete-example'), 
                         
-                        html.P('Select a genome'),
+                        html.P(html.P('Select a genome') ),
                         html.Div(
                             dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genome",) #style = {'width':'75%'})
                         ),
@@ -283,7 +283,7 @@ final_list.append(
                             [
                                 html.Div(
                                     [
-                                        html.P('Select PAM'),
+                                        html.P(html.P('Select PAM')),
                                         html.Div(
                                             dcc.Dropdown(options = pam_file, clearable = False, id = 'available-pam')
                                         )
@@ -486,113 +486,99 @@ load_page = html.Div(final_list, style = {'margin':'1%'})
 
 #Test bootstrap page, go to /test-page to see 
 final_list = []
-# radar_img = 'Results/W0Q0702F1E/test.summary_single_guide_GAGTCCGAGCAGAAGAAGAANNN_4mm.png'
-# radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open(radar_img, 'rb').read()).decode())
-# final_list.append(html.Img(src = radar_src, width="100%", height="auto"))
-# final_list.append(html.P('List of Targets found for the selected guide'))
 
-# df = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
-# exp_col = []
-# close_col = []
-# status_col = []     #'Top1' or 'Subcluster'
-# df.drop( df[df['top'] == 's'].index, inplace = True)
 
-# for i in range (df.shape[0]):
-#     exp_col.append('+')
-#     close_col.append('-')
-#     status_col.append('Top1')
-# df['Open'] = exp_col
-# df['Close'] = close_col
-# df['Status'] = status_col
-# print('columns:', df.columns)
-# final_list.append(dash_table.DataTable(
-#     id='table-expand',
-#     columns=[{"name": i, "id": i} for i in df.columns[:]],
-#     data=df.to_dict('records'),
-#     row_selectable = 'multi',
-#     style_data_conditional = [{
-#                         'if': {
-#                                 'filter_query': '{Variant unique} eq y', 
-#                                 #'column_id' :'{#Bulge type}',
-#                                 #'column_id' :'{Total}'
-#                             },
-#                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-#                             'background-color':'rgba(230, 0, 0,0.65)'#'rgb(255, 102, 102)'
-                            
-#                         }]
-# ))
 final_list.append(html.Div(id='test-div-for-button'))
 test_page = html.Div(final_list, style = {'margin':'1%'})
 
 #TEST PAGE 2
 final_list = []
-# final_list.append(html.P('List of Targets found for the selected guide'))
-# final_list.append(html.P('Select a row to view the corresponding cluster'))
-# df_example = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
-# print('TABELLA CLUSTER', df_example)
-# #df_example.drop( df_example[df_example['top'] == 's'].index, inplace = True)
-# final_list.append(dash_table.DataTable(
-#     id='double-table-one',
-#     columns=[{"name": i, "id": i} for i in df_example.columns[:-2]],
-#     data= df_example.loc[df_example['top'] == 't'].to_dict('records'), #df_example.to_dict('records'),
-#     css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
 
-#     style_data_conditional = [{
-#                         'if': {
-#                                 'filter_query': '{Variant unique} eq y', 
-#                                 #'column_id' :'{#Bulge type}',
-#                                 #'column_id' :'{Total}'
-#                             },
-#                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-#                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
-                            
-#                         }]
-# ))
-# final_list.append(html.P())
-# final_list.append(html.P())
-# final_list.append(html.Div(
-#     dash_table.DataTable(
-#         id = 'double-table-two',
-#         #columns=[{"name": i, "id": i} for i in df_example.columns[:]],
-#         #fixed_rows = {'headers' : True, 'data': 0},
-#         page_current=0,
-#         page_size=PAGE_SIZE,
-#         page_action='custom',
-#         virtualization = True,
-#         css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
-
-#         style_data_conditional = [{
-#                         'if': {
-#                                 'filter_query': '{Variant unique} eq y', 
-#                                 #'column_id' :'{#Bulge type}',
-#                                 #'column_id' :'{Total}'
-#                             },
-#                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-#                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
-                            
-#                         },
-#                         {
-#                             'if': {
-#                                     'filter_query': '{top} eq t',         
-#                                     # 'column_id' :'BulgeType'
-#                                 },
-#                                 # 'border-left': '5px solid rgba(26, 26, 255, 0.9)',
-#                                 'font-weight':'bold'
-                                
-
-#                         }    
-                        
-#                     ]
-#         ),
-#     id = 'div-test-page2-second-table'
-#     )
-# )
 test_page2 = html.Div(final_list, style = {'margin':'1%'})
 
 #TEST page3 for new result page
 final_list = []
 
 test_page3 = html.Div(final_list, style = {'margin':'1%'})
+
+#ABPUT PAGE
+final_list = []
+final_list.append(
+     html.Div([
+        html.H3('About'),
+        html.P('CRISPritz is a suite of software tools to support the design and analysis of CRISPR/CRISPR-associated (Cas) experiments. Using efficient data structures combined with' + 
+        'parallel computation, we offer a rapid, reliable, and exhaustive search mechanism to enumerate a comprehensive' +
+        'list of putative off-target sites')])
+    
+)
+
+final_list.append(html.H3('Main Page'))
+final_list.append(
+    html.Div([
+    html.P(
+        'In the main page of PersonalCRISPritz, users can select a wide range of options to personalize their searches. The input phase is divided into three main steps:'
+    ),
+    html.Ol(
+        [
+            html.Li('STEP 1: Genome and PAM selection'),
+            html.Li('STEP 2: Guide insertion and threshold configuration'),
+            html.Li('STEP 3 (Advanced options): Select various comparisons')
+        ] , style = {'padding': '15px'}
+    ),
+    html.P('Starting from STEP 1 [figura], two dropdown are available for selection of:'),
+    html.Ol(
+        [
+            html.Li('Genome: here you can select a genome from the ones present, some genomes have also the variant version enriched (indicated with a \'+\' symbol) with genetic variant from the 1000genome project'),
+            html.Li('PAM: here you can select a Protospacer Adjacent Motif for a specific Cas protein.'),
+        ], style = {'padding': '15px'}
+    )
+    ])
+)
+
+final_list.append(
+    dbc.Alert('Contact us for suggesting the addition of new genomes',color = 'info', fade = False, style = {'width':'25%'})
+)
+
+final_list.append(
+    html.Div(
+        [
+            html.P('In STEP 2 [figura], select the type of input desired by selecting the \'Guides\' or \'Sequence\' label'),
+            html.Ol(
+                [
+                    html.Li('Guides: a list of crRNAs sequences, consisting in 1 or more sequences (max 1000 sequences) to search on the genome [img example]'),
+                    html.Li('Sequence: one or more genetic sequences (max 1000 characters), each sequence MUST BE separated with the header \'>name\'. The sequence can be also submitted with a ' + 
+                    'chromosome range, also provided with an header [img example]. The region will be extracted from the Genome selected in STEP 1'),
+                ], style = {'padding': '15px'}
+            ),
+            html.P('In this STEP, some constraints on the number of mimsatches and bulges can be selected:'),
+            html.Ol(
+                [
+                    html.Li('Allowed mismatches: number of tolerated mismatches in a target'),
+                    html.Li('Bulge DNA size: size of bubbles tolerated on the DNA sequence (can be consecutive(AA--AA) or interleaved(AA-A-AA)).'),
+                    html.Li('Bulge RNA size: size of bubbles tolerated on the RNA sequence (can be consecutive(AA--AA) or interleaved(AA-A-AA))'),
+                    html.Li('crRNA length: available only when a genetic sequence is given as input, represents the length of the guides (without PAM) that you want to extract from the sequence.')
+                ], style = {'padding': '15px'}
+            ),
+        ]
+    )
+)
+
+final_list.append(
+    html.Div(
+        [
+            html.P('The final step before submitting the job is the selection of various Advanced Options:'),
+            html.Ol(
+                [
+                    html.Li('Compare your results with the GeCKO v2 library: selected by default, compares the results of your guides with the results obtained in a previous search with guides from the well-known GeCKO library.'),
+                    html.Li('Compare your results with the corresponding reference genome: selected by default when an enriched genome is chosen, compares the results with the respective reference genome to evaluate differences when variant are added.'),
+                    html.Li('Notify me by email: if selected, let you insert an email to receive a notification when your job is terminated.'),
+                ], style = {'padding': '15px'}
+            ),
+        ]
+    )
+)
+final_list.append(html.H3('Result Page'))
+about_page = html.Div(final_list, style = {'margin':'1%'})
 
 ##################################################CALLBACKS##################################################
 #Test callbacks
@@ -1121,7 +1107,8 @@ def changePage( href, path, search, hash_guide):
         return test_page2, URL + '/load' + search
     if path == '/test-page3':
         return test_page3, URL + '/load' + search
-   
+    if path == '/about':
+        return about_page, URL + '/load' + search
     return index_page, ''
 
 #Check end job
@@ -1429,7 +1416,10 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
 
     if value == 'tab-summary-by-guide': #BUG se cambio guida selezionata due volte mi cambia il mms mettendo a 0, provare con un div nascosto
         #Show Summary by Guide table
-       
+        fl.append(
+            html.P('Summary table counting the number of targets found for each combination of Bulge Type, Bulge Size and Mismatch. Select \'Show Targets\' to view the corresponding list of targets.')
+        )
+        fl.append(html.Br())
         df = pd.read_pickle(job_directory + job_id + '.summary_by_guide.' + guide + '.txt')
         
         df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | (df['Number of targets'] == 0)  ].index, inplace = True)
@@ -1453,6 +1443,9 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         return fl
     elif value == 'tab-summary-by-sample':
         #Show Summary by Sample table
+        fl.append(
+            html.P('Summary table counting the number of targets found for each sample. Filter the table by selecting the Population or Superpopulation desired from the dropdowns.')
+        )
         if genome_type == 'both':
             col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of targets', 'Targets in Sample', 'Total Targets in Population', 'Total targets in Super Population']
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
@@ -1506,7 +1499,14 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         return fl
     elif value == 'tab-summary-by-position':
         #Show Summary by position table
+        fl.append(
+            html.P('Summary table containing all the targets found in a specific position of the genome. For each position, the best target is shown, along with his mismatch and mulge size values.' + 
+            ' The subtable on the right represents the number of targets found in that position for a particular mismatch-bulge value.')
+        )
 
+        fl.append(
+            html.P('Filter the table by selecting the chromosome of interest and writing the start and/or end position of the region to view.')
+        )
         #Dropdown chromosomes
         try:
             onlyfile = [f for f in listdir('Genomes/' + genome_selected) if (isfile(join('Genomes/' + genome_selected, f)) and (f.endswith('.fa') or f.endswith('.fasta')))]
@@ -1577,7 +1577,6 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         return fl
     else:
         #Show Report images
-        fl = []
         samp_style = {}
         if genome_type == 'ref':
             samp_style = {'display':'none'}
@@ -1912,9 +1911,11 @@ def generate_table(dataframe, id_table, guide='', job_id='', max_rows=2600):
     '''
     Per generare una html table. NOTE è diversa da una dash dataTable
     '''
+
     return html.Table(
         # Header
-        [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
+        [html.Tr([html.Th(col) if col != 'Targets created by SNPs' else html.Th(html.Abbr(col, title = 'Counting of targets that are generated by the insertion of a IUPAC nucleotide of a sample', 
+        style = {'text-decoration':'underline'})) for col in dataframe.columns]) ] +
         # Body
         [html.Tr([
             html.Td(html.A(dataframe.iloc[i][col],  href = 'result?job=' + job_id + '#' + guide +'new' + dataframe.iloc[i]['Bulge Type'] + str(dataframe.iloc[i]['Bulge Size']) + str(dataframe.iloc[i]['Mismatches']) , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
@@ -2318,7 +2319,13 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
 #     font-weight: normal;
 # }
 
-
+#TEST download file
+# @app.server.route('/Results/59IPPT3KLP/guides_error.txt') 
+# def download_csv():
+#     return send_file('Results/59IPPT3KLP/guides_error.txt',
+#                      mimetype='text/csv',
+#                      attachment_filename='downloadFile.csv',
+#                      as_attachment=True)
 
 
 #If the input guides are different len, select the ones with same length as the first
@@ -2386,10 +2393,16 @@ def resultPage(job_id):
     with open('Results/' + value + '/acfd.txt') as a:
         all_scores = a.read().strip().split('\n')
     
+    list_error_guides = []
+    if os.path.exists('Results/' + value + '/guides_error.txt'):
+        with open('Results/' + value + '/guides_error.txt') as error_g:
+            for e_g in error_g:
+                list_error_guides.append(e_g.strip())
+
     if 'NO SCORES' not in all_scores:
         all_scores.sort()
-        acfd = [float(a.split('\t')[1]) for a in all_scores]
-        doench = [int(a.split('\t')[2]) for a in all_scores]
+        acfd = [float(a.split('\t')[1]) for a in all_scores if a not in list_error_guides]
+        doench = [int(a.split('\t')[2]) for a in all_scores if a not in list_error_guides]
         acfd  = [int(round((100/(100 + x))*100)) for x in acfd]
         columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
     else:
@@ -2425,6 +2438,10 @@ def resultPage(job_id):
        
     
     final_list = []    
+    if list_error_guides:
+        final_list.append(
+            dbc.Alert('Warning: Some guides have too many targets! ' + ', '.join(list_error_guides), color='warning')
+        )
     final_list.append(
         html.H3('Result Summary')
     )
@@ -2443,13 +2460,13 @@ def resultPage(job_id):
                 id = 'general-profile-table',
                 #page_size=PAGE_SIZE,
                 columns = columns_profile_table,
-                data = profile.to_dict('records'),
+                #data = profile.to_dict('records'),
                 selected_cells = [{'row':0, 'column':0}],
                 css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
                 page_current= 0,
                 page_size= 10,
                 page_action='custom',
-
+                virtualization = True,
                 filter_action='custom',
                 filter_query='',
 
@@ -2541,6 +2558,14 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
         genome_type = 'both'
     
     filtering_expressions = filter.split(' && ')
+    
+    #Get error guides
+    list_error_guides = []
+    if os.path.exists('Results/' + job_id + '/guides_error.txt'):
+        with open('Results/' + job_id + '/guides_error.txt') as error_g:
+            for e_g in error_g:
+                list_error_guides.append(e_g.strip())
+    
     #Get guide from guide.txt
     with open('Results/' + job_id + '/guides.txt') as g:
         guides = g.read().strip().split('\n')
@@ -2550,11 +2575,12 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     with open('Results/' + job_id + '/acfd.txt') as a:
         all_scores = a.read().strip().split('\n')
     
+    print(list_error_guides)
     #Load scores
     if 'NO SCORES' not in all_scores:
         all_scores.sort()
-        acfd = [float(a.split('\t')[1]) for a in all_scores]
-        doench = [int(a.split('\t')[2]) for a in all_scores]
+        acfd = [float(a.split('\t')[1]) for a in all_scores if a.split('\t')[0] not in list_error_guides]
+        doench = [int(a.split('\t')[2]) for a in all_scores if a.split('\t')[0] not in list_error_guides]
         acfd  = [int(round((100/(100 + x))*100)) for x in acfd] 
     #     columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
     # else:
@@ -2583,6 +2609,11 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     else:
         data_guides = {'Guide': guides, 'Total On-Targets':column_on_target, 'Total Off-Targets':column_off_target, 'col_targetfor': column_sep_by_mm_value}
    
+    for i in data_guides:
+        try:
+            print(i, len(data_guides[i]))
+        except:
+            print(i, data_guides[i])
     dff = pd.DataFrame(data_guides)
 
             
@@ -2615,6 +2646,7 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     data_to_send=dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
     ].to_dict('records')
+    print(len(data_to_send))
     return data_to_send, [{'row':0, 'column':0}]
 
 @cache.memoize()

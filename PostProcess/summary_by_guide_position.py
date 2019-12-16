@@ -91,19 +91,21 @@ with open(sys.argv[1]) as targets:
     if type_post == 'Uniq':
         
         for line in targets:
+            
             if '#' in line:
                 continue
             line = line.strip().split('\t')
-            
             #Summary by position
-            if current_cluster == line[3] + ' ' + line[5]:
+            if current_cluster == line[1].replace('-','') + line[3] + ' ' + line[5]:
                 mms_current_line = int(line[7])
                 bulge_current_line = int(line[8])
+                # print('if',line)
                 guide_d_cluster[line[1].replace('-','')][-1].count[bulge_current_line][mms_current_line] += 1 
             else:   #New cluster
+                # print('else',line)
                 sub_cluster_visited = []
                 guide_d_cluster[line[1].replace('-','')].append(Cluster(line[3] + '\t' + line[5] + '\t' + line[2] + '\t' + line[7] + '\t' + line[8], [[0 for i in range (mms + 1)] for i in range (bulge + 1)] ))    
-                current_cluster = line[3] + ' ' + line[5]
+                current_cluster = line[1].replace('-','') +line[3] + ' ' + line[5]
                 mms_current_line = int(line[7])
                 bulge_current_line = int(line[8])
                 guide_d_cluster[line[1].replace('-','')][-1].count[bulge_current_line][mms_current_line] += 1 

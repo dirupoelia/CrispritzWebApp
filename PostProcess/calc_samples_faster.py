@@ -64,6 +64,7 @@ if True:
             line = line.strip().split('\t')
             if line[3] != current_chr:
                 if not os.path.exists(os.path.realpath(sys.argv[1]) + '/my_dict_' + line[3] + '.json'):
+                    test_result.write('\t'.join(line) + '\t' + 'n' + '\t' +line[1].replace('-','') + '\n')
                     continue 
                 print('Done ', current_chr)
                 current_chr = line[3]
