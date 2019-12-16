@@ -126,10 +126,11 @@ else:
     #     outFileTargets.write("#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\tAnnotation_Type\n")
 
 if 'Samples' in header:
-    print('samples')
     summary_samples = True
 else:
     summary_samples = False
+
+header_list = header.strip().split('\t')
 #Variables for summary samples code
 '''
 {
@@ -165,7 +166,16 @@ count_sample = dict()
 count_pop = dict()
 count_superpop = dict()
 
-
+#Create -Summary_total for a file ref.Annotation.summary.txt from the y and n values of Var_uniq column
+summary_barplot_from_total = False
+if 'Var_uniq' in header:
+    summary_barplot_from_total = True
+    vu_pos = header_list.index('Var_uniq')
+count_unique = dict()
+count_unique['targets'] = [0]*10
+count_unique_for_guide = dict()
+for item in annotationsSet:
+    count_unique[item] = [0]*10
 
 
 
@@ -182,6 +192,10 @@ for line in inResult:
         guideDict[str(x[1])] = {}
         guideDict[str(x[1])]['targets'] = {}
         guideDict[str(x[1])]['targets'] = [0]*10
+
+        count_unique_for_guide[str(x[1])] = dict()
+        count_unique_for_guide[str(x[1])]['targets'] = [0]*10
+
         count_sample[str(x[1])] = dict()
         count_pop[str(x[1])] = dict()
         count_superpop[str(x[1])] = dict()
@@ -189,11 +203,19 @@ for line in inResult:
         for item in annotationsSet:
             guideDict[str(x[1])][item]= {}
             guideDict[str(x[1])][item] = [0]*10
+
+            count_unique_for_guide[str(x[1])][item] = [0]*10
         
     #conto i target generali per mm threshold
     totalDict['targets'][int(x[mm_pos])] += 1
     guideDict[str(x[1])]['targets'][int(x[mm_pos])] += 1
-
+    
+    
+    if summary_barplot_from_total:
+        if x[vu_pos] == 'y': 
+            count_unique['targets'][int(x[mm_pos])] += 1
+            count_unique_for_guide[str(x[1])]['targets'][int(x[mm_pos])] += 1
+    
     if summary_samples:
         for sample in x[-2].split(','):
             if sample == 'n':
@@ -231,6 +253,12 @@ for line in inResult:
             outFileTargets.write(line.rstrip() + '\t' + str(guideSplit[1]) + "\n")
             guideDict[str(x[1])][guideSplit[1]][int(x[mm_pos])] += 1
             totalDict[guideSplit[1]][int(x[mm_pos])] += 1
+            
+            if summary_barplot_from_total:
+                if x[vu_pos] == 'y':
+                    count_unique[guideSplit[1]][int(x[mm_pos])] += 1
+                    count_unique_for_guide[str(x[1])][guideSplit[1]][int(x[mm_pos])] += 1
+            
             if summary_samples:
                 for sample in x[-2].split(','):
                     if sample == 'n':
@@ -326,6 +354,19 @@ if summary_samples:
                     except:
                         result.write(item + '\t' + '\t'.join(str(i) for i in [0]*10) + '\n')
 
+
+#Write sumref for barplot for targets in top1 form of var/ref search
+if summary_barplot_from_total:
+    with open(outputFile + '.sumref.Annotation.summary.txt', 'w+') as result:
+        result.write('-Summary_Total\n')
+        result.write('targets'+'\t'+'\t'.join(str(i - count_unique['targets'][pos]) for pos,i in enumerate(totalDict['targets'])) + '\n')
+        for elem in sorted(annotationsSet):
+            result.write(str(elem)+'\t'+'\t'.join(str(i - count_unique[elem][pos]) for pos, i in enumerate(totalDict[elem]))+'\n')
+        for guide in count_unique_for_guide:
+            result.write('-Summary_' + guide + '\n')
+            result.write('targets' + '\t' + '\t'.join(str(i - count_unique_for_guide[guide]['targets'][pos]) for pos,i in enumerate(guideDict[guide]['targets'])) + '\n')
+            for annotation in sorted(annotationsSet):
+                result.write(annotation + '\t' + '\t'.join(str(i - count_unique_for_guide[guide][annotation][pos]) for pos, i in enumerate(guideDict[guide][annotation])) + '\n')
 # for item in annotationsSet:
 #     with open(outputFile+'.'+str(item)+'Count.txt','w') as tempItem:
 #         for guide in guidesSet:

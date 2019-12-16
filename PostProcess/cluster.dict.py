@@ -56,6 +56,7 @@ out, err = process.communicate()
 total_line = int(out.decode('UTF-8').split(' ')[0])
 if total_line > MAX_LIMIT:
     print('Max limit file reached, using clustering by single guide')
+    ok_guides = []
     write_header = True
     with open(sys.argv[5]) as guides:
         for guide in guides:
@@ -173,8 +174,10 @@ if total_line > MAX_LIMIT:
                             for target in cluster:
                                 result.write('\t'.join(str(x) for x in target[:3]) + '\t' + target[4] +'\t' + target[6].strip() + '\n')
             del guides_dict[guide]
+            ok_guides.append(guide)
             print("Clustering runtime: %s seconds" % (time.time() - start_time))
-            
+    with open(sys.argv[5], 'w') as guides:
+        guides.write('\n'.join(ok_guides))        
 
 else:
     #####DO FAST CLUSTERING

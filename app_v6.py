@@ -443,9 +443,9 @@ final_list.append(
                         html.Ul(
                             [
                                 html.Li('Searching crRNA'),
+                                html.Li('Processing data'),
                                 html.Li('Annotating result'),
-                                html.Li('Generating report'),
-                                html.Li('Post Process data')
+                                html.Li('Generating report')
                             ]
                         ),
                         style = {'flex':'0 0 20%'}
@@ -454,9 +454,9 @@ final_list.append(
                         html.Ul(
                             [
                                 html.Li('To do', style = {'color':'red'}, id = 'search-status'),
+                                html.Li('To do', style = {'color':'red'}, id = 'post-process-status'),
                                 html.Li('To do', style = {'color':'red'}, id = 'annotate-result-status'),
-                                html.Li('To do', style = {'color':'red'}, id = 'generate-report-status'),
-                                html.Li('To do', style = {'color':'red'}, id = 'post-process-status')
+                                html.Li('To do', style = {'color':'red'}, id = 'generate-report-status')
                             ],
                             style = {'list-style-type':'none'}
                         )
@@ -1160,26 +1160,14 @@ def refreshSearch(n, dir_name):
                 elif os.path.exists(current_job_dir + 'output.txt'):                #Extract % of search done
                     with open(current_job_dir + 'output.txt', 'r') as output_status:
                         line = output_status.read().strip()
-                        if 'Annotate_output' in line:
-                            if 'both' in line:
-                                last_percent = line.rfind('%')
-                                if last_percent > 0:
-                                    last_percent = line[line[:last_percent].rfind(' '): last_percent]
-                                    status_message = last_percent + '%'
-                                else:
-                                    status_message = 'Annotating...'
-
-                                steps = 'Step [1/2]'
-                                if 'Annotate_output_ref' in line:
-                                    steps = 'Step [2/2]'
+                        if 'Annotate_output' in line:                            
+                            last_percent = line.rfind('%')
+                            if last_percent > 0:
+                                last_percent = line[line[:last_percent].rfind(' '): last_percent]
+                                status_message = last_percent + '%'
                             else:
-                                last_percent = line.rfind('%')
-                                if last_percent > 0:
-                                    last_percent = line[line[:last_percent].rfind(' '): last_percent]
-                                    status_message = last_percent + '%'
-                                else:
-                                    status_message = 'Annotating...'
-                                steps = ''
+                                status_message = 'Annotating...'
+                            steps = ''
                             annotate_res_status = html.P(status_message + ' ' + steps, style = {'color':'orange'})
 
                 if ('Search-index\tDone' in current_log and 'Search\tDone' in current_log):
@@ -1200,7 +1188,6 @@ def refreshSearch(n, dir_name):
                                 steps = 'Step [1/2]'
                                 if 'Search_output_ref' in line:
                                     steps = 'Step [2/2]'
-                                
                                 
                             else:
                                 last_percent = line.rfind('%')
@@ -1224,10 +1211,18 @@ def refreshSearch(n, dir_name):
                             else:
                                 status_message = round((len(line.split('\n')) - 1) / n_guides, 2)
                                 report_status = html.P(str(status_message * 100) + '%', style = {'color':'orange'})
-                #TODO continuare con post process
                 if ('PostProcess\tDone' in current_log):
                     post_process_status = html.P('Done', style = {'color':'green'})
                     all_done = all_done + 1
+                elif os.path.exists(current_job_dir + 'output.txt'):                #Extract % of search done
+                    with open(current_job_dir + 'output.txt', 'r') as output_status:
+                        line = output_status.read().strip()
+                        if 'PostProcess_output' in line:
+                            line = line.split('\n')
+                            if line[-1] == 'PostProcess_output':
+                                post_process_status = html.P('Processing data...', style = {'color':'orange'})    
+                            else:
+                                post_process_status = html.P(line[-1], style = {'color':'orange'})
                 if all_done == 4 or 'Job\tDone' in current_log:
                     return {'visibility':'visible'}, annotate_res_status, search_status, report_status, post_process_status ,'/result?job=' + dir_name.split('=')[-1], ''
                 else:
