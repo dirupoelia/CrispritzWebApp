@@ -185,7 +185,7 @@ checklist_div = html.Div(
         dbc.FormGroup(
             [
                 dbc.Checkbox(
-                    id="checkbox-gecko", className="form-check-input"
+                    id="checkbox-gecko", className="form-check-input", checked = True
                 ),
                 dbc.Label(
                     #html.P(['Activate Gecko ', html.Abbr('comparison', title ='The results of your test guides will be compared with results obtained from a previous computed analysis on gecko library')]) ,
@@ -1953,7 +1953,7 @@ def generate_table_position(dataframe, id_table, page, mms, bulges, guide = '', 
         html.Th('Min Mismatch', rowSpan = '2', style = {'vertical-align':'middle', 'text-align':'center'}),
         html.Th('Min Bulge', rowSpan = '2', style = {'vertical-align':'middle', 'text-align':'center'}),
         html.Th('Bulge', rowSpan = '2', style = {'vertical-align':'middle', 'text-align':'center'}),
-        html.Th('Targets by mismatch value', colSpan = str(mms +1), style = {'vertical-align':'middle', 'text-align':'center'}),
+        html.Th('Targets in cluster by mismatch value', colSpan = str(mms +1), style = {'vertical-align':'middle', 'text-align':'center'}),
         html.Th('', rowSpan = '2'),
         ])
     ]

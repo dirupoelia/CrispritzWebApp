@@ -95,39 +95,155 @@ elif [ ${19} = 'var' ]; then
     fi
     echo 'End annotation var'
 
-else
-    echo 'Start cluster var'
-    python3 ../../PostProcess/cluster.dict.py $jobid.targets.txt 'no' 'True' 'False' # > $jobid.targets.cluster.txt
-    echo 'End cluster var'
+else    #Type search = both
 
-    echo 'Start extraction top1 var'
-    python3 ../../PostProcess/extract_top.py $jobid.targets.cluster.txt $jobid  # > $jobid.top_1.txt
-    echo 'End extraction top1 var'
+    # echo 'Start cluster var'
+    # python3 ../../PostProcess/cluster.dict.py $jobid.targets.txt 'no' 'True' 'False' # > $jobid.targets.cluster.txt
+    # echo 'End cluster var'
 
-    echo 'Start annotation var'
-    if [ ${12} = 'True' ]; then
-        crispritz.py annotate-results $jobid.top_1.txt ../../${18} $jobid # > $jobid.Annotation.summary.txt , $jobid.Annotation.targets.txt 
-    fi
-    echo 'End annotation var'
+    # echo 'Start extraction top1 var'
+    # python3 ../../PostProcess/extract_top.py $jobid.targets.cluster.txt $jobid  # > $jobid.top_1.txt
+    # echo 'End extraction top1 var'
 
-    echo 'Start cluster ref'
-    echo 'Annotate_output_ref '${19} >>  output.txt
-    cd ref/
-        python3 ../../../PostProcess/cluster.dict.py $jobid'_ref'.targets.txt 'no' 'True' 'False' # > ref/$jobid'_ref'.targets.cluster.txt
+    #From here
+    # echo 'Start annotation var'
+    # if [ ${12} = 'True' ]; then
+    #     crispritz.py annotate-results $jobid.top_1.txt ../../${18} $jobid # > $jobid.Annotation.summary.txt , $jobid.Annotation.targets.txt 
+    # fi
+    # echo 'End annotation var'
+    
+    # echo 'Start cluster ref'
+    # echo 'Annotate_output_ref '${19} >>  output.txt
+    # cd ref/
+    #     python3 ../../../PostProcess/cluster.dict.py $jobid'_ref'.targets.txt 'no' 'True' 'False' # > ref/$jobid'_ref'.targets.cluster.txt
         
-        echo 'End cluster ref'
-        echo 'Start extraction top1 ref'
-        python3 ../../../PostProcess/extract_top.py $jobid'_ref'.targets.cluster.txt $jobid'_ref'  # > ref/$jobid'_ref'.top_1.txt
-        echo 'End extraction top1 ref'
+    #     echo 'End cluster ref'
+    #     echo 'Start extraction top1 ref'
+    #     python3 ../../../PostProcess/extract_top.py $jobid'_ref'.targets.cluster.txt $jobid'_ref'  # > ref/$jobid'_ref'.top_1.txt
+    #     echo 'End extraction top1 ref'
 
-        echo 'Start annotation ref'
-        if [ ${12} = 'True' ]; then
-            crispritz.py annotate-results $jobid'_ref'.top_1.txt ../../../${18} $jobid'_ref' # > ref/$jobid'_ref'.Annotation.summary.txt , ref/$jobid'_ref'.Annotation.targets.txt 
-        fi
-        echo 'End annotation ref'
-    cd ../
+    #     echo 'Start annotation ref'
+    #     if [ ${12} = 'True' ]; then
+    #         crispritz.py annotate-results $jobid'_ref'.top_1.txt ../../../${18} $jobid'_ref' # > ref/$jobid'_ref'.Annotation.summary.txt , ref/$jobid'_ref'.Annotation.targets.txt 
+    #     fi
+    #     echo 'End annotation ref'
+    # cd ../
+    #TO HERE cancellare, perchè mi serve solo per annotation per barplot, ma lo faccio in un altro modo:
+
+    #NUOVO TEST
+
+    #Estract common, semicommon and unique
+    echo 'Start creation semicommon, common, unique'
+    ../../PostProcess/./extraction.sh ref/$jobid'_ref.targets.txt' $jobid.targets.txt $jobid
+    echo 'End creation semicommon, common, unique'
+
+    #Cluster common file, extract top1 and insert into semicommon
+    echo 'Start cluster common'
+    python3 ../../PostProcess/cluster.dict.py $jobid.common_targets.txt 'no' 'False' 'False' # > $jobid.common_targets.cluster.txt
+                                                                        #Second false to not save the colum Pos Cluster and Total -> no needed for cat into semicommon
+    echo 'End cluster common'
+    echo 'Start top1 extraction common'
+    python3 ../../PostProcess/extract_top.py $jobid.common_targets.cluster.txt $jobid.common_targets # > $jobid.common_targets.top_1.txt
+    cat $jobid.common_targets.top_1.txt >> $jobid.semi_common_targets.txt
+    echo 'End top1 extraction common'
+
+    #Cluster semicommon e uniq
+    echo 'Start cluster semicommon'
+    python3 ../../PostProcess/cluster.dict.py $jobid.semi_common_targets.txt 'no' 'True' 'False'
+    echo 'End cluster semicommon'
+    echo 'Start cluster unique'     #NOTE doing cluster separately does not create the right order of cluster (first clusters of uniq, then clusters of semi_common)
+    python3 ../../PostProcess/cluster.dict.py $jobid.unique_targets.txt 'no' 'True' 'False'
+    echo 'End cluster unique'
+
+    #Pam analysis
+    echo 'Start pam analysis'
+    python3 ../../PostProcess/pam_analysis.py $jobid.semi_common_targets.cluster.txt pam.txt ${19}  # > $jobid.semi_common_targets.cluster.minmaxdisr.txt
+    echo 'End pam analysis'
+    echo 'Start pam creation'
+    python3 ../../PostProcess/pam_creation.py $jobid.unique_targets.cluster.txt pam.txt ../../$3 # > $jobid.unique_targets.cluster.pamcreation.txt
+    echo 'End pam creation'
+    cat $jobid.unique_targets.cluster.pamcreation.txt $jobid.semi_common_targets.cluster.minmaxdisr.txt > $jobid.total.txt
+
+    #Cluster of jobid.total.txt and extraction of top 1
+    echo 'Start cluster of total.txt'
+    python3 ../../PostProcess/cluster.dict.py $jobid.total.txt 'no' 'True' 'True' 'total'
+    echo 'End cluster of total.txt'
+    echo 'Start extract top1 total.txt'
+    python3 ../../PostProcess/extract_top.py $jobid.total.cluster.txt $jobid # > $jobid.top_1.txt
+    echo 'End extract top1 total.txt'
+
+    #Scoring of top1
+    echo 'Start Scoring'
+    python3 ../../PostProcess/scores_guide_table.py $jobid.top_1.txt ../../$used_genome_dir pam.txt guides.txt
+    echo 'End Scoring'
+
+    #Summary guide, pos #NOTE the script automatically counts only for top subclusters
+    echo 'Start summary by guide and position'  #NOTE change to top_1 if in sum by pos want to see cluster count of top1
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.cluster.txt $7 $8 $9 guides.txt $jobid 'Uniq'
+    echo 'End summary by guide and position'
+
+    #Top1 expansion
+    echo 'Start sort'
+    sort -k4,4 $jobid.top_1.txt > $jobid.top_1.sort.txt && mv $jobid.top_1.sort.txt $jobid.top_1.txt 
+    echo 'End sort'
+    echo 'Start calc samples'
+    python3 ../../PostProcess/calc_samples_faster.py ../../../dictionaries $jobid.top_1.txt  #> $jobid.top_1.samples.txt $jobid.top_1.samples.all.txt
+    echo 'End calc samples'
+
+    #Put right header into top_1.samples.all.txt
+    sed -i '1 i\#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPam_disr\tPAM_gen\tVar_uniq' $jobid.top_1.samples.all.txt
+    
+    #Summary samples
+    echo 'Start summary by samples'
+    python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt 
+    echo 'End summary by samples'
+
+    #Annotation of top1 with samples
+    echo 'Start Annotation'
+    crispritz.py annotate-results $jobid.top_1.samples.all.txt ../../${18} $jobid # > $jobid.Annotation.targets.txt $jobid.Annotation.summary.txt
+                                                                                # $jobid.sample_annotation.guide.sample.txt $jobid..sumref.Annotation.summary.txt
+    echo 'End Annotation'
+
+    #Generate report
+    if [ ${13} = 'True' ]; then
+        echo 'Generate_report' >  output.txt
+        proc=$(($7 + 1))
+        while IFS= read -r line || [ -n "$line" ]; do    
+            if [ ${14} = 'True' ]; then         #If -gecko
+                if [ ${15} = 'True' ]; then     #If genome_ref comparison
+                    
+                    printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % crispritz.py generate-report $line -mm % -annotation $jobid'.Annotation.summary.txt' -extprofile *.extended_profile.xls -sumref $jobid.sumref.Annotation.summary.txt  -gecko -ws
+                else
+                    printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % crispritz.py generate-report $line -mm % -annotation $jobid'.Annotation.summary.txt' -extprofile *.extended_profile.xls -gecko -ws
+                fi
+            else
+                if [ ${15} = 'True' ]; then     #If genome_ref comparison
+                    printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % crispritz.py generate-report $line -mm % -annotation $jobid'.Annotation.summary.txt' -extprofile *.extended_profile.xls -sumref $jobid.sumref.Annotation.summary.txt -ws
+                else
+                    printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % crispritz.py generate-report $line -mm % -annotation $jobid'.Annotation.summary.txt' -extprofile *.extended_profile.xls -ws
+                fi
+            fi
+            echo $line >> output.txt
+        done < guides.txt
+        mkdir ../../assets/Img/$jobid
+        cp *.png ../../assets/Img/$jobid/
+    fi
+    echo 'Report\tDone\t'$(date) >> log.txt
+    #Rimettere i samples nel file di cluster (solo nel top1)
+    echo 'Start creating final file'
+    python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.total.txt $jobid.top_1.samples.txt $jobid  # > $jobid.final.txt
+    echo 'End creating final file'
+
 fi
+
 echo 'Annotation\tDone\t'$(date) >> log.txt
+
+exit 1
+
+
+
+
+
 
 #Start generate report
 echo 'Report\tStart\t'$(date) >> log.txt
@@ -238,7 +354,7 @@ fi
 
 if [ ${19} = 'ref' ]; then
     type_post='No'      #TODO decide if summary done on top1 or target.cluster
-    python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.top_1.txt $7 $8 $9 guides.txt $jobid $type_post
 elif [ ${19} = 'var' ]; then
     type_post='No'
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post

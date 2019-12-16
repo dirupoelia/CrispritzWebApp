@@ -28,7 +28,8 @@
 #Input file columns:
 #BulgeType, Guide, Target, Chr, Position, Cluster Position, Direction, MM, Bulge,Total
 
-#sys1 file risultati
+#sys1 file risultati (nel caso di var/ref, uso il total.cluster. NOTE se nel summary by pos poi decidiamo di contare solo i top 1, in
+# input ci va top1 di total.cluster)
 # sys2 mms
 # sys3 bulges DNA
 # sys4 bulges RNA
@@ -107,21 +108,21 @@ with open(sys.argv[1]) as targets:
                 bulge_current_line = int(line[8])
                 guide_d_cluster[line[1].replace('-','')][-1].count[bulge_current_line][mms_current_line] += 1 
             
-            #Summar by guide
-            if line[0]+line[7]+line[8] not in sub_cluster_visited:
-                sub_cluster_visited.append(line[0]+line[7]+line[8])
-                if line[0] == 'X':
-                    guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
-                    if line[14] == 'y':
-                        guide_dict[line[1].replace('-','')][3][int(line[7])][int(line[8])] += 1
-                elif line[0] == 'DNA':
-                    guide_dict[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1
-                    if line[14] == 'y':
-                        guide_dict[line[1].replace('-','')][4][int(line[7])][int(line[8])] += 1
-                else:
-                    guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
-                    if line[14] == 'y':
-                        guide_dict[line[1].replace('-','')][5][int(line[7])][int(line[8])] += 1
+                #Summar by guide
+                if line[0]+line[7]+line[8] not in sub_cluster_visited:
+                    sub_cluster_visited.append(line[0]+line[7]+line[8])
+                    if line[0] == 'X':
+                        guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
+                        if line[14] == 'y':
+                            guide_dict[line[1].replace('-','')][3][int(line[7])][int(line[8])] += 1
+                    elif line[0] == 'DNA':
+                        guide_dict[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1
+                        if line[14] == 'y':
+                            guide_dict[line[1].replace('-','')][4][int(line[7])][int(line[8])] += 1
+                    else:
+                        guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
+                        if line[14] == 'y':
+                            guide_dict[line[1].replace('-','')][5][int(line[7])][int(line[8])] += 1
         
         for guide in guide_dict.keys():
             tab_summary = pd.DataFrame(columns = ['Guide', 'Bulge Type', 'Bulge Size', 'Mismatches', 'Number of targets', 'Targets created by SNPs'])
@@ -153,15 +154,15 @@ with open(sys.argv[1]) as targets:
                 bulge_current_line = int(line[8])
                 guide_d_cluster[line[1].replace('-','')][-1].count[bulge_current_line][mms_current_line] += 1    
             
-            #Summary by guide
-            if line[0]+line[7]+line[8] not in sub_cluster_visited:
-                sub_cluster_visited.append(line[0]+line[7]+line[8])
-                if line[0] == 'X':
-                    guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1
-                elif line[0] == 'DNA':
-                    guide_dict[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1
-                else:
-                    guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
+                #Summary by guide
+                if line[0]+line[7]+line[8] not in sub_cluster_visited:
+                    sub_cluster_visited.append(line[0]+line[7]+line[8])
+                    if line[0] == 'X':
+                        guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1
+                    elif line[0] == 'DNA':
+                        guide_dict[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1
+                    else:
+                        guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
 
         for guide in guide_dict.keys():    
             tab_summary = pd.DataFrame(columns = ['Guide', 'Bulge Type', 'Bulge Size', 'Mismatches', 'Number of targets'])
