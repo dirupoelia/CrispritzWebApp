@@ -29,7 +29,10 @@ import collections                          #For check if guides are the same in
 from datetime import datetime               #For time when job submitted
 from seq_script import extract_seq, convert_pam
 import re                                   #For sort chr filter values
+import concurrent                           #For workers and queue
 #Warning symbol \u26A0
+
+exeggutor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
 
 PAGE_SIZE = 50                    #number of entries in each page of the table in view report
 URL = 'http://crispritz.di.univr.it'
@@ -1065,13 +1068,21 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if '+' in genome_selected:
         genome_type = 'var'
     if ref_comparison:
-        genome_type = 'both'    #NOTE change submit job script name
-    subprocess.Popen(['assets/./submit_job.test.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
+        genome_type = 'both'    #NOTE change submit job script name. al momento ok .test.
+
+    #NOTE test command per queue
+    subprocess.run(['touch Results/' + job_id + '/queue.txt'], shell = True)
+    command = 'assets/./submit_job.test.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
         ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
             ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + 'annotations/' + annotation_file[0] + 
-            ' ' + genome_type
-        )
-    )], shell = True)
+            ' ' + genome_type))
+    # subprocess.Popen(['assets/./submit_job.test.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
+    #     ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
+    #         ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + 'annotations/' + annotation_file[0] + 
+    #         ' ' + genome_type
+    #     )
+    # )], shell = True)
+    exeggutor.submit(subprocess.run, command, shell=True)
     return '/load','?job=' + job_id
 
 #When url changed, load new page
@@ -1227,6 +1238,8 @@ def refreshSearch(n, dir_name):
                     return {'visibility':'visible'}, annotate_res_status, search_status, report_status, post_process_status ,'/result?job=' + dir_name.split('=')[-1], ''
                 else:
                     return {'visibility':'hidden'}, annotate_res_status, search_status, report_status, post_process_status,'', ''
+        elif 'queue.txt' in onlyfile:
+            return {'visibility':'hidden'}, html.P('To do', style = {'color':'red'}), html.P('To do', style = {'color':'red'}), html.P('To do', style = {'color':'red'}), html.P('To do', style = {'color':'red'}),'', dbc.Alert("Job submitted. Current status: in queue", color = "info")
     return {'visibility':'hidden'}, html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}) ,'', dbc.Alert("The selected result does not exist", color = "danger")
 
 #Perform expensive loading of a dataframe and save result into 'global store'
@@ -1565,6 +1578,10 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
     else:
         #Show Report images
         fl = []
+        samp_style = {}
+        if genome_type == 'ref':
+            samp_style = {'display':'none'}
+        
         fl.append(html.Br())
         fl.append(html.P('Select a mismatch value'))
         fl_buttons = []
@@ -1656,9 +1673,9 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                                 
                                 dbc.Row(
                                     [
-                                        dbc.Col(html.Div(dcc.Dropdown(options = super_populations, id = 'dropdown-superpopulation-sample', placeholder = 'Select a Super Population'))),
-                                        dbc.Col(html.Div(dcc.Dropdown(options = populations, id = 'dropdown-population-sample', placeholder = 'Select a Population'))),
-                                        dbc.Col(html.Div(dcc.Dropdown( id = 'dropdown-sample', placeholder = 'Select a Sample'))),
+                                        dbc.Col(html.Div(dcc.Dropdown(options = super_populations, id = 'dropdown-superpopulation-sample', placeholder = 'Select a Super Population', style = samp_style))),
+                                        dbc.Col(html.Div(dcc.Dropdown(options = populations, id = 'dropdown-population-sample', placeholder = 'Select a Population', style = samp_style))),
+                                        dbc.Col(html.Div(dcc.Dropdown( id = 'dropdown-sample', placeholder = 'Select a Sample', style = samp_style))),
                                     ]   #NOTE sample presenti solo se seleziono la pop
                                 ),
                                 html.Div(
@@ -2405,16 +2422,7 @@ def resultPage(job_id):
         tmp_col_to_add = []
         
     profile['col_targetfor'] = col_to_add
-    
-    if genome_type == 'var':
-        columns_profile_table.append({'name':'Targets in samples', 'id':'Targets in samples', 'type':'numeric'})
-        column_sample_total = []
-        for guide in profile.Guide.unique():
-            with open ('Results/' + value + '/' + value + '.summary_by_samples.' + guide + '.txt', 'r') as sample_list:
-                sample_total = sample_list.readline().strip().split('\t')[1]
-                column_sample_total.append(sample_total)
-        profile['Targets in samples'] = column_sample_total
-    
+       
     
     final_list = []    
     final_list.append(
@@ -2653,8 +2661,8 @@ def guidePagev3(job_id, hash):
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric']
         file_to_grep = '.targets.cluster.txt'
     elif genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption'] 
-        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'Samples Summary'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
         # file_to_grep = 'targets.cluster.minmaxdisr'
         file_to_grep = '.final.txt'
     else:
@@ -2737,7 +2745,16 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
     '''
     job_id = search.split('=')[-1]
     job_directory = 'Results/' + job_id + '/'
-    #guide = hash_guide.split('#')[1]
+    with open('Results/' + job_id + '/Params.txt') as p:
+        all_params = p.read()
+        genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+        ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+        
+    genome_type = 'ref'
+    if '+' in genome_type_f:
+        genome_type = 'var'
+    if 'True' in ref_comp:
+        genome_type = 'both'
     value = job_id
     if search is None:
         raise PreventUpdate
@@ -2754,9 +2771,15 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
         bulge_t = 'X'  
     df = global_store_subset(value, bulge_t, bulge_s, mms, guide)
     dff = df
-    dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+    if genome_type == 'ref':
+        dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+        7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Top Subcluster'}, inplace = True)
+    elif genome_type == 'var':
+        dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+    else:
+        dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
-    #TODO cambiare nome colonne se ref, var , both
     # sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
     # sort_by.insert(1, {'column_id' : 'Bulge Size', 'direction': 'asc'})
     #sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
@@ -2764,17 +2787,13 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
     #Remove not top1 subcluster:
     dff.drop( df[(df['Top Subcluster'] == 's')].index, inplace = True)
 
+    
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
 
         if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
             # these operators match pandas series operator method names
-            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)].sort_values([col['column_id'] for col in sort_by],
-            ascending=[
-                col['direction'] == 'asc'
-                for col in sort_by
-            ],
-            inplace=False)
+            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
         elif operator == 'contains':
             dff = dff.loc[dff[col_name].str.contains(filter_value)]
         elif operator == 'datestartswith':
@@ -2782,9 +2801,6 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
             # only works with complete fields in standard format
             dff = dff.loc[dff[col_name].str.startswith(filter_value)]
 
-    #NOTE sort_by: [{'column_id': 'BulgeType', 'direction': 'asc'}, {'column_id': 'crRNA', 'direction': 'asc'}]
-    #sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
-    #sort_by.insert(0, {'column_id' : 'BulgeSize', 'direction': 'asc'})
     if len(sort_by):
         dff = dff.sort_values(
             [col['column_id'] for col in sort_by],
@@ -2833,20 +2849,20 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
     data_to_send=dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
     ].to_dict('records')
-    for row in data_to_send:
-        summarized_sample_cell = dict()
-        for s in row['Samples'].split(','):
-            if s == 'n':
-                break
-            try:
-                summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] += 1
-            except:
-                summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] = 1
-        if summarized_sample_cell:
-            row['Samples Summary'] = ', '.join([str(summarized_sample_cell[sp]) + ' ' + sp for sp in summarized_sample_cell])
-        else:
-            row['Samples Summary'] = 'n'
-
+    if genome_type != 'ref':
+        for row in data_to_send:
+            summarized_sample_cell = dict()
+            for s in row['Samples'].split(','):
+                if s == 'n':
+                    break
+                try:
+                    summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] += 1
+                except:
+                    summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] = 1
+            if summarized_sample_cell:
+                row['Samples Summary'] = ', '.join([str(summarized_sample_cell[sp]) + ' ' + sp for sp in summarized_sample_cell])
+            else:
+                row['Samples Summary'] = 'n'
     return data_to_send, cells_style
 
 #Create second table for subset targets page, and show corresponding samples
@@ -2862,28 +2878,41 @@ def loadFullSubsetTable(active_cel, data, cols, search):
         raise PreventUpdate
     fl = []
     job_id = search.split('=')[-1]
-    #Show sample list
+    with open('Results/' + job_id + '/Params.txt') as p:
+        all_params = p.read()
+        genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+        ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+        
+    genome_type = 'ref'
+    if '+' in genome_type_f:
+        genome_type = 'var'
+    if 'True' in ref_comp:
+        genome_type = 'both'
+
     fl.append(html.Br())
-    # fl.append(html.H4('Samples list'))
-    
-    # sample_list = data[active_cel['row']]['Samples'].split(',')
-    # for i in range(int(len(sample_list)/20) + 1):
-    #     fl.append(html.P(', '.join(sample_list[20*i:20*i+20])))     #TODO migliorare mettendo elenco puntato con popolazioni
-    
+        
     #Table for subtop cluster
     fl.append(html.Br())
-    df = global_store_subset(job_id, data[active_cel['row']]['Bulge Type'], str(data[active_cel['row']]['Bulge Size']), str(data[active_cel['row']]['Mismatches']), data[active_cel['row']]['crRNA'])
-    df.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
-    #TODO cambiare nome colonne se ref, var , both
-    df.drop(df[(~( df['Cluster Position'] == int(data[active_cel['row']]['Cluster Position']))) | (~( df['Chromosome'] == data[active_cel['row']]['Chromosome']))].index, inplace = True)
-    # print(df)
+    # df = global_store_subset(job_id, data[active_cel['row']]['Bulge Type'], str(data[active_cel['row']]['Bulge Size']), str(data[active_cel['row']]['Mismatches']), data[active_cel['row']]['crRNA'])
+    
+    # if genome_type == 'ref':
+    #     df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+    #     7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Top Subcluster'}, inplace = True)
+    # elif genome_type == 'var':
+    #     df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+    #     7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+    # else:    
+    #     df.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+    #     7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
+    # df.drop(df[(~( df['Cluster Position'] == int(data[active_cel['row']]['Cluster Position']))) | (~( df['Chromosome'] == data[active_cel['row']]['Chromosome']))].index, inplace = True)
+    # # print(df)
+
     fl.append(
         html.Div(
             dash_table.DataTable(
                 id='second-table-subset-targets', 
                 columns=cols, 
-                data = df.to_dict('records'),
+                #data = df.to_dict('records'),
                 virtualization = True,
                 fixed_rows={ 'headers': True, 'data': 0 },
                 #fixed_columns = {'headers': True, 'data':1},
@@ -2943,6 +2972,130 @@ def loadFullSubsetTable(active_cel, data, cols, search):
     )
 
     return  fl
+
+#Filter etc for second tabe
+@app.callback(
+    [Output('second-table-subset-targets', 'data'),
+    Output('second-table-subset-targets', 'style_data_conditional')],
+    [Input('second-table-subset-targets', "page_current"),
+     Input('second-table-subset-targets', "page_size"),
+     Input('second-table-subset-targets', "sort_by"),
+     Input('second-table-subset-targets', 'filter_query')],
+     [State('url', 'search'),
+     State('url', 'hash'),
+     State('table-subset-target', 'active_cell'),
+    State('table-subset-target', 'data')]
+)
+def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, search, hash_guide, active_cel, data):
+    if active_cel is None:
+        raise PreventUpdate
+    job_id = search.split('=')[-1]
+    job_directory = 'Results/' + job_id + '/'
+    with open('Results/' + job_id + '/Params.txt') as p:
+        all_params = p.read()
+        genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+        ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+        
+    genome_type = 'ref'
+    if '+' in genome_type_f:
+        genome_type = 'var'
+    if 'True' in ref_comp:
+        genome_type = 'both'
+    if search is None:
+        raise PreventUpdate
+    filtering_expressions = filter.split(' && ')
+     
+    df = global_store_subset(job_id, data[active_cel['row']]['Bulge Type'], str(data[active_cel['row']]['Bulge Size']), str(data[active_cel['row']]['Mismatches']), data[active_cel['row']]['crRNA'])
+    
+    if genome_type == 'ref':
+        df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+        7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Top Subcluster'}, inplace = True)
+    elif genome_type == 'var':
+        df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+    else:    
+        df.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
+    df.drop(df[(~( df['Cluster Position'] == int(data[active_cel['row']]['Cluster Position']))) | (~( df['Chromosome'] == data[active_cel['row']]['Chromosome']))].index, inplace = True)
+    # print(df)
+    dff = df
+    
+    for filter_part in filtering_expressions:
+        col_name, operator, filter_value = split_filter_part(filter_part)
+
+        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+            # these operators match pandas series operator method names
+            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
+        elif operator == 'contains':
+            dff = dff.loc[dff[col_name].str.contains(filter_value)]
+        elif operator == 'datestartswith':
+            # this is a simplification of the front-end filtering logic,
+            # only works with complete fields in standard format
+            dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+
+    if len(sort_by):
+        dff = dff.sort_values(
+            [col['column_id'] for col in sort_by],
+            ascending=[
+                col['direction'] == 'asc'
+                for col in sort_by
+            ],
+            inplace=False
+        )
+   
+
+    cells_style = [
+                        {
+                        'if': {
+                                'filter_query': '{Variant unique} eq y',
+                                #'filter_query': '{Direction} eq +', 
+                                #'column_id' :'Bulge Type'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                            
+                        },
+                        # {#TODO colora altro colore quelle con pam creation
+                        # 'if': {
+                        #         'filter_query': '{Chromosome} eq "chr2"',
+                        #         #'filter_query': '{Direction} eq +', 
+                        #         #'column_id' :'Bulge Type'
+                        #     },
+                        #     #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                        #     'background-color':'rgba(255, 69, 0,0.15)'#'rgb(255, 102, 102)'
+                            
+                        # },
+                        # {
+                        #     'if': {
+                        #             'filter_query': '{Variant unique} eq n',           
+                        #             'column_id' :'Bulge Type'
+                        #         },
+                        #         'border-left': '5px solid rgba(26, 26, 255, 0.9)',
+
+                        # }
+                        
+                ]
+    
+    #Calculate sample count
+    
+    data_to_send=dff.iloc[
+        page_current*page_size:(page_current+ 1)*page_size
+    ].to_dict('records')
+    if genome_type != 'ref':
+        for row in data_to_send:
+            summarized_sample_cell = dict()
+            for s in row['Samples'].split(','):
+                if s == 'n':
+                    break
+                try:
+                    summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] += 1
+                except:
+                    summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] = 1
+            if summarized_sample_cell:
+                row['Samples Summary'] = ', '.join([str(summarized_sample_cell[sp]) + ' ' + sp for sp in summarized_sample_cell])
+            else:
+                row['Samples Summary'] = 'n'
+    return data_to_send, cells_style
 
 @cache.memoize()
 def global_store_general(path_file_to_load):
@@ -3037,6 +3190,7 @@ def samplePage(job_id, hash):
                             
                         }
                 ],
+                export_format = 'csv',
                 css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
                 # css= [{ 'selector': 'td.row--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.row--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
                 
@@ -3076,8 +3230,11 @@ def update_table_sample(page_current, page_size, sort_by, filter, search, hash):
     dff = global_store_general('Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt')
     if dff is None:
         raise PreventUpdate
-    #TODO inserire colonne corrette in base al tipo di ricerca
-    dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+    if genome_type == 'var':
+        dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+    else:
+        dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
     dff.drop(dff.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
     for filter_part in filtering_expressions:
@@ -3153,7 +3310,7 @@ def clusterPage(job_id, hash):
         file_to_grep = '.targets.cluster.txt'
     elif genome_type == 'var':
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'Samples Summary']#'Samples', #'Correct Column'] 
-        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text']
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
         # file_to_grep = 'targets.cluster.minmaxdisr'
         file_to_grep = '.final.txt'
     else:
@@ -3247,8 +3404,14 @@ def update_table_cluster(page_current, page_size, sort_by, filter, search, hash)
     dff = global_store_general('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +  '.txt')
     if dff is None:
         raise PreventUpdate
-    #TODO inserire colonne corrette in base al tipo di ricerca
-    dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+    if genome_type == 'ref':
+        dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+        7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Top Subcluster'}, inplace = True)
+    elif genome_type == 'var':
+        dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+    else:
+        dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
     dff.drop(dff.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
     for filter_part in filtering_expressions:
@@ -3279,19 +3442,20 @@ def update_table_cluster(page_current, page_size, sort_by, filter, search, hash)
     data_to_send=dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
     ].to_dict('records')
-    for row in data_to_send:
-        summarized_sample_cell = dict()
-        for s in row['Samples'].split(','):
-            if s == 'n':
-                break
-            try:
-                summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] += 1
-            except:
-                summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] = 1
-        if summarized_sample_cell:
-            row['Samples Summary'] = ', '.join([str(summarized_sample_cell[sp]) + ' ' + sp for sp in summarized_sample_cell])
-        else:
-            row['Samples Summary'] = 'n'
+    if genome_type != 'ref':
+        for row in data_to_send:
+            summarized_sample_cell = dict()
+            for s in row['Samples'].split(','):
+                if s == 'n':
+                    break
+                try:
+                    summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] += 1
+                except:
+                    summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] = 1
+            if summarized_sample_cell:
+                row['Samples Summary'] = ', '.join([str(summarized_sample_cell[sp]) + ' ' + sp for sp in summarized_sample_cell])
+            else:
+                row['Samples Summary'] = 'n'
     return data_to_send
 
 if __name__ == '__main__':

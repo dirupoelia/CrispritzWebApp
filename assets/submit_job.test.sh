@@ -21,6 +21,7 @@
 #Note that if genome_selected is not enriched, the python exe will force $15 as false
 
 cd $1
+rm queue.txt
 jobid=$(basename $1)
 echo 'Job\tStart\t'$(date)> log.txt
 used_genome_dir=$2                 
