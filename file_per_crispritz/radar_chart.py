@@ -381,25 +381,27 @@ if guide != 'no':       #DO RADAR CHART
                     next(inGuidesProfileExtended)
                     # line=inGuidesProfileExtended.readline()
                     for ciao in range(0, uppermm+1):
-                        line = inGuidesProfileExtended.readline()
+                        line = inGuidesProfileExtended.readline().strip()
                         count = 0
                         x = line.split('\t')
-                        guidesExtendedProfile.append((x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9],
-                                                    x[10], x[11], x[12], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20]))
+                        guidesExtendedProfile.append(tuple(x[1:-1]))    #read X Mismatch line, exclude last column
+                        # guidesExtendedProfile.append((x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9],
+                        #                             x[10], x[11], x[12], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20]))
                         for line in inGuidesProfileExtended:
                             if count < 6:
                                 line = line.rstrip()
                                 x = line.split('\t')
                                 #y = str(x[20]).split('\n')
-                                guidesExtendedProfile.append((x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9],
-                                                            x[10], x[11], x[12], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20]))
+                                guidesExtendedProfile.append(tuple(x[1:]))
+                                # guidesExtendedProfile.append((x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9],
+                                #                             x[10], x[11], x[12], x[13], x[14], x[15], x[16], x[17], x[18], x[19], x[20]))
                                 count += 1
                             else:
                                 break
                     break
         arrayguidesExtendedProfile = np.array(guidesExtendedProfile, dtype=int)
-        
-        arrayguidesExtendedProfile.shape = (7*((uppermm-0)+1), 20)
+        shape_size = len(guidesExtendedProfile[0])
+        arrayguidesExtendedProfile.shape = (7*((uppermm-0)+1), shape_size)
 
         #Plot motif logo
         datacount = arrayguidesExtendedProfile[mm*7] / \
@@ -408,7 +410,8 @@ if guide != 'no':       #DO RADAR CHART
         data = np.around(data, decimals=1)
         data.shape = (1, len(datacount))
 
-        string = guide[0:20]
+        # string = guide[0:20]
+        string = guide.replace('N','')
         strArray = np.array([list(string)])
 
         A = arrayguidesExtendedProfile[mm*7+1] / \
@@ -461,42 +464,107 @@ if guide != 'no':       #DO RADAR CHART
                 "_"+str(mm) + "mm" + "." + file_extension, format=file_extension)
 
 elif radarchart_sample:   #Radarchart for sample
-    #summary_two contains counting of total, change variable name to summary_total
-    summary_total = summary_two.copy()
-    #Extract counting for total
-    summary_two = []
-    with open(annotation_var, 'r') as ann_var:
-        for line in ann_var:
-            if sample_name in line:
-                found = True
-                continue
-            if found:
-                if 'Summary_' in line:
-                    break
-                summary_two.append(line.strip())
+    if gecko_dir != 'no':
+        summary_two = []
+        with open(annotation_var, 'r') as ann_var:
+            for line in ann_var:
+                if sample_name in line:
+                    found = True
+                    continue
+                if found:
+                    if 'Summary_' in line:
+                        break
+                    summary_two.append(line.strip())
         
-    #Calculate distances
-    # print('num target: targets', summary_total[0].split('\t')[mm + 1])
-    if int(summary_total[0].split('\t')[mm + 1]) > 0:
-        diff_dict= {'targets':[round(1 - round(int(summary_two[0].split('\t')[mm + 1]) / int(summary_total[0].split('\t')[mm + 1]),2),2), summary_two[0].split('\t')[mm + 1]]}
+        annotations = ['CTCF', 'DNAse', 'Exons', 'Introns', 'Promoters']    #NOTE lexicograph order (same as summary_two)
+        for ann_pos, annotation in enumerate(annotations):
+            target_value = int(summary_two[ann_pos + 1].split('\t')[mm + 1])     #first +1 due to targets elelment , second +1 due to name of annotation in splitted list
+            #Load file
+            with open(gecko_dir + '/gecko.' + annotation + '.Count.txt', 'r') as ge:
+                a_l = []
+                for line in ge:
+                    line = line.strip().split('\t')
+                    a_l.append([line[0], int(line[mm + 1])])        #+1 due to name of annotation in line.split
+            
+            a_l.sort(key=lambda x: int(x[1]))
+            #Calculate min difference
+            min_diff = sys.maxsize
+            pos_in_gecko = SIZE_GECKO
+            cluster_pos = SIZE_GECKO
+            for pos, i in enumerate(a_l):
+                current_diff = abs(i[1] - target_value)
+                if current_diff > min_diff:
+                    pos_in_gecko = cluster_pos #pos - 1
+                    break
+                elif current_diff < min_diff:
+                    cluster_pos = pos
+
+                min_diff = current_diff
+            
+            table_dict[annotation.lower()] = [round(pos_in_gecko / SIZE_GECKO, 2), target_value]
+            
+            #Calculate position on Total targets value
+            a_l = []
+            with open(gecko_dir + '/gecko.reference.profile.xls') as gecko_pro:
+                header = gecko_pro.readline().strip().split('\t')
+                column_mm = header.index(str(mm) +  'MM')
+                for line in gecko_pro:
+                    line = line.strip().split('\t')
+                    a_l.append([line[0], int(line[column_mm])])
+            a_l.sort(key=lambda x: int(x[1]))
+            #Calculate min difference
+            target_value = int(summary_two[0].split('\t')[mm + 1])
+            min_diff = sys.maxsize
+            pos_in_gecko = SIZE_GECKO
+            cluster_pos = SIZE_GECKO
+            for pos, i in enumerate(a_l):
+                current_diff = abs(i[1] - target_value)
+                if current_diff > min_diff:
+                    pos_in_gecko = cluster_pos#pos - 1
+                    break
+                elif current_diff < min_diff:
+                    cluster_pos = pos
+                min_diff = current_diff
+
+            table_dict['targets'] = [round(pos_in_gecko / SIZE_GECKO,2), target_value]
     else:
-        diff_dict= {'targets': [0.0,summary_two[0].split('\t')[mm + 1] ]}
-    for pos, annotation in enumerate(summary_two[1:], 1):
-        annotation = annotation.split('\t')
-        # print('numtarget:', annotation,summary_total[pos].split('\t')[mm + 1] )
-        if int(summary_total[pos].split('\t')[mm + 1]) > 0:
-            diff_dict[annotation[0]]=[round(1 - round(int(annotation[mm + 1]) / int(summary_total[pos].split('\t')[mm + 1]),2),2), annotation[mm + 1]]
+
+        #summary_two contains counting of total, change variable name to summary_total
+        summary_total = summary_two.copy()
+        #Extract counting for total
+        summary_two = []
+        with open(annotation_var, 'r') as ann_var:
+            for line in ann_var:
+                if sample_name in line:
+                    found = True
+                    continue
+                if found:
+                    if 'Summary_' in line:
+                        break
+                    summary_two.append(line.strip())
+        #Calculate distances
+        # print('num target: targets', summary_total[0].split('\t')[mm + 1])
+        if int(summary_total[0].split('\t')[mm + 1]) > 0:
+            table_dict= {'targets':[round(1 - round(int(summary_two[0].split('\t')[mm + 1]) / int(summary_total[0].split('\t')[mm + 1]),2),2), summary_two[0].split('\t')[mm + 1]]}
         else:
-            diff_dict[annotation[0]] = [0.0, annotation[mm + 1]]
+            table_dict= {'targets': [0.0,summary_two[0].split('\t')[mm + 1] ]}
+        for pos, annotation in enumerate(summary_two[1:], 1):
+            annotation = annotation.split('\t')
+            # print('numtarget:', annotation,summary_total[pos].split('\t')[mm + 1] )
+            if int(summary_total[pos].split('\t')[mm + 1]) > 0:
+                table_dict[annotation[0]]=[round(1 - round(int(annotation[mm + 1]) / int(summary_total[pos].split('\t')[mm + 1]),2),2), annotation[mm + 1]]
+            else:
+                table_dict[annotation[0]] = [0.0, annotation[mm + 1]]
+    
     #Create data for radarchart
-    data_for_df = {'group': ['A'], 'General':diff_dict['targets'][0]}
-    data_for_table_df = [diff_dict['targets']]
+    data_for_df = {'group': ['A'], 'General':table_dict['targets'][0]}
+    data_for_table_df = [table_dict['targets']]
     rows = ['General']
-    for elem in diff_dict:
+    for elem in table_dict:
         if elem == 'targets':
             continue
-        data_for_df[elem] = diff_dict[elem][0]
-        data_for_table_df.append(diff_dict[elem])
+        data_for_df[elem] = table_dict[elem][0]
+        data_for_table_df.append(table_dict[elem])
         rows.append(elem)
     
     df = pd.DataFrame(data_for_df)
@@ -515,7 +583,7 @@ elif radarchart_sample:   #Radarchart for sample
     angles += angles[:1]
 
     # Initialise the spider plot
-    ax = plt.subplot(2, 2, 1, polar=True)
+    ax = plt.subplot(1, 2, 1, polar=True)
     # ax=plt.subplot(1, 1, 1, polar=True)
     # plt.title('RADAR CHART')
 
@@ -548,10 +616,10 @@ elif radarchart_sample:   #Radarchart for sample
     # Fill area
     ax.fill(angles, values, 'b', alpha=0.1)
 
-    columns = ('Dissimilarity', '# Targets')
+    columns = ('Position', '# Targets')
     
     #Create table plot
-    plt.subplot(2, 2, 2)
+    plt.subplot(1, 2, 2)
     table = plt.table(cellText=data_for_table_df, rowLabels=rows,colLabels=columns, loc='center', colWidths=[0.35 for x in columns])
     table.auto_set_font_size(False)
     table.set_fontsize(18)
@@ -564,8 +632,8 @@ elif radarchart_sample:   #Radarchart for sample
                 horizontalalignment='center', color='black', size=25)
 
     plt.tight_layout()
-    plt.subplots_adjust(top=0.90, bottom=0.07, left=0.05,
-                        right=0.99, wspace=0.12)
+    plt.subplots_adjust(top=0.90, bottom=0.07, left=0.10,
+                        right=0.99, wspace=0.50)
 
     plt.savefig("summary_single_guide_" + str(sample_name) +
                 "_"+ guide_name_for_sample + '_' + str(mm) + "mm" + "." + file_extension, format=file_extension)

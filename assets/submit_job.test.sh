@@ -74,12 +74,12 @@ if [ ${19} = 'ref' ]; then
     echo 'End extraction top1 ref'
 
     echo 'Start Scoring'
-    echo 'Calculating scores... Step [2/3]' >>  output.txt
+    echo 'Calculating Scores... Step [2/3]' >>  output.txt
     python3 ../../PostProcess/scores_guide_table.py $jobid.top_1.txt ../../$used_genome_dir pam.txt guides.txt
     echo 'End Scoring'
 
     echo 'Start summary by pos-guide'
-    echo 'Creating summaries... Step [3/3]' >>  output.txt
+    echo 'Creating Summaries... Step [3/3]' >>  output.txt
     type_post='No'      
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.top_1.txt $7 $8 $9 guides.txt $jobid $type_post
     echo 'End summary by pos-guide'
@@ -135,7 +135,7 @@ elif [ ${19} = 'var' ]; then
     echo 'End extraction top1 var'
 
     echo 'Start Scoring'
-    echo 'Calculating scores... Step [2/6]' >>  output.txt
+    echo 'Calculating Scores... Step [2/6]' >>  output.txt
     python3 ../../PostProcess/scores_guide_table.py $jobid.top_1.txt ../../$used_genome_dir pam.txt guides.txt
     echo 'End Scoring'
 
@@ -143,13 +143,13 @@ elif [ ${19} = 'var' ]; then
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
 
     echo 'Start pam analysis'
-    echo 'PAM analysis... Step [3/6]' >>  output.txt
+    echo 'PAM Analysis... Step [3/6]' >>  output.txt
     python3 ../../PostProcess/pam_analysis.py $jobid.targets.cluster.txt pam.txt ${19}
     echo 'End pam analysis'
     
     # Extract top 1
     echo 'Start extract top1'
-    echo 'Extracting samples... Step [4/6]' >>  output.txt
+    echo 'Extracting Samples... Step [4/6]' >>  output.txt
     python3 ../../PostProcess/extract_top.py $jobid.targets.cluster.minmaxdisr.txt $jobid # > $jobid.top_1.txt
     echo 'End extract top1'
     # Expand top 1
@@ -165,13 +165,13 @@ elif [ ${19} = 'var' ]; then
     
     # Summary by samples table
     echo 'Start summary by samples'
-    echo 'Creating summaries... Step [5/6]' >>  output.txt
+    echo 'Creating Summaries... Step [5/6]' >>  output.txt
     python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt
     echo 'End summary by samples'
 
     #Rimettere i samples nel file di cluster (solo nel top1)
     echo 'Start creating final file'
-    echo 'Preparing files... Step [6/6]' >>  output.txt
+    echo 'Preparing Files... Step [6/6]' >>  output.txt
     python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.targets.cluster.minmaxdisr.txt $jobid.top_1.samples.txt $jobid # > $jobid.final.txt
     echo 'End creating final file'
     echo 'PostProcess\tDone\t'$(date) >> log.txt
@@ -217,7 +217,7 @@ else    #Type search = both
     #Estract common, semicommon and unique
     echo 'Start creation semicommon, common, unique'
     echo 'PostProcess_output' > output.txt
-    echo 'Processing search results... Step [1/7]' >>  output.txt
+    echo 'Processing Search Results... Step [1/7]' >>  output.txt
     ../../PostProcess/./extraction.sh ref/$jobid'_ref.targets.txt' $jobid.targets.txt $jobid
     echo 'End creation semicommon, common, unique'
 
@@ -242,7 +242,7 @@ else    #Type search = both
 
     #Pam analysis
     echo 'Start pam analysis'
-    echo 'PAM analysis... Step [3/7]' >>  output.txt
+    echo 'PAM Analysis... Step [3/7]' >>  output.txt
     python3 ../../PostProcess/pam_analysis.py $jobid.semi_common_targets.cluster.txt pam.txt ${19}  # > $jobid.semi_common_targets.cluster.minmaxdisr.txt
     echo 'End pam analysis'
     echo 'Start pam creation'
@@ -252,7 +252,7 @@ else    #Type search = both
 
     #Cluster of jobid.total.txt and extraction of top 1
     echo 'Start cluster of total.txt'
-    echo 'Calculating scores... Step [4/7]' >>  output.txt
+    echo 'Calculating Scores... Step [4/7]' >>  output.txt
     python3 ../../PostProcess/cluster.dict.py $jobid.total.txt 'no' 'True' 'True' 'total' guides.txt
     echo 'End cluster of total.txt'
     echo 'Start extract top1 total.txt'
@@ -271,7 +271,7 @@ else    #Type search = both
 
     #Top1 expansion
     echo 'Start sort'
-    echo 'Extracting samples... Step [5/7]' >>  output.txt
+    echo 'Extracting Samples... Step [5/7]' >>  output.txt
     sort -k4,4 $jobid.top_1.txt > $jobid.top_1.sort.txt && mv $jobid.top_1.sort.txt $jobid.top_1.txt 
     echo 'End sort'
     echo 'Start calc samples'
@@ -283,15 +283,15 @@ else    #Type search = both
     
     #Summary samples
     echo 'Start summary by samples'
-    echo 'Creating summaries... Step [6/7]' >>  output.txt
+    echo 'Creating Summaries... Step [6/7]' >>  output.txt
     python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt 
     echo 'End summary by samples'
 
     #Rimettere i samples nel file di cluster (solo nel top1)
     echo 'Start creating final file'
-    python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.total.txt $jobid.top_1.samples.txt $jobid  # > $jobid.final.txt
+    python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.total.cluster.txt $jobid.top_1.samples.txt $jobid  # > $jobid.final.txt
     echo 'End creating final file'
-    echo 'Preparing files... Step [7/7]' >>  output.txt
+    echo 'Preparing Files... Step [7/7]' >>  output.txt
     echo 'PostProcess\tDone\t'$(date) >> log.txt
 
     #Annotation of top1 with samples

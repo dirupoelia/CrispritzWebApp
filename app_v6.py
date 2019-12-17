@@ -28,18 +28,22 @@ import dash_bootstrap_components as dbc
 import collections                          #For check if guides are the same in two results
 from datetime import datetime               #For time when job submitted
 from seq_script import extract_seq, convert_pam
+from additional_pages import help_page
+from additional_pages import contacts_page
 import re                                   #For sort chr filter values
 import concurrent                           #For workers and queue
+import math
+
 #Warning symbol \u26A0
 
-exeggutor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
+exeggutor = concurrent.futures.ProcessPoolExecutor(max_workers=2)
 
 PAGE_SIZE = 50                    #number of entries in each page of the table in view report
-URL = 'http://crispritz.di.univr.it:8080'
+URL = 'http://crispritz.di.univr.it'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-app.title = 'PersonalCRISPRitz'
+app.title = 'CRISPRme'
 app.config['suppress_callback_exceptions'] = True       #necessary if update element in a callback generated in another callback
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
@@ -107,34 +111,34 @@ for pam_name in onlyfile:
 
 
 #Available mismatches and bulges
-av_mismatches = [{'label': i, 'value': i} for i in range(0, 8)]
-av_bulges = [{'label': i, 'value': i} for i in range(0, 6)]
+av_mismatches = [{'label': i, 'value': i} for i in range(0, 7)]
+av_bulges = [{'label': i, 'value': i} for i in range(0, 3)]
 av_guide_sequence = [{'label': i, 'value': i} for i in range(15, 26)]
 search_bar = dbc.Row(
     [
         #dbc.Col(dbc.Input(type="search", placeholder="Search")),
         dbc.Col(dbc.NavLink('HOME', active = True, href = URL, className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
-        dbc.Col(dbc.NavLink('ABOUT', active = True, href = URL + '/about', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
-        dbc.Col(
-            dbc.DropdownMenu(
-                children=[
-                    dbc.DropdownMenuItem("Github", header=True),
-                    dbc.DropdownMenuItem("InfOmics/CRISPRitz", href='https://github.com/InfOmics/CRISPRitz'),
-                    dbc.DropdownMenuItem("Pinellolab/CRISPRitz", href='https://github.com/pinellolab/CRISPRitz'),
-                ],
-                #nav=True,
-                in_navbar=True,
-                label="Downloads",
-                style = {'width': '300px !important' } #'height': '400px !important' 
-            ),
-        ),
-        dbc.Col(dbc.NavLink('CONTACTS', active = True, href = URL, className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'}))
+        dbc.Col(dbc.NavLink('MANUAL', active = True, href = URL + '/user-guide', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
+        # dbc.Col(
+        #     dbc.DropdownMenu(
+        #         children=[
+        #             dbc.DropdownMenuItem("Github", header=True),
+        #             dbc.DropdownMenuItem("InfOmics/CRISPRitz", href='https://github.com/InfOmics/CRISPRitz'),
+        #             dbc.DropdownMenuItem("Pinellolab/CRISPRitz", href='https://github.com/pinellolab/CRISPRitz'),
+        #         ],
+        #         #nav=True,
+        #         in_navbar=True,
+        #         label="Downloads",
+        #         style = {'width': '300px !important' } #'height': '400px !important' 
+        #     ),
+        # ),
+        dbc.Col(dbc.NavLink('CONTACTS', active = True, href = URL + '/contacts', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'}))
     ],
     no_gutters=True,
     className="ml-auto flex-nowrap mt-3 mt-md-0",
     align="center",
 )
-PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"    #TODO modificare logo
+PLOTLY_LOGO = 'assets/37143442.png'#"https://images.plot.ly/logo/new-branding/plotly-logomark.png"   
 
 
 navbar = dbc.Navbar(
@@ -143,8 +147,8 @@ navbar = dbc.Navbar(
             # Use row and col to control vertical alignment of logo / brand
             dbc.Row(
                 [
-                    dbc.Col(html.Img(src=PLOTLY_LOGO, height="30px")),
-                    dbc.Col(dbc.NavbarBrand("PersonalCRISPRitz", className="ml-2", style = {'font-size': '30px'}))
+                    dbc.Col(html.Img(src=PLOTLY_LOGO, height="60px")),
+                    dbc.Col(dbc.NavbarBrand("CRISPRme", className="ml-2", style = {'font-size': '30px'}))
                 ],
                 align="center",
                 no_gutters=True,
@@ -171,15 +175,20 @@ app.layout = html.Div([
 #Main Page
 final_list = []
 final_list.extend([#html.H1('CRISPRitz Web Application'),
-    html.Div(children='''
-        CRISPRitz is a software package containing 5 different tools dedicated to perform predictive analysis and result assessement on CRISPR/Cas experiments. 
-    '''),
-    html.P()])
+    html.Div([
+        'CRISPRme  performs  predictive analysis and result assessment on population and individual specific CRISPR/Cas experiments.' +  
+        ' CRISPRme enumerates on- and off-target accounting simultaneously for  substitutions, DNA/RNA bulges and common genetic variants from the 1000 genomes project.'+
+        ' CRISPRme is based on CRISPRitz [1] a software tool for population target analyses.'  
+    + ' CRISPRme is devoted to individual specific on- and off-target analyses.'
+    ]),
+    #html.Br()
+    ])
 
 final_list.append(
     html.Div(
         [
-            html.P(['Download the offline version here: ', html.A('InfOmics/CRISPRitz', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank"), ' or ', html.A('Pinellolab/CRISPRitz', href = 'https://github.com/pinellolab/CRISPRitz', target="_blank") ])
+            # html.P(['Download the offline version here: ', html.A('InfOmics/CRISPRitz', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank"), ' or ', html.A('Pinellolab/CRISPRitz', href = 'https://github.com/pinellolab/CRISPRitz', target="_blank") ])
+            html.Br()
         ]
     )
 )
@@ -288,7 +297,7 @@ final_list.append(
                                             dcc.Dropdown(options = pam_file, clearable = False, id = 'available-pam')
                                         )
                                     ],
-                                    style = {'flex':'0 0 50%', 'margin-top': '10%'}
+                                    style = {'flex':'0 0 100%', 'margin-top': '10%'}
                                 )
                             ],
                             id = 'div-pam',
@@ -298,12 +307,12 @@ final_list.append(
                             [
                                 html.Ul(
                                     [html.Li(
-                                        [html.A('Contact us', href = URL, target="_blank"),' to request new genomes availability in the dropdown list'],
+                                        [html.A('Contact us', href = URL + '/contacts', target="_blank"),' to request new genomes availability in the dropdown list'],
                                         style = {'margin-top':'5%'}
                                     ),
-                                    html.Li(
-                                        [html.A('Download', href = 'https://github.com/InfOmics/CRISPRitz'), ' the offline version for more custom parameters']
-                                    )
+                                    # html.Li(
+                                    #     [html.A('Download', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank"), ' the offline version for more custom parameters']
+                                    # )
                                     ],
                                     style = {'list-style':'inside'}
                                 ),
@@ -412,6 +421,11 @@ final_list.append(
         id = 'steps-background'
     )
 )
+final_list.append(html.Br())
+final_list.append(html.P('[1] Cancellieri, Samuele, et al. \"Crispritz: rapid, high-throughput, and variant-aware in silico off-target site identification for crispr genome editing.\" Bioinformatics (2019).'))
+final_list.append(
+    html.P(['Download CRISPRitz here: ', html.A('InfOmics/CRISPRitz', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank"), ' or ', html.A('Pinellolab/CRISPRitz', href = 'https://github.com/pinellolab/CRISPRitz', target="_blank") ])
+)
 index_page = html.Div(final_list, style = {'margin':'1%'})
 
 #Load Page
@@ -480,6 +494,7 @@ final_list.append(
 
 final_list.append(html.P('', id = 'done'))
 
+
 final_list.append(dcc.Interval(id = 'load-page-check', interval=3*1000))
 load_page = html.Div(final_list, style = {'margin':'1%'})
 
@@ -487,7 +502,7 @@ load_page = html.Div(final_list, style = {'margin':'1%'})
 #Test bootstrap page, go to /test-page to see 
 final_list = []
 
-
+final_list.append(html.A('Download file', href = URL + '/data/Test/ALL.chr5.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf.gz', target = '_blank'))
 final_list.append(html.Div(id='test-div-for-button'))
 test_page = html.Div(final_list, style = {'margin':'1%'})
 
@@ -501,84 +516,14 @@ final_list = []
 
 test_page3 = html.Div(final_list, style = {'margin':'1%'})
 
-#ABPUT PAGE
+#ABOUT PAGE
+
+about_page =  html.Div(help_page.helpPage(), style = {'margin':'1%'})
+#Contacts page
 final_list = []
-final_list.append(
-     html.Div([
-        html.H3('About'),
-        html.P('CRISPritz is a suite of software tools to support the design and analysis of CRISPR/CRISPR-associated (Cas) experiments. Using efficient data structures combined with' + 
-        'parallel computation, we offer a rapid, reliable, and exhaustive search mechanism to enumerate a comprehensive' +
-        'list of putative off-target sites')])
-    
-)
+contacts_page =  html.Div(contacts_page.contactPage(), style = {'margin':'1%'})
 
-final_list.append(html.H3('Main Page'))
-final_list.append(
-    html.Div([
-    html.P(
-        'In the main page of PersonalCRISPritz, users can select a wide range of options to personalize their searches. The input phase is divided into three main steps:'
-    ),
-    html.Ol(
-        [
-            html.Li('STEP 1: Genome and PAM selection'),
-            html.Li('STEP 2: Guide insertion and threshold configuration'),
-            html.Li('STEP 3 (Advanced options): Select various comparisons')
-        ] , style = {'padding': '15px'}
-    ),
-    html.P('Starting from STEP 1 [figura], two dropdown are available for selection of:'),
-    html.Ol(
-        [
-            html.Li('Genome: here you can select a genome from the ones present, some genomes have also the variant version enriched (indicated with a \'+\' symbol) with genetic variant from the 1000genome project'),
-            html.Li('PAM: here you can select a Protospacer Adjacent Motif for a specific Cas protein.'),
-        ], style = {'padding': '15px'}
-    )
-    ])
-)
 
-final_list.append(
-    dbc.Alert('Contact us for suggesting the addition of new genomes',color = 'info', fade = False, style = {'width':'25%'})
-)
-
-final_list.append(
-    html.Div(
-        [
-            html.P('In STEP 2 [figura], select the type of input desired by selecting the \'Guides\' or \'Sequence\' label'),
-            html.Ol(
-                [
-                    html.Li('Guides: a list of crRNAs sequences, consisting in 1 or more sequences (max 1000 sequences) to search on the genome [img example]'),
-                    html.Li('Sequence: one or more genetic sequences (max 1000 characters), each sequence MUST BE separated with the header \'>name\'. The sequence can be also submitted with a ' + 
-                    'chromosome range, also provided with an header [img example]. The region will be extracted from the Genome selected in STEP 1'),
-                ], style = {'padding': '15px'}
-            ),
-            html.P('In this STEP, some constraints on the number of mimsatches and bulges can be selected:'),
-            html.Ol(
-                [
-                    html.Li('Allowed mismatches: number of tolerated mismatches in a target'),
-                    html.Li('Bulge DNA size: size of bubbles tolerated on the DNA sequence (can be consecutive(AA--AA) or interleaved(AA-A-AA)).'),
-                    html.Li('Bulge RNA size: size of bubbles tolerated on the RNA sequence (can be consecutive(AA--AA) or interleaved(AA-A-AA))'),
-                    html.Li('crRNA length: available only when a genetic sequence is given as input, represents the length of the guides (without PAM) that you want to extract from the sequence.')
-                ], style = {'padding': '15px'}
-            ),
-        ]
-    )
-)
-
-final_list.append(
-    html.Div(
-        [
-            html.P('The final step before submitting the job is the selection of various Advanced Options:'),
-            html.Ol(
-                [
-                    html.Li('Compare your results with the GeCKO v2 library: selected by default, compares the results of your guides with the results obtained in a previous search with guides from the well-known GeCKO library.'),
-                    html.Li('Compare your results with the corresponding reference genome: selected by default when an enriched genome is chosen, compares the results with the respective reference genome to evaluate differences when variant are added.'),
-                    html.Li('Notify me by email: if selected, let you insert an email to receive a notification when your job is terminated.'),
-                ], style = {'padding': '15px'}
-            ),
-        ]
-    )
-)
-final_list.append(html.H3('Result Page'))
-about_page = html.Div(final_list, style = {'margin':'1%'})
 
 ##################################################CALLBACKS##################################################
 #Test callbacks
@@ -694,7 +639,7 @@ def inExample(nI, nR):
     
     if nI > 0:
         if nI > nR:
-            return 'hg38 ref+hg38 1000genomeproject', '5\'-NGG-3\'', 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', '4', '0', '0', '20', '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
+            return 'hg38 ref+hg38 1000genomeproject', '20bp-NGG-SpCas9', 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', '4', '0', '0', '20', '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
 
 
     if nR > 0:
@@ -877,7 +822,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if genome_selected is None or genome_selected is '':
         genome_selected = 'hg19_ref'
     if pam is None or pam is '':
-        pam = '5\'-NGG-3\''
+        pam = '20bp-NGG-SpCas9'
     if text_guides is None or text_guides is '':
         text_guides = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC'
     else:
@@ -958,7 +903,11 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         for name_and_seq in text_sequence.split('>'):
             if '' == name_and_seq:
                 continue
-            name, seq = name_and_seq.strip().split('\n')    #TODO rimuovere spazi o \n interni alla sequenza, rimuovere caratteri strani
+            name = name_and_seq[:name_and_seq.find('\n')]
+            seq = name_and_seq[name_and_seq.find('\n'):]
+            seq = seq.strip().split()
+            seq = ''.join(seq)
+            # name, seq = name_and_seq.strip().split('\n')    
             if 'chr' in seq:
                 extracted_seq = extract_seq.extractSequence(name, seq, genome_selected.replace(' ', '_'))
             else:
@@ -1025,20 +974,37 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     #all_result_dirs.remove('test')
     for check_param_dir in all_result_dirs:
         if os.path.exists('Results/' + check_param_dir + '/Params.txt'):
-            if os.path.exists('Results/' + check_param_dir + '/log.txt'):
-                with open('Results/' + check_param_dir + '/log.txt') as log:
-                    if ('Job\tDone' in log.read()):
-                        if (filecmp.cmp('Results/' + check_param_dir + '/Params.txt', result_dir + '/Params.txt' )):
-                                guides1 = open('Results/' + check_param_dir + '/guides.txt').read().split('\n')
-                                guides2 = open('Results/' + job_id + '/guides.txt').read().split('\n')
-                                if (collections.Counter(guides1) == collections.Counter(guides2)):
-                                    search = False
-                                    search_index = False
-                                    subprocess.run(['cp $PWD/Results/' + check_param_dir + '/' + check_param_dir + '* ' + result_dir + '/'], shell = True)
-                                    subprocess.run(['cp $PWD/Results/' + check_param_dir + '/*.png ' + result_dir + '/'], shell = True)
-                                    subprocess.run(['rename \'s/' + check_param_dir + '/' + job_id + '/g\' ' + result_dir + '/*'], shell = True)
-                                    break           
-    
+            #if os.path.exists('Results/' + check_param_dir + '/log.txt'):
+                #with open('Results/' + check_param_dir + '/log.txt') as log:
+                    #if ('Job\tDone' in log.read()):
+            if (filecmp.cmp('Results/' + check_param_dir + '/Params.txt', result_dir + '/Params.txt' )):
+                    guides1 = open('Results/' + check_param_dir + '/guides.txt').read().split('\n')
+                    guides2 = open('Results/' + job_id + '/guides.txt').read().split('\n')
+                    if (collections.Counter(guides1) == collections.Counter(guides2)):
+                        if os.path.exists('Results/' + check_param_dir + '/log.txt'):
+                            adj_date = False
+                            with open('Results/' + check_param_dir + '/log.txt') as log:
+                                log_content = log.read().strip()
+                                if ('Job\tDone' in log_content):
+                                    adj_date = True
+                                    log_content = log_content.split('\n')
+                                    new_date = subprocess.Popen(['echo $(date)'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell = True)
+                                    out, err = new_date.communicate()
+                                    rewrite = '\n'.join(log_content[:-1]) + '\nJob\tDone\t' + out.decode('UTF-8').strip()
+                            if adj_date:
+                                with open('Results/' + check_param_dir + '/log.txt' ,'w+') as log:
+                                    log.write(rewrite)
+                            subprocess.call(['rm -r ' + 'Results/' + job_id], shell = True)
+                            return '/load','?job=' + check_param_dir
+                        else:
+                            continue
+                        # search = False
+                        # search_index = False
+                        # subprocess.run(['cp $PWD/Results/' + check_param_dir + '/' + check_param_dir + '* ' + result_dir + '/'], shell = True)
+                        # subprocess.run(['cp $PWD/Results/' + check_param_dir + '/*.png ' + result_dir + '/'], shell = True)
+                        # subprocess.run(['rename \'s/' + check_param_dir + '/' + job_id + '/g\' ' + result_dir + '/*'], shell = True)
+                        # break           
+
     #Annotation
     if (not search and not search_index):
         annotation = False      
@@ -1107,8 +1073,10 @@ def changePage( href, path, search, hash_guide):
         return test_page2, URL + '/load' + search
     if path == '/test-page3':
         return test_page3, URL + '/load' + search
-    if path == '/about':
+    if path == '/user-guide':
         return about_page, URL + '/load' + search
+    if path == '/contacts':
+        return contacts_page, URL + '/load' + search
     return index_page, ''
 
 #Check end job
@@ -1422,7 +1390,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         fl.append(html.Br())
         df = pd.read_pickle(job_directory + job_id + '.summary_by_guide.' + guide + '.txt')
         
-        df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | (df['Number of targets'] == 0)  ].index, inplace = True)
+        df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | (df['Number of Targets'] == 0)  ].index, inplace = True)
         more_info_col = []
         total_col = []
         for i in range(df.shape[0]):
@@ -1431,7 +1399,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         df[''] = more_info_col
         df['Total'] = df['Bulge Size'] + df['Mismatches']
         if genome_type == 'both':
-            df = df.sort_values(['Total', 'Targets created by SNPs'], ascending = [True, False])
+            df = df.sort_values(['Total', 'Targets Created by SNPs'], ascending = [True, False])
         else:
             df = df.sort_values('Total', ascending = True)
         del df['Total']
@@ -1447,14 +1415,14 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
             html.P('Summary table counting the number of targets found for each sample. Filter the table by selecting the Population or Superpopulation desired from the dropdowns.')
         )
         if genome_type == 'both':
-            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of targets', 'Targets in Sample', 'Total Targets in Population', 'Total targets in Super Population']
+            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of Targets', 'Targets created by SNPs', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Disruption', 'PAM Creation']
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
-            df = df.sort_values('Targets in Sample', ascending = False)
-            df.drop(['Number of targets'], axis = 1, inplace = True)
+            df = df.sort_values('Targets created by SNPs', ascending = False)
+            df.drop(['Number of Targets'], axis = 1, inplace = True)
         else:
-            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of targets', 'Total Targets in Population', 'Total targets in Super Population']
+            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of Targets', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Disruption', 'PAM Creation']
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
-            df = df.sort_values('Number of targets', ascending = False)
+            df = df.sort_values('Number of Targets', ascending = False)
         more_info_col = []
         for i in range(df.shape[0]):
             more_info_col.append('Show Targets')
@@ -1495,13 +1463,15 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                 style = {'text-align': 'center'}
             )
         )
-        fl.append(html.Div('1', id= 'div-current-page-table-samples'))
+        max_page = len(df.index)
+        max_page = math.floor(max_page / 10) + 1
+        fl.append(html.Div('1/' + str(max_page), id= 'div-current-page-table-samples'))
         return fl
     elif value == 'tab-summary-by-position':
         #Show Summary by position table
         fl.append(
-            html.P('Summary table containing all the targets found in a specific position of the genome. For each position, the best target is shown, along with his mismatch and mulge size values.' + 
-            ' The subtable on the right represents the number of targets found in that position for a particular mismatch-bulge value.')
+            html.P('Summary table containing all the targets found in a specific position of the genome. For each position, the best target is shown, along with his Mismatch and Bulge Size values.' + 
+            ' The subtable \'Targets in Cluster by Mismatch Value\' represents the number of targets found in that position for a particular Mismatch-Bulge Size pair.')
         )
 
         fl.append(
@@ -1531,7 +1501,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         
         # Colonne tabella: chr, pos, target migliore, min mm, min bulges, num target per ogni categoria di mm e bulge, show targets; ordine per total, poi mm e poi bulge
         start_time = time.time()
-        df = pd.read_csv( job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t', nrows = 100)   
+        df = pd.read_csv( job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')   
         df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
         more_info_col = []
         for i in range(df.shape[0]):
@@ -1571,8 +1541,9 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                 style = {'text-align': 'center'}
             )
         )
-
-        fl.append(html.Div('1', id= 'div-current-page-table-position'))
+        max_page = len(df.index)
+        max_page = math.floor(max_page / 10) + 1
+        fl.append(html.Div('1/' + str(max_page), id= 'div-current-page-table-position'))
         fl.append(html.Div(mms + '-' + max_bulges, id = 'div-mms-bulges-position', style = {'display':'none'}))
         return fl
     else:
@@ -1582,7 +1553,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
             samp_style = {'display':'none'}
         
         fl.append(html.Br())
-        fl.append(html.P('Select a mismatch value'))
+        
         fl_buttons = []
         for i in range (10):
             if (i <= int(mms)):
@@ -1593,6 +1564,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                 fl_buttons.append(
                     html.Button(str(i) + ' mm',id = 'btn' + str(i), style = {'display':'none'}),       
                 )
+        
         fl.append(html.Br())
 
         radar_img = 'summary_single_guide_' + guide + '_' + str(0) + 'mm.png' #TODO choose between 0 mm and max used mms
@@ -1616,111 +1588,96 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         except:
             radar_href = ''
         #TODO if genoma selezionato è hg19/38, con varianti, allora aggiungo queste pop (se per esempio seleziono mouse, devo mettere i ceppi)
-        #TODO inserire un messaggio che se la ricerca è fatta sul ref, non si possono vedere le immagini coi samples
         super_populations = [{'label':i, 'value':i} for i in population_1000gp.keys()]
         populations = []
         for k in population_1000gp.keys():
             for i in population_1000gp[k]:
                 populations.append({'label':i, 'value':i})
+        
+        # fl.append(html.P('Select Mismatch Value'))
         fl.append(
             html.Div(
-                [
-                    dbc.Row(
+                [   dbc.Row(
                         [
-                            dbc.Col([    #Guide part
-                                
-                                dbc.Row(
-                                    dbc.Col(
-                                        html.Div(fl_buttons)
+                            dbc.Col(
+                                [
+                                    html.P('Select Mismatch Value'),
+                                    dbc.Row(
+                                        html.Div(fl_buttons),
                                     )
-                                ),
-                                html.Div(
-                                    [
-
-                                        dbc.Row(html.Br()),
-                                        dbc.Row(
-                                            [
-                                                dbc.Col(
-                                                    html.A(
-                                                        html.Img(src = radar_src, id = 'barplot-img-guide', width="100%", height="auto"),
-                                                        target="_blank",
-                                                        href = radar_href
-                                                    ),
-                                                    width = 10
-                                                )
-                                            ]
-                                        ),
-                                        dbc.Row(html.Br()),
-                                        dbc.Row(
-                                            [
-                                                dbc.Col(
-                                                    html.A(
-                                                        html.Img(src = barplot_src,id = 'radar-img-guide', width="100%", height="auto"),
-                                                        target="_blank",
-                                                        href = barplot_href
-                                                    ),
-                                                    width = 10
-                                                )
-                                            ]
-                                        )
-                                        
-                                    ],
-                                    id = 'div-guide-image'
-                                )
-                            ]),
-                            dbc.Col([    #Sample part
-                                
-                                dbc.Row(
-                                    [
-                                        dbc.Col(html.Div(dcc.Dropdown(options = super_populations, id = 'dropdown-superpopulation-sample', placeholder = 'Select a Super Population', style = samp_style))),
-                                        dbc.Col(html.Div(dcc.Dropdown(options = populations, id = 'dropdown-population-sample', placeholder = 'Select a Population', style = samp_style))),
-                                        dbc.Col(html.Div(dcc.Dropdown( id = 'dropdown-sample', placeholder = 'Select a Sample', style = samp_style))),
-                                    ]   #NOTE sample presenti solo se seleziono la pop
-                                ),
-                                html.Div(
-                                    [
-                                    #     dbc.Row(html.Br()),
-                                    #     dbc.Row(
-                                    #         [
-                                    #             dbc.Col(
-                                    #                 html.A(
-                                    #                     html.Img(src = radar_src, id = 'barplot-img-sample', width="100%", height="auto"),
-                                    #                     target="_blank",
-                                    #                     href = radar_href
-                                    #                 ),
-                                    #                 width = 10
-                                    #             ),
-                                    #             dbc.Col(
-                                    #                 [
-                                    #                     html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('sample_img.png', 'rb').read()).decode())),
-                                    #                     html.P('SAmple X', id = 'sample-name-testpage3')
-                                    #                 ],
-                                    #                 align="center"
-                                    #             )
-                                    #         ],
-                                    #         no_gutters=True 
-                                    #     ),
-                                    #     dbc.Row(html.Br()),
-                                    #     dbc.Row(
-                                    #         [
-                                    #             dbc.Col(
-                                    #                 html.A(
-                                    #                     html.Img(src = barplot_src,id = 'barplot-img-pop', width="75%", height="auto"),
-                                    #                     target="_blank",
-                                    #                     href = barplot_href
-                                    #                 )
-                                    #             )
-                                    #         ]
-                                    #     )
-                                    ],
-                                    id = 'div-sample-image'
-                                )
-                            ])
+                                ]
+                            ),
+                            dbc.Col(
+                                [
+                                    html.P('Select Individual Data'),
+                                    dbc.Row([
+                                    dbc.Col(html.Div(dcc.Dropdown(options = super_populations, id = 'dropdown-superpopulation-sample', placeholder = 'Select a Super Population', style = samp_style))),
+                                    dbc.Col(html.Div(dcc.Dropdown(options = populations, id = 'dropdown-population-sample', placeholder = 'Select a Population', style = samp_style))),
+                                    dbc.Col(html.Div(dcc.Dropdown( id = 'dropdown-sample', placeholder = 'Select a Sample', style = samp_style))),
+                                    ])
+                                ]
+                            )
                         ]
-                    )
+                    ),
                 ]
             )
         )
+        fl.append(html.Hr())
+        fl.append(
+                html.Div(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col([    #Guide part
+                                    html.Div(
+                                        [
+                                    
+                                            dbc.Row(html.Br()),
+                                            dbc.Row(
+                                                [
+                                                    dbc.Col(
+                                                        html.A(
+                                                            html.Img(src = radar_src, id = 'barplot-img-guide', width="100%", height="auto"),
+                                                            target="_blank",
+                                                            href = radar_href
+                                                        ),
+                                                        width = 10
+                                                    )
+                                                ]
+                                            ),
+                                            dbc.Row(html.Br()),
+                                            dbc.Row(
+                                                [
+                                                    dbc.Col(
+                                                        html.A(
+                                                            html.Img(src = barplot_src,id = 'radar-img-guide', width="100%", height="auto"),
+                                                            target="_blank",
+                                                            href = barplot_href
+                                                        ),
+                                                        width = 10
+                                                    )
+                                                ]
+                                            )
+                                            
+                                        ],
+                                        id = 'div-guide-image'
+                                    )
+                                ]),
+                                dbc.Col([    #Sample part
+                                    html.Div(
+                                        [
+                                        
+                                        ],
+                                        id = 'div-sample-image'
+                                    )
+                                ])
+                            ]
+                        )
+                    ]
+                
+                )
+            )
+            
         
         fl.append(html.Br())
         fl.append(html.Br())
@@ -1763,7 +1720,13 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
     # get guide with sel_cel and all_data
     guide_images = []
     sample_images = []
-    
+    with open('Results/' + job_id + '/Params.txt') as p:
+        all_params = p.read()
+        gecko_comp = (next(s for s in all_params.split('\n') if 'Gecko' in s)).split('\t')[-1]
+
+    gecko_string = ''
+    if gecko_comp == 'True':
+        gecko_string = '-gecko'
     if not n0:
         n0 = 0
     if not n1:
@@ -1869,7 +1832,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
         )
     ])
     class_images = [(sample, 'Samples'), (population, 'Population'), (superpopulation, 'Superpopulation')]
-    print('qui')
+    
     for c in class_images:
         if c[0]:
             try:
@@ -1878,7 +1841,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
                 #create image from annotation file of samples
                 subprocess.call(['cd '+job_directory +';'+
                 ' crispritz.py generate-report ' + guide + ' -mm ' + str(mm_show) + ' -annotation ' + job_id + '.sample_annotation.' + guide +
-                '.' + c[1].lower() + '.txt -ws -sample ' + c[0]], shell = True)
+                '.' + c[1].lower() + '.txt '+ gecko_string +' -ws -sample ' + c[0]], shell = True)
                 
                 copy_img = subprocess.Popen(['cp ' + job_directory + 'summary_single_guide_' + c[0] +'_' + guide + '_' + str(mm_show) + 'mm.png assets/Img/' + job_id], shell = True)
                 copy_img.wait() #BUG se metto il copia link, mi si ricarica la pagina, forse il problema non c'è se uso gnicorn
@@ -1914,7 +1877,7 @@ def generate_table(dataframe, id_table, guide='', job_id='', max_rows=2600):
 
     return html.Table(
         # Header
-        [html.Tr([html.Th(col) if col != 'Targets created by SNPs' else html.Th(html.Abbr(col, title = 'Counting of targets that are generated by the insertion of a IUPAC nucleotide of a sample', 
+        [html.Tr([html.Th(col) if col != 'Targets Created by SNPs' else html.Th(html.Abbr(col, title = 'Counting of targets that are generated by the insertion of a IUPAC nucleotide of a sample', 
         style = {'text-decoration':'underline'})) for col in dataframe.columns]) ] +
         # Body
         [html.Tr([
@@ -1931,7 +1894,8 @@ def generate_table_samples(dataframe, id_table, page ,guide='', job_id='', max_r
     rows_remaining = len(dataframe) - (page - 1) * max_rows
     return html.Table(
         # Header
-        [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
+        [html.Tr([html.Th(col) if col != 'Targets Created by SNPs'  else html.Th(html.Abbr(col, title = 'Counting of targets that are generated by the insertion of a IUPAC nucleotide of a sample',
+        style = {'text-decoration':'underline'})) for col in dataframe.columns]) ] +   
         # Body
         [html.Tr([
             html.Td(html.A(dataframe.iloc[i + (page - 1)*max_rows][col],  href = 'result?job=' + job_id + '#' + guide +'-Sample-' + dataframe.iloc[i]['Sample'] , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i + (page - 1)*max_rows][col]) for col in dataframe.columns
@@ -1966,7 +1930,7 @@ def generate_table_position(dataframe, id_table, page, mms, bulges, guide = '', 
         html.Th('Min Mismatch', rowSpan = '2', style = {'vertical-align':'middle', 'text-align':'center'}),
         html.Th('Min Bulge', rowSpan = '2', style = {'vertical-align':'middle', 'text-align':'center'}),
         html.Th('Bulge', rowSpan = '2', style = {'vertical-align':'middle', 'text-align':'center'}),
-        html.Th('Targets in cluster by mismatch value', colSpan = str(mms +1), style = {'vertical-align':'middle', 'text-align':'center'}),
+        html.Th('Targets in Cluster by Mismatch Value', colSpan = str(mms +1), style = {'vertical-align':'middle', 'text-align':'center'}),
         html.Th('', rowSpan = '2'),
         ])
     ]
@@ -2069,6 +2033,7 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
         sup_pop = None
     if pop == 'None':
         pop = None
+    current_page = current_page.split('/')[0]
     current_page = int(current_page)
     btn_sample_section = []
     btn_sample_section.append(n)
@@ -2089,38 +2054,42 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
 
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     if genome_type == 'both':
-        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of targets', 'Targets in Sample', 'Total Targets in Population', 'Total targets in Super Population']
+        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of Targets', 'Targets Created by SNPs', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Disruption', 'PAM Creation']
     else:
-        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of targets', 'Total Targets in Population', 'Total targets in Super Population']
+        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of Targets', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Disruption', 'PAM Creation']
     if max(btn_sample_section) == n:              #Last button pressed is filtering, return the first page of the filtered table
         if genome_type == 'both':
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
-            df = df.sort_values('Targets in Sample', ascending = False)
-            df.drop(['Number of targets'], axis = 1, inplace = True)
+            df = df.sort_values('Targets Created by SNPs', ascending = False)
+            df.drop(['Number of Targets'], axis = 1, inplace = True)
         else:
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
-            df = df.sort_values('Number of targets', ascending = False)
+            df = df.sort_values('Number of Targets', ascending = False)
         more_info_col = []
         for i in range(df.shape[0]):
             more_info_col.append('Show Targets')
         df[''] = more_info_col
-        if (sup_pop is None or sup_pop is '') and (pop is None or pop is ''):   #No filter value selected   #TODO implementare che se cancello i filtri ritorno i valori originali
-            return generate_table_samples(df, 'table-samples', 1, guide, job_id ), 1
+        if (sup_pop is None or sup_pop is '') and (pop is None or pop is ''):   #No filter value selected
+            max_page = len(df.index)
+            max_page = math.floor(max_page / 10) + 1
+            return generate_table_samples(df, 'table-samples', 1, guide, job_id ), '1/' + str(max_page)
         if pop is None or pop is '':
             df.drop(df[(~(df['Population'].isin(population_1000gp[sup_pop])))].index , inplace = True)
         else:
             df.drop(df[(df['Population'] != pop)].index , inplace = True)
-        return generate_table_samples(df, 'table-samples', 1, guide, job_id ), 1
+        max_page = len(df.index)
+        max_page = math.floor(max_page / 10) + 1
+        return generate_table_samples(df, 'table-samples', 1, guide, job_id ), '1/' + str(max_page)
     else:
         if max(btn_sample_section) == nNext:
             current_page = current_page + 1
             if genome_type == 'both':
                 df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
-                df = df.sort_values('Targets in Sample', ascending = False)
-                df.drop(['Number of targets'], axis = 1, inplace = True)
+                df = df.sort_values('Targets Created by SNPs', ascending = False)
+                df.drop(['Number of Targets'], axis = 1, inplace = True)
             else:
                 df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
-                df = df.sort_values('Number of targets', ascending = False)
+                df = df.sort_values('Number of Targets', ascending = False)
             more_info_col = []
             for i in range(df.shape[0]):
                 more_info_col.append('Show Targets')
@@ -2136,7 +2105,9 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
                 current_page = current_page -1
                 if current_page < 1:
                     current_page = 1
-            return generate_table_samples(df, 'table-samples', current_page, guide, job_id ), current_page
+            max_page = len(df.index)
+            max_page = math.floor(max_page / 10) + 1
+            return generate_table_samples(df, 'table-samples', current_page, guide, job_id ), str(current_page) + '/' + str(max_page)
         
         else:   #Go to previous page
             current_page = current_page - 1
@@ -2144,11 +2115,11 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
                 current_page = 1
             if genome_type == 'both':
                 df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
-                df = df.sort_values('Targets in Sample', ascending = False)
-                df.drop(['Number of targets'], axis = 1, inplace = True)
+                df = df.sort_values('Targets Created by SNPs', ascending = False)
+                df.drop(['Number of Targets'], axis = 1, inplace = True)
             else:
                 df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
-                df = df.sort_values('Number of targets', ascending = False)
+                df = df.sort_values('Number of Targets', ascending = False)
             more_info_col = []
             for i in range(df.shape[0]):
                 more_info_col.append('Show Targets')
@@ -2158,7 +2129,9 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
                     df.drop(df[(~(df['Population'].isin(population_1000gp[sup_pop])))].index , inplace = True)
                 else:
                     df.drop(df[(df['Population'] != pop)].index , inplace = True)
-            return generate_table_samples(df, 'table-samples', current_page, guide, job_id ), current_page
+            max_page = len(df.index)
+            max_page = math.floor(max_page / 10) + 1
+            return generate_table_samples(df, 'table-samples', current_page, guide, job_id ), str(current_page) + '/' + str(max_page)
     raise PreventUpdate
 
 #Callback to update the hidden div filter position
@@ -2217,6 +2190,7 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
     if pos_end == 'None':
         pos_end = None
     
+    current_page = current_page.split('/')[0]
     current_page = int(current_page)
     mms = int(mms_bulge.split('-')[0])
     max_bulges = int(mms_bulge.split('-')[1])
@@ -2243,12 +2217,16 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
             more_info_col.append('Show Targets')
         df[''] = more_info_col
         if chr is None or chr is '':
-            return generate_table_position(df, 'table-position', 1, mms, max_bulges,guide, job_id ), 1
+            max_page = len(df.index)
+            max_page = math.floor(max_page / 10) + 1
+            return generate_table_position(df, 'table-position', 1, mms, max_bulges,guide, job_id ), '1/' + str(max_page)
         if pos_end is None:
             df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) )].index , inplace = True)
         else:
             df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) | (df['Position'] > int(pos_end)))].index , inplace = True)
-        return generate_table_position(df, 'table-position', 1, mms, max_bulges,guide, job_id ), 1
+        max_page = len(df.index)
+        max_page = math.floor(max_page / 10) + 1
+        return generate_table_position(df, 'table-position', 1, mms, max_bulges,guide, job_id ), '1/'+ str(max_page)
     else:
         
         if max(btn_position_section) == nNext:
@@ -2263,7 +2241,7 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
                         pos_end = None
                 df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')  
             else:
-                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t', nrows = current_page * 10)   
+                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')#, nrows = current_page * 10)   
             df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
             more_info_col = []
             for i in range(df.shape[0]):
@@ -2278,7 +2256,9 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
                 current_page = current_page -1
                 if current_page < 1:
                     current_page = 1
-            return generate_table_position(df, 'table-position', current_page, mms, max_bulges,guide, job_id ), current_page
+            max_page = len(df.index)
+            max_page = math.floor(max_page / 10) + 1
+            return generate_table_position(df, 'table-position', current_page, mms, max_bulges,guide, job_id ), str(current_page) + '/' + str(max_page)
         else:                       #Go to previous page
             current_page = current_page - 1
             if current_page < 1:
@@ -2294,7 +2274,7 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
                         pos_end = None
                 df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')  
             else:
-                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t', nrows = current_page * 10)   
+                df = pd.read_csv(job_directory + job_id + '.summary_by_position.' + guide +'.txt', sep = '\t')#, nrows = current_page * 10)   
             df.rename(columns = {'#Chromosome':'Chromosome'}, inplace = True)
             more_info_col = []
             for i in range(df.shape[0]):
@@ -2305,7 +2285,10 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
                     df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) )].index , inplace = True)
                 else:
                     df.drop(df[(df['Chromosome'] != chr) | ((df['Chromosome'] == chr) & (df['Position'] < int(pos_begin)) | (df['Position'] > int(pos_end)))].index , inplace = True)
-            return generate_table_position(df, 'table-position', current_page, mms, max_bulges,guide, job_id ), current_page
+            
+            max_page = len(df.index)
+            max_page = math.floor(max_page / 10) + 1
+            return generate_table_position(df, 'table-position', current_page, mms, max_bulges,guide, job_id ), str(current_page) + '/' + str(max_page)
 
 #FOR BUTTON IN TABLE
 # element.style {
@@ -2349,9 +2332,6 @@ def resultPage(job_id):
     esatto di bottoni per mismatches in base ai mms dati in input nella ricerca (serve a risolvere problemi con le callback che hanno input
     da elementi non creati. In questo caso io creo tutti i possibili bottoni ma ne rendo visibili/disponibili solo il numero corretto in base
     ai mms).
-    TODO usare className per i bottoni e modificare lo stile, oppure vedere se è possibile usare un buttongroup. Vedere quale è meglio.
-    TODO al momento la tabella delle guide è ordinata per acfd, rendere possibile anche l'ordinamento e il filtering da parte dell'utente,
-    usare il codice presente in dash datatable filtering con python.
     '''
     value = job_id
     job_directory = 'Results/' + job_id + '/'
@@ -2404,9 +2384,9 @@ def resultPage(job_id):
         acfd = [float(a.split('\t')[1]) for a in all_scores if a not in list_error_guides]
         doench = [int(a.split('\t')[2]) for a in all_scores if a not in list_error_guides]
         acfd  = [int(round((100/(100 + x))*100)) for x in acfd]
-        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
+        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-Targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
     else:
-        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
+        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-Targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
 
     keep_column = ['GUIDE', 'ONT', 'OFFT']
     for i in range (mms):
@@ -2420,7 +2400,7 @@ def resultPage(job_id):
         rename_columns[str(i+1) + 'MM'] = str(i+1) + ' Mismatches'
         col_targetfor = col_targetfor + str(i) + '-'
     col_targetfor = col_targetfor + str(mms)
-    col_targetfor = col_targetfor + ' mismatches'
+    col_targetfor = col_targetfor + ' Mismatches'
     columns_profile_table.append({'name': col_targetfor, 'id' : 'col_targetfor', 'type':'text'})
     profile.rename(columns = rename_columns, inplace = True)    #Now profile is Guide, Total On-targets, ...
     col_to_add = []
@@ -2451,8 +2431,8 @@ def resultPage(job_id):
     profile = profile.sort_values('Guide')
     profile['CFD'] = acfd
     profile['Doench 2016'] = doench
-    
-    profile = profile.sort_values(['CFD', 'Doench 2016'], ascending = [False, False])
+    # if len(DataFrame.index) > 
+    #profile = profile.sort_values(['CFD', 'Doench 2016'], ascending = [False, False])
     final_list.append(html.P('Select a guide by clicking on a row to view more information'))
     final_list.append(
         html.Div(
@@ -2460,13 +2440,14 @@ def resultPage(job_id):
                 id = 'general-profile-table',
                 #page_size=PAGE_SIZE,
                 columns = columns_profile_table,
+                #fixed_rows={ 'headers': True, 'data': 0 },
                 #data = profile.to_dict('records'),
                 selected_cells = [{'row':0, 'column':0}],
                 css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
                 page_current= 0,
                 page_size= 10,
                 page_action='custom',
-                virtualization = True,
+                #virtualization = True,
                 filter_action='custom',
                 filter_query='',
 
@@ -2474,8 +2455,8 @@ def resultPage(job_id):
                 sort_mode='multi',
                 sort_by=[],
                 style_table={
-                    'max-height': '200px'
-                    #'overflowY': 'scroll',
+                    'max-height': '200px',
+                    'overflowY': 'scroll',
                 }
             )
             ,id = 'div-general-profile-table')
@@ -2575,7 +2556,6 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     with open('Results/' + job_id + '/acfd.txt') as a:
         all_scores = a.read().strip().split('\n')
     
-    print(list_error_guides)
     #Load scores
     if 'NO SCORES' not in all_scores:
         all_scores.sort()
@@ -2599,23 +2579,26 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     column_off_target = []
     column_sep_by_mm_value = []
     for g in guides:
+        zero_to_n_mms = []
         df_profile = pd.read_pickle('Results/' + job_id + '/' + job_id + '.summary_by_guide.' + g + '.txt')
-        column_on_target = int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Number of targets'])
-        zero_to_n_mms = df_profile[(df_profile['Bulge Type'] == 'X')]['Number of targets'].to_list()
+        column_on_target.append(int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Number of Targets']))
+        
+        for i in range (mms + 1):
+          zero_to_n_mms.append(sum(df_profile[(df_profile['Mismatches'] == i)]['Number of Targets'].to_list())) 
+        # zero_to_n_mms = df_profile[(df_profile['Bulge Type'] == 'X')]['Number of Targets'].to_list()
         column_sep_by_mm_value.append(' - '.join(str(int(x)) for x in zero_to_n_mms))
         column_off_target.append(int(sum(zero_to_n_mms[1:])))
     if 'NO SCORES' not in all_scores:
         data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On-Targets':column_on_target, 'Total Off-Targets':column_off_target, 'col_targetfor': column_sep_by_mm_value}
     else:
         data_guides = {'Guide': guides, 'Total On-Targets':column_on_target, 'Total Off-Targets':column_off_target, 'col_targetfor': column_sep_by_mm_value}
-   
-    for i in data_guides:
-        try:
-            print(i, len(data_guides[i]))
-        except:
-            print(i, data_guides[i])
-    dff = pd.DataFrame(data_guides)
 
+    dff = pd.DataFrame(data_guides)
+    
+    if 'NO SCORES' not in all_scores:
+        dff = dff.sort_values(['CFD', 'Doench 2016'], ascending = [False, False])
+    else:
+        dff = dff.sort_values('Total Off-Targets', ascending = False)
             
 
     for filter_part in filtering_expressions:
@@ -2691,28 +2674,23 @@ def guidePagev3(job_id, hash):
     if genome_type == 'ref':
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric']
-        file_to_grep = '.targets.cluster.txt'
+        file_to_grep = '.top_1.txt'#'.targets.cluster.txt'
     elif genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'Samples Summary'] 
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'Samples Summary'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
-        # file_to_grep = 'targets.cluster.minmaxdisr'
-        file_to_grep = '.final.txt'
+        file_to_grep = '.top_1.samples.all.txt'#'.final.txt'
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples Summary']#, 'Samples']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique', 'Samples Summary']#, 'Samples']
         col_type = ['text','text','text','text','numeric','text', 'text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']#, 'text']
-        file_to_grep = '.final.txt'
+        file_to_grep = '.top_1.samples.all.txt'#'.final.txt'
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     job_directory = 'Results/' + job_id + '/'
     
-    start = time.time()
     guide_grep_result = job_directory + job_id + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide + '.txt'
     if not os.path.exists(guide_grep_result):    #Example    job_id.X.0.4.guide.txt
-        # subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + job_directory + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + bulge_t + ' | awk \'$8==' + mms + ' && $9==' + bulge_s + '\' > ' + guide_grep_result], shell = True)
         subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + job_directory + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + bulge_t + ' | awk -v mm="' + mms + '" -v b="'+bulge_s+'" -f PostProcess/extract_subcluster.awk > ' + guide_grep_result], shell = True)
     global_store_subset(job_id, bulge_t, bulge_s, mms,guide)
-    #subset_targets = pd.read_csv('example_todo_delete.txt', sep = '\t')
-    #data_dict = subset_targets.to_dict('records')
-    print('Grep e load:', time.time() - start)
+    
     final_list.append(          
         html.Div( 
             dash_table.DataTable(
@@ -2808,10 +2786,10 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
         7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Top Subcluster'}, inplace = True)
     elif genome_type == 'var':
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
     else:
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
     # sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
     # sort_by.insert(1, {'column_id' : 'Bulge Size', 'direction': 'asc'})
     #sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
@@ -2847,7 +2825,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
     cells_style = [
                         {
                         'if': {
-                                'filter_query': '{Variant unique} eq y',
+                                'filter_query': '{Variant Unique} eq y',
                                 #'filter_query': '{Direction} eq +', 
                                 #'column_id' :'Bulge Type'
                             },
@@ -2855,7 +2833,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
                         },
-                        # {#TODO colora altro colore quelle con pam creation
+                        # {#TODO colora altro colore quelle con PAM Creation
                         # 'if': {
                         #         'filter_query': '{Chromosome} eq "chr2"',
                         #         #'filter_query': '{Direction} eq +', 
@@ -2867,7 +2845,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
                         # },
                         # {
                         #     'if': {
-                        #             'filter_query': '{Variant unique} eq n',           
+                        #             'filter_query': '{Variant Unique} eq n',           
                         #             'column_id' :'Bulge Type'
                         #         },
                         #         'border-left': '5px solid rgba(26, 26, 255, 0.9)',
@@ -2914,7 +2892,7 @@ def loadFullSubsetTable(active_cel, data, cols, search):
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
-        
+    
     genome_type = 'ref'
     if '+' in genome_type_f:
         genome_type = 'var'
@@ -2932,10 +2910,10 @@ def loadFullSubsetTable(active_cel, data, cols, search):
     #     7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Top Subcluster'}, inplace = True)
     # elif genome_type == 'var':
     #     df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-    #     7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+    #     7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
     # else:    
     #     df.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-    #     7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
+    #     7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
     # df.drop(df[(~( df['Cluster Position'] == int(data[active_cel['row']]['Cluster Position']))) | (~( df['Chromosome'] == data[active_cel['row']]['Chromosome']))].index, inplace = True)
     # # print(df)
 
@@ -2970,7 +2948,7 @@ def loadFullSubsetTable(active_cel, data, cols, search):
                 css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
                 style_data_conditional = [{
                         'if': {
-                                'filter_query': '{Variant unique} eq y',
+                                'filter_query': '{Variant Unique} eq y',
                                 #'filter_query': '{Direction} eq +', 
                                 #'column_id' :'Bulge Type'
                             },
@@ -2978,9 +2956,9 @@ def loadFullSubsetTable(active_cel, data, cols, search):
                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
                         },
-                        {#TODO colora altro colore quelle con pam creation
+                        {#TODO colora altro colore quelle con PAM Creation
                         'if': {
-                                'filter_query': '{Variant unique} eq y && {Pam creation}  != "n"',
+                                'filter_query': '{Variant Unique} eq y && {PAM Creation}  != "n"',
                                 #'filter_query': '{Direction} eq +', 
                                 #'column_id' :'Bulge Type'
                             },
@@ -3027,27 +3005,37 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
-        
+    guide = hash_guide[1:hash_guide.find('new')]
     genome_type = 'ref'
+    file_to_grep = '.targets.cluster.txt'
     if '+' in genome_type_f:
         genome_type = 'var'
+        file_to_grep = '.final.txt'
     if 'True' in ref_comp:
         genome_type = 'both'
+        file_to_grep = '.final.txt'
     if search is None:
         raise PreventUpdate
     filtering_expressions = filter.split(' && ')
-     
-    df = global_store_subset(job_id, data[active_cel['row']]['Bulge Type'], str(data[active_cel['row']]['Bulge Size']), str(data[active_cel['row']]['Mismatches']), data[active_cel['row']]['crRNA'])
-    
+    bulge_t =  data[active_cel['row']]['Bulge Type']
+    bulge_s = str(data[active_cel['row']]['Bulge Size'])
+    mms = str(data[active_cel['row']]['Mismatches'])
+    chrom = str(data[active_cel['row']]['Chromosome'])
+    pos = str(data[active_cel['row']]['Cluster Position'])
+    #df = global_store_subset(job_id, data[active_cel['row']]['Bulge Type'], str(data[active_cel['row']]['Bulge Size']), str(data[active_cel['row']]['Mismatches']), data[active_cel['row']]['crRNA'])
+    subgrep_file = job_directory + job_id + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide + '.' + chrom + pos +'.txt'
+    if not os.path.exists(subgrep_file):    #Example    job_id.X.0.4.guide.sub.txt
+        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + job_directory + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + bulge_t + ' | awk \'$8=='+mms+' && $9=='+bulge_s+'\' > ' + subgrep_file], shell = True)
+    df = pd.read_csv(subgrep_file, header = None, sep = '\t')
     if genome_type == 'ref':
         df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Top Subcluster'}, inplace = True)
     elif genome_type == 'var':
         df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
     else:    
         df.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
     df.drop(df[(~( df['Cluster Position'] == int(data[active_cel['row']]['Cluster Position']))) | (~( df['Chromosome'] == data[active_cel['row']]['Chromosome']))].index, inplace = True)
     # print(df)
     dff = df
@@ -3079,7 +3067,7 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
     cells_style = [
                         {
                         'if': {
-                                'filter_query': '{Variant unique} eq y',
+                                'filter_query': '{Variant Unique} eq y',
                                 #'filter_query': '{Direction} eq +', 
                                 #'column_id' :'Bulge Type'
                             },
@@ -3087,7 +3075,7 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
                         },
-                        # {#TODO colora altro colore quelle con pam creation
+                        # {#TODO colora altro colore quelle con PAM Creation
                         # 'if': {
                         #         'filter_query': '{Chromosome} eq "chr2"',
                         #         #'filter_query': '{Direction} eq +', 
@@ -3099,7 +3087,7 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
                         # },
                         # {
                         #     'if': {
-                        #             'filter_query': '{Variant unique} eq n',           
+                        #             'filter_query': '{Variant Unique} eq n',           
                         #             'column_id' :'Bulge Type'
                         #         },
                         #         'border-left': '5px solid rgba(26, 26, 255, 0.9)',
@@ -3166,14 +3154,14 @@ def samplePage(job_id, hash):
         #html.P('List of Targets found for the selected Sample - ' + sample + ' - and guide - ' + guide + ' -')
         html.H3('Selected Sample: ' + sample)
     )
-    final_list.append(html.P('List of Targets found for the selected sample'))
-    # col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples']
+    final_list.append(html.P('List of Targets found for the selected sample. The rows highlighted in red indicates that the target was found only in the genome with variants.'))
+    # col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique', 'Samples']
     
     if genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption',  'Samples Summary']#'Samples', 'Correct Guide'] 
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption',  'Samples Summary']#'Samples', 'Correct Guide'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique',  'Samples Summary']# 'Samples', 'Correct Guide']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique',  'Samples Summary']# 'Samples', 'Correct Guide']
         col_type = ['text','text','text','text','numeric','numeric','text', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text','text']
     
     file_to_grep = '.top_1.samples.txt'
@@ -3188,7 +3176,7 @@ def samplePage(job_id, hash):
     # del col_list[-1]                                         #NOTE comment to show the sample column (maybe not informative in this view)
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     
-    final_list.append(          #TODO add margin bottom 1rem to toggle button and prev-next buttons
+    final_list.append(          
         html.Div( 
             dash_table.DataTable(
                 id='table-sample-target', 
@@ -3213,7 +3201,7 @@ def samplePage(job_id, hash):
                 style_data_conditional=[
                     {
                         'if': {
-                                'filter_query': '{Variant unique} eq y', 
+                                'filter_query': '{Variant Unique} eq y', 
                                 #'column_id' :'{#Bulge type}',
                                 #'column_id' :'{Total}'
                             },
@@ -3264,10 +3252,10 @@ def update_table_sample(page_current, page_size, sort_by, filter, search, hash):
         raise PreventUpdate
     if genome_type == 'var':
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
     else:
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
     dff.drop(dff.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
@@ -3341,12 +3329,12 @@ def clusterPage(job_id, hash):
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric']
         file_to_grep = '.targets.cluster.txt'
     elif genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'Samples Summary']#'Samples', #'Correct Column'] 
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'Samples Summary']#'Samples', #'Correct Column'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
         # file_to_grep = 'targets.cluster.minmaxdisr'
         file_to_grep = '.final.txt'
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min_mismatches', 'Max_mismatches', 'PAM disruption', 'PAM creation', 'Variant unique', 'Samples Summary']#'Samples', 'Correct Column']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique', 'Samples Summary']#'Samples', 'Correct Column']
         col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
         file_to_grep = '.final.txt'
     
@@ -3384,7 +3372,7 @@ def clusterPage(job_id, hash):
                 style_data_conditional=[
                     {
                         'if': {
-                                'filter_query': '{Variant unique} eq y', 
+                                'filter_query': '{Variant Unique} eq y', 
                                 #'column_id' :'{#Bulge type}',
                                 #'column_id' :'{Total}'
                             },
@@ -3441,10 +3429,10 @@ def update_table_cluster(page_current, page_size, sort_by, filter, search, hash)
         7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Top Subcluster'}, inplace = True)
     elif genome_type == 'var':
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
     else:
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min_mismatches', 11:'Max_mismatches', 12: 'PAM disruption', 13:'PAM creation', 14 : 'Variant unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
     dff.drop(dff.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
@@ -3498,7 +3486,6 @@ if __name__ == '__main__':
 
     #BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti
     #Iupac
-    #TODO se cancello il chr nel filter by position, non vedo nessun risultato -> fare in modo che metta risultati originali -> da controllare con risultati più grandi
-    #BUG quando visualizzo per samples, la colonna pam creation/ pam disruption possono risultare non accurate in quanto non ho iupac ma il
+    #BUG quando visualizzo per samples, la colonna PAM Creation/ PAM Disruption possono risultare non accurate in quanto non ho iupac ma il
     #carattere esatto. Inoltre alcuni samples non possono esistere in quanto la pam non è NGG (o quella selezionata dall'utente)
     #BUG nel filtering se ho, in min mismatch etc, la stringa '-', che non è considerata numero

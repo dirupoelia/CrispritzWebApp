@@ -68,6 +68,9 @@ if bulges_rna > bulges_dna:
     bulge = bulges_rna
 guide_dict = dict()
 guide_d_cluster = dict()
+count_disruption = dict()
+count_creation = dict() #{GUIDE1 -> [0 0 0;0 0 0] per ogni categoria mms-bulge,}
+
 with open (guide_file,'r') as all_guides:
     for line in all_guides:
         line = line.strip()
@@ -76,7 +79,11 @@ with open (guide_file,'r') as all_guides:
         if type_post == 'Uniq':
             guide_dict[line] = [np.zeros((mms + 1, 1)), np.zeros((mms + 1,bulges_dna + 1)), np.zeros((mms + 1,bulges_rna + 1)),
                                 np.zeros((mms + 1, 1)), np.zeros((mms + 1,bulges_dna + 1)), np.zeros((mms + 1,bulges_rna + 1))]
-        else:
+            count_disruption[line] = [np.zeros((mms + 1, 1)), np.zeros((mms + 1,bulges_dna + 1)), np.zeros((mms + 1,bulges_rna + 1))]
+                #,np.zeros((mms + 1, 1)), np.zeros((mms + 1,bulges_dna + 1)), np.zeros((mms + 1,bulges_rna + 1))]
+            count_creation[line] = [np.zeros((mms + 1, 1)), np.zeros((mms + 1,bulges_dna + 1)), np.zeros((mms + 1,bulges_rna + 1))]
+                #,np.zeros((mms + 1, 1)), np.zeros((mms + 1,bulges_dna + 1)), np.zeros((mms + 1,bulges_rna + 1))]
+        else:   #TODO aggiungere nel caso di ricerca solo var
             guide_dict[line] = [np.zeros((mms + 1, 1)), np.zeros((mms + 1,bulges_dna + 1)), np.zeros((mms + 1,bulges_rna + 1))]
         guide_d_cluster[line] = []
 
@@ -125,17 +132,35 @@ with open(sys.argv[1]) as targets:
                         guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
                         if line[14] == 'y':
                             guide_dict[line[1].replace('-','')][5][int(line[7])][int(line[8])] += 1
+                #Count pam creation or disruption:
+                if line[14] != 'y':
+                    if line[12] != 'n':
+                        if line[0] == 'X':
+                            count_disruption[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
+                        elif line[0] == 'DNA':
+                            count_disruption[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1 
+                        else:
+                            count_disruption[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1 
+                else:
+                    if line[13] != 'n':
+                        if line[0] == 'X':
+                            count_creation[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
+                        elif line[0] == 'DNA':
+                            count_creation[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1 
+                        else:
+                            count_creation[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1 
+
         
         for guide in guide_dict.keys():
-            tab_summary = pd.DataFrame(columns = ['Guide', 'Bulge Type', 'Bulge Size', 'Mismatches', 'Number of targets', 'Targets created by SNPs'])
+            tab_summary = pd.DataFrame(columns = ['Guide', 'Bulge Type', 'Bulge Size', 'Mismatches', 'Number of Targets', 'Targets Created by SNPs', 'PAM Disruption', 'PAM Creation'])
             for m in range(mms + 1):
                 for b_d in range(bulges_dna +1):
-                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'DNA', 'Bulge Size': b_d, 'Mismatches': m, 'Number of targets': guide_dict[guide][1][m][b_d], 'Targets created by SNPs':guide_dict[guide][4][m][b_d]  }, ignore_index = True)            
+                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'DNA', 'Bulge Size': b_d, 'Mismatches': m, 'Number of Targets': guide_dict[guide][1][m][b_d], 'Targets Created by SNPs':guide_dict[guide][4][m][b_d], 'PAM Disruption':count_disruption[guide][1][m][b_d], 'PAM Creation':count_creation[guide][1][m][b_d]  }, ignore_index = True)            
 
                 for b_r in range(bulges_rna +1):
-                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'RNA', 'Bulge Size': b_r, 'Mismatches': m, 'Number of targets': guide_dict[guide][2][m][b_r], 'Targets created by SNPs': guide_dict[guide][5][m][b_r] }, ignore_index = True)
+                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'RNA', 'Bulge Size': b_r, 'Mismatches': m, 'Number of Targets': guide_dict[guide][2][m][b_r], 'Targets Created by SNPs': guide_dict[guide][5][m][b_r],'PAM Disruption':count_disruption[guide][2][m][b_r], 'PAM Creation':count_creation[guide][2][m][b_r] }, ignore_index = True)
 
-                tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'X', 'Bulge Size': 0, 'Mismatches': m, 'Number of targets': guide_dict[guide][0][m][0], 'Targets created by SNPs':guide_dict[guide][3][m][0] }, ignore_index = True)
+                tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'X', 'Bulge Size': 0, 'Mismatches': m, 'Number of Targets': guide_dict[guide][0][m][0], 'Targets Created by SNPs':guide_dict[guide][3][m][0],  'PAM Disruption':count_disruption[guide][0][m][0], 'PAM Creation':count_creation[guide][0][m][0] }, ignore_index = True)
             tab_summary.to_pickle(sys.argv[6] + '.summary_by_guide.' + guide +'.txt')
     else:
         for line in targets:
@@ -167,15 +192,15 @@ with open(sys.argv[1]) as targets:
                         guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
 
         for guide in guide_dict.keys():    
-            tab_summary = pd.DataFrame(columns = ['Guide', 'Bulge Type', 'Bulge Size', 'Mismatches', 'Number of targets'])
+            tab_summary = pd.DataFrame(columns = ['Guide', 'Bulge Type', 'Bulge Size', 'Mismatches', 'Number of Targets'])
             for m in range(mms + 1):
                 for b_d in range(bulges_dna +1):
-                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'DNA', 'Bulge Size': b_d, 'Mismatches': m, 'Number of targets': guide_dict[guide][1][m][b_d] }, ignore_index = True)            
+                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'DNA', 'Bulge Size': b_d, 'Mismatches': m, 'Number of Targets': guide_dict[guide][1][m][b_d] }, ignore_index = True)            
 
                 for b_r in range(bulges_rna +1):
-                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'RNA', 'Bulge Size': b_r, 'Mismatches': m, 'Number of targets': guide_dict[guide][2][m][b_r] }, ignore_index = True)
+                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'RNA', 'Bulge Size': b_r, 'Mismatches': m, 'Number of Targets': guide_dict[guide][2][m][b_r] }, ignore_index = True)
 
-                tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'X', 'Bulge Size': 0, 'Mismatches': m, 'Number of targets': guide_dict[guide][0][m][0] }, ignore_index = True)
+                tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'X', 'Bulge Size': 0, 'Mismatches': m, 'Number of Targets': guide_dict[guide][0][m][0] }, ignore_index = True)
                 tab_summary.to_pickle(sys.argv[6] + '.summary_by_guide.' + guide +'.txt')
 
 for guide in guide_d_cluster.keys():
