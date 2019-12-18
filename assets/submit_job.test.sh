@@ -140,7 +140,7 @@ elif [ ${19} = 'var' ]; then
     echo 'End Scoring'
 
     type_post='No'
-    python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.top_1.txt $7 $8 $9 guides.txt $jobid $type_post
 
     echo 'Start pam analysis'
     echo 'PAM Analysis... Step [3/6]' >>  output.txt
@@ -149,7 +149,7 @@ elif [ ${19} = 'var' ]; then
     
     # Extract top 1
     echo 'Start extract top1'
-    echo 'Extracting Samples... Step [4/6]' >>  output.txt
+    echo 'Extracting Samples... (This operation has a long execution time, Please Wait) Step [4/6]' >>  output.txt
     python3 ../../PostProcess/extract_top.py $jobid.targets.cluster.minmaxdisr.txt $jobid # > $jobid.top_1.txt
     echo 'End extract top1'
     # Expand top 1
@@ -266,12 +266,12 @@ else    #Type search = both
 
     #Summary guide, pos #NOTE the script automatically counts only for top subclusters
     echo 'Start summary by guide and position'  #NOTE change to top_1 if in sum by pos want to see cluster count of top1
-    python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.cluster.txt $7 $8 $9 guides.txt $jobid 'Uniq'
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.top_1.txt $7 $8 $9 guides.txt $jobid 'Uniq'
     echo 'End summary by guide and position'
 
     #Top1 expansion
     echo 'Start sort'
-    echo 'Extracting Samples... Step [5/7]' >>  output.txt
+    echo 'Extracting Samples... (This operation has a long execution time, Please Wait) Step [5/7]' >>  output.txt
     sort -k4,4 $jobid.top_1.txt > $jobid.top_1.sort.txt && mv $jobid.top_1.sort.txt $jobid.top_1.txt 
     echo 'End sort'
     echo 'Start calc samples'

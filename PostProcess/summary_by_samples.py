@@ -128,6 +128,8 @@ for k in guides_dict.keys():
             for i in all_samples:
                 if i not in guides_dict[k]:
                     guides_dict[k][i] = [0,0]
+                    count_creation[k][i] = [0,0]
+                    count_disruption[k][i] = [0,0]
                 if dict_pop[i] not in guides_population_targets[k]:
                     guides_population_targets[k][dict_pop[i]] = 0
                 if population_1000gp[dict_pop[i]] not in guides_superpopulation_targets[k]:

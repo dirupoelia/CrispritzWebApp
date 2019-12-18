@@ -38,7 +38,7 @@ import math
 
 exeggutor = concurrent.futures.ProcessPoolExecutor(max_workers=2)
 
-PAGE_SIZE = 50                    #number of entries in each page of the table in view report
+PAGE_SIZE = 10                    #number of entries in each page of the table in view report
 URL = 'http://crispritz.di.univr.it'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -118,21 +118,17 @@ search_bar = dbc.Row(
     [
         #dbc.Col(dbc.Input(type="search", placeholder="Search")),
         dbc.Col(dbc.NavLink('HOME', active = True, href = URL, className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
-        dbc.Col(dbc.NavLink('MANUAL', active = True, href = URL + '/user-guide', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
-        # dbc.Col(
-        #     dbc.DropdownMenu(
-        #         children=[
-        #             dbc.DropdownMenuItem("Github", header=True),
-        #             dbc.DropdownMenuItem("InfOmics/CRISPRitz", href='https://github.com/InfOmics/CRISPRitz'),
-        #             dbc.DropdownMenuItem("Pinellolab/CRISPRitz", href='https://github.com/pinellolab/CRISPRitz'),
-        #         ],
-        #         #nav=True,
-        #         in_navbar=True,
-        #         label="Downloads",
-        #         style = {'width': '300px !important' } #'height': '400px !important' 
-        #     ),
-        # ),
-        dbc.Col(dbc.NavLink('CONTACTS', active = True, href = URL + '/contacts', className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'}))
+        dbc.Col(dbc.NavLink(
+            html.A('MANUAL', href = URL + '/user-guide',target = '_blank', style = {'text-decoration':'none', 'color':'white'}), 
+            active = True, 
+            #href = URL + '/user-guide', 
+            className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
+        dbc.Col(dbc.NavLink(
+            html.A('CONTACTS', href = URL + '/contacts', target = '_blank', style = {'text-decoration':'none', 'color':'white'}),
+            #disabled = True, 
+            active = True, 
+            #href = URL + '/contacts', 
+            className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'}))
     ],
     no_gutters=True,
     className="ml-auto flex-nowrap mt-3 mt-md-0",
@@ -1609,7 +1605,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                             ),
                             dbc.Col(
                                 [
-                                    html.P('Select Individual Data'),
+                                    html.P('Select Individual Data', style = samp_style ),
                                     dbc.Row([
                                     dbc.Col(html.Div(dcc.Dropdown(options = super_populations, id = 'dropdown-superpopulation-sample', placeholder = 'Select a Super Population', style = samp_style))),
                                     dbc.Col(html.Div(dcc.Dropdown(options = populations, id = 'dropdown-population-sample', placeholder = 'Select a Population', style = samp_style))),
@@ -2720,7 +2716,19 @@ def guidePagev3(job_id, hash):
                     }
                 ],
                 css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
-                export_format = 'csv'                
+                export_format = 'csv', 
+                style_data_conditional = [
+                    {
+                        'if': {
+                                'filter_query': '{Variant Unique} eq y',
+                                #'filter_query': '{Direction} eq +', 
+                                #'column_id' :'Bulge Type'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                            
+                        }
+                ]            
             ),
             id = 'div-result-table',
         )
@@ -2736,8 +2744,7 @@ def guidePagev3(job_id, hash):
 
 #Send the data when next or prev button is clicked on the result table
 @app.callback(
-    [Output('table-subset-target', 'data'),
-    Output('table-subset-target', 'style_data_conditional')],
+    Output('table-subset-target', 'data'),
     [Input('table-subset-target', "page_current"),
      Input('table-subset-target', "page_size"),
      Input('table-subset-target', "sort_by"),
@@ -2821,18 +2828,29 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
             inplace=False
         )
    
-
     cells_style = [
-                        {
-                        'if': {
-                                'filter_query': '{Variant Unique} eq y',
-                                #'filter_query': '{Direction} eq +', 
-                                #'column_id' :'Bulge Type'
-                            },
-                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                        
+                        # {
+                        # 'if': {
+                        #         'filter_query': '{Variant Unique} eq y',
+                        #         #'filter_query': '{Direction} eq +', 
+                        #         #'column_id' :'Bulge Type'
+                        #     },
+                        #     #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                        #     'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
+                        # },
+                        {
+                            'if': {
+                                    'filter_query': '{Cluster Position} eq "' + guide + '"', 
+                                    #'column_id' :'{#Bulge type}',
+                                    #'column_id' :'{Total}'
+                                },
+                                #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                                'background-color':'rgba(0, 0, 255,0.15)'#'rgb(255, 102, 102)'
+                                
                         },
+                        
                         # {#TODO colora altro colore quelle con PAM Creation
                         # 'if': {
                         #         'filter_query': '{Chromosome} eq "chr2"',
@@ -2873,17 +2891,20 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
                 row['Samples Summary'] = ', '.join([str(summarized_sample_cell[sp]) + ' ' + sp for sp in summarized_sample_cell])
             else:
                 row['Samples Summary'] = 'n'
-    return data_to_send, cells_style
+    return data_to_send#, cells_style + style_data_table
 
 #Create second table for subset targets page, and show corresponding samples
 @app.callback(
-    Output('div-second-table-subset-targets', 'children'),
+    [Output('div-second-table-subset-targets', 'children'),
+    Output('table-subset-target', 'style_data_conditional')],
     [Input('table-subset-target', 'active_cell')],
     [State('table-subset-target', 'data'),
     State('table-subset-target', 'columns'),
-    State('url', 'search')]
+    State('url', 'search'),
+    State('table-subset-target', 'style_data_conditional'),
+    State('table-subset-target', 'selected_cells')]
 )
-def loadFullSubsetTable(active_cel, data, cols, search):
+def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
     if active_cel is  None:
         raise PreventUpdate
     fl = []
@@ -2981,7 +3002,43 @@ def loadFullSubsetTable(active_cel, data, cols, search):
         )
     )
 
-    return  fl
+    pos_cluster = data[int(sel_cell[0]['row'])]['Cluster Position']
+    chrom = data[int(sel_cell[0]['row'])]['Chromosome']
+    cells_style = [
+                       style_data[0],
+                        {
+                            'if': {
+                                    'filter_query': '{Cluster Position} eq "' + str(pos_cluster) + '"',
+                                    ##'filter_query': '{Chromosome} eq "' + str(chrom) + '"',
+                                    #'column_id' :'{#Bulge type}',
+                                    #'column_id' :'{Total}'
+                                },
+                                #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                                'background-color':'rgba(0, 0, 255,0.15)'#'rgb(255, 102, 102)'
+                                
+                        }
+                        
+                        # {#TODO colora altro colore quelle con PAM Creation
+                        # 'if': {
+                        #         'filter_query': '{Chromosome} eq "chr2"',
+                        #         #'filter_query': '{Direction} eq +', 
+                        #         #'column_id' :'Bulge Type'
+                        #     },
+                        #     #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                        #     'background-color':'rgba(255, 69, 0,0.15)'#'rgb(255, 102, 102)'
+                            
+                        # },
+                        # {
+                        #     'if': {
+                        #             'filter_query': '{Variant Unique} eq n',           
+                        #             'column_id' :'Bulge Type'
+                        #         },
+                        #         'border-left': '5px solid rgba(26, 26, 255, 0.9)',
+
+                        # }
+                        
+                ]
+    return  fl, cells_style
 
 #Filter etc for second tabe
 @app.callback(

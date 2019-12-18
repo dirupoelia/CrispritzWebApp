@@ -17,9 +17,7 @@ def helpPage():
             html.H3('About'),
             html.P([
         'CRISPRme  performs  predictive analysis and result assessment on population and individual specific CRISPR/Cas experiments.' +  
-        ' CRISPRme enumerates on- and off-target accounting simultaneously for  substitutions, DNA/RNA bulges and common genetic variants from the 1000 genomes project.'+
-        ' CRISPRme is based on CRISPRitz [1] a software tool for population target analyses.'  
-    + ' CRISPRme is devoted to individual specific on- and off-target analyses.'
+        ' CRISPRme enumerates on- and off-target accounting simultaneously for  substitutions, DNA/RNA bulges and common genetic variants from the 1000 genomes project.'
         ]),
         html.P(['Open this ', html.A('example',href = 'http://crispritz.di.univr.it/result?job=QVFHZMMBRA', target = '_blank') ,' to navigate the results we show in this page'])
     
@@ -56,15 +54,15 @@ def helpPage():
                         html.Ul(
                             [
                                 html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/helpPage/guides.PNG', 'rb').read()).decode()), width='40%' ),
-                                html.Li('Guides: a list of crRNAs sequences, consisting in 1 or more sequences (max 1000 sequences) to search on the genome [img example]'),
+                                html.Li('Guides: a list of crRNAs sequences, consisting in 1 or more sequences (max 1000 sequences) to search on the genome'),
                                 html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/helpPage/sequence.PNG', 'rb').read()).decode()), width='40%' ),
                                 html.Li('Sequence: one or more genetic sequences (max 1000 characters), each sequence MUST BE separated with the header \'>name\'. The sequence can be also submitted with a ' + 
-                                'chromosome range, also provided with an header [img example]. The region will be extracted from the Genome selected in STEP 1'),
-                                html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/helpPage/allowed.PNG', 'rb').read()).decode()), width='20%' ),
+                                'chromosome range, also provided with an header. The region will be extracted from the Genome selected in STEP 1'),
+                                html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/helpPage/crRNA.PNG', 'rb').read()).decode()), width='20%' ),
                                 html.Li('Allowed mismatches: number of tolerated mismatches in a target'),
                                 html.Li('Bulge DNA size: size of bubbles tolerated on the DNA sequence (can be consecutive(AA--AA) or interleaved(AA-A-AA)).'),
                                 html.Li('Bulge RNA size: size of bubbles tolerated on the RNA sequence (can be consecutive(AA--AA) or interleaved(AA-A-AA))'),
-                                html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/helpPage/crRNA.PNG', 'rb').read()).decode()), width='20%' ),
+                                # html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/helpPage/crRNA.PNG', 'rb').read()).decode()), width='20%' ),
                                 html.Li('crRNA length: available only when a genetic sequence is given as input, represents the length of the guides (without PAM) that you want to extract from the sequence.')
                             ], style = {'padding': '15px'}
                         )
@@ -178,7 +176,7 @@ def helpPage():
 
                         ),
                         html.Li([html.Span('Graphical Report: ', style = {'color':'red'}),'This page shows graphics about a specific guide, including genomic annotation and motif logos. The main feature introduced is the possibility to visualize graphical reports at individual level.']),
-                        html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/resultPage/summaryByGraphic.PNG', 'rb').read()).decode()), width='100%' ),
+                        html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/resultPage/summaryByGraphicaGecko.png', 'rb').read()).decode()), width='100%' ),
                         html.Ul(
                             [
                                 html.Li('Select a Mismatch Value: generate graphics with the specified mismatch value'),
