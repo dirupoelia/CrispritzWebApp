@@ -117,7 +117,11 @@ av_guide_sequence = [{'label': i, 'value': i} for i in range(15, 26)]
 search_bar = dbc.Row(
     [
         #dbc.Col(dbc.Input(type="search", placeholder="Search")),
-        dbc.Col(dbc.NavLink('HOME', active = True, href = URL, className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
+        dbc.Col(dbc.NavLink(
+            html.A('HOME', href = URL, target = '_blank', style = {'text-decoration':'none', 'color':'white'}), 
+            active = True, 
+            #href = URL, 
+            className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
         dbc.Col(dbc.NavLink(
             html.A('MANUAL', href = URL + '/user-guide',target = '_blank', style = {'text-decoration':'none', 'color':'white'}), 
             active = True, 
@@ -125,7 +129,6 @@ search_bar = dbc.Row(
             className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
         dbc.Col(dbc.NavLink(
             html.A('CONTACTS', href = URL + '/contacts', target = '_blank', style = {'text-decoration':'none', 'color':'white'}),
-            #disabled = True, 
             active = True, 
             #href = URL + '/contacts', 
             className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'}))

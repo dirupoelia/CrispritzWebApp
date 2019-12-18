@@ -215,8 +215,8 @@ if summary_one  and summary_two :           #DO BARPLOT
 check_annotation_name = []
 for i in summary_two:
     check_annotation_name.append(i.split('\t')[0].lower())
-if set(check_annotation_name) != set(['targets', 'ctcf', 'dnase', 'exon', 'intron', 'promoter']) and gecko_dir != "no":     #NOTE if gecko annotations are updated, update the list adding the new annotations 
-    print('Warning! Option \'-gecko\' can be used on files annotated with \'ctcf\', \'dnase\', \'exon\', \'intron\', \'promoter\'\nRemoving \'-gecko\' option')
+if set(check_annotation_name) != set(['targets', 'ctcf', 'dnasei', 'exon', 'intron', 'promoter']) and gecko_dir != "no":     #NOTE if gecko annotations are updated, update the list adding the new annotations 
+    print('Warning! Option \'-gecko\' can be used on files annotated with \'ctcf\', \'dnasei\', \'exon\', \'intron\', \'promoter\'\nRemoving \'-gecko\' option')
     gecko_dir = 'no'
 
 complete_matrix = []  
@@ -224,7 +224,7 @@ table_dict = dict()
 if guide != 'no':       #DO RADAR CHART
     if gecko_dir != 'no':       
         #do process for gecko -> annotations file before 08/12/2019
-        annotations = ['CTCF', 'DNAse', 'Exons', 'Introns', 'Promoters']    #NOTE lexicograph order (same as summary_two)
+        annotations = ['CTCF', 'DNAseI', 'Exons', 'Introns', 'Promoters']    #NOTE lexicograph order (same as summary_two)
         for ann_pos, annotation in enumerate(annotations):
             target_value = int(summary_two[ann_pos + 1].split('\t')[mm + 1])     #first +1 due to targets elelment , second +1 due to name of annotation in splitted list
             #Load file
@@ -250,7 +250,8 @@ if guide != 'no':       #DO RADAR CHART
 
                 min_diff = current_diff
             
-            table_dict[annotation.lower()] = [round(pos_in_gecko / SIZE_GECKO, 2), target_value]
+            # table_dict[annotation.lower()] = [round(pos_in_gecko / SIZE_GECKO, 2), target_value]
+            table_dict[annotation] = [round(pos_in_gecko / SIZE_GECKO, 2), target_value]
         
         #Calculate position on Total targets value
         a_l = []
@@ -476,7 +477,7 @@ elif radarchart_sample:   #Radarchart for sample
                         break
                     summary_two.append(line.strip())
         
-        annotations = ['CTCF', 'DNAse', 'Exons', 'Introns', 'Promoters']    #NOTE lexicograph order (same as summary_two)
+        annotations = ['CTCF', 'DNAseI', 'Exons', 'Introns', 'Promoters']    #NOTE lexicograph order (same as summary_two)
         for ann_pos, annotation in enumerate(annotations):
             target_value = int(summary_two[ann_pos + 1].split('\t')[mm + 1])     #first +1 due to targets elelment , second +1 due to name of annotation in splitted list
             #Load file
@@ -501,7 +502,8 @@ elif radarchart_sample:   #Radarchart for sample
 
                 min_diff = current_diff
             
-            table_dict[annotation.lower()] = [round(pos_in_gecko / SIZE_GECKO, 2), target_value]
+            #table_dict[annotation.lower()] = [round(pos_in_gecko / SIZE_GECKO, 2), target_value]
+            table_dict[annotation] = [round(pos_in_gecko / SIZE_GECKO, 2), target_value]
             
             #Calculate position on Total targets value
             a_l = []
