@@ -25,6 +25,10 @@ Comando rename - Non più usato
 ```
 sudo apt install rename
 ```
+Comando zip
+```
+conda install -c conda-forge zip
+```
 Bootstrap for dash
 ```
 conda install -c conda-forge dash-bootstrap-components

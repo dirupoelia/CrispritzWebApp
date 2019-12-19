@@ -190,6 +190,39 @@ def helpPage():
         )
     )
 
-    final_list
+    final_list.append(
+        html.Div(
+            [
+                html.H3('Browser Compatibility'),
+                html.Div([
+                    dash_table.DataTable(
+                        data= [ {'OS':'Linux', 'V': 'Ubuntu 18.04.2 LTS', 'Ch': '79.0' , 'S':'n/a', 'ME':'n/a' ,'F':'71.0'},
+                                {'OS':'MacOS', 'V': 'Mojave', 'Ch': ' 79.0' , 'S':'13.0.4' , 'ME':'n/a' , 'F':'71.0'},
+                                {'OS':'Windows', 'V': '10', 'Ch': '79.0' , 'S':'n/a' ,'ME':'44.18362.449.0','F':'71.0'}],
+
+                        columns=[{'id': 'OS', 'name': 'Operative System'}, {'id': 'V', 'name': 'Version'}, {'id': 'Ch', 'name': 'Chrome'},
+                                {'id': 'S', 'name': 'Safari'}, {'id': 'ME', 'name': 'Microsoft Edge'}, {'id': 'F', 'name': 'Firefox'}
+                               ],
+
+                        style_cell={
+                        'textAlign':'center',
+                        'width':'20'
+                    },
+
+                        style_data_conditional=[
+                            {
+                                'if': {'row_index': 'odd'},
+                                'backgroundColor': 'rgb(248, 248, 248)'
+                                }
+                            ],
+                        style_header={
+                            'backgroundColor': 'rgb(230, 230, 230)',
+                            'fontWeight': 'bold'
+                    }
+                )
+                ],   style = {'display': 'inline-block', 'width': '48%'})
+            ]
+        )
+    )
     page = html.Div(final_list, style = {'margin':'1%'})
     return page
