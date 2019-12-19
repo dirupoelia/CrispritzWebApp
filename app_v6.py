@@ -2773,7 +2773,6 @@ def guidePagev3(job_id, hash):
                     }
                 ],
                 css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
-                export_format = 'csv', 
                 style_data_conditional = [
                     {
                         'if': {
@@ -3340,7 +3339,6 @@ def samplePage(job_id, hash):
                             
                         }
                 ],
-                export_format = 'csv',
                 css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
                 # css= [{ 'selector': 'td.row--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.row--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
                 
@@ -3525,7 +3523,6 @@ def clusterPage(job_id, hash):
                             
                         }
                 ],
-                export_format = 'csv',
                 css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
                 
             ),

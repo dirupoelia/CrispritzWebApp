@@ -29,8 +29,7 @@ with open (sys.argv[1] + '/email.txt', 'r') as e:
         
         #TODO add Parameters section with date and other parameters
         msg.set_content(content_email)
-        print(msg)
-        quit()
+         
         context = ssl.SSLContext(ssl.PROTOCOL_TLS)
 
 
