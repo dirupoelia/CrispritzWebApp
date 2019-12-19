@@ -1024,17 +1024,18 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
                         else:
                             #We may have entered a jobdir that was in queue
                             if os.path.exists('Results/' + check_param_dir + '/queue.txt'):
-                                if os.path.exists('Results/' + check_param_dir + '/email.txt'):
-                                    with open('Results/' + check_param_dir + '/email.txt' ,'a+') as e:
-                                        e.write('--OTHEREMAIL--')
-                                        e.write(dest_email + '\n')
-                                        e.write(URL + '/load?job=' + check_param_dir + '\n')
-                                        e.write(datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S") + '\n')
-                                else:
-                                    with open('Results/' + check_param_dir + '/email.txt' ,'w+') as e:
-                                        e.write(dest_email + '\n')
-                                        e.write(URL + '/load?job=' + check_param_dir + '\n')
-                                        e.write(datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S") + '\n')
+                                if send_email:
+                                    if os.path.exists('Results/' + check_param_dir + '/email.txt'):
+                                        with open('Results/' + check_param_dir + '/email.txt' ,'a+') as e:
+                                            e.write('--OTHEREMAIL--')
+                                            e.write(dest_email + '\n')
+                                            e.write(URL + '/load?job=' + check_param_dir + '\n')
+                                            e.write(datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S") + '\n')
+                                    else:
+                                        with open('Results/' + check_param_dir + '/email.txt' ,'w+') as e:
+                                            e.write(dest_email + '\n')
+                                            e.write(URL + '/load?job=' + check_param_dir + '\n')
+                                            e.write(datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S") + '\n')
                                 return '/load','?job=' + check_param_dir
 
     #Annotation
@@ -1054,7 +1055,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if ref_comparison:
         genome_type = 'both'    #NOTE change submit job script name. al momento ok .test.
 
-    
+    print(genome_type)
     command = 'assets/./submit_job.test.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
         ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
             ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + 'annotations/' + annotation_file[0] + 
@@ -2457,7 +2458,12 @@ def resultPage(job_id):
     final_list = []    
     if list_error_guides:
         final_list.append(
-            dbc.Alert('Warning: Some guides have too many targets! ' + ', '.join(list_error_guides), color='warning')   #TODO aggiungere link guide errate
+            dbc.Alert(
+                [
+                    'Warning: Some guides have too many targets! ',
+                    html.A("Click here", href= URL + "/data/" + job_id + '/guides_error.txt', className="alert-link"),
+                    ' to view them'
+                ], color='warning')   #TODO aggiungere link guide errate
         )
     final_list.append(
         html.H3('Result Summary - ' + genome_name + ' - Mismatches ' + str(mms) + ' - DNA ' + bulge_dna + ' - RNA ' + bulge_rna)

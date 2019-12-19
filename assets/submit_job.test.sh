@@ -31,13 +31,13 @@ echo 'Search-index\tStart\t'$(date) >> log.txt
 echo 'Search_output '${19} >  output.txt
 if [ ${10} = 'True' ]; then
     #echo 'crispritz search-index'
-    crispritz.py search ../../$4 pam.txt guides.txt $jobid -mm $7 -bDNA $8 -bRNA ${9} -t #>> output.txt #TODO sistemare l'output redirection
+    crispritz.py search ../../$4 pam.txt guides.txt $jobid -mm $7 -bDNA $8 -bRNA ${9} -t >> output.txt #TODO sistemare l'output redirection
 
 
     if [ ${15} = 'True' ]; then
         mkdir 'ref'
         echo 'Search_output_ref '${19} >>  output.txt
-        crispritz.py search ../../${16} pam.txt guides.txt $jobid'_ref' -mm $7 -bDNA $8 -bRNA ${9} -t #>> output.txt #TODO sistemare l'output redirection
+        crispritz.py search ../../${16} pam.txt guides.txt $jobid'_ref' -mm $7 -bDNA $8 -bRNA ${9} -t >> output.txt #TODO sistemare l'output redirection
         mv ./$jobid'_ref'.*.txt 'ref'
         mv ./$jobid'_ref'.*.xls 'ref'
     fi
@@ -48,12 +48,12 @@ echo 'Search-index\tDone\t'$(date) >> log.txt
 echo 'Search\tStart\t'$(date) >> log.txt
 if [ ${11} = 'True' ]; then
     #echo 'crispritz search'
-    crispritz.py search ../../$used_genome_dir pam.txt guides.txt $jobid -mm $7 -var -t #>> output.txt #-scores $3
+    crispritz.py search ../../$used_genome_dir pam.txt guides.txt $jobid -mm $7 -var -t >> output.txt #-scores $3
     
     if [ ${15} = 'True' ]; then
         mkdir 'ref'
         echo 'Search_output_ref '${19} >>  output.txt 
-        crispritz.py search ../../$3 pam.txt guides.txt $jobid'_ref' -mm $7 -var -t #>> output.txt
+        crispritz.py search ../../$3 pam.txt guides.txt $jobid'_ref' -mm $7 -var -t >> output.txt
         mv ./$jobid'_ref'.*.txt 'ref'
         mv ./$jobid'_ref'.*.xls 'ref'
     fi
@@ -89,7 +89,7 @@ if [ ${19} = 'ref' ]; then
     echo 'Annotate_output '${19} >  output.txt
     echo 'Start annotation ref'
     if [ ${12} = 'True' ]; then
-        crispritz.py annotate-results $jobid.top_1.txt ../../${18} $jobid # > $jobid.Annotation.summary.txt , $jobid.Annotation.targets.txt 
+        crispritz.py annotate-results $jobid.top_1.txt ../../${18} $jobid >> output.txt # > $jobid.Annotation.summary.txt , $jobid.Annotation.targets.txt 
     fi
     echo 'End annotation ref'
     echo 'Annotation\tDone\t'$(date) >> log.txt
@@ -180,7 +180,7 @@ elif [ ${19} = 'var' ]; then
     echo 'Annotation\tStart\t'$(date) >> log.txt
     echo 'Annotate_output '${19} >  output.txt
     echo 'Start Annotation'
-    crispritz.py annotate-results $jobid.top_1.samples.all.txt ../../${18} $jobid # > $jobid.Annotation.targets.txt $jobid.Annotation.summary.txt
+    crispritz.py annotate-results $jobid.top_1.samples.all.txt ../../${18} $jobid >> output.txt # > $jobid.Annotation.targets.txt $jobid.Annotation.summary.txt
                                                                                 # $jobid.sample_annotation.guide.sample.txt $jobid..sumref.Annotation.summary.txt
     echo 'End Annotation'
     echo 'Annotation\tDone\t'$(date) >> log.txt
@@ -298,7 +298,7 @@ else    #Type search = both
     echo 'Annotation\tStart\t'$(date) >> log.txt
     echo 'Annotate_output '${19} >  output.txt
     echo 'Start Annotation'
-    crispritz.py annotate-results $jobid.top_1.samples.all.txt ../../${18} $jobid # > $jobid.Annotation.targets.txt $jobid.Annotation.summary.txt
+    crispritz.py annotate-results $jobid.top_1.samples.all.txt ../../${18} $jobid >> output.txt # > $jobid.Annotation.targets.txt $jobid.Annotation.summary.txt
                                                                                 # $jobid.sample_annotation.guide.sample.txt $jobid..sumref.Annotation.summary.txt
     echo 'End Annotation'
     echo 'Annotation\tDone\t'$(date) >> log.txt
