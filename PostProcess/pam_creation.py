@@ -34,6 +34,7 @@ with open (sys.argv[2]) as pam:
     pam_begin = 0
     pam_end = len_pam * (-1)
     if len_pam < 0:
+        guide_len = len(pam) + len_pam
         pam = pam[: (len_pam * (-1))]
         len_pam = len_pam * (-1)
         pos_beg = len_pam
@@ -48,6 +49,7 @@ with open (sys.argv[2]) as pam:
         pam_begin = len_pam * (-1)
         pam_end = None
 
+print(guide_len)
 name_output = sys.argv[1][:sys.argv[1].rfind('.')]
 
 iupac_code = {
@@ -150,21 +152,22 @@ else:
     with open (sys.argv[1]) as uniq, open('bedfile.bed', 'w+') as bedfile:
         #header=uniq.readline()   #NOTE uncomment if file has header
         for line in uniq:
+            if '#' in line:
+                continue
             line = line.strip().split('\t')
             for pos, char in enumerate(line[2][pam_begin:pam_end]):           
                 if char in iupac_code:
                     if line[0] == 'DNA':
-                        bulges = int(line[7])
+                        bulges = int(line[8])
                     elif line[0] == 'RNA':
-                        bulges = int(line[7]) * (-1)        
+                        bulges = int(line[8]) * (-1)        
                     else:
                         bulges = 0
                     if line[6] == '+':
-                        # La pos (line[4] mi indica la prima lettera del target, eg la prima A in ACGCGACTAGCTACGCACGTNRG)
+                        #SEE file pamatbeginning.txt
                         bedfile.write(line[3] + '\t' + str( int(line[4]) + pos) + '\t' + str(int(line[4]) + pos + 1) +'\n') 
                     else:
-                        # La pos (line[4] mi indica la prima lettera del target, che sarebbe la prima lettera della pam rev compl, 
-                        # eg la prima C in CCGTGCATACTAGCTACGCACGT)
+                        # #SEE file pamatbeginning.txt
                         bedfile.write(line[3] + '\t' + str(int(line[4]) + guide_len + bulges + rev_comp_pam[pos]) + '\t' + str(int(line[4]) + guide_len + bulges + rev_comp_pam[pos] + 1) +'\n')
 
 print('Created bedfile:', time.time() - start_time)

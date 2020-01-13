@@ -104,10 +104,10 @@ onlyfile = [f for f in listdir('pam') if isfile(join('pam', f))]
 onlyfile = [x.replace('.txt', '') for x in onlyfile]            #removed .txt for better visualization
 pam_file = []
 for pam_name in onlyfile:
-    if 'NGG' in pam_name:               #TODO modificare per selezionare solo le PAM disponibili
+    if 'NGG' in pam_name or 'NGA' in pam_name:               #TODO modificare per selezionare solo le PAM disponibili
         pam_file.append({'label':pam_name, 'value':pam_name})
     else:
-        pam_file.append({'label': pam_name, 'value' : pam_name, 'disabled':True})
+        pam_file.append({'label': pam_name, 'value' : pam_name, 'disabled':False})
 
 
 #Available mismatches and bulges
@@ -949,7 +949,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
 
     
     
-    genome_idx = pam_char + '_' + '5' + '_' + genome_selected   #TODO CUSTOM: modificare per la versione UI offline
+    genome_idx = pam_char + '_' + '2' + '_' + genome_selected   #TODO CUSTOM: modificare per la versione UI offline
     genome_idx_ref = genome_idx.split('+')[0]
 
     #Create Params.txt file
@@ -2472,8 +2472,8 @@ def resultPage(job_id):
 
     
     profile = profile.sort_values('Guide')
-    profile['CFD'] = acfd
-    profile['Doench 2016'] = doench
+    #profile['CFD'] = acfd
+    #profile['Doench 2016'] = doench
     # if len(DataFrame.index) > 
     #profile = profile.sort_values(['CFD', 'Doench 2016'], ascending = [False, False])
     final_list.append(html.P('Select a guide by clicking on a row to view more information'))
@@ -2716,7 +2716,7 @@ def guidePagev3(job_id, hash):
     final_list.append(
         html.P(
             [
-                        'List of Targets found for the selected guide. Select a row to view other possible configurations of the target.', 
+                        'List of Targets found for the selected guide. Select a row to view other possible configurations of the target. The rows highlighted in red indicates that the target was found only in the genome with variants.', 
                         html.Div(
                             [   
                                 html.P('Generating download link, Please wait...', id = 'download-link-sumbyguide'), 
@@ -3458,7 +3458,7 @@ def clusterPage(job_id, hash):
     )
     final_list.append(html.P(
         [
-            'List of Targets found for the selected position',
+            'List of Targets found for the selected position. The rows highlighted in red indicates that the target was found only in the genome with variants.',
             html.Div(
                 [   
                     html.P('Generating download link, Please wait...', id = 'download-link-sumbyposition'), 
@@ -3681,7 +3681,7 @@ def downloadLinkSample(n, file_to_load, search): #file to load =
 
 if __name__ == '__main__':
     #app.run_server(debug=True)
-    app.run_server(host='0.0.0.0', debug=True, port=8080)
+    app.run_server(host='0.0.0.0', debug=True, port=8050)
     #app.run_server(host='0.0.0.0',  port=8080) #NOTE to not reload the page when creating new images in graphical report
     cache.clear()       #delete cache when server is closed
 
