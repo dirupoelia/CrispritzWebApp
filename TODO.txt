@@ -355,3 +355,7 @@ sample rispetto al num target dell'annotazione della guida (per indicare che se 
 -Aggiungere workers
 -Aggiungere pagina di help
 -Sistemare bug immagini e bottoni
+
+IMPORTANTE:
+Aggiungere visualizzazione target scomposto con relativi samples e sample summary sia in sum by guide che in sum by position. Quando seleziono 
+un target, appare sotto una nuova tabella con tutte le sue possibili combinazioni (fare grep chr pos sul file per la tabella dei samples)
