@@ -2716,7 +2716,7 @@ def guidePagev3(job_id, hash):
     final_list.append(
         html.P(
             [
-                        'List of Targets found for the selected guide. Select a row to view other possible configurations of the target. The rows highlighted in red indicates that the target was found only in the genome with variants.', 
+                        'List of Targets found for the selected guide. Select a row to view the target IUPAC character scomposition. The rows highlighted in red indicates that the target was found only in the genome with variants.', 
                         html.Div(
                             [   
                                 html.P('Generating download link, Please wait...', id = 'download-link-sumbyguide'), 
@@ -2955,7 +2955,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
                 row['Samples Summary'] = 'n'
     return data_to_send#, cells_style + style_data_table
 
-#Create second table for subset targets page, and show corresponding samples
+#Create second table for subset targets page, and show corresponding samples    -> CHANGED, now show IUPAC scomposition
 @app.callback(
     [Output('div-second-table-subset-targets', 'children'),
     Output('table-subset-target', 'style_data_conditional')],
@@ -2982,33 +2982,25 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
     if 'True' in ref_comp:
         genome_type = 'both'
 
+    #fl.append(html.Br())
+    fl.append(html.Hr())
+    #Table for IUPAC scomposition
+    #fl.append(html.Br())
+    fl.append('IUPAC scomposition for the selected target.')
     fl.append(html.Br())
-        
-    #Table for subtop cluster
-    fl.append(html.Br())
-    # df = global_store_subset(job_id, data[active_cel['row']]['Bulge Type'], str(data[active_cel['row']]['Bulge Size']), str(data[active_cel['row']]['Mismatches']), data[active_cel['row']]['crRNA'])
-    
-    # if genome_type == 'ref':
-    #     df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-    #     7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Top Subcluster'}, inplace = True)
-    # elif genome_type == 'var':
-    #     df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-    #     7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
-    # else:    
-    #     df.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-    #     7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
-    # df.drop(df[(~( df['Cluster Position'] == int(data[active_cel['row']]['Cluster Position']))) | (~( df['Chromosome'] == data[active_cel['row']]['Chromosome']))].index, inplace = True)
-    # # print(df)
+    cols.append({"name": 'Samples', "id": 'Samples', 'type':'text', 'hideable':True})  
 
+    iupac_scomposition_visibility = {'display':'none'}
+    if genome_type == 'both':                   #TODO possibile anche con 'var'?
+        iupac_scomposition_visibility = {}
+       
     fl.append(
         html.Div(
             dash_table.DataTable(
                 id='second-table-subset-targets', 
                 columns=cols, 
-                #data = df.to_dict('records'),
                 virtualization = True,
                 fixed_rows={ 'headers': True, 'data': 0 },
-                #fixed_columns = {'headers': True, 'data':1},
                 style_cell={'width': '150px'},
                 page_current=0,
                 page_size=PAGE_SIZE,
@@ -3020,7 +3012,6 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
                 filter_query='',
                 style_table={
                     'max-height': '600px'
-                    #'overflowY': 'scroll',
                 },
                 style_cell_conditional=[
                     {
@@ -3032,8 +3023,6 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
                 style_data_conditional = [{
                         'if': {
                                 'filter_query': '{Variant Unique} eq y',
-                                #'filter_query': '{Direction} eq +', 
-                                #'column_id' :'Bulge Type'
                             },
                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
@@ -3048,19 +3037,10 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
                             'background-color':'rgba(255, 69, 0,0.15)'#'rgb(255, 102, 102)'
                             
-                        },
-                        {#TODO fixare
-                        'if': {
-                                'filter_query': '{Top subcluster} eq t',         
-                                # 'column_id' :'BulgeType'
-                            },
-                            'border-left': '5px solid rgba(26, 26, 255, 0.9)',
-                            'font-weight':'bold'
-                            
-
-                        } 
+                        }
                 ]         
             ),
+            style = iupac_scomposition_visibility
         )
     )
 
@@ -3104,7 +3084,7 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
 
 #Filter etc for second tabe
 @app.callback(
-    [Output('second-table-subset-targets', 'data'),
+    [Output('second-table-subset-targets', 'data'),                         #Table showing iupac scomposition
     Output('second-table-subset-targets', 'style_data_conditional')],
     [Input('second-table-subset-targets', "page_current"),
      Input('second-table-subset-targets', "page_size"),
@@ -3135,21 +3115,33 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
         file_to_grep = '.final.txt'
     if search is None:
         raise PreventUpdate
+
+    if genome_type != 'both':
+        raise PreventUpdate     #TODO check if can be done with 'var'
+
     filtering_expressions = filter.split(' && ')
     bulge_t =  data[active_cel['row']]['Bulge Type']
     bulge_s = str(data[active_cel['row']]['Bulge Size'])
     mms = str(data[active_cel['row']]['Mismatches'])
     chrom = str(data[active_cel['row']]['Chromosome'])
     pos = str(data[active_cel['row']]['Cluster Position'])
-    #df = global_store_subset(job_id, data[active_cel['row']]['Bulge Type'], str(data[active_cel['row']]['Bulge Size']), str(data[active_cel['row']]['Mismatches']), data[active_cel['row']]['crRNA'])
-    subgrep_file = job_directory + job_id + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide + '.' + chrom + pos +'.txt'
-    if not os.path.exists(subgrep_file):    #Example    job_id.X.0.4.guide.sub.txt
-        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + job_directory + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + bulge_t + ' | awk \'$8=='+mms+' && $9=='+bulge_s+'\' > ' + subgrep_file], shell = True)
-    df = pd.read_csv(subgrep_file, header = None, sep = '\t')
-    if genome_type == 'ref':
-        df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Top Subcluster'}, inplace = True)
-    elif genome_type == 'var':
+
+
+    scomposition_file = job_directory + job_id + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide + '.' + chrom + '.' + pos + '.scomposition.txt'
+    file_to_grep = '.top_1.samples.txt'
+
+    iupac_scomposition_visibility = {'display':'none'}
+    if genome_type == 'both':                   #TODO possibile anche con 'var'?
+        iupac_scomposition_visibility = {}
+        if not os.path.exists(scomposition_file):    #Example    job_id.X.0.4.GUIDE.chrom.position.scomposition.txt
+            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $8==' + mms + ' && $9==' + bulge_s +'\' > ' + scomposition_file], shell = True)
+    
+    if os.path.getsize(scomposition_file) > 0:          #Check if result grep has at least 1 result
+        df = pd.read_csv(scomposition_file, header = None, sep = '\t')
+    else:
+        raise PreventUpdate
+   
+    if genome_type == 'var':
         df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
     else:    
@@ -3514,7 +3506,7 @@ def clusterPage(job_id, hash):
                 filter_action='custom',
                 filter_query='',
                 style_table={
-                    'height': '600px'
+                    'max-height': '600px'
                     #'overflowY': 'scroll',
                 },
                 style_data_conditional=[
@@ -3535,6 +3527,65 @@ def clusterPage(job_id, hash):
             id = 'div-result-table',
         )
     )
+
+
+    scomposition_file = 'Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.scomposition.txt'
+    file_to_grep = '.top_1.samples.txt'
+
+    iupac_scomposition_visibility = {'display':'none'}
+    if genome_type == 'both':                   #TODO possibile anche con 'var'?
+        iupac_scomposition_visibility = {}
+        if not os.path.exists(scomposition_file):    #Example    job_id.chr_pos.guide.scomposition.txt
+            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + scomposition_file], shell = True)
+
+    #final_list.append(html.Br())
+    final_list.append(html.Hr())
+    final_list.append(
+        html.P('IUPAC scomposition for the target in the selected position', style = iupac_scomposition_visibility)
+    )
+    cols_for_scomposition = cols.copy()
+    cols_for_scomposition.append({"name": 'Samples', "id": 'Samples', 'type':'text', 'hideable':True})
+    final_list.append(
+        html.Div(
+            dash_table.DataTable(
+                id = 'table-scomposition-cluster',          #TABLE that represent scomposition of iupac of selected target, take rows from top_1.samples.txt
+                columns=cols_for_scomposition, 
+                #data = df.to_dict('records'),
+                virtualization = True,
+                fixed_rows={ 'headers': True, 'data': 0 },
+                #fixed_columns = {'headers': True, 'data':1},
+                style_cell={'width': '150px'},
+                page_current=0,
+                page_size=PAGE_SIZE,
+                page_action='custom',
+                sort_action='custom',
+                sort_mode='multi',
+                sort_by=[],
+                filter_action='custom',
+                filter_query='',
+                style_table={
+                    'max-height': '600px'
+                    #'overflowY': 'scroll',
+                },
+                style_data_conditional=[
+                    {
+                        'if': {
+                                'filter_query': '{Variant Unique} eq y', 
+                                #'column_id' :'{#Bulge type}',
+                                #'column_id' :'{Total}'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                            
+                        }
+                ],
+                css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
+                
+            ),
+            style = iupac_scomposition_visibility
+        )
+    )
+
     return html.Div(final_list, style = {'margin':'1%'})
 
 #Filter/sort cluster
@@ -3625,6 +3676,95 @@ def update_table_cluster(page_current, page_size, sort_by, filter, search, hash)
                 row['Samples Summary'] = 'n'
     return data_to_send
 
+
+#Filter/sort IUPAC decomposition table for cluster page
+@app.callback(
+    Output('table-scomposition-cluster','data'),
+    [Input('table-scomposition-cluster', "page_current"),
+     Input('table-scomposition-cluster', "page_size"),
+     Input('table-scomposition-cluster', 'sort_by'),
+     Input('table-scomposition-cluster', 'filter_query')],
+    [State('url', 'search'),
+     State('url', 'hash')]
+)
+def update_iupac_scomposition_table_cluster(page_current, page_size, sort_by, filter, search, hash):
+    job_id = search.split('=')[-1]
+    hash = hash.split('#')[1]
+    guide = hash[:hash.find('-Pos-')]
+    chr_pos = hash[hash.find('-Pos-') + 5:]
+    chromosome = chr_pos.split('-')[0]
+    position = chr_pos.split('-')[1]
+    
+    with open('Results/' + job_id + '/Params.txt') as p:
+        all_params = p.read()
+        genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+        ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+        
+    genome_type = 'ref'
+    if '+' in genome_type_f:
+        genome_type = 'var'
+    if 'True' in ref_comp:
+        genome_type = 'both'
+
+    if genome_type != 'both':       #TODO check if 'var' can be accepted
+        raise PreventUpdate
+    
+    filtering_expressions = filter.split(' && ')
+    dff = global_store_general('Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.scomposition.txt')
+    if dff is None:
+        raise PreventUpdate
+    
+    if genome_type == 'var':           #TODO check if 'var' can be accepted
+        dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+    else:
+        dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
+    dff.drop(dff.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
+    for filter_part in filtering_expressions:
+        col_name, operator, filter_value = split_filter_part(filter_part)
+
+        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+            # these operators match pandas series operator method names
+            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
+        elif operator == 'contains':
+            dff = dff.loc[dff[col_name].str.contains(filter_value)]
+        elif operator == 'datestartswith':
+            # this is a simplification of the front-end filtering logic,
+            # only works with complete fields in standard format
+            dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+
+    if len(sort_by):
+        dff = dff.sort_values(
+            [col['column_id'] for col in sort_by],
+            ascending=[
+                col['direction'] == 'asc'
+                for col in sort_by
+            ],
+            inplace=False
+        )
+    
+    #Calculate sample count
+    
+    data_to_send=dff.iloc[
+        page_current*page_size:(page_current+ 1)*page_size
+    ].to_dict('records')
+    if genome_type != 'ref':
+        for row in data_to_send:
+            summarized_sample_cell = dict()
+            for s in row['Samples'].split(','):
+                if s == 'n':
+                    break
+                try:
+                    summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] += 1
+                except:
+                    summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] = 1
+            if summarized_sample_cell:
+                row['Samples Summary'] = ', '.join([str(summarized_sample_cell[sp]) + ' ' + sp for sp in summarized_sample_cell])
+            else:
+                row['Samples Summary'] = 'n'
+    return data_to_send
+
 #Generate download link sumbyguide
 @app.callback(
     [Output('download-link-sumbyguide', 'children'),
@@ -3685,8 +3825,7 @@ if __name__ == '__main__':
     #app.run_server(host='0.0.0.0',  port=8080) #NOTE to not reload the page when creating new images in graphical report
     cache.clear()       #delete cache when server is closed
 
-    #BUG quando faccio scores, se ho dei char IUPAC nei targets, nel terminale posso vedere 150% 200% etc perche' il limite massimo e' basato su wc -l dei targets, ma possono aumentare se ho molti
-    #Iupac
-    #BUG quando visualizzo per samples, la colonna PAM Creation/ PAM Disruption possono risultare non accurate in quanto non ho iupac ma il
+    #NOTE quando visualizzo per samples, la colonna PAM Creation/ PAM Disruption possono risultare non accurate in quanto non ho iupac ma il
     #carattere esatto. Inoltre alcuni samples non possono esistere in quanto la pam non è NGG (o quella selezionata dall'utente)
     #BUG nel filtering se ho, in min mismatch etc, la stringa '-', che non è considerata numero
+    #BUG non posso fare ordinamento per SAMPLE SUMMARY perchè è una colonna aggiunta dopo, non è nel dataframe
