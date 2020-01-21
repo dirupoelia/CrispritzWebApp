@@ -1326,7 +1326,7 @@ def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
     #sort_by.insert(0, {'column_id' : 'BulgeSize', 'direction': 'asc'})
     if len(sort_by):
         dff = dff.sort_values(
-            [col['column_id'] for col in sort_by],
+            ['Samples' if col['column_id'] == 'Samples Summary' else col['column_id'] for col in sort_by],
             ascending=[
                 col['direction'] == 'asc'
                 for col in sort_by
@@ -2659,7 +2659,7 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
 
     if len(sort_by):
         dff = dff.sort_values(
-            [col['column_id'] for col in sort_by],
+            ['Samples' if col['column_id'] == 'Samples Summary' else col['column_id'] for col in sort_by],
             ascending=[
                 col['direction'] == 'asc'
                 for col in sort_by
@@ -2869,7 +2869,8 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
     
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
-
+        if col_name == 'Samples Summary':
+            col_name = 'Samples'
         if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
             # these operators match pandas series operator method names
             dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
@@ -2882,7 +2883,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
 
     if len(sort_by):
         dff = dff.sort_values(
-            [col['column_id'] for col in sort_by],
+            ['Samples' if col['column_id'] == 'Samples Summary' else col['column_id'] for col in sort_by],
             ascending=[
                 col['direction'] == 'asc'
                 for col in sort_by
@@ -3166,7 +3167,7 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
 
     if len(sort_by):
         dff = dff.sort_values(
-            [col['column_id'] for col in sort_by],
+            ['Samples' if col['column_id'] == 'Samples Summary' else col['column_id'] for col in sort_by],
             ascending=[
                 col['direction'] == 'asc'
                 for col in sort_by
@@ -3398,7 +3399,7 @@ def update_table_sample(page_current, page_size, sort_by, filter, search, hash):
 
     if len(sort_by):
         dff = dff.sort_values(
-            [col['column_id'] for col in sort_by],
+            ['Samples' if col['column_id'] == 'Samples Summary' else col['column_id'] for col in sort_by],
             ascending=[
                 col['direction'] == 'asc'
                 for col in sort_by
@@ -3647,7 +3648,7 @@ def update_table_cluster(page_current, page_size, sort_by, filter, search, hash)
 
     if len(sort_by):
         dff = dff.sort_values(
-            [col['column_id'] for col in sort_by],
+            ['Samples' if col['column_id'] == 'Samples Summary' else col['column_id'] for col in sort_by],
             ascending=[
                 col['direction'] == 'asc'
                 for col in sort_by
@@ -3736,7 +3737,7 @@ def update_iupac_scomposition_table_cluster(page_current, page_size, sort_by, fi
 
     if len(sort_by):
         dff = dff.sort_values(
-            [col['column_id'] for col in sort_by],
+            ['Samples' if col['column_id'] == 'Samples Summary' else col['column_id'] for col in sort_by],
             ascending=[
                 col['direction'] == 'asc'
                 for col in sort_by
@@ -3828,4 +3829,4 @@ if __name__ == '__main__':
     #NOTE quando visualizzo per samples, la colonna PAM Creation/ PAM Disruption possono risultare non accurate in quanto non ho iupac ma il
     #carattere esatto. Inoltre alcuni samples non possono esistere in quanto la pam non è NGG (o quella selezionata dall'utente)
     #BUG nel filtering se ho, in min mismatch etc, la stringa '-', che non è considerata numero
-    #BUG non posso fare ordinamento per SAMPLE SUMMARY perchè è una colonna aggiunta dopo, non è nel dataframe
+    #NOTE: l'ordinamento su Samples Summary o su Samples è fatto su stringhe, e non su numero di samples (potrebbe essere più utile)
