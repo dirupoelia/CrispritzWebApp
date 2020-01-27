@@ -26,18 +26,6 @@ chr_name = sys.argv[1].split('.json')[0].split('_')[-1]
 
 current_chr = 'no'
 chr_name = 'no'
-pam_at_beginning = True
-pam_len = 4 #TODO mettere dinamico
-guide_len = 20
-rev_comp_guide = dict()
-for i in range(guide_len):
-    rev_comp_guide[i] = guide_len - i - 1
-rev_comp_pam = dict()
-for i in range(pam_len):
-    rev_comp_pam[i] = pam_len - i - 1
-
-print('rev_comp_guide', rev_comp_guide)
-print('rev_comp_pam',rev_comp_pam)
 if True:
     # start_time = time.time()
     # if True:
@@ -93,46 +81,14 @@ if True:
             # if line[3] == chr_name:       
             set_list = []
             target_string = line[2]
-            if pam_at_beginning:
-                # if line[6] == '+':
-                #     target_string = target_string[::-1]  
-                pass 
-            else: 
-                if line[6] == '-':
-                    target_string = target_string[::-1]
+            if line[6] == '-':
+                target_string = target_string[::-1]
             bulge_found = 0 
             for pos, char in enumerate(target_string):
                 if char == '-':
                     bulge_found = bulge_found + 1 
                 if char in iupac_code:
-                    if pam_at_beginning:
-                        if line[6]=='+':
-                            if pos < pam_len:
-                                iupac_pos = str(int(line[4]) + pos + 1)
-                            else:
-                                # print('pos:',pos,'g_len:',guide_len, 'lin8', line[8], 'pam_len', pam_len)
-                                # iupac_pos = str(int(line[4])  + pam_len + (guide_len + int(line[8]) - rev_comp_guide[pos-pam_len]))
-        
-                                iupac_pos = str(int(line[4]) + pam_len +1 +  (guide_len + int(line[8]) - (pos +1 - pam_len)))
-
-                        else:
-                            if pos < pam_len:
-                                iupac_pos = str(int(line[4]) + rev_comp_pam[pos] + int(line[8]) +guide_len + 1)
-                            else:
-                                iupac_pos = str(int(line[4]) + pos -pam_len +1 )
-                        # if line[6]=='+':
-                        #     if (pos) >= (guide_len + int(line[8])):
-                        #         iupac_pos = str(int(line[4]) + int(line[8])+ ( guide_len + pam_len - pos))
-                        #     else:
-                        #         iupac_pos = str(int(line[4]) + pos + 1 - bulge_found + pam_len)
-                        # else:
-                        #     if pos < pam_len:
-                        #         iupac_pos = str(int(line[4]) + pos + guide_len+ pam_len )
-                        #     else:
-                        #         iupac_pos = str(int(line[4]) + pos +1  -pam_len )
-                        
-                    else:
-                        iupac_pos = str(int(line[4]) + pos + 1 - bulge_found)
+                    iupac_pos = str(int(line[4]) + pos + 1 - bulge_found)
                     try:
                         a = (datastore[chr_name + ',' + iupac_pos])   #NOTE se non ha samples, ritorna ;ref,var
                         
@@ -149,7 +105,6 @@ if True:
                     except Exception as e: 
                         print(e)
                         print('Error at ' + '\t'.join(line) + ', with char ' + char + ', at pos ', iupac_pos)
-                        print('pos:', pos )
                         #sys.exit()
                         total_error = total_error + 1
                     #print(set(a.split(',')))
