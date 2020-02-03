@@ -97,7 +97,7 @@ with open(sys.argv[3]) as pamfile:
   if len(line[0]) != 23 or 'NGG' not in line[0]:
     with open('acfd.txt', 'w+') as result:
       result.write('NO SCORES')
-
+      exit()
 
 mm_scores, pam_scores = get_mm_pam_scores()
 guides_dict = dict()

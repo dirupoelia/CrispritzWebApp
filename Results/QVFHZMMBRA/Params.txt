@@ -1,0 +1,10 @@
+Genome_selected	hg38_ref+hg38_1000genomeproject
+Genome_ref	hg38_ref
+Genome_idx	NGG_5_hg38_ref+hg38_1000genomeproject
+Pam	NGG
+Max_bulges	1
+Mismatches	4
+DNA	1
+RNA	1
+Gecko	True
+Ref_comp	True

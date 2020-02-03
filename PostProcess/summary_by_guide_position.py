@@ -109,6 +109,7 @@ with open(sys.argv[1]) as targets:
                 # print('if',line)
                 guide_d_cluster[line[1].replace('-','')][-1].count[bulge_current_line][mms_current_line] += 1 
             else:   #New cluster
+                
                 # print('else',line)
                 sub_cluster_visited = []
                 guide_d_cluster[line[1].replace('-','')].append(Cluster(line[3] + '\t' + line[5] + '\t' + line[2] + '\t' + line[7] + '\t' + line[8], [[0 for i in range (mms + 1)] for i in range (bulge + 1)] ))    
@@ -119,6 +120,8 @@ with open(sys.argv[1]) as targets:
             
                 #Summar by guide
                 if line[0]+line[7]+line[8] not in sub_cluster_visited:
+                    # if line[1] == 'CCATCGGTGGCCGTTTGCCCNNN' and line[7] == '4':
+                    #     print(line)
                     sub_cluster_visited.append(line[0]+line[7]+line[8])
                     if line[0] == 'X':
                         guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 

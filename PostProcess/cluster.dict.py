@@ -29,12 +29,24 @@ import subprocess
 import os 
 MAX_LIMIT = 50000000
 
+pam_at_end = True
 guides_to_check = set()        #Set of error guides, do not do computation on them
 if os.path.exists('./guides_error.txt'):
     with open('guides_error.txt') as g_e:
         for line in g_e:
             line = line.strip()
             guides_to_check.add(line)
+            if line[0] == 'N':
+                pam_at_end = False
+with open(sys.argv[5]) as guides:
+    for guide in guides:
+        if guide[0] == 'N':
+            pam_at_end = False
+
+strand_to_check = '-'
+if pam_at_end:
+    strand_to_check = '+'
+
 start = time.time()
 total_targets = []
 guides_dict = dict()
@@ -73,7 +85,8 @@ if total_line > MAX_LIMIT:
                         continue
                     if not cluster_only:
                         line.append(str(int(line[6]) + int(line[7])))
-                        if line[5] == '+':
+                        
+                        if line[5] == strand_to_check:
                             if line[0] == 'DNA':
                                 # line.append(str(int(line[4]) + int(line[7])))
                                 line.insert(5, str(int(line[4]) + int(line[7])))
@@ -83,6 +96,7 @@ if total_line > MAX_LIMIT:
                         else:
                             # line.append(line[4])
                             line.insert(5, line[4])
+                        
                     current_count += 1
                     if current_count > MAX_LIMIT:
                         print('The guide ' + guide + ' has more than ' + str(MAX_LIMIT) + ' targets. Skipping...')
@@ -190,7 +204,7 @@ else:
                 continue
             if not cluster_only:
                 line.append(str(int(line[6]) + int(line[7])))
-                if line[5] == '+':
+                if line[5] == strand_to_check:
                     if line[0] == 'DNA':
                         # line.append(str(int(line[4]) + int(line[7])))
                         line.insert(5, str(int(line[4]) + int(line[7])))

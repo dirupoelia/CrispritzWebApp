@@ -31,13 +31,13 @@ echo 'Search-index\tStart\t'$(date) >> log.txt
 echo 'Search_output '${19} >  output.txt
 if [ ${10} = 'True' ]; then
     #echo 'crispritz search-index'
-    crispritz.py search ../../$4 pam.txt guides.txt $jobid -mm $7 -bDNA $8 -bRNA ${9} -t >> output.txt #TODO sistemare l'output redirection
+    crispritz.py search ../../$4 pam.txt guides.txt $jobid -mm $7 -bDNA $8 -bRNA ${9} -t #>> output.txt #TODO sistemare l'output redirection
 
 
     if [ ${15} = 'True' ]; then
         mkdir 'ref'
         echo 'Search_output_ref '${19} >>  output.txt
-        crispritz.py search ../../${16} pam.txt guides.txt $jobid'_ref' -mm $7 -bDNA $8 -bRNA ${9} -t >> output.txt #TODO sistemare l'output redirection
+        crispritz.py search ../../${16} pam.txt guides.txt $jobid'_ref' -mm $7 -bDNA $8 -bRNA ${9} -t #>> output.txt #TODO sistemare l'output redirection
         mv ./$jobid'_ref'.*.txt 'ref'
         mv ./$jobid'_ref'.*.xls 'ref'
     fi
@@ -48,12 +48,12 @@ echo 'Search-index\tDone\t'$(date) >> log.txt
 echo 'Search\tStart\t'$(date) >> log.txt
 if [ ${11} = 'True' ]; then
     #echo 'crispritz search'
-    crispritz.py search ../../$used_genome_dir pam.txt guides.txt $jobid -mm $7 -var -t >> output.txt #-scores $3
+    crispritz.py search ../../$used_genome_dir pam.txt guides.txt $jobid -mm $7 -var -t #>> output.txt #-scores $3
     
     if [ ${15} = 'True' ]; then
         mkdir 'ref'
         echo 'Search_output_ref '${19} >>  output.txt 
-        crispritz.py search ../../$3 pam.txt guides.txt $jobid'_ref' -mm $7 -var -t >> output.txt
+        crispritz.py search ../../$3 pam.txt guides.txt $jobid'_ref' -mm $7 -var -t #>> output.txt
         mv ./$jobid'_ref'.*.txt 'ref'
         mv ./$jobid'_ref'.*.xls 'ref'
     fi
@@ -81,7 +81,7 @@ if [ ${19} = 'ref' ]; then
     echo 'Start summary by pos-guide'
     echo 'Creating Summaries... Step [3/3]' >>  output.txt
     type_post='No'      
-    python3 ../../PostProcess/summary_by_guide_position.py $jobid.top_1.txt $7 $8 $9 guides.txt $jobid $type_post
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
     echo 'End summary by pos-guide'
     echo 'PostProcess\tDone\t'$(date) >> log.txt
 
@@ -140,7 +140,7 @@ elif [ ${19} = 'var' ]; then
     echo 'End Scoring'
 
     type_post='No'
-    python3 ../../PostProcess/summary_by_guide_position.py $jobid.top_1.txt $7 $8 $9 guides.txt $jobid $type_post
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
 
     echo 'Start pam analysis'
     echo 'PAM Analysis... Step [3/6]' >>  output.txt
@@ -266,7 +266,7 @@ else    #Type search = both
 
     #Summary guide, pos #NOTE the script automatically counts only for top subclusters
     echo 'Start summary by guide and position'  #NOTE change to top_1 if in sum by pos want to see cluster count of top1
-    python3 ../../PostProcess/summary_by_guide_position.py $jobid.top_1.txt $7 $8 $9 guides.txt $jobid 'Uniq'
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.cluster.txt $7 $8 $9 guides.txt $jobid 'Uniq'
     echo 'End summary by guide and position'
 
     #Top1 expansion

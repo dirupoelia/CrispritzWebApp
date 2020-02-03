@@ -19,15 +19,19 @@ with open(sys.argv[1]) as targets, open( job_id + '.top_' + str(top_x) + '.txt',
     else:
         line = line.strip().split('\t')
     prev_position = line[header['Cluster Position']]
+    prev_chr = line[header['Chromosome']]
     result.write('\t'.join(line) + '\n')
     top_x_inserted = top_x_inserted + 1
     for line in targets:
         line = line.strip().split('\t')
         current_pos = line[header['Cluster Position']]
-        if prev_position == current_pos and top_x_inserted < top_x:
+        current_chr = line[header['Chromosome']]
+        #if i can still instert top1
+        if prev_position == current_pos and prev_chr == current_chr and top_x_inserted < top_x:
             top_x_inserted = top_x_inserted + 1
             result.write('\t'.join(line) + '\n')
-        elif prev_position != current_pos:
+        elif prev_position != current_pos or prev_chr != current_chr:
             top_x_inserted = 1
             prev_position = current_pos
+            prev_chr = current_chr
             result.write('\t'.join(line) + '\n')

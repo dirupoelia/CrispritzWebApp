@@ -1,0 +1,42 @@
+-Summary_Total
+targets	2	0	81	1406	15260	0	0	0	0	0
+CTCF	0	0	0	3	12	0	0	0	0	0
+dnaseI	0	0	7	102	1145	0	0	0	0	0
+exon	0	0	1	60	574	0	0	0	0	0
+intron	2	0	28	475	4958	0	0	0	0	0
+promoter	0	0	20	304	3186	0	0	0	0	0
+-Summary_EAS
+targets	0	0	27	367	3946	0	0	0	0	0
+CTCF	0	0	0	2	4	0	0	0	0	0
+dnaseI	0	0	4	18	352	0	0	0	0	0
+exon	0	0	1	23	157	0	0	0	0	0
+intron	0	0	9	134	1275	0	0	0	0	0
+promoter	0	0	8	72	799	0	0	0	0	0
+-Summary_EUR
+targets	0	0	20	360	3977	0	0	0	0	0
+CTCF	0	0	0	1	2	0	0	0	0	0
+dnaseI	0	0	1	35	355	0	0	0	0	0
+exon	0	0	1	15	145	0	0	0	0	0
+intron	0	0	4	111	1281	0	0	0	0	0
+promoter	0	0	8	92	772	0	0	0	0	0
+-Summary_AFR
+targets	0	0	33	553	6149	0	0	0	0	0
+CTCF	0	0	0	3	5	0	0	0	0	0
+dnaseI	0	0	3	46	517	0	0	0	0	0
+exon	0	0	1	24	236	0	0	0	0	0
+intron	0	0	11	191	1994	0	0	0	0	0
+promoter	0	0	10	105	1252	0	0	0	0	0
+-Summary_AMR
+targets	0	0	30	413	4572	0	0	0	0	0
+CTCF	0	0	0	1	6	0	0	0	0	0
+dnaseI	0	0	5	33	400	0	0	0	0	0
+exon	0	0	1	14	169	0	0	0	0	0
+intron	0	0	8	145	1435	0	0	0	0	0
+promoter	0	0	9	84	942	0	0	0	0	0
+-Summary_SAS
+targets	0	0	23	407	4358	0	0	0	0	0
+CTCF	0	0	0	1	5	0	0	0	0	0
+dnaseI	0	0	2	37	386	0	0	0	0	0
+exon	0	0	1	14	161	0	0	0	0	0
+intron	0	0	9	131	1393	0	0	0	0	0
+promoter	0	0	6	81	900	0	0	0	0	0
