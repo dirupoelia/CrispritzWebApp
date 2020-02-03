@@ -1474,6 +1474,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                             [
                                 dbc.Col(html.Div(dcc.Dropdown(options = super_populations, id = 'dropdown-superpopulation-sample', placeholder = 'Select a Super Population'))),
                                 dbc.Col(html.Div(dcc.Dropdown(options = populations, id = 'dropdown-population-sample', placeholder = 'Select a Population'))),
+                                dbc.Col(html.Div(dcc.Dropdown( id = 'dropdown-sample', placeholder = 'Select a Sample'))),
                                 dbc.Col(html.Div(html.Button('Filter', id = 'button-filter-population-sample')))
                             ]
                         ),
@@ -1481,7 +1482,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                     style = {'width':'50%'}
                 )
         )
-        fl.append(html.Div('None,None',id = 'div-sample-filter-query', style = {'display':'none'})) #Folr keep current filter:  Superpop,Pop
+        fl.append(html.Div('None,None,None',id = 'div-sample-filter-query', style = {'display':'none'})) #Folr keep current filter:  Superpop,Pop
         fl.append(html.Div(
                 generate_table_samples(df, 'table-samples', 1, guide, job_id ), style = {'text-align': 'center'}, id = 'div-table-samples'
             )
@@ -1930,7 +1931,7 @@ def generate_table_samples(dataframe, id_table, page ,guide='', job_id='', max_r
         style = {'text-decoration':'underline'})) for col in dataframe.columns]) ] +   
         # Body
         [html.Tr([
-            html.Td(html.A(dataframe.iloc[i + (page - 1)*max_rows][col],  href = 'result?job=' + job_id + '#' + guide +'-Sample-' + dataframe.iloc[i]['Sample'] , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i + (page - 1)*max_rows][col]) for col in dataframe.columns
+            html.Td(html.A(dataframe.iloc[i + (page - 1)*max_rows][col],  href = 'result?job=' + job_id + '#' + guide +'-Sample-' + dataframe.iloc[i  + (page - 1)*max_rows]['Sample'] , target = '_blank' )) if col == '' else  html.Td(dataframe.iloc[i + (page - 1)*max_rows][col]) for col in dataframe.columns
         ]) for i in range(min(rows_remaining, max_rows))],
         style = {'display':'inline-block'},
         id = id_table
@@ -2026,12 +2027,13 @@ def updateSampleDrop(pop):
     Output('div-sample-filter-query', 'children'),
     [Input('button-filter-population-sample', 'n_clicks')],
     [State('dropdown-superpopulation-sample', 'value'),
-    State('dropdown-population-sample', 'value')]
+    State('dropdown-population-sample', 'value'),
+    State('dropdown-sample', 'value')]
 )
-def updateSampleFilter(n, superpopulation, population):
+def updateSampleFilter(n, superpopulation, population, sample):
     if n is None:
         raise PreventUpdate
-    return str(superpopulation) + ',' + str(population)
+    return str(superpopulation) + ',' + str(population) + ',' + str(sample)
 
 #Callback to view next/prev page on sample table
 @app.callback(
@@ -2061,10 +2063,14 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
     
     sup_pop = filter_q.split(',')[0]
     pop = filter_q.split(',')[1]
+    samp = filter_q.split(',')[2]
     if sup_pop == 'None':
         sup_pop = None
     if pop == 'None':
         pop = None
+    if samp == 'None':
+        samp = None
+    
     current_page = current_page.split('/')[0]
     current_page = int(current_page)
     btn_sample_section = []
@@ -2101,14 +2107,17 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
         for i in range(df.shape[0]):
             more_info_col.append('Show Targets')
         df[''] = more_info_col
-        if (sup_pop is None or sup_pop is '') and (pop is None or pop is ''):   #No filter value selected
+        if (sup_pop is None or sup_pop is '') and (pop is None or pop is '') and (samp is None or samp is ''):   #No filter value selected
             max_page = len(df.index)
             max_page = math.floor(max_page / 10) + 1
             return generate_table_samples(df, 'table-samples', 1, guide, job_id ), '1/' + str(max_page)
-        if pop is None or pop is '':
-            df.drop(df[(~(df['Population'].isin(population_1000gp[sup_pop])))].index , inplace = True)
+        if samp is None or samp is '':
+            if pop is None or pop is '':
+                df.drop(df[(~(df['Population'].isin(population_1000gp[sup_pop])))].index , inplace = True)
+            else:
+                df.drop(df[(df['Population'] != pop)].index , inplace = True)
         else:
-            df.drop(df[(df['Population'] != pop)].index , inplace = True)
+            df.drop(df[(df['Sample'] != samp)].index , inplace = True)
         max_page = len(df.index)
         max_page = math.floor(max_page / 10) + 1
         return generate_table_samples(df, 'table-samples', 1, guide, job_id ), '1/' + str(max_page)
@@ -2127,11 +2136,14 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
                 more_info_col.append('Show Targets')
             df[''] = more_info_col
             #Active filter
-            if pop or sup_pop:
-                if pop is None or pop is '':
-                    df.drop(df[(~(df['Population'].isin(population_1000gp[sup_pop])))].index , inplace = True)
+            if pop or sup_pop or samp:
+                if samp is None or samp is '':
+                    if pop is None or pop is '':
+                        df.drop(df[(~(df['Population'].isin(population_1000gp[sup_pop])))].index , inplace = True)
+                    else:
+                        df.drop(df[(df['Population'] != pop)].index , inplace = True)
                 else:
-                    df.drop(df[(df['Population'] != pop)].index , inplace = True)
+                    df.drop(df[(df['Sample'] != samp)].index , inplace = True)
 
             if ((current_page - 1) * 10) > len(df): 
                 current_page = current_page -1
@@ -2156,11 +2168,14 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
             for i in range(df.shape[0]):
                 more_info_col.append('Show Targets')
             df[''] = more_info_col
-            if pop or sup_pop:
-                if pop is None or pop is '':
-                    df.drop(df[(~(df['Population'].isin(population_1000gp[sup_pop])))].index , inplace = True)
+            if pop or sup_pop or samp:
+                if samp is None or samp is '':
+                    if pop is None or pop is '':
+                        df.drop(df[(~(df['Population'].isin(population_1000gp[sup_pop])))].index , inplace = True)
+                    else:
+                        df.drop(df[(df['Population'] != pop)].index , inplace = True)
                 else:
-                    df.drop(df[(df['Population'] != pop)].index , inplace = True)
+                    df.drop(df[(df['Sample'] != samp)].index , inplace = True)
             max_page = len(df.index)
             max_page = math.floor(max_page / 10) + 1
             return generate_table_samples(df, 'table-samples', current_page, guide, job_id ), str(current_page) + '/' + str(max_page)

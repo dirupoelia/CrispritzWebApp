@@ -26,6 +26,16 @@ chr_name = sys.argv[1].split('.json')[0].split('_')[-1]
 
 current_chr = 'no'
 chr_name = 'no'
+
+def rev_comp(a):
+    if a == 'A' or a == 'a':
+        return 'T'
+    if a == 'T' or a == 't':
+        return 'A'
+    if a == 'C' or a == 'c':
+        return 'G'
+    return 'C'
+
 if True:
     # start_time = time.time()
     # if True:
@@ -96,6 +106,9 @@ if True:
                         #var_char = a[-4:][3]
                         ref_char = a.split(';')[-1].split(',')[0]
                         var_char = a.split(';')[-1].split(',')[1]
+                        if line[6] == '-':
+                            ref_char = rev_comp(ref_char)
+                            var_char = rev_comp(var_char)
                         # a = a[:-4]
                         a = a.split(';')[0]
                         pos_snp.append(pos)
@@ -144,6 +157,9 @@ if True:
                     
                     ref = a.split(';')[-1].split(',')[0]
                     var = a.split(';')[-1].split(',')[1]
+                    if line[6] == '-':
+                            ref = rev_comp(ref)
+                            var = rev_comp(var)
                     # if int(p) == 10353471 or int(p) == 10353474:
                         # print(p)
                         # print('final result', final_result)
