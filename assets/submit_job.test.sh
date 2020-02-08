@@ -161,7 +161,7 @@ elif [ ${19} = 'var' ]; then
     echo 'End calc samples'
     
     #Put right header into top_1.samples.all.txt
-    sed -i '1 i\#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPam_disr\tPAM_gen\tVar_uniq\tSamples' $jobid.top_1.samples.all.txt
+    sed -i '1 i\#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPam_disr\tSamples\tReal Guide' $jobid.top_1.samples.all.txt
     
     # Summary by samples table
     echo 'Start summary by samples'
@@ -279,7 +279,7 @@ else    #Type search = both
     echo 'End calc samples'
 
     #Put right header into top_1.samples.all.txt
-    sed -i '1 i\#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPam_disr\tPAM_gen\tVar_uniq\tSamples' $jobid.top_1.samples.all.txt
+    sed -i '1 i\#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPam_disr\tPAM_gen\tVar_uniq\tSamples\tReal Guide' $jobid.top_1.samples.all.txt
     
     #Summary samples
     echo 'Start summary by samples'

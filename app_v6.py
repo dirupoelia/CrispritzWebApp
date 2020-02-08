@@ -31,7 +31,7 @@ from seq_script import extract_seq, convert_pam
 from additional_pages import help_page
 from additional_pages import contacts_page
 import re                                   #For sort chr filter values
-import concurrent                           #For workers and queue
+import concurrent.futures                           #For workers and queue
 import math
 
 #Warning symbol \u26A0
@@ -104,11 +104,11 @@ onlyfile = [f for f in listdir('pam') if isfile(join('pam', f))]
 onlyfile = [x.replace('.txt', '') for x in onlyfile]            #removed .txt for better visualization
 pam_file = []
 for pam_name in onlyfile:
-    if 'NGG' in pam_name or 'NGA' in pam_name:               #TODO modificare per selezionare solo le PAM disponibili
+    if 'NGG' in pam_name or 'NGA' in pam_name or 'NGK' in pam_name or 'NAA' in pam_name or 'NGTN' in pam_name:               #TODO modificare per selezionare solo le PAM disponibili
         pam_file.append({'label':pam_name, 'value':pam_name})
     else:
-        pam_file.append({'label': pam_name, 'value' : pam_name, 'disabled':False})
-
+        #pam_file.append({'label': pam_name, 'value' : pam_name, 'disabled':False})
+        pass
 
 #Available mismatches and bulges
 av_mismatches = [{'label': i, 'value': i} for i in range(0, 7)]
@@ -460,7 +460,7 @@ final_list.append(
                             [
                                 html.Li('Searching crRNA'),
                                 html.Li('Processing data'),
-                                html.Li('Annotating result'),
+                                #html.Li('Annotating result'),
                                 html.Li('Generating report')
                             ]
                         ),
@@ -471,7 +471,7 @@ final_list.append(
                             [
                                 html.Li('To do', style = {'color':'red'}, id = 'search-status'),
                                 html.Li('To do', style = {'color':'red'}, id = 'post-process-status'),
-                                html.Li('To do', style = {'color':'red'}, id = 'annotate-result-status'),
+                                #html.Li('To do', style = {'color':'red'}, id = 'annotate-result-status'),
                                 html.Li('To do', style = {'color':'red'}, id = 'generate-report-status')
                             ],
                             style = {'list-style-type':'none'}
@@ -647,8 +647,7 @@ def inExample(nI, nR):
 
 
 
-    # TODO salvare una cartella speciale in results che abbia i risultati di questa ricerca in modo da non occupare il server con
-    # questa ricerca di esempio, ma all'utente passo già la cartella fatta (questa parte già implementata)
+    
     # return '', '', '', '', '', '', ''
 #If selected genome has a '+', update advanced options comparison with reference
 @app.callback(
@@ -913,7 +912,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
                 extracted_seq = extract_seq.extractSequence(name, seq, genome_selected.replace(' ', '_'))
             else:
                 extracted_seq = seq.strip()
-            guides.extend(convert_pam.getGuides(extracted_seq, pam_char, len_guide_sequence))
+            guides.extend(convert_pam.getGuides(extracted_seq, pam_char, len_guide_sequence, pam_begin))
             text_guides = '\n'.join(guides).strip()
     
 
@@ -1055,8 +1054,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if ref_comparison:
         genome_type = 'both'    #NOTE change submit job script name. al momento ok .test.
 
-    print(genome_type)
-    command = 'assets/./submit_job.test.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
+    command = 'assets/./submit_job.final.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
         ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
             ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + 'annotations/' + annotation_file[0] + 
             ' ' + genome_type))
@@ -1114,7 +1112,6 @@ def changePage( href, path, search, hash_guide):
 #Check end job
 @app.callback(
     [Output('view-results', 'style'),
-    Output('annotate-result-status', 'children'),
     Output('search-status', 'children'),
     Output('generate-report-status', 'children'),
     Output('post-process-status', 'children'),
@@ -1147,26 +1144,11 @@ def refreshSearch(n, dir_name):
         if 'log.txt' in onlyfile:
             with open(current_job_dir + 'log.txt') as log:
                 all_done = 0
-                annotate_res_status = html.P('To do', style = {'color':'red'})
+                
                 search_status = html.P('To do', style = {'color':'red'})
                 report_status = html.P('To do', style = {'color':'red'})
                 post_process_status = html.P('To do', style = {'color':'red'})
                 current_log = log.read()
-                if ('Annotation\tDone' in current_log):
-                    annotate_res_status = html.P('Done', style = {'color':'green'})
-                    all_done = all_done + 1
-                elif os.path.exists(current_job_dir + 'output.txt'):                #Extract % of search done
-                    with open(current_job_dir + 'output.txt', 'r') as output_status:
-                        line = output_status.read().strip()
-                        if 'Annotate_output' in line:                            
-                            last_percent = line.rfind('%')
-                            if last_percent > 0:
-                                last_percent = line[line[:last_percent].rfind(' '): last_percent]
-                                status_message = last_percent + '%'
-                            else:
-                                status_message = 'Annotating...'
-                            steps = ''
-                            annotate_res_status = html.P(status_message + ' ' + steps, style = {'color':'orange'})
 
                 if ('Search-index\tDone' in current_log and 'Search\tDone' in current_log):
                     search_status = html.P('Done', style = {'color':'green'})
@@ -1220,14 +1202,23 @@ def refreshSearch(n, dir_name):
                             if line[-1] == 'PostProcess_output':
                                 post_process_status = html.P('Processing data...', style = {'color':'orange'})    
                             else:
-                                post_process_status = html.P(line[-1], style = {'color':'orange'})
-                if all_done == 4 or 'Job\tDone' in current_log:
-                    return {'visibility':'visible'}, annotate_res_status, search_status, report_status, post_process_status ,'/result?job=' + dir_name.split('=')[-1], ''
+                                if 'Annotating...' in line:
+                                    last_percent = line[-1].rfind('%')
+                                    if last_percent > 0:
+                                        last_percent = line[line[:last_percent].rfind(' '): last_percent]
+                                        status_message = last_percent + '%'
+                                    else:
+                                        status_message = 'Annotating...'
+                                else:
+                                    status_message = line[-1]
+                                post_process_status = html.P(status_message, style = {'color':'orange'})
+                if all_done == 3 or 'Job\tDone' in current_log:
+                    return {'visibility':'visible'},  search_status, report_status, post_process_status ,'/result?job=' + dir_name.split('=')[-1], ''
                 else:
-                    return {'visibility':'hidden'}, annotate_res_status, search_status, report_status, post_process_status,'', ''
+                    return {'visibility':'hidden'},  search_status, report_status, post_process_status,'', ''
         elif 'queue.txt' in onlyfile:
-            return {'visibility':'hidden'}, html.P('To do', style = {'color':'red'}), html.P('To do', style = {'color':'red'}), html.P('To do', style = {'color':'red'}), html.P('To do', style = {'color':'red'}),'', dbc.Alert("Job submitted. Current status: in queue", color = "info")
-    return {'visibility':'hidden'}, html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}) ,'', dbc.Alert("The selected result does not exist", color = "danger")
+            return {'visibility':'hidden'},  html.P('To do', style = {'color':'red'}), html.P('To do', style = {'color':'red'}), html.P('To do', style = {'color':'red'}),'', dbc.Alert("Job submitted. Current status: in queue", color = "info")
+    return {'visibility':'hidden'},  html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}), html.P('Not available', style = {'color':'red'}) ,'', dbc.Alert("The selected result does not exist", color = "danger")
 
 #Perform expensive loading of a dataframe and save result into 'global store'
 #Cache are in the Cache directory
@@ -1474,7 +1465,8 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                             [
                                 dbc.Col(html.Div(dcc.Dropdown(options = super_populations, id = 'dropdown-superpopulation-sample', placeholder = 'Select a Super Population'))),
                                 dbc.Col(html.Div(dcc.Dropdown(options = populations, id = 'dropdown-population-sample', placeholder = 'Select a Population'))),
-                                dbc.Col(html.Div(dcc.Dropdown( id = 'dropdown-sample', placeholder = 'Select a Sample'))),
+                                #dbc.Col(html.Div(dcc.Dropdown( id = 'dropdown-sample', placeholder = 'Select a Sample'))),
+                                dbc.Col(html.Div(dcc.Input(id = 'input-sample', placeholder = 'Select a Sample' ))),
                                 dbc.Col(html.Div(html.Button('Filter', id = 'button-filter-population-sample')))
                             ]
                         ),
@@ -2028,12 +2020,12 @@ def updateSampleDrop(pop):
     [Input('button-filter-population-sample', 'n_clicks')],
     [State('dropdown-superpopulation-sample', 'value'),
     State('dropdown-population-sample', 'value'),
-    State('dropdown-sample', 'value')]
+    State('input-sample', 'value')]
 )
 def updateSampleFilter(n, superpopulation, population, sample):
     if n is None:
         raise PreventUpdate
-    return str(superpopulation) + ',' + str(population) + ',' + str(sample)
+    return str(superpopulation) + ',' + str(population) + ',' + str(sample).replace(' ','').upper()
 
 #Callback to view next/prev page on sample table
 @app.callback(
@@ -2068,9 +2060,8 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
         sup_pop = None
     if pop == 'None':
         pop = None
-    if samp == 'None':
+    if samp == 'None' or samp == 'NONE':
         samp = None
-    
     current_page = current_page.split('/')[0]
     current_page = int(current_page)
     btn_sample_section = []
@@ -2742,17 +2733,17 @@ def guidePagev3(job_id, hash):
         )
     )
     if genome_type == 'ref':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total'] 
-        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric']
-        file_to_grep = '.top_1.txt'#'.targets.cluster.txt'
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Annotation Type'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'text']
+        file_to_grep = '.Annotation.targets.txt'#'.top_1.txt'
     elif genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'Samples Summary'] 
-        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
-        file_to_grep = '.top_1.samples.all.txt'#'.final.txt'
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'Samples Summary', 'Annotation Type'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text']
+        file_to_grep = '.samples.all.annotation.txt'#'.top_1.samples.all.txt'
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique', 'Samples Summary']#, 'Samples']
-        col_type = ['text','text','text','text','numeric','text', 'text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']#, 'text']
-        file_to_grep = '.top_1.samples.all.txt'#'.final.txt'
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique', 'Samples Summary', 'Annotation Type']#, 'Samples']
+        col_type = ['text','text','text','text','numeric','text', 'text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text', 'text']#, 'text']
+        file_to_grep = '.samples.all.annotation.txt'#'.top_1.samples.all.txt'
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     job_directory = 'Results/' + job_id + '/'
     
@@ -2867,13 +2858,13 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
     dff = df
     if genome_type == 'ref':
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Top Subcluster'}, inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Annotation Type', 12:'Top Subcluster'}, inplace = True)
     elif genome_type == 'var':
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Annotation Type' ,16:'Top Subcluster'}, inplace = True)
     else:
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Annotation Type', 18:'Top Subcluster'} , inplace = True)
     # sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
     # sort_by.insert(1, {'column_id' : 'Bulge Size', 'direction': 'asc'})
     #sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
@@ -2998,6 +2989,8 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
     if 'True' in ref_comp:
         genome_type = 'both'
 
+    if genome_type == 'ref':
+        raise PreventUpdate
     #fl.append(html.Br())
     fl.append(html.Hr())
     #Table for IUPAC scomposition
@@ -3006,9 +2999,6 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
     fl.append(html.Br())
     cols.append({"name": 'Samples', "id": 'Samples', 'type':'text', 'hideable':True})  
 
-    iupac_scomposition_visibility = {'display':'none'}
-    if genome_type == 'both':                   #TODO possibile anche con 'var'?
-        iupac_scomposition_visibility = {}
        
     fl.append(
         html.Div(
@@ -3055,8 +3045,7 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
                             
                         }
                 ]         
-            ),
-            style = iupac_scomposition_visibility
+            )
         )
     )
 
@@ -3122,18 +3111,15 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
     guide = hash_guide[1:hash_guide.find('new')]
     genome_type = 'ref'
-    file_to_grep = '.targets.cluster.txt'
     if '+' in genome_type_f:
         genome_type = 'var'
-        file_to_grep = '.final.txt'
     if 'True' in ref_comp:
         genome_type = 'both'
-        file_to_grep = '.final.txt'
     if search is None:
         raise PreventUpdate
 
-    if genome_type != 'both':
-        raise PreventUpdate     #TODO check if can be done with 'var'
+    if genome_type == 'ref':
+        raise PreventUpdate    
 
     filtering_expressions = filter.split(' && ')
     bulge_t =  data[active_cel['row']]['Bulge Type']
@@ -3141,28 +3127,26 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
     mms = str(data[active_cel['row']]['Mismatches'])
     chrom = str(data[active_cel['row']]['Chromosome'])
     pos = str(data[active_cel['row']]['Cluster Position'])
-
+    # annotation_type = str(data[active_cel['row']]['Annotation Type'])
 
     scomposition_file = job_directory + job_id + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide + '.' + chrom + '.' + pos + '.scomposition.txt'
-    file_to_grep = '.top_1.samples.txt'
+    file_to_grep = '.samples.annotation.txt'
 
-    iupac_scomposition_visibility = {'display':'none'}
-    if genome_type == 'both':                   #TODO possibile anche con 'var'?
-        iupac_scomposition_visibility = {}
-        if not os.path.exists(scomposition_file):    #Example    job_id.X.0.4.GUIDE.chrom.position.scomposition.txt
-            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $8==' + mms + ' && $9==' + bulge_s +'\' > ' + scomposition_file], shell = True)
+    if not os.path.exists(scomposition_file):    #Example    job_id.X.0.4.GUIDE.chrom.position.scomposition.txt
+        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $8==' + mms + ' && $9==' + bulge_s +'\' > ' + scomposition_file], shell = True)
     
     if os.path.getsize(scomposition_file) > 0:          #Check if result grep has at least 1 result
         df = pd.read_csv(scomposition_file, header = None, sep = '\t')
+        # df['Annotation Type'] = annotation_type
     else:
         raise PreventUpdate
    
     if genome_type == 'var':
         df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide', 15:'Annotation Type', 16:'Top Subcluster'}, inplace = True)
     else:    
         df.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide', 17:'Annotation Type', 18:'Top Subcluster'} , inplace = True)
     df.drop(df[(~( df['Cluster Position'] == int(data[active_cel['row']]['Cluster Position']))) | (~( df['Chromosome'] == data[active_cel['row']]['Chromosome']))].index, inplace = True)
     # print(df)
     dff = df
@@ -3298,13 +3282,13 @@ def samplePage(job_id, hash):
     # col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique', 'Samples']
     
     if genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption',  'Samples Summary']#'Samples', 'Correct Guide'] 
-        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption',  'Samples Summary', 'Annotation Type']#'Samples', 'Correct Guide'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text']
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique',  'Samples Summary']# 'Samples', 'Correct Guide']
-        col_type = ['text','text','text','text','numeric','numeric','text', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text','text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique',  'Samples Summary', 'Annotation Type']# 'Samples', 'Correct Guide']
+        col_type = ['text','text','text','text','numeric','numeric','text', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text','text', 'text']
     
-    file_to_grep = '.top_1.samples.txt'
+    file_to_grep = '.samples.annotation.txt'
     sample_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt'
     final_list.append(
         html.Div(job_id + '.' + sample + '.' + guide,style = {'display':'none'}, id = 'div-info-sumbysample-targets')
@@ -3312,11 +3296,7 @@ def samplePage(job_id, hash):
     if not os.path.exists(sample_grep_result):    #Example    job_id.HG001.guide.txt
         subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + sample + ' > ' + sample_grep_result], shell = True)
         subprocess.Popen(['zip ' + sample_grep_result.replace('.txt','.zip') + ' ' + sample_grep_result],shell = True)
-    #df = pd.read_csv('Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt', sep = '\t', names = col_list, header = None)
-    #df.drop(df.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
     
-    # df.drop(df.columns[[-1,]], axis=1, inplace=True)         #NOTE comment to show the sample column (maybe not informative in this view)
-    # del col_list[-1]                                         #NOTE comment to show the sample column (maybe not informative in this view)
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     
     final_list.append(          
@@ -3394,11 +3374,12 @@ def update_table_sample(page_current, page_size, sort_by, filter, search, hash):
         raise PreventUpdate
     if genome_type == 'var':
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide', 15:'Annotation Type', 16:'Top Subcluster'}, inplace = True)
     else:
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
-    dff.drop(dff.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide', 17:'Annotation Type', 18:'Top Subcluster'} , inplace = True)
+    del dff['Correct Guide']         #NOTE Drop the Correct Guide column
+    
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
 
@@ -3479,28 +3460,43 @@ def clusterPage(job_id, hash):
     )
     
     if genome_type == 'ref':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Correct Column'] 
-        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Annotation Type'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'text']
         file_to_grep = '.targets.cluster.txt'
     elif genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'Samples Summary']#'Samples', #'Correct Column'] 
-        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'Samples Summary', 'Annotation Type']#'Samples', #'Correct Column'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text']
         # file_to_grep = 'targets.cluster.minmaxdisr'
-        file_to_grep = '.final.txt'
+        file_to_grep = '.targets.cluster.minmaxdisr.txt'  #get the cluster target, but still missing samples and annotation
+        #order_of_column = '$1\"\\t\"$2\"\\t\"$3\"\\t\"$4\"\\t\"$5\"\\t\"$6\"\\t\"$7\"\\t\"$8\"\\t\"$9\"\\t\"$10\"\\t\"$11\"\\t\"$12\"\\t\"$13\"\\t\"'     #All cols until PAM disruption except Real Guide ($14) #NOTE Change if add other column to report
+        #last_column = '$14'
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique', 'Samples Summary']#'Samples', 'Correct Column']
-        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
-        file_to_grep = '.final.txt'
-    
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique', 'Samples Summary', 'Annotation Type']#'Samples', 'Correct Column']
+        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text', 'text']
+        file_to_grep = '.total.cluster.txt'
+        #order_of_column = '$1\"\\t\"$2\"\\t\"$3\"\\t\"$4\"\\t\"$5\"\\t\"$6\"\\t\"$7\"\\t\"$8\"\\t\"$9\"\\t\"$10\"\\t\"$11\"\\t\"$12\"\\t\"$13\"\\t\"$14\"\\t\"$15\"\\t\"'  #All cols until Var Uniq except Real Guide ($16) #NOTE Change if add other column to report
+        #last_column = '$16'
     cluster_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.txt'
     if not os.path.exists(cluster_grep_result):    #Example    job_id.chr3_100.guide.txt
-        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + cluster_grep_result], shell = True)
+        #Grep annotation
+        if genome_type == 'ref':
+            get_annotation = subprocess.Popen(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + '.Annotation.targets.txt' + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\''], shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = get_annotation.communicate()
+            annotation_type = out.decode('UTF-8').strip().split('\t')[-1]
+            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\" {print $0\"\\t' + annotation_type + '\"}\' > ' + cluster_grep_result], shell = True)
+        else:   #Get annotation and samples
+            # get_annotation = subprocess.Popen(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + '.samples.all.annotation.txt' + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\''], shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            # out, err = get_annotation.communicate()
+            # annotation_type = out.decode('UTF-8').strip().split('\t')[-1]
+            # samples_list = out.decode('UTF-8').strip().split('\t')[-3]
+            
+            #subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\" ; {print ' + order_of_column + samples_list + '\"\\t\"' + last_column + '\"\\t\"' + annotation_type + '\"}\' > ' + cluster_grep_result], shell = True)
+            #subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\" {print $0\"\\t' + samples_list + '\\t' + annotation_type +'\"}\' > ' + cluster_grep_result], shell = True)
+            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + cluster_grep_result], shell = True)  #NOTE file will not have sample and annotation column
         subprocess.Popen(['zip ' + cluster_grep_result.replace('.txt','.zip') + ' ' + cluster_grep_result], shell = True)
     final_list.append(
         html.Div(job_id + '.' + chromosome + '_' + position + '.' + guide ,style = {'display':'none'}, id = 'div-info-sumbyposition-targets')
     ) 
-    # df = pd.read_csv('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +  '.txt', sep = '\t', names = col_list)
-    # df.drop(df.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     
     final_list.append(          
@@ -3546,10 +3542,10 @@ def clusterPage(job_id, hash):
 
 
     scomposition_file = 'Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.scomposition.txt'
-    file_to_grep = '.top_1.samples.txt'
+    file_to_grep = '.samples.annotation.txt'
 
     iupac_scomposition_visibility = {'display':'none'}
-    if genome_type == 'both':                   #TODO possibile anche con 'var'?
+    if genome_type != 'ref':                   
         iupac_scomposition_visibility = {}
         if not os.path.exists(scomposition_file):    #Example    job_id.chr_pos.guide.scomposition.txt
             subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + scomposition_file], shell = True)
@@ -3638,16 +3634,30 @@ def update_table_cluster(page_current, page_size, sort_by, filter, search, hash)
     dff = global_store_general('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +  '.txt')
     if dff is None:
         raise PreventUpdate
+
+
+    if genome_type != 'ref':
+        #Grep annotation and samples #NOTE missing in txt file
+        get_annotation = subprocess.Popen(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + '.samples.all.annotation.txt' + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\''], shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = get_annotation.communicate()
+        annotation_type = out.decode('UTF-8').strip().split('\t')[-1]
+        samples_list = out.decode('UTF-8').strip().split('\t')[-3]
+        dff['Samples'] = samples_list
+        dff['Annotation Type'] = annotation_type
+
     if genome_type == 'ref':
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Top Subcluster'}, inplace = True)
-    elif genome_type == 'var':
+        7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide',11:'Annotation Type'}, inplace = True)
+    elif genome_type == 'var':      #NOTE Correct guide and samples are inverted w.r.t. summary by sample and summary by guide
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
-    else:
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Correct Guide', 14:'Samples', 15:'Annotation Type', 16:'Top Subcluster'}, inplace = True)
+    else:                           #NOTE Correct guide and samples are inverted w.r.t. summary by sample and summary by guide
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
-    dff.drop(dff.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Correct Guide', 16:'Samples',17:'Annotation Type', 18:'Top Subcluster'} , inplace = True)
+
+    del dff['Correct Guide']
+    # dff['Annotation Type'] = annotation_type
+    #print(dff)
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
 
@@ -3722,7 +3732,7 @@ def update_iupac_scomposition_table_cluster(page_current, page_size, sort_by, fi
     if 'True' in ref_comp:
         genome_type = 'both'
 
-    if genome_type != 'both':       #TODO check if 'var' can be accepted
+    if genome_type == 'ref':       
         raise PreventUpdate
     
     filtering_expressions = filter.split(' && ')
@@ -3730,13 +3740,22 @@ def update_iupac_scomposition_table_cluster(page_current, page_size, sort_by, fi
     if dff is None:
         raise PreventUpdate
     
-    if genome_type == 'var':           #TODO check if 'var' can be accepted
+    # #Grep annotation
+    # file_to_grep = '.Annotation.targets.txt'
+    # get_annotation = subprocess.Popen(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\''], shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # out, err = get_annotation.communicate()
+    # annotation_type = out.decode('UTF-8').strip().split('\t')[-1]
+    
+    if genome_type == 'var':           
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Top Subcluster'}, inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide', 15:'Annotation Type',16:'Top Subcluster'}, inplace = True)
     else:
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Top Subcluster'} , inplace = True)
-    dff.drop(dff.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Annotation Type',18:'Top Subcluster'} , inplace = True)
+    # dff.drop(dff.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
+    del dff['Correct Guide']
+    #dff['Annotation Type'] = annotation_type
+
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
 
@@ -3837,7 +3856,7 @@ def downloadLinkSample(n, file_to_load, search): #file to load =
 
 if __name__ == '__main__':
     #app.run_server(debug=True)
-    app.run_server(host='0.0.0.0', debug=True, port=8050)
+    app.run_server(host='0.0.0.0', debug=True, port=8080)
     #app.run_server(host='0.0.0.0',  port=8080) #NOTE to not reload the page when creating new images in graphical report
     cache.clear()       #delete cache when server is closed
 
@@ -3845,3 +3864,5 @@ if __name__ == '__main__':
     #carattere esatto. Inoltre alcuni samples non possono esistere in quanto la pam non è NGG (o quella selezionata dall'utente)
     #BUG nel filtering se ho, in min mismatch etc, la stringa '-', che non è considerata numero
     #NOTE: l'ordinamento su Samples Summary o su Samples è fatto su stringhe, e non su numero di samples (potrebbe essere più utile)
+    #BUG: quando creo il file per il Show target del summary by position, i sample e le annotazioni sono aggiunte real time al sito, quindi se l'utente fa download file
+    # queste colonne non sono presenti

@@ -44,7 +44,7 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
         if '#' in line:
             continue
         line = line.strip().split('\t')
-        if 'No' not in line[-2]:
+        if 'n' not in line[-3]:
             guide = line[1].replace('-','')
             if guide not in guides_dict:
                 guides_dict[guide] = dict()
@@ -53,9 +53,9 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
                 guides_superpopulation_targets[guide] = dict()  #{GUIDE -> {SUPOP->count,SUPOP2 -> count}, GUIDE2 -> {SUPOP1 -> count}}
                 count_creation[guide] = dict()
                 count_disruption[guide] = dict()
-            words = line[-2].split(',')
+            words = line[-3].split(',')
             
-            if current_chr_pos != line[3]+line[4]:
+            if current_chr_pos != line[3]+line[4]:          #This if is not used
                 guides_dict_total[guide] += 1
                 current_chr_pos = line[3]+line[4]
             checked_pop = []
@@ -75,7 +75,7 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
                     count_creation[guide][word][0] +=1
 
                 if sys.argv[3] == 'both':
-                    if 'y' in line[-3]:
+                    if 'y' in line[-4]:
                         guides_dict[guide][word][1] += 1
                         
                         if line[12] != 'n':
@@ -84,7 +84,7 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
                             count_creation[guide][word][1] +=1
 
                 #NOTE se voglio contare solo gli y il codice sotto lo idento una volta
-                if dict_pop[word] not in checked_pop:       #I wanna count the target only once even if multiple samples of the same pop are in line[-2]
+                if dict_pop[word] not in checked_pop:       #I wanna count the target only once even if multiple samples of the same pop are in line[-3]
                     checked_pop.append(dict_pop[word])
                     try:
                         guides_population_targets[guide][dict_pop[word]] += 1
@@ -107,7 +107,7 @@ with open(sys.argv[4], 'r') as g_file:
 
 for k in guides_dict.keys():
     with open(sys.argv[2] + '.summary_by_samples.' + k + '.txt', 'w+') as result:
-        result.write(k + '\t' + str(guides_dict_total[k]) + '\n')
+        result.write(k + '\t' + str(guides_dict_total[k]) + '\n')       #this line is not used in the dash application
         if sys.argv[3] == 'both':
             for i in all_samples:
                 if i not in guides_dict[k]:
