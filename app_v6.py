@@ -909,7 +909,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
             seq = ''.join(seq)
             # name, seq = name_and_seq.strip().split('\n')    
             if 'chr' in seq:
-                extracted_seq = extract_seq.extractSequence(name, seq, genome_selected.replace(' ', '_'))
+                extracted_seq = extract_seq.extractSequence(name, seq, genome_ref.replace(' ', '_'))
             else:
                 extracted_seq = seq.strip()
             guides.extend(convert_pam.getGuides(extracted_seq, pam_char, len_guide_sequence, pam_begin))
