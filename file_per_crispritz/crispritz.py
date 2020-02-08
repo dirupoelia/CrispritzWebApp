@@ -117,10 +117,10 @@ def searchTST():
 			sys.exit()
 
 	if (int(max_bulges) < bDNA):
-		print("WARNING! Max available bulges (" + max_bulges + ") is smaller than input DNA bulges (" + bDNA + "). Using " + max_bulges + " bulges")
+		print("WARNING! Max available bulges (" + max_bulges + ") is smaller than input DNA bulges (" + str(bDNA) + "). Using " + max_bulges + " bulges")
 		bDNA = max_bulges
 	if (int(max_bulges) < bRNA):
-		print("WARNING! Max available bulges (" + max_bulges + ") is smaller than input RNA bulges (" + bRNA + "). Using " + max_bulges + " bulges")
+		print("WARNING! Max available bulges (" + max_bulges + ") is smaller than input RNA bulges (" + str(bRNA) + "). Using " + max_bulges + " bulges")
 		bRNA = max_bulges
 	# read number of threads
 	th = 1

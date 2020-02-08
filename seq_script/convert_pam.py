@@ -4,7 +4,7 @@ import os
 import itertools
 from Bio.Seq import Seq
 import re
-def getGuides(extracted_seq, pam, len_guide):
+def getGuides(extracted_seq, pam, len_guide, pam_begin):
     
     len_pam = len(pam)
     #dict
@@ -51,19 +51,29 @@ def getGuides(extracted_seq, pam, len_guide):
         pos = ([m.start() for m in re.finditer('(?=' + pam + ')', extracted_seq)])
         if pos:
             for i in pos:
-                if i < len_guide:
-                    continue
-                #guides.append(extracted_seq[i-len_guide:i+len_pam])           # i is position where first char of pam is found, eg the N char in NNNNNN NGG
-                #print('1 for:' , extracted_seq[i-len_guide:i])
-                guides.append(extracted_seq[i-len_guide:i])
+                if pam_begin:
+                    if i > (len_sequence - len_guide - len_pam):
+                        continue
+                    guides.append(extracted_seq[i + len_pam : i +len_pam + len_guide])
+                else:
+                    if i < len_guide:
+                        continue
+                    #guides.append(extracted_seq[i-len_guide:i+len_pam])           # i is position where first char of pam is found, eg the N char in NNNNNN NGG
+                    #print('1 for:' , extracted_seq[i-len_guide:i])
+                    guides.append(extracted_seq[i-len_guide:i])
     for pam in iupac_pam_reverse:       #Negative strand
         pos = ([m.start() for m in re.finditer('(?=' + pam + ')', extracted_seq)])
         if pos:
             for i in pos:
-                if i > (len_sequence - len_guide - len_pam):
-                    continue
-                #guides.append(str(Seq(extracted_seq[i:i+len_pam+len_guide]).reverse_complement()))         # i is position where first char of pam is found, eg the first C char in CCN NNNNNN
-                #print('2 for:', str(Seq(extracted_seq[i + len_pam : i + len_guide + len_pam]).reverse_complement()))
-                guides.append(str(Seq(extracted_seq[i + len_pam : i + len_guide + len_pam]).reverse_complement()))
+                if pam_begin:
+                    if i < len_guide:
+                        continue
+                    guides.append(str(Seq(extracted_seq[i-len_guide:i]).reverse_complement()))
+                else:
+                    if i > (len_sequence - len_guide - len_pam):
+                        continue
+                    #guides.append(str(Seq(extracted_seq[i:i+len_pam+len_guide]).reverse_complement()))         # i is position where first char of pam is found, eg the first C char in CCN NNNNNN
+                    #print('2 for:', str(Seq(extracted_seq[i + len_pam : i + len_guide + len_pam]).reverse_complement()))
+                    guides.append(str(Seq(extracted_seq[i + len_pam : i + len_guide + len_pam]).reverse_complement()))
     return guides
     #return guides for when adding to app.py
