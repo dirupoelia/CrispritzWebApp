@@ -11,6 +11,8 @@ import concurrent.futures
 import subprocess
 import pandas as pd
 import os
+print('TEST PER ANNOTAZIONE COMPLETA: I TARGET SENZA ANNOTAZIONE SONO SALVATI COME \"n\"')
+print('SE UN  TARGET HA 1+ ANNOTAZIONI, LE SALVA IN SINGOLA UNICA RIGA')
 print("READING INPUT FILES")
 #Dictionaries for annotating samples
 
@@ -246,11 +248,16 @@ for line in inResult:
 
     #faccio match su albero
     foundAnnotations = sorted(annotationsTree[int(x[4]):(int(x[4])+int(len(x[1]))+1)])
+    string_annotation = []
+    found_bool = False
     for found in range(0, len(foundAnnotations)):
         guide = foundAnnotations[found].data
         guideSplit = guide.split('\t')
+        # print(guide, str(guideSplit[0]), str(x[3]))
         if(str(guideSplit[0]) == str(x[3])):
-            outFileTargets.write(line.rstrip() + '\t' + str(guideSplit[1]) + "\n")
+            found_bool = True
+            #outFileTargets.write(line.rstrip() + '\t' + str(guideSplit[1]) + "\n")
+            string_annotation.append(str(guideSplit[1]))
             guideDict[str(x[1])][guideSplit[1]][int(x[mm_pos])] += 1
             totalDict[guideSplit[1]][int(x[mm_pos])] += 1
             
@@ -273,7 +280,10 @@ for line in inResult:
                         count_superpop[x[1]][dict_pop_to_sup[dict_sample_to_pop[sample]]][guideSplit[1]][int(x[mm_pos])] += 1
                 visited_pop = []
                 visited_superpop = []
-
+    if not found_bool:
+        outFileTargets.write(line.rstrip() + '\tn\n')
+    else:
+        outFileTargets.write(line.rstrip() + '\t' + ','.join(string_annotation) + '\n')
     lines_processed +=1
     if lines_processed % (mod_tot_line) == 0:
         print('Annotation: Total progress ' + str(round(lines_processed /total_line *100, 2)) + '%')
