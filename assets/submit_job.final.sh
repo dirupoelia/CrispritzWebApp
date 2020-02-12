@@ -49,12 +49,12 @@ echo 'Search-index\tDone\t'$(date) >> log.txt
 echo 'Search\tStart\t'$(date) >> log.txt
 if [ ${11} = 'True' ]; then
     #echo 'crispritz search'
-    crispritz.py search ../../$used_genome_dir pam.txt guides.txt $jobid -mm $7 -var -t #>> output.txt #-scores $3
+    crispritz.py search ../../$used_genome_dir pam.txt guides.txt $jobid -mm $7 -var -t -th 8 #>> output.txt #-scores $3
     
     if [ ${15} = 'True' ]; then
         mkdir 'ref'
         echo 'Search_output_ref '${19} >>  output.txt 
-        crispritz.py search ../../$3 pam.txt guides.txt $jobid'_ref' -mm $7 -var -t #>> output.txt
+        crispritz.py search ../../$3 pam.txt guides.txt $jobid'_ref' -mm $7 -var -t -th 8 #>> output.txt
         mv ./$jobid'_ref'.*.txt 'ref'
         mv ./$jobid'_ref'.*.xls 'ref'
     fi
