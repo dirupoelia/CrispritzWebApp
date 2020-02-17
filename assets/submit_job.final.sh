@@ -230,8 +230,8 @@ else    #Type search = both
     echo 'Start creation semicommon, common, unique'
     echo 'PostProcess_output' > output.txt
     echo 'Processing Search Results... Step [1/6]' >>  output.txt
-    ../../PostProcess/./extraction.sh ref/$jobid'_ref.targets.txt' $jobid.targets.txt $jobid
-    echo 'End creation semicommon, common, unique'
+    ../../PostProcess/./extraction.sh ref/$jobid'_ref.targets.txt' $jobid.targets.txt $jobid #TODO modificare extraction.sh per tenere in considerazione la colonna cluster position
+    echo 'End creation semicommon, common, unique'                                          #TODO e poi modificare le chiamate ai vari cluster.dict.py
 
     #Cluster common file, extract top1 and insert into semicommon
     echo 'Start cluster common'

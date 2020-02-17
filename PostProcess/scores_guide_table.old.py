@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Faster script + multiprocessing
+
 # Script that calculates cfd score for targets with bulge 'X', and save the accumulated cfd score for the input guide
 # Also calculates the Doench score if the targets has bulge 'X' and 0 mms (doench = 0 if no such target exists)
 
@@ -18,22 +18,11 @@ import subprocess
 import azimuth.model_comparison
 import string
 import itertools
-import multiprocessing
-SIZE_DOENCH = 10000
-N_THR = 3
+
 # doench_string.append(seq)
 # doench_score =  azimuth.model_comparison.predict(np.asarray(doench_string), None, None, model= model, pam_audit=False)
 # doench_score = np.around(doench_score * 100)
-
-def doenchParallel(targets, model, result):
-  start_time = time.time()
-  doench_score =  azimuth.model_comparison.predict(targets,None, None, model= model, pam_audit=False)
-  doench_score = [np.around(i * 100) for i in doench_score]
-  max_doench = int(max(doench_score))
-  result.append(max_doench)
-
-
-def doenchForIupac(sequence_doench, guide_seq):
+def doenchForIupac(sequence_doench, model):
   pos_iupac = []
   var = []
   for pos, c in enumerate(sequence_doench):
@@ -41,14 +30,19 @@ def doenchForIupac(sequence_doench, guide_seq):
       pos_iupac.append(pos)
       var.append(iupac_code[c])
   
+  target_combination = []
   if var:
     for i in itertools.product(*var):
         t = list(sequence_doench)
         for p, el in enumerate(pos_iupac):
             t[el] = i[p]
-        targets_for_doench[guide_seq].append(''.join(t))
+        target_combination.append(''.join(t))
   else:
-    targets_for_doench[guide_seq].append(sequence_doench)
+    target_combination.append(sequence_doench)
+  
+  doench_score =  azimuth.model_comparison.predict(np.asarray(target_combination), None, None, model= model, pam_audit=False)
+  doench_score = [np.around(i * 100) for i in doench_score]
+  return int(max(doench_score))
 
 
 def get_mm_pam_scores():
@@ -108,9 +102,6 @@ with open(sys.argv[3]) as pamfile:
 mm_scores, pam_scores = get_mm_pam_scores()
 guides_dict = dict()
 guides_dict_doench = dict()
-targets_for_doench = dict()
-
-N_THR = multiprocessing.cpu_count() // 2
 
 iupac_code = {
           "R":("A", "G"),
@@ -151,20 +142,6 @@ max_doench = 0
 n_of_acceptable_cfd = 0
 sum_cfd = 0
 cfd_scores = []
-
-# NOTE uncomment for progress bas
-# process = subprocess.Popen(['wc', '-l', sys.argv[1]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-# out, err = process.communicate()
-# total_line = int(out.decode('UTF-8').split(' ')[0])
-# if total_line < 2:
-#     print('WARNING! Input file has no targets')
-#     sys.exit()
-# if total_line < 10:
-#     mod_tot_line = 1
-# else:
-#     mod_tot_line = int(total_line/90)
-# lines_processed = 0
-
 
 all_word = []
 with open (sys.argv[1]) as result:
@@ -211,10 +188,15 @@ with open (sys.argv[1]) as result:
           sequence_doench = out.strip().split('\n')[-1].upper()
         else:
           sequence_doench = reverse_complement_table(out.strip().split('\n')[-1].upper())
-        
-        if target[1] not in targets_for_doench:
-          targets_for_doench[target[1]] = []
-        doenchForIupac(sequence_doench, target[1])  #Get all possible targets with iupac itertools for doench
+        # doench_score =  azimuth.model_comparison.predict(np.asarray(sequence_doench), None, None, model= model, pam_audit=False)
+        # doench_score = np.around(doench_score * 100)
+        # doench_score = doench_score[0]
+        doench_score = doenchForIupac(sequence_doench, model)
+        try:
+          if doench_score > guides_dict_doench[target[1]]:
+            guides_dict_doench[target[1]] = doench_score
+        except:
+          guides_dict_doench[target[1]] = doench_score
 
       sum_cfd = sum_cfd + cfd_score
       try:
@@ -242,10 +224,28 @@ with open (sys.argv[1]) as result:
           sequence_doench = out.strip().split('\n')[-1].upper()
         else:
           sequence_doench = reverse_complement_table(out.strip().split('\n')[-1].upper())
+        # pos_iupac = []
+        # var = []
+        # for pos, c in enumerate(sequence_doench):
+        #   if c in iupac_code:
+        #     pos_iupac.append(pos)
+        #     var.append(iupac_code[c])
+
+        # target_combination = []
+        # for i in itertools.product(*var):
+        #     t = list(sequence_doench)
+        #     for p, el in enumerate(pos_iupac):
+        #         t[el] = i[p]
+        #     target_combination.append(''.join(t))
         
-        if target[1] not in targets_for_doench:
-          targets_for_doench[target[1]] = []
-        doenchForIupac(sequence_doench, target[1])  #Get all possible targets with iupac itertools for doench
+        # doench_score =  azimuth.model_comparison.predict(np.asarray(target_combination), None, None, model= model, pam_audit=False)
+        # doench_score = [np.around(i * 100) for i in doench_score]
+        m_doench = doenchForIupac(sequence_doench, model)
+        try:
+          if m_doench > guides_dict_doench[target[1]]:
+            guides_dict_doench[target[1]] = m_doench
+        except:
+          guides_dict_doench[target[1]] = m_doench
 
       i = 0
       for char in off:
@@ -281,45 +281,19 @@ with open (sys.argv[1]) as result:
           guides_dict[target[1]] = guides_dict[target[1]] + cfd_score
         except:
           guides_dict[target[1]] = cfd_score
-    
-    #NOTE decomment for progress bar
-    # lines_processed +=1
-    # if lines_processed % (mod_tot_line) == 0:
-    #     print('Scoring: Total progress ' + str(round(lines_processed /total_line *100, 2)) + '%')
 
 job_id = sys.argv[1].split('/')[-1].split('.')[0]
 
+
+
 with open( 'acfd.txt', 'w+') as res, open(sys.argv[4], 'r') as guides:
-  man = multiprocessing.Manager()
-  shared_doench = man.list() #list containing max doech for each thread
   guides = guides.read().strip().split('\n')
   for g in guides:
-    guides_dict_doench[g] = 0
     if g not in guides_dict:
       guides_dict[g] = 0    
   #for k in guides_dict.keys():
-    if g not in targets_for_doench:
+    if g not in guides_dict_doench:
       guides_dict_doench[g] = 0
-    else:
-      if len (targets_for_doench[g]) > SIZE_DOENCH:
-        jobs = []
-        remaining_splits = (len(targets_for_doench[g])//SIZE_DOENCH) + 1
-        for i in range ((len(targets_for_doench[g])//SIZE_DOENCH) + 1):
-          for thr in range (min(N_THR, remaining_splits)):
-            p = multiprocessing.Process(target = doenchParallel, args=(np.asarray(targets_for_doench[g][i*N_THR*SIZE_DOENCH + thr*SIZE_DOENCH : min( i*N_THR*SIZE_DOENCH + (thr+1)*SIZE_DOENCH,len(targets_for_doench[g]))]), model, shared_doench,) )
-            remaining_splits -= 1
-            p.start()
-            jobs.append(p)
-          for i in jobs:
-            i.join()
-          
-        guides_dict_doench[g] = max(shared_doench)
-        shared_doench =  man.list()
-      else:
-        start_time = time.time()
-        doench_score =  azimuth.model_comparison.predict(np.asarray(targets_for_doench[g]), None, None, model= model, pam_audit=False)
-        doench_score = [np.around(i * 100) for i in doench_score]
-        guides_dict_doench[g] =  int(max(doench_score))
     res.write(g + '\t' + str(guides_dict[g]) + '\t' + str(guides_dict_doench[g]) + '\n')
 
 
