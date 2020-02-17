@@ -230,22 +230,12 @@ else    #Type search = both
     echo 'Start creation semicommon, common, unique'
     echo 'PostProcess_output' > output.txt
     echo 'Processing Search Results... Step [1/6]' >>  output.txt
-    ../../PostProcess/./extraction.sh ref/$jobid'_ref.targets.txt' $jobid.targets.txt $jobid #TODO modificare extraction.sh per tenere in considerazione la colonna cluster position
-    echo 'End creation semicommon, common, unique'                                          #TODO e poi modificare le chiamate ai vari cluster.dict.py
-
-    #Cluster common file, extract top1 and insert into semicommon
-    echo 'Start cluster common'
-    echo 'Clustering... Step [2/6]' >>  output.txt
-    python3 ../../PostProcess/cluster.dict.py $jobid.common_targets.txt 'no' 'False' 'False' guides.txt # > $jobid.common_targets.cluster.txt
-                                                                        #Second false to not save the colum Pos Cluster and Total -> no needed for cat into semicommon
-    echo 'End cluster common'
-    echo 'Start top1 extraction common'
-    python3 ../../PostProcess/extract_top.py $jobid.common_targets.cluster.txt $jobid.common_targets # > $jobid.common_targets.top_1.txt
-    cat $jobid.common_targets.top_1.txt >> $jobid.semi_common_targets.txt
-    echo 'End top1 extraction common'
-
-    #Cluster semicommon e uniq
+    ../../PostProcess/./extraction.sh ref/$jobid'_ref.targets.txt' $jobid.targets.txt $jobid # > $jobid.common_targets.txt $jobid.semi_common_targets.txt $jobid.unique_targets.txt
+    echo 'End creation semicommon, common, unique'                                          
+    
+    #Cluster semicommon (that also contains common -> see extraction.sh) e uniq
     echo 'Start cluster semicommon'
+    echo 'Clustering... Step [2/6]' >>  output.txt
     python3 ../../PostProcess/cluster.dict.py $jobid.semi_common_targets.txt 'no' 'True' 'False' guides.txt
     echo 'End cluster semicommon'
     echo 'Start cluster unique'     #NOTE doing cluster separately does not create the right order of cluster (first clusters of uniq, then clusters of semi_common)

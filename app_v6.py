@@ -638,7 +638,7 @@ def inExample(nI, nR):
     
     if nI > 0:
         if nI > nR:
-            return 'hg38 ref+hg38 1000genomeproject', '20bp-NGG-SpCas9', 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', '4', '0', '0', '20', '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
+            return 'hg38 ref+hg38 1000genomeproject', '20bp-NGG-SpCas9', 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', '4', '1', '1', '20', '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
 
 
     if nR > 0:
@@ -818,7 +818,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     
     #Check input, else give simple input
     if genome_selected is None or genome_selected is '':
-        genome_selected = 'hg19_ref'
+        genome_selected = 'hg38_ref'
     if pam is None or pam is '':
         pam = '20bp-NGG-SpCas9'
     if text_guides is None or text_guides is '':

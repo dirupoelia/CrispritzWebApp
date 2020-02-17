@@ -23,6 +23,8 @@
 #sys5 is guides.txt for slow clustering
 #Output column (not written): Bulge_type, Guide, Target, chr, pos, pos_cluster (optional), direction, mms, bulge, total(optional), real guide(optional)
 
+#NOTE with new search, cluster position is already present, so code for that column is commented
+
 import time
 import sys
 import subprocess
@@ -84,18 +86,18 @@ if total_line > MAX_LIMIT:
                     if '#' in line[0] or line[1].replace('-','') != guide:
                         continue
                     if not cluster_only:
-                        line.append(str(int(line[6]) + int(line[7])))
+                        line.append(str(int(line[7]) + int(line[8])))   #Total column
                         
-                        if line[5] == strand_to_check:
-                            if line[0] == 'DNA':
-                                # line.append(str(int(line[4]) + int(line[7])))
-                                line.insert(5, str(int(line[4]) + int(line[7])))
-                            else:
-                                # line.append(str(int(line[4]) - int(line[7])))
-                                line.insert(5,str(int(line[4]) - int(line[7])))
-                        else:
-                            # line.append(line[4])
-                            line.insert(5, line[4])
+                        # if line[5] == strand_to_check:  #Cluster Position column
+                        #     if line[0] == 'DNA':
+                        #         # line.append(str(int(line[4]) + int(line[7])))
+                        #         line.insert(5, str(int(line[4]) + int(line[7])))
+                        #     else:
+                        #         # line.append(str(int(line[4]) - int(line[7])))
+                        #         line.insert(5,str(int(line[4]) - int(line[7])))
+                        # else:
+                        #     # line.append(line[4])
+                        #     line.insert(5, line[4])
                         
                     current_count += 1
                     if current_count > MAX_LIMIT:
@@ -106,9 +108,9 @@ if total_line > MAX_LIMIT:
                         del guides_dict[guide]
                         break
                     try:
-                        guides_dict[line[1].replace('-','')].append(('\t'.join(line[:3]), line[3], int(line[4]), int(line[5]), '\t'.join(line[6:9]), int(line[9]), '\t'.join(line[10:])))    #[('type\tguide\target', 'chr', pos, clusterpos, 'dir\tmm\tbul', tot)]
+                        guides_dict[line[1].replace('-','')].append(('\t'.join(line[:3]), line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]), '\t'.join(line[10:])))    #[('type\tguide\target', 'chr', pos, clusterpos, 'dir', mm, bul, tot)]
                     except:
-                        guides_dict[line[1].replace('-','')] = [('\t'.join(line[:3]), line[3], int(line[4]), int(line[5]), '\t'.join(line[6:9]), int(line[9]),'\t'.join(line[10:]) )]
+                        guides_dict[line[1].replace('-','')] = [('\t'.join(line[:3]), line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]),'\t'.join(line[10:]) )]
                     #total_targets.append(line)
             if not cluster_ok:
                 continue
@@ -119,7 +121,7 @@ if total_line > MAX_LIMIT:
             start = time.time()
             # total_targets.sort(key = lambda x: ( x[3] , int(x[-1]) ))
             for k in guides_dict.keys():
-                guides_dict[k].sort(key = lambda x: ( x[1] , x[3] ))
+                guides_dict[k].sort(key = lambda x: ( x[1] , x[3] ))    #Order by chr_clusterpos
             #total_targets.sort(key = lambda x: ( x[3] , int(x[5]) ))
 
             print('Targets sorted:', time.time() - start)
@@ -158,16 +160,16 @@ if total_line > MAX_LIMIT:
                     #if line[3] + ' ' + line[9] != current_chr_pos:
                     if line[1] + ' ' + str(line[3]) != current_chr_pos:
                         # total_list[-1].sort(key = lambda x: int(x[8]))
-                        total_list[-1].sort(key = lambda x: x[5])   #Order cluster by total
+                        total_list[-1].sort(key = lambda x: (x[7], x[5]))   #Order cluster by total and mms
                         total_list.append([line])
                         # current_chr_pos = line[3] + ' ' + line[9]
                         current_chr_pos = line[1] + ' ' + str(line[3])
                     else:
                         total_list[-1].append(line)     
 
-                total_list[-1].sort(key = lambda x: x[5])
+                total_list[-1].sort(key = lambda x: (x[7], x[5]))       #Order last cluster by total and mms
 
-                total_list.sort(key = lambda x: x[0][5])        #Order all clusters by total of top1
+                total_list.sort(key = lambda x: x[0][7])        #Order all clusters by total of top1
                 if addGuide:
                     if keep_columns:
                         for cluster in total_list:
@@ -176,7 +178,7 @@ if total_line > MAX_LIMIT:
                     else:
                         for cluster in total_list:
                             for target in cluster:
-                                result.write('\t'.join(str(x) for x in target[:3]) + '\t' + target[4] +'\t' + target[6].strip() + '\t' + target[0].split('\t')[1].replace('-','') + '\n')
+                                result.write('\t'.join(str(x) for x in target[:3]) + '\t' + '\t'.join(str(x) for x in target[4:7]) +'\t' + target[8].strip() + '\t' + target[0].split('\t')[1].replace('-','') + '\n')
 
                 else:
                     if keep_columns:
@@ -186,7 +188,7 @@ if total_line > MAX_LIMIT:
                     else:
                         for cluster in total_list:
                             for target in cluster:
-                                result.write('\t'.join(str(x) for x in target[:3]) + '\t' + target[4] +'\t' + target[6].strip() + '\n')
+                                result.write('\t'.join(str(x) for x in target[:3]) + '\t' + '\t'.join(str(x) for x in target[4:7]) +'\t' + target[8].strip() + '\n')
             del guides_dict[guide]
             ok_guides.append(guide)
             print("Clustering runtime: %s seconds" % (time.time() - start_time))
@@ -203,21 +205,21 @@ else:
             if line[1].replace('-','') in guides_to_check:
                 continue
             if not cluster_only:
-                line.append(str(int(line[6]) + int(line[7])))
-                if line[5] == strand_to_check:
-                    if line[0] == 'DNA':
-                        # line.append(str(int(line[4]) + int(line[7])))
-                        line.insert(5, str(int(line[4]) + int(line[7])))
-                    else:
-                        # line.append(str(int(line[4]) - int(line[7])))
-                        line.insert(5,str(int(line[4]) - int(line[7])))
-                else:
-                    # line.append(line[4])
-                    line.insert(5, line[4])
+                line.append(str(int(line[7]) + int(line[8])))   #Add Total column
+                # if line[5] == strand_to_check:                  #Add Cluster Position column
+                #     if line[0] == 'DNA':
+                #         # line.append(str(int(line[4]) + int(line[7])))
+                #         line.insert(5, str(int(line[4]) + int(line[7])))
+                #     else:
+                #         # line.append(str(int(line[4]) - int(line[7])))
+                #         line.insert(5,str(int(line[4]) - int(line[7])))
+                # else:
+                #     # line.append(line[4])
+                #     line.insert(5, line[4])
             try:
-                guides_dict[line[1].replace('-','')].append(('\t'.join(line[:3]), line[3], int(line[4]), int(line[5]), '\t'.join(line[6:9]), int(line[9]), '\t'.join(line[10:])))    #[('type\tguide\target', 'chr', pos, clusterpos, 'dir\tmm\tbul', tot)]
+                guides_dict[line[1].replace('-','')].append(('\t'.join(line[:3]), line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]), '\t'.join(line[10:])))    #[('type\tguide\target', 'chr', pos, clusterpos, 'dir', mm, bul, tot)]
             except:
-                guides_dict[line[1].replace('-','')] = [('\t'.join(line[:3]), line[3], int(line[4]), int(line[5]), '\t'.join(line[6:9]), int(line[9]),'\t'.join(line[10:]) )]
+                guides_dict[line[1].replace('-','')] = [('\t'.join(line[:3]), line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]),'\t'.join(line[10:]) )]
             #total_targets.append(line)
     if not cluster_only:       
         print('Created \'Total\' and \'Position Cluster\' columns:', time.time() - start)
@@ -226,7 +228,7 @@ else:
     start = time.time()
     # total_targets.sort(key = lambda x: ( x[3] , int(x[-1]) ))
     for k in guides_dict.keys():
-        guides_dict[k].sort(key = lambda x: ( x[1] , x[3] ))
+        guides_dict[k].sort(key = lambda x: ( x[1] , x[3] ))        #Order by chr_clusterpos
     #total_targets.sort(key = lambda x: ( x[3] , int(x[5]) ))
 
     print('Targets sorted:', time.time() - start)
@@ -267,16 +269,16 @@ else:
             #if line[3] + ' ' + line[9] != current_chr_pos:
             if line[1] + ' ' + str(line[3]) != current_chr_pos:
                 # total_list[-1].sort(key = lambda x: int(x[8]))
-                total_list[-1].sort(key = lambda x: x[5])   #Order cluster by total
+                total_list[-1].sort(key = lambda x: (x[7], x[5]))   #Order cluster by total and mms
                 total_list.append([line])
                 # current_chr_pos = line[3] + ' ' + line[9]
                 current_chr_pos = line[1] + ' ' + str(line[3])
             else:
                 total_list[-1].append(line)     
 
-        total_list[-1].sort(key = lambda x: x[5])
+        total_list[-1].sort(key = lambda x: (x[7], x[5]))       #Order last cluster by total and mms
 
-        total_list.sort(key = lambda x: x[0][5])        #Order all clusters by total of top1
+        total_list.sort(key = lambda x: x[0][7])        #Order all clusters by total of top1
         if addGuide:
             if keep_columns:
                 for cluster in total_list:
@@ -285,7 +287,7 @@ else:
             else:
                 for cluster in total_list:
                     for target in cluster:
-                        result.write('\t'.join(str(x) for x in target[:3]) + '\t' + target[4] +'\t' + target[6].strip() + '\t' + target[0].split('\t')[1].replace('-','') + '\n')
+                        result.write('\t'.join(str(x) for x in target[:3]) + '\t' + '\t'.join(str(x) for x in target[4:7]) +'\t' + target[8].strip() + '\t' + target[0].split('\t')[1].replace('-','') + '\n')
 
         else:
             if keep_columns:
@@ -295,6 +297,6 @@ else:
             else:
                 for cluster in total_list:
                     for target in cluster:
-                        result.write('\t'.join(str(x) for x in target[:3]) + '\t' + target[4] +'\t' + target[6].strip() + '\n')
+                        result.write('\t'.join(str(x) for x in target[:3]) + '\t' + '\t'.join(str(x) for x in target[4:7]) +'\t' + target[8].strip() + '\n')
 
     print("Clustering runtime: %s seconds" % (time.time() - start_time))
