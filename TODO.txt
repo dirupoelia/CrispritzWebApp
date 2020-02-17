@@ -41,7 +41,7 @@ ValueError: arange: cannot compute length
 	-Modificare allineamento checkbox						X
 -Inserire spiegazione guide									X
 -Inserire 'send us email or download offline'				X
-	-Inserire link a contatti e download
+	-Inserire link a contatti e download					X
 -Modificare stile barplot quando non ho risultati			X
 -Modificare la mail											X
 	-Aggiungere paramtri alla mail
@@ -89,7 +89,7 @@ eg.  ci sono 1000 target che hanno 3 samples						X
 -Inserire una guida gìà come esempio		X
 -Mettere 7 mms come massimo					X
 -Inserire possibilità di mettere sequenze come crispor (con varianti!), oppure posizizioni sul genoma. Da questa sequenza estraggo la pam selezionata
-e ottengo delle guide che poi vado a cercare su genoma enr.			
+e ottengo delle guide che poi vado a cercare su genoma enr.										X		
 	-Aggiungere PAM inizio
 	-Inserire controllo sugli input mancanti anche ai textbox e dropdown sulle sequenze			X
 	-Inserire controllo correttezza input textbox e dropdown sequenze							X
@@ -104,8 +104,8 @@ e ottengo delle guide che poi vado a cercare su genoma enr.
 	-Per colorare, se un target ha una variante allora è del gen enr, se non le ha allora del gen ref --> controllare se i ref possono avere iupac
 		-PROBLEMA: se nei targets ho uno IUPAC, 'perdo' l'informazione riguardo che lettera c'era in quel posto nel ref -> vedere se avere l'info del ref
 		è importante (allora dobbiamo distinguere -> fare due ricerche su enr e ref) oppure no (fare singola ricerca e dividere in base a presenza iupac)		X
--Inserire link per scaricare tutti gli offt, lasciar gestire ad apache il tutto
--Inserire un riassunto dei parametri della ricerca
+-Inserire link per scaricare tutti gli offt, lasciar gestire ad apache il tutto		X
+-Inserire un riassunto dei parametri della ricerca		X
 -CFD score in notazione scientifica			X
 
 -Fare un group by per ogni posizione e vedere se i ref e il var è sempre lo stesso o cambia (potrei avere 2500 A G e il resto A T)
@@ -156,21 +156,21 @@ TODO per giovedì 24 (non tutto, il più possibile)
 Pagina principale:
 - Testare come inserire javascript in dash, per esempio cliccare una parola e far modificare il contenuto di un altro elemento della pagina
 	-Serve per esempio per inserire/cancellare gli input di esempio nella pagina principale
--Altrimenti modificare lo stile del bottone di insert example per farlo somigliare ad un link
--Inserire un altro bottone simile a quello di prima per cancellare l'esempio inserito, oppure usare lo stesso bottone
+-Altrimenti modificare lo stile del bottone di insert example per farlo somigliare ad un link	X	
+-Inserire un altro bottone simile a quello di prima per cancellare l'esempio inserito, oppure usare lo stesso bottone	X
 	-Vedere se possibile implementare 3 idee:
 		-Cancellare tutti i valori inseriti
 		-Cancellare solo i valori che sono uguali a quelli di esempio e non quelli che sono stati modificati dall'utente
 		-Se anche un solo valore è diverso da quello di esempio, non cancellare niente
 
 Pagina dei risultati con la tabella delle guide:
--Aggiungere possibilità di filtering e sorting della tabella (controllare https://dash.plot.ly/datatable e https://dash.plot.ly/datatable/callbacks)
--Modificare le colonne tenendo solo CFD, On-Targets, Off-targets, Off-targets for 0-1-2-3-4...mms (in base ai mmismatches di quella ricerca).
--Nella cella Off-targets for 0-1-2... mettere il numero di offtargets trovati per quel valore di mms, per esempio 1-12-15-50. I valori si trovano
+X-Aggiungere possibilità di filtering e sorting della tabella (controllare https://dash.plot.ly/datatable e https://dash.plot.ly/datatable/callbacks)
+X-Modificare le colonne tenendo solo CFD, On-Targets, Off-targets, Off-targets for 0-1-2-3-4...mms (in base ai mmismatches di quella ricerca).
+X-Nella cella Off-targets for 0-1-2... mettere il numero di offtargets trovati per quel valore di mms, per esempio 1-12-15-50. I valori si trovano
 nel file profiling, o profiling complete se presente, ed è caricato in un dataframe quando la tabella è visualizzata, quindi si può partire da li
 per costruire la stringa da far vedere nella cella.
 -Testare se mettere un buttongroup è più bello rispetto ai bottoni attuali
--Continuare l'implementazione per i bottoni (funzione loadColumnImages()), mettendo come input tutti i bottoni, e verificando qual è l'ultimo 
+X-Continuare l'implementazione per i bottoni (funzione loadColumnImages()), mettendo come input tutti i bottoni, e verificando qual è l'ultimo 
 bottone cliccato e visualizzando le immagini con quel valore di mms. 
 
 Pagina del load job
@@ -196,37 +196,37 @@ nella cartella del job corrispondente
 
 -Creare colonna con num only var e num colonna blu nella tabella del summary guide-threshold	X
 -Bloccare/nascondere colonne dei targets 		X
--modificare posiizone dei target con bulges per ricondurre la pos alla versiobne senza bulges
+-modificare posiizone dei target con bulges per ricondurre la pos alla versiobne senza bulges	X
 
 -Cancellare coppie mms-bulges che hanno 0 Targets			X
 -cambaire colore hover icone ordinamento/nascondi colonna
 -Mettere bottone show all columns
 
 -Mettere avviso che se l'utente cerca con variant, popup per dire che se vuole può fare comparison con genoma riferimento
--Colonne dinamiche in base a che tipo di ricerca è stata fatta (solo ref/solo var, var + comparazione ref (ovvero le colonne del post processing))
+X-Colonne dinamiche in base a che tipo di ricerca è stata fatta (solo ref/solo var, var + comparazione ref (ovvero le colonne del post processing))
 
 
 -14/11
--Tutta la riga della guida evidenziata (tabella generale guida)
+X-Tutta la riga della guida evidenziata (tabella generale guida)
 -Font e grandezza
 -Tabella guida specifica -> aggiungo colonna more info e metto i link li, li tolgo dalla guida		X
 -Ordino tabella guida specifica per bulge+mms e num massimo var uniq								X
 	-Sistemare allineamento celle
 -Pam creation evidenziare ancora di più -> se un target ha la colonna pam creation, lo evidenzio con un altro colore
 -Colore dei target su tutta la riga (più trasparente possibile), oppure allargare la banda colorate, migliorare il nome colonne, resize delle colonne		X
--Help e legenda per spiegare colori e colonne
--Tenere solo NO e elenco di tutte le PAM, non -;A-;
--Mostrare solo top 1 del cluser, se lo clicco si apre tutto il cluster -> Idea Fare due tabelle: se clicco sul top one, sulla secodna tabella si apre il suo cluster
--Samples: fare solo top 1, combinazione di tutti gli iupac , che se clicco si apre la riga sotto con tutte le possibili combinazioni (che hanno samples) --> Aggiungere colonna sulle guide
+X-Help e legenda per spiegare colori e colonne
+X-Tenere solo NO e elenco di tutte le PAM, non -;A-;
+X-Mostrare solo top 1 del cluser, se lo clicco si apre tutto il cluster -> Idea Fare due tabelle: se clicco sul top one, sulla secodna tabella si apre il suo cluster
+X-Samples: fare solo top 1, combinazione di tutti gli iupac , che se clicco si apre la riga sotto con tutte le possibili combinazioni (che hanno samples) --> Aggiungere colonna sulle guide
  con individual smaples e metto la somma dei targets trovati su tutti i targets (calcolo fatto solo sui top 1)
--Aggiungere colonna doench (tenere migliore)
--Tabella guide generale ordinabile e max 100 guide per pagina
+X-Aggiungere colonna doench (tenere migliore)
+X-Tabella guide generale ordinabile e max 100 guide per pagina
 
--Tabella dei target dei samples: contiene solo top1 e on targets, se clicco su target viene scomposta. La scomposizione contiene solo i targets che hanno almeno 1 var e appartengono a quel sample
--La scomposizione delle guide la faccio sui cluster: se seleziono un target si apre il cluster di quel target mostrando solo i targets con quel valore di mm-bulge (apro un sottocluster)
+X-Tabella dei target dei samples: contiene solo top1 e on targets, se clicco su target viene scomposta. La scomposizione contiene solo i targets che hanno almeno 1 var e appartengono a quel sample
+X-La scomposizione delle guide la faccio sui cluster: se seleziono un target si apre il cluster di quel target mostrando solo i targets con quel valore di mm-bulge (apro un sottocluster)
 
--Implementare bottone next e prev nella tabella popolazione
--Filtering della posizione:
+X-Implementare bottone next e prev nella tabella popolazione
+X-Filtering della posizione:
 	-Aggiungere controllo se end < begin
 	-Bottone restore original
 	-Bottone download
@@ -236,7 +236,7 @@ nella cartella del job corrispondente
 -Download di tutto il file tramite ftp
 -Visualizzare i risultati solo del total
 	-Lasciare il common solo scaricabile
--cluster fatti per guida
+X-cluster fatti per guida
 -cambio colore al selector di dash		X (vedere opzione css della tabella delle guide)
 	-cambio anche i bordi in blu
 	-cambio colore selezione in tutte le tabelle dash datatable
@@ -247,21 +247,21 @@ nella cartella del job corrispondente
 -Tenere solo genomi hg19 e hg38
 -Mettere 2/3 PAM
 -Libreria tabix per indexing di file (per prendere le posizioni)
--Mettere estimated time nella pagina di load (tempi calcolati sul load example)
+X-Mettere estimated time nella pagina di load (tempi calcolati sul load example)
 -Ingrandire load example
--Mettere tabs e non bottoni -> Graphical report, Summary by guide, summary by sample, summary by position
--Nella tab Graph report, mettere bottoni per mms e show all
+X-Mettere tabs e non bottoni -> Graphical report, Summary by guide, summary by sample, summary by position
+X-Nella tab Graph report, mettere bottoni per mms e show all
 -Nel report del sample, mettere un link per un graph report (fare redar chart per il sample selezionato. Ci posso mettere anche le info della tabella)
 -Se ho la visualizzazione dei targets che hannosamples, se clicco nella riga mi appare sotto la tabella l'elenco di questi samples, se clicco si apre in un'altra scheda
 il suo graph report
--Creare link per download results tramite flask e lascire a nginx il download (mettere file in una cartella tipo assets)
+X-Creare link per download results tramite flask e lascire a nginx il download (mettere file in una cartella tipo assets)
 
 -Mettere apertura dei file summary_by corretti: se non ho risultati per una guida, metto 'Nessun result' e non carico la tabella ma solo quella scritta.
 
 -Sistemare grep, colore tutta riga, rimettere i samples nel .targets.cluster.*.txt, implementare var/ref	X
 
 -Per la percentuale di lavoro svolto: redirigo l'output in un file e ogni 3 sec lo leggo per vedere lo status. Se lo status non cambia, non aggiorno.	X
--Parte grafica: seguire le immagini di Samuele. Metto 3 dropdown per i samples.
+X-Parte grafica: seguire le immagini di Samuele. Metto 3 dropdown per i samples.
 -Uso fgrep e LCALL per velocizzare i grep. AWK per metter t e s nei subcluster.	X
 
 hg38 var
@@ -289,7 +289,7 @@ Dizionario :
 -Al posto del motif logo, mettere info del sample presa dalla tabella (in modod da avere una card con tutte le info del sample)
 -Togliere  conteggio tot targets con sample dalla tabella generale delle guide
 
--CONTROLLARE GENOMA RIFERIMENTO CHE C'E' ANCORA IL SUM BY SAMPLE
+X-CONTROLLARE GENOMA RIFERIMENTO CHE C'E' ANCORA IL SUM BY SAMPLE
 -Funzionamento radarchart:
 	-prendo i summary di tutte le guide, seleziono tutte le annotazioni e prendo i valori del mm in input. Ordino queste liste. Prendo il valore di quell mm della mia guida example
 	faccio sottrazione abs. Quando trovo il minimo -> valore della colonna pos
@@ -340,22 +340,22 @@ sample rispetto al num target dell'annotazione della guida (per indicare che se 
 -Cambiare radar chart sample con 1-(num sample/num guide)
 -Lasciare 1 worker
 -Gen report multi
--Spezzare clustering per guida, mettere no se targets per guida > 50kk
+X-Spezzare clustering per guida, mettere no se targets per guida > 50kk
 	-Rimuovere guida e segnalare l'utente
 -Mettere percentuale nell'annotazione
 -Aggiungere -T nell'estrazione semicommon etc	X
 -Risolvere problema plot con nohup	X
--Togliere sample se ricerca con ref nelle immaginig
+X-Togliere sample se ricerca con ref nelle immaginig
 -Se due job hhano lo stesso params e la cache non è stata cancellata, se uno cerca X00 l'altro avrà quel res e non il suo
--Controllo colore tabella
+X-Controllo colore tabella
 
--Creare clustering per guide con >50kk
--Cambiare nome colonne in base al tipo di ricerca
-	-Togliere visual sample con ricerca ref
+X-Creare clustering per guide con >50kk
+X-Cambiare nome colonne in base al tipo di ricerca
+X	-Togliere visual sample con ricerca ref
 -Aggiungere workers
--Aggiungere pagina di help
--Sistemare bug immagini e bottoni
+X-Aggiungere pagina di help
+X-Sistemare bug immagini e bottoni
 
-IMPORTANTE:
+XIMPORTANTE:
 Aggiungere visualizzazione target scomposto con relativi samples e sample summary sia in sum by guide che in sum by position. Quando seleziono 
 un target, appare sotto una nuova tabella con tutte le sue possibili combinazioni (fare grep chr pos sul file per la tabella dei samples)
