@@ -92,7 +92,7 @@ def calc_cfd(guide_seq, sg, pam, mm_scores, pam_scores):
     
     return score
 
-tab = str.maketrans("ACTG", "TGAC")
+tab = str.maketrans("ACTGRYSWMKHDBVactgryswmkhdbv", "TGACYRSWKMDHVBtgacyrswkmdhvb") 
 
 def reverse_complement_table(seq):
     return seq.translate(tab)[::-1]

@@ -451,7 +451,7 @@ for line in inResult:
 #scorro tutto il dict total e scrivo il summary, targets e ogni annotation
 outFileSummary.write("-Summary_Total\n")
 outFileSummary.write('targets' + '\t'+'\t'.join(str(i) for i in totalDict['targets'])+'\n')
-for elem in sorted(totalDict.keys()):
+for elem in sorted(totalDict.keys(), key = lambda s : s.lower()):
     if elem == 'targets':
         continue
     outFileSummary.write(str(elem)+'\t'+'\t'.join(str(i) for i in totalDict[elem])+'\n')
@@ -460,7 +460,7 @@ for elem in sorted(totalDict.keys()):
 for elem in guideDict.keys():
     outFileSummary.write("-Summary_"+str(elem)+'\n')
     outFileSummary.write('targets'+'\t'+'\t'.join(str(i) for i in guideDict[elem]['targets'])+'\n')
-    for item in sorted(annotationsSet):
+    for item in sorted(annotationsSet, key = lambda s : s.lower()):
         outFileSummary.write(str(item)+'\t'+'\t'.join(str(i) for i in guideDict[elem][item])+'\n')
 
 #Write summaries for samples, pop, superpop
@@ -470,7 +470,7 @@ if summary_samples:
         with open(outputFile + '.sample_annotation.' + guide +'.samples.txt', 'w+') as result:
             result.write('-Summary_Total\n')
             result.write('targets'+'\t'+'\t'.join(str(i) for i in guideDict[guide]['targets'])+'\n')
-            for item in sorted(annotationsSet):
+            for item in sorted(annotationsSet, key = lambda s : s.lower()):
                 result.write(str(item)+'\t'+'\t'.join(str(i) for i in guideDict[guide][item])+'\n')
             #Write sample specific counting, put [0]*10 if sample was not found
             for sample in all_samples:
@@ -479,7 +479,7 @@ if summary_samples:
                     result.write('targets' + '\t' + '\t'.join(str(i) for i in count_sample[guide][sample]['targets']) + '\n')
                 except: #Sample not found in targets
                     result.write('targets' + '\t' + '\t'.join(str(i) for i in [0]*10) + '\n')
-                for item in sorted(annotationsSet):
+                for item in sorted(annotationsSet, key = lambda s : s.lower()):
                     try:
                         result.write(item + '\t' + '\t'.join(str(i) for i in count_sample[guide][sample][item]) + '\n')
                     except:
@@ -489,7 +489,7 @@ if summary_samples:
         with open(outputFile + '.sample_annotation.' + guide +'.population.txt', 'w+') as result:
             result.write('-Summary_Total\n')
             result.write('targets'+'\t'+'\t'.join(str(i) for i in guideDict[guide]['targets'])+'\n')
-            for item in sorted(annotationsSet):
+            for item in sorted(annotationsSet, key = lambda s : s.lower()):
                 result.write(str(item)+'\t'+'\t'.join(str(i) for i in guideDict[guide][item])+'\n')
             #Write population specific counting, put [0]*10 if sample was not found
             for population in set(all_pop):
@@ -498,7 +498,7 @@ if summary_samples:
                     result.write('targets' + '\t' + '\t'.join(str(i) for i in count_pop[guide][population]['targets']) + '\n')
                 except: #Sample not found in targets
                     result.write('targets' + '\t' + '\t'.join(str(i) for i in [0]*10) + '\n')
-                for item in sorted(annotationsSet):
+                for item in sorted(annotationsSet, key = lambda s : s.lower()):
                     try:
                         result.write(item + '\t' + '\t'.join(str(i) for i in count_pop[guide][population][item]) + '\n')
                     except:
@@ -508,7 +508,7 @@ if summary_samples:
         with open(outputFile + '.sample_annotation.' + guide +'.superpopulation.txt', 'w+') as result:
             result.write('-Summary_Total\n')
             result.write('targets'+'\t'+'\t'.join(str(i) for i in guideDict[guide]['targets'])+'\n')
-            for item in sorted(annotationsSet):
+            for item in sorted(annotationsSet, key = lambda s : s.lower()):
                 result.write(str(item)+'\t'+'\t'.join(str(i) for i in guideDict[guide][item])+'\n')
             #Write superpopulation specific counting, put [0]*10 if sample was not found
             for superpop in superpopulation:
@@ -517,7 +517,7 @@ if summary_samples:
                     result.write('targets' + '\t' + '\t'.join(str(i) for i in count_superpop[guide][superpop]['targets']) + '\n')
                 except: #Sample not found in targets
                     result.write('targets' + '\t' + '\t'.join(str(i) for i in [0]*10) + '\n')
-                for item in sorted(annotationsSet):
+                for item in sorted(annotationsSet, key = lambda s : s.lower()):
                     try:
                         result.write(item + '\t' + '\t'.join(str(i) for i in count_superpop[guide][superpop][item]) + '\n')
                     except:
@@ -529,12 +529,12 @@ if summary_barplot_from_total:
     with open(outputFile + '.sumref.Annotation.summary.txt', 'w+') as result:
         result.write('-Summary_Total\n')
         result.write('targets'+'\t'+'\t'.join(str(i - count_unique['targets'][pos]) for pos,i in enumerate(totalDict['targets'])) + '\n')
-        for elem in sorted(annotationsSet):
+        for elem in sorted(annotationsSet, key = lambda s : s.lower()):
             result.write(str(elem)+'\t'+'\t'.join(str(i - count_unique[elem][pos]) for pos, i in enumerate(totalDict[elem]))+'\n')
         for guide in count_unique_for_guide:
             result.write('-Summary_' + guide + '\n')
             result.write('targets' + '\t' + '\t'.join(str(i - count_unique_for_guide[guide]['targets'][pos]) for pos,i in enumerate(guideDict[guide]['targets'])) + '\n')
-            for annotation in sorted(annotationsSet):
+            for annotation in sorted(annotationsSet, key = lambda s : s.lower()):
                 result.write(annotation + '\t' + '\t'.join(str(i - count_unique_for_guide[guide][annotation][pos]) for pos, i in enumerate(guideDict[guide][annotation])) + '\n')
 if total_error > 0:
     print('Skipped SNP:', total_error)
