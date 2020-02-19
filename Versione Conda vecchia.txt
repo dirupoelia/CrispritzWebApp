@@ -1,0 +1,9 @@
+dash                      1.3.0                      py_0    conda-forge
+dash-bootstrap-components 0.7.1                    py36_0    conda-forge
+dash-core-components      1.2.0                      py_0    conda-forge
+dash-html-components      1.0.1                      py_0    conda-forge
+dash-renderer             1.1.0                      py_0    conda-forge
+dash-table                4.3.0                      py_0    conda-forge
+
+Vecchie versioni del conda del pc del lab Infomics. Sono state aggiornate per eseguire un test (il fatto che su margarita il grep veniva fatto dopo il general_cache_load), ma non 
+era la versione differente il problema. Al momento (19/02/2020) non sembra ci siano incompatibilità, ma ulteriori test sono necessari
