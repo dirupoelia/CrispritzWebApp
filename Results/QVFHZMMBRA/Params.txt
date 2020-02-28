@@ -1,6 +1,6 @@
 Genome_selected	hg38_ref+hg38_1000genomeproject
 Genome_ref	hg38_ref
-Genome_idx	NGG_5_hg38_ref+hg38_1000genomeproject
+Genome_idx	NGG_2_hg38_ref+hg38_1000genomeproject
 Pam	NGG
 Max_bulges	1
 Mismatches	4

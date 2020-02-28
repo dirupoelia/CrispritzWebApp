@@ -2385,7 +2385,8 @@ def resultPage(job_id):
         bulge_rna = (next(s for s in all_params.split('\n') if 'RNA' in s)).split('\t')[-1]
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
-        
+        max_bulges = (next(s for s in all_params.split('\n') if 'Max_bulges' in s)).split('\t')[-1]
+
     genome_name = genome_type_f
     genome_type = 'ref'
     if '+' in genome_type_f:
@@ -2398,21 +2399,21 @@ def resultPage(job_id):
     mms = int(mms[0])
     mms_values = [{'label':i, 'value':i} for i in range(mms + 1) ]      
     
-    col_profile_general = ['Total On-Targets', 'Total Off-Targets']
-    for i in range(mms):
-        col_profile_general.append(str(i+1) + ' Mismatches')
-    col_type = ['numeric' for i in col_profile_general]
+    # col_profile_general = ['Total On-Targets', 'Total Off-Targets']
+    # for i in range(mms):
+    #     col_profile_general.append(str(i+1) + ' Mismatches')
+    # col_type = ['numeric' for i in col_profile_general]
     
-    
+
     #Load profile
-    try:
-        profile = pd.read_csv('Results/' + value + '/' + value + '.profile_complete.xls')   #NOTE profile_complete has ',' as separator
-        if len(profile.columns) == 1:
-            profile = pd.read_csv('Results/' + value + '/' + value + '.profile_complete.xls', sep='\t')
-    except:
-        profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls', sep = '\t')    #NOTE profile has \t as separator or ','
-        if len(profile.columns) == 1:
-            profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls')
+    # try:
+    #     profile = pd.read_csv('Results/' + value + '/' + value + '.profile_complete.xls')   #NOTE profile_complete has ',' as separator
+    #     if len(profile.columns) == 1:
+    #         profile = pd.read_csv('Results/' + value + '/' + value + '.profile_complete.xls', sep='\t')
+    # except:
+    #     profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls', sep = '\t')    #NOTE profile has \t as separator or ','
+    #     if len(profile.columns) == 1:
+    #         profile = pd.read_csv('Results/' + value + '/' + value + '.profile.xls')
     #load acfd for each guide 
     with open('Results/' + value + '/acfd.txt') as a:
         all_scores = a.read().strip().split('\n')
@@ -2428,37 +2429,37 @@ def resultPage(job_id):
         acfd = [float(a.split('\t')[1]) for a in all_scores if a not in list_error_guides]
         doench = [int(a.split('\t')[2]) for a in all_scores if a not in list_error_guides]
         acfd  = [int(round((100/(100 + x))*100)) for x in acfd]
-        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-Targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
+        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-Targets in Reference', 'id' : 'Total Off-Targets in Reference', 'type':'numeric'}, {'name':'Total Off-Targets in Enriched', 'id' : 'Total Off-Targets in Enriched', 'type':'numeric'}]
     else:
-        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-Targets', 'id' : 'Total Off-Targets', 'type':'numeric'}]
+        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-Targets in Reference', 'id' : 'Total Off-Targets in Reference', 'type':'numeric'}, {'name':'Total Off-Targets in Enriched', 'id' : 'Total Off-Targets in Enriched', 'type':'numeric'}]
 
     keep_column = ['GUIDE', 'ONT', 'OFFT']
     for i in range (mms):
         #columns_profile_table.append({'name': str(i+1) + ' Mismatches', 'id':str(i+1) + ' Mismatches', 'type':'numeric'})
         keep_column.append(str(i+1) + 'MM')
     
-    profile = profile[keep_column]
-    rename_columns = {'GUIDE':'Guide',"ONT":'Total On-Targets', 'OFFT':'Total Off-Targets'}
+    # profile = profile[keep_column]
+    # rename_columns = {'GUIDE':'Guide',"ONT":'Total On-Targets', 'OFFT':'Total Off-Targets'}
     col_targetfor = 'Targets for '
-    for i in range(mms):
-        rename_columns[str(i+1) + 'MM'] = str(i+1) + ' Mismatches'
+    for i in range(mms + int(max_bulges)):
+        # rename_columns[str(i+1) + 'MM'] = str(i+1) + ' Mismatches'
         col_targetfor = col_targetfor + str(i) + '-'
-    col_targetfor = col_targetfor + str(mms)
-    col_targetfor = col_targetfor + ' Mismatches'
+    col_targetfor = col_targetfor + str(mms + int(max_bulges))
+    col_targetfor = col_targetfor + ' Total (Mismatches + Bulges)'
     columns_profile_table.append({'name': col_targetfor, 'id' : 'col_targetfor', 'type':'text'})
-    profile.rename(columns = rename_columns, inplace = True)    #Now profile is Guide, Total On-targets, ...
-    col_to_add = []
-    tmp_col_to_add = []
-    for row in profile.itertuples():
-        for i in range (mms+1):
-            if i == 0:
-                tmp_col_to_add.append(str(profile['Total On-Targets'][row[0]]))
-            else:
-                tmp_col_to_add.append(str(profile[str(i) + ' Mismatches'][row[0]]))
-        col_to_add.append(' - '.join(tmp_col_to_add))
-        tmp_col_to_add = []
+    # profile.rename(columns = rename_columns, inplace = True)    #Now profile is Guide, Total On-targets, ...
+    # col_to_add = []
+    # tmp_col_to_add = []
+    # for row in profile.itertuples():
+    #     for i in range (mms+1):
+    #         if i == 0:
+    #             tmp_col_to_add.append(str(profile['Total On-Targets'][row[0]]))
+    #         else:
+    #             tmp_col_to_add.append(str(profile[str(i) + ' Mismatches'][row[0]]))
+    #     col_to_add.append(' - '.join(tmp_col_to_add))
+    #     tmp_col_to_add = []
         
-    profile['col_targetfor'] = col_to_add
+    # profile['col_targetfor'] = col_to_add
        
     
     final_list = []    
@@ -2477,7 +2478,7 @@ def resultPage(job_id):
    
 
     
-    profile = profile.sort_values('Guide')
+    # profile = profile.sort_values('Guide')
     #profile['CFD'] = acfd
     #profile['Doench 2016'] = doench
     # if len(DataFrame.index) > 
@@ -2579,7 +2580,7 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
         mms = int((next(s for s in all_params.split('\n') if 'Mismatches' in s)).split('\t')[-1])
-    
+        max_bulges = int((next(s for s in all_params.split('\n') if 'Max_bulges' in s)).split('\t')[-1])
         
     genome_type = 'ref'
     if '+' in genome_type_f:
@@ -2623,24 +2624,28 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     # col_targetfor = col_targetfor + ' mismatches'
     # columns_profile_table.append({'name': col_targetfor, 'id' : 'col_targetfor', 'type':'text'})
 
-    #Get target counting from summary by guide -> select only bulge type X rows
+    #Get target counting from summary by guide
     column_on_target = []
-    column_off_target = []
+    column_off_target_ref = []
+    column_off_target_enriched = []
     column_sep_by_mm_value = []
     for g in guides:
         zero_to_n_mms = []
+        zero_to_n_mms_onlySNP = []
         df_profile = pd.read_pickle('Results/' + job_id + '/' + job_id + '.summary_by_guide.' + g + '.txt')
         column_on_target.append(int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Number of Targets']))
         
-        for i in range (mms + 1):
-          zero_to_n_mms.append(sum(df_profile[(df_profile['Mismatches'] == i)]['Number of Targets'].to_list())) 
-        # zero_to_n_mms = df_profile[(df_profile['Bulge Type'] == 'X')]['Number of Targets'].to_list()
+        for i in range (mms + 1 + int(max_bulges)):         #For column Targets for 0-1-2 Total (Mismatches + Bulges), sum values for row with same total
+            zero_to_n_mms.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Number of Targets'].to_list())) 
+            zero_to_n_mms_onlySNP.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Targets Created by SNPs'].to_list())) 
         column_sep_by_mm_value.append(' - '.join(str(int(x)) for x in zero_to_n_mms))
-        column_off_target.append(int(sum(zero_to_n_mms[1:])))
+        column_off_target_enriched.append(int(sum(zero_to_n_mms_onlySNP[1:])))
+        column_off_target_ref.append(int(sum(zero_to_n_mms[1:])) - column_off_target_enriched[-1])
+        
     if 'NO SCORES' not in all_scores:
-        data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On-Targets':column_on_target, 'Total Off-Targets':column_off_target, 'col_targetfor': column_sep_by_mm_value}
+        data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On-Targets':column_on_target, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched,'col_targetfor': column_sep_by_mm_value}
     else:
-        data_guides = {'Guide': guides, 'Total On-Targets':column_on_target, 'Total Off-Targets':column_off_target, 'col_targetfor': column_sep_by_mm_value}
+        data_guides = {'Guide': guides, 'Total On-Targets':column_on_target, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched, 'col_targetfor': column_sep_by_mm_value}
 
     dff = pd.DataFrame(data_guides)
     
