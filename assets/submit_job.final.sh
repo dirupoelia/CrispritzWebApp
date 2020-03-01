@@ -165,7 +165,7 @@ elif [ ${19} = 'var' ]; then
     echo 'End sort'
     echo 'Annotation\tStart\t'$(date) >> log.txt
     echo 'Start calc samples and annotation'
-    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.top_1.txt $jobid ../../../dictionaries   #> $jobid.samples.all.annotation.txt $jobid.samples.annotation.txt  with header
+    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.top_1.txt $jobid ../../../dictionaries pam.txt  #> $jobid.samples.all.annotation.txt $jobid.samples.annotation.txt  with header
                                                                                                                 # > $jobid.Annotation.summary.txt
                                                                                                                 # > $jobid.sample_annotation.GUIDE.sample.txt
                                                                                                                 # > $jobid.sumref.Annotation.summary.txt
@@ -281,7 +281,7 @@ else    #Type search = both
     echo 'End sort'
     echo 'Start calc samples and annotation'
     echo 'Annotation\tStart\t'$(date) >> log.txt
-    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.top_1.txt $jobid ../../../dictionaries   #> $jobid.samples.all.annotation.txt $jobid.samples.annotation.txt  with header
+    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.top_1.txt $jobid ../../../dictionaries pam.txt   #> $jobid.samples.all.annotation.txt $jobid.samples.annotation.txt  with header
                                                                                                                 # > $jobid.Annotation.summary.txt
                                                                                                                 # > $jobid.sample_annotation.GUIDE.sample.txt
                                                                                                                 # > $jobid.sumref.Annotation.summary.txt

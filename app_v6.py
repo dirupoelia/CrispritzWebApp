@@ -3138,7 +3138,8 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
     file_to_grep = '.samples.annotation.txt'
 
     if not os.path.exists(scomposition_file):    #Example    job_id.X.0.4.GUIDE.chrom.position.scomposition.txt
-        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $8==' + mms + ' && $9==' + bulge_s +'\' > ' + scomposition_file], shell = True)
+        # subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $8==' + mms + ' && $9==' + bulge_s +'\' > ' + scomposition_file], shell = True)
+        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $9==' + bulge_s +'\' > ' + scomposition_file], shell = True)
     
     if os.path.getsize(scomposition_file) > 0:          #Check if result grep has at least 1 result
         df = pd.read_csv(scomposition_file, header = None, sep = '\t')
@@ -3153,7 +3154,6 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
         df.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide', 17:'Annotation Type', 18:'Top Subcluster'} , inplace = True)
     df.drop(df[(~( df['Cluster Position'] == int(data[active_cel['row']]['Cluster Position']))) | (~( df['Chromosome'] == data[active_cel['row']]['Chromosome']))].index, inplace = True)
-    # print(df)
     dff = df
     
     for filter_part in filtering_expressions:

@@ -12,6 +12,7 @@ in samples.txt, poi calcola l'annotazione corrispondente e crea il file Annotati
 #argv2 è il file top1 ordinato per chr
 #argv3 è nome del file in output
 #argv4 è directory dei dizionari
+#argv5 is pamfile
 
 import sys
 import json
@@ -25,6 +26,8 @@ import pandas as pd
 print('ESECUZIONE DI ANNOTATION E CALC SAMPLE INSIEME')
 print('TEST PER ANNOTAZIONE COMPLETA: I TARGET SENZA ANNOTAZIONE SONO SALVATI COME \"n\"')
 print('SE UN  TARGET HA 1+ ANNOTAZIONI, LE SALVA IN SINGOLA UNICA RIGA')
+print('Test: quando scompongo i sample, rifaccio il calcolo dei mms. Se almeno un target nella scomposizione è ok, tengo la y nel target iupac. Se nessun target scomposto è ok, cambio\
+    il target iupac in F. Stessa cosa per i target scomposti')
 print("READING INPUT FILES")
 #Dictionaries for annotating samples
 
@@ -53,6 +56,66 @@ superpopulation = ['EAS', 'EUR', 'AFR', 'AMR','SAS']
 annotationFile = sys.argv[1] #file with annotation
 resultsFile = sys.argv[2] #file with results from search
 outputFile = sys.argv[3] #file with annotated results
+
+#Get pam and guide length for new count mismatch samples
+pam_at_beginning = False
+with open (sys.argv[5]) as pam:
+    line = pam.read().strip()
+    pam = line.split(' ')[0]
+    len_pam = int(line.split(' ')[1])
+    guide_len = len(pam) - len_pam
+    pos_beg = 0
+    pos_end = None
+    pam_begin = 0
+    pam_end = len_pam * (-1)
+    if len_pam < 0:
+        guide_len = len(pam) + len_pam
+        pam = pam[: (len_pam * (-1))]
+        len_pam = len_pam * (-1)
+        pos_beg = len_pam
+        pos_end = None
+        pam_begin = 0
+        pam_end = len_pam
+        pam_at_beginning = True
+    else:
+        pam = pam[(len_pam * (-1)):]
+        pos_beg = 0
+        pos_end = len_pam * (-1)
+        pam_begin = len_pam * (-1)
+        pam_end = None
+
+iupac_code_set = {
+          "R":{"A", "G"},
+          "Y":{"C", "T"},
+          "S":{"G", "C"},
+          "W":{"A", "T"},
+          "K":{"G", "T"},
+          "M":{"A", "C"},
+          "B":{"C", "G", "T"},
+          "D":{"A", "G", "T"},
+          "H":{"A", "C", "T"},
+          "V":{"A", "C", "G"},
+          "r":{"A", "G"},
+          "y":{"C", "T"},
+          "s":{"G", "C"},
+          "w":{"A", "T"},
+          "k":{"G", "T"},
+          "m":{"A", "C"},
+          "b":{"C", "G", "T"},
+          "d":{"A", "G", "T"},
+          "h":{"A", "C", "T"},
+          "v":{"A", "C", "G"},
+          "A":{"A"},
+          "T":{"T"},
+          "C":{"C"},
+          "G":{"G"},
+          "a":{"a"},
+          "t":{"t"},
+          "c":{"c"},
+          "g":{"g"},
+          'N':{'A','T','G','C'}
+        }
+
 
 #OPEN INPUT FILES AND PREPARE OUTPUT FILE
 inResult = open(resultsFile, "r")  # resultfile open
@@ -206,7 +269,8 @@ for line in inResult:
     if '#' in line:
         continue
     x = line.strip().split('\t')
-    x[1] = str(x[1]).replace("-","")
+    guide_no_bulge = x[1].replace("-","")
+    # x[1] = x[1].replace("-","")
     if x[3] != current_chr:
         if not os.path.exists(os.path.realpath(sys.argv[4]) + '/my_dict_' + x[3] + '.json'):
             pass
@@ -257,7 +321,7 @@ for line in inResult:
                 var.append((var_char, ref_char))
             except Exception as e:      #NOTE this error can occure if i have an IUPAC in a target that has no vcf file
                 print(e)
-                print('Error at ' + line.rstrip() + ', with char ' + char + ', at pos ', iupac_pos)
+                print('Error at ' + line.rstrip() + ', with char ' + char + ', at pos ', iupac_pos, '. No corresponding SNP position was found in the vcf file')
                 a = []
                 #sys.exit()
                 total_error = total_error + 1
@@ -271,113 +335,9 @@ for line in inResult:
         x.append(','.join(union_sample))
     else:
         x.append('n')
-    x.append(x[1])
+    x.append(guide_no_bulge)
 
-    #Annotate target
-    visited_pop = []
-    visited_superpop = []
-
-    #inserisco la key nel dict se non presente e creo la sua matrice
-    if(str(x[1]) not in guideDict.keys()):
-        guideDict[str(x[1])] = {}
-        guideDict[str(x[1])]['targets'] = {}
-        guideDict[str(x[1])]['targets'] = [0]*10
-
-        count_unique_for_guide[str(x[1])] = dict()
-        count_unique_for_guide[str(x[1])]['targets'] = [0]*10
-
-        count_sample[str(x[1])] = dict()
-        count_pop[str(x[1])] = dict()
-        count_superpop[str(x[1])] = dict()
-
-        for item in annotationsSet:
-            guideDict[str(x[1])][item]= {}
-            guideDict[str(x[1])][item] = [0]*10
-
-            count_unique_for_guide[str(x[1])][item] = [0]*10
-    
-    #conto i target generali per mm threshold
-    totalDict['targets'][int(x[mm_pos])] += 1
-    guideDict[str(x[1])]['targets'][int(x[mm_pos])] += 1
-
-    if summary_barplot_from_total:
-        if x[vu_pos] == 'y': 
-            count_unique['targets'][int(x[mm_pos])] += 1
-            count_unique_for_guide[str(x[1])]['targets'][int(x[mm_pos])] += 1
-    
-    if summary_samples:
-        for sample in x[-2].split(','):
-            if sample == 'n':
-                continue
-            #Initialization if sample, pop or superpop not in dict
-            if sample not in count_sample[x[1]]:
-                count_sample[x[1]][sample] = {'targets': [0]*10}
-                for item in annotationsSet:
-                    count_sample[x[1]][sample][item] = [0]*10
-                if dict_sample_to_pop[sample] not in count_pop[x[1]]:
-                    count_pop[x[1]][dict_sample_to_pop[sample]] = {'targets': [0]*10}
-                    for item in annotationsSet:
-                        count_pop[x[1]][dict_sample_to_pop[sample]][item] = [0]*10
-                if dict_pop_to_sup[dict_sample_to_pop[sample]] not in count_superpop[x[1]]:
-                    count_superpop[x[1]][dict_pop_to_sup[dict_sample_to_pop[sample]]] = {'targets': [0]*10}
-                    for item in annotationsSet:
-                        count_superpop[x[1]][dict_pop_to_sup[dict_sample_to_pop[sample]]][item] = [0]*10
-            #Add +1 to targets
-            count_sample[x[1]][sample]['targets'][int(x[mm_pos])] += 1
-            if dict_sample_to_pop[sample] not in visited_pop:
-                visited_pop.append(dict_sample_to_pop[sample])
-                count_pop[x[1]][dict_sample_to_pop[sample]]['targets'][int(x[mm_pos])] += 1
-            if dict_pop_to_sup[dict_sample_to_pop[sample]] not in visited_superpop:
-                visited_superpop.append(dict_pop_to_sup[dict_sample_to_pop[sample]])
-                count_superpop[x[1]][dict_pop_to_sup[dict_sample_to_pop[sample]]]['targets'][int(x[mm_pos])] += 1
-        visited_pop = []
-        visited_superpop = []
-    
-    #faccio match su albero
-    foundAnnotations = sorted(annotationsTree[int(x[4]):(int(x[4])+int(len(x[1]))+1)])
-    string_annotation = []
-    found_bool = False
-    for found in range(0, len(foundAnnotations)):
-        guide = foundAnnotations[found].data
-        guideSplit = guide.split('\t')
-        # print(guide, str(guideSplit[0]), str(x[3]))
-        if(str(guideSplit[0]) == str(x[3])):
-            found_bool = True
-            #outFileTargets.write(line.rstrip() + '\t' + str(guideSplit[1]) + "\n")
-            string_annotation.append(str(guideSplit[1]))
-            guideDict[str(x[1])][guideSplit[1]][int(x[mm_pos])] += 1
-            totalDict[guideSplit[1]][int(x[mm_pos])] += 1
-            
-            if summary_barplot_from_total:
-                if x[vu_pos] == 'y':
-                    count_unique[guideSplit[1]][int(x[mm_pos])] += 1
-                    count_unique_for_guide[str(x[1])][guideSplit[1]][int(x[mm_pos])] += 1
-            
-            if summary_samples:
-                for sample in x[-2].split(','):
-                    if sample == 'n':
-                        continue
-                    #Add +1 to annotation
-                    count_sample[x[1]][sample][guideSplit[1]][int(x[mm_pos])] += 1
-                    if dict_sample_to_pop[sample] not in visited_pop:
-                        visited_pop.append(dict_sample_to_pop[sample])
-                        count_pop[x[1]][dict_sample_to_pop[sample]][guideSplit[1]][int(x[mm_pos])] += 1
-                    if dict_pop_to_sup[dict_sample_to_pop[sample]] not in visited_superpop:
-                        visited_superpop.append(dict_pop_to_sup[dict_sample_to_pop[sample]])
-                        count_superpop[x[1]][dict_pop_to_sup[dict_sample_to_pop[sample]]][guideSplit[1]][int(x[mm_pos])] += 1
-                visited_pop = []
-                visited_superpop = []
-    if not found_bool:
-        x.append('n')
-        #outFileTargets.write(line.rstrip() + '\tn\n')
-    else:
-        x.append(','.join(string_annotation))
-        #outFileTargets.write(line.rstrip() + '\t' + ','.join(string_annotation) + '\n')
-
-    #Save union samples + annotation
-    
-    outFileSampleAll.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')
-    
+    #Get all combinations to remove targets that have no haplotype 
     #Create all combinations
     for i in itertools.product(*var):
         t = list(target_string)
@@ -385,11 +345,13 @@ for line in inResult:
             t[el] = i[p]
         target_combination.append(''.join(t))
     
+    target_scomposti_salvare = []
     samples_already_assigned = set()
-    
+    false_targets = 0 
     for t in target_combination:
         set_list2 = []
         final_result = x.copy()
+        # print(t, pos_snp_chr)
         for ele_pos,p in enumerate(pos_snp_chr):
             #print('pos_chr', p)
             a = (datastore[chr_name + ',' + p])
@@ -407,7 +369,8 @@ for line in inResult:
                 # print('final result', final_result)
                 # print('Samp, ref, var: ',samples, ref, var)
             #print('char in pos',t[pos_snp[ele_pos]].upper())
-            if t[pos_snp[ele_pos]].upper() == var:      
+            if t[pos_snp[ele_pos]].upper() == var:   
+                # print(t[pos_snp[ele_pos]])   
                 if samples:
                     set_list2.append(set(samples.split(',')))
                 else:
@@ -425,21 +388,249 @@ for line in inResult:
             # print('samp already assigned', samples_already_assigned)
             # print('common_smples', common_samples)
             if common_samples:
-                final_result[-3] = ','.join(common_samples)
+                final_result[-2] = ','.join(common_samples)
             else:
                 # final_result.append('No common samples')
                 final_result = []                       #DO not save results without samples
+                false_targets += 1
         else:
             # final_result.append('No samples')         #DO not save results without samples
             final_result = []
+            if set_list:            #Eventually put F only on targets that have at least 1 IUPAC
+                false_targets += 1
         # print('final_res', final_result)
         if x[6] == '-':
             t = t[::-1]
-        if final_result:
-            final_result[2] = t
-            outFileSample.write('\t'.join(final_result) + '\n') #final_result[1].replace('-','') for better grep
+        mm_new_t = 0
         
-        #print(final_result)
+        if final_result:
+            guide_no_pam = final_result[1][pos_beg:pos_end]    
+            for position_t, char_t in enumerate(t[pos_beg:pos_end]):
+                # print(t)
+                # print(final_result[1])
+                if char_t.upper() != guide_no_pam[position_t]:
+                    mm_new_t += 1
+            final_result[2] = t
+        
+            #Check for pam status
+            pam_ok = True
+            for pam_chr_pos, pam_chr in enumerate(t[pam_begin:pam_end]):
+                if pam_chr.upper() not in iupac_code_set[pam[pam_chr_pos]]:
+                    pam_ok = False
+
+            if summary_barplot_from_total:          #Change to F only for variants/reference search
+                if not pam_ok or int(final_result[7]) < mm_new_t - int(final_result[8]):                      #TODO magari cambiare anche il valore in PAM creation/PAM disruption
+                    final_result[vu_pos] = 'F'      #TODO cambiare nel caso abbia ricerca solo var
+                    false_targets += 1
+                    x[-2] = ','.join(set(x[-2].split(',')) - set(common_samples))
+                    
+            final_result[7] = str(mm_new_t - int(final_result[8]))
+            target_scomposti_salvare.append(final_result)
+            # outFileSample.write('\t'.join(final_result) + '\n') #final_result[1].replace('-','') for better grep
+    if summary_barplot_from_total and false_targets >= len(target_combination):        #If all the scomposed targets have no sample or do not respect PAM/mm threasold, the iupac target does not really exist
+        line = line.strip().split('\t')
+        line[vu_pos] = 'F'
+        x[-2] = 'n'     #Since iupac target has no scomposition, it means it has no sample associated
+        line = '\t'.join(line)
+        
+    #Annotate target
+    visited_pop = []
+    visited_superpop = []
+
+    #inserisco la key nel dict se non presente e creo la sua matrice
+    if(guide_no_bulge not in guideDict.keys()):
+        guideDict[guide_no_bulge] = {}
+        guideDict[guide_no_bulge]['targets'] = {}
+        guideDict[guide_no_bulge]['targets'] = [0]*10
+
+        count_unique_for_guide[guide_no_bulge] = dict()
+        count_unique_for_guide[guide_no_bulge]['targets'] = [0]*10
+
+        count_sample[guide_no_bulge] = dict()
+        count_pop[guide_no_bulge] = dict()
+        count_superpop[guide_no_bulge] = dict()
+
+        for item in annotationsSet:
+            guideDict[guide_no_bulge][item]= {}
+            guideDict[guide_no_bulge][item] = [0]*10
+
+            count_unique_for_guide[guide_no_bulge][item] = [0]*10
+    
+    #conto i target generali per mm threshold
+    totalDict['targets'][int(x[mm_pos])] += 1
+    guideDict[guide_no_bulge]['targets'][int(x[mm_pos])] += 1
+
+    if summary_barplot_from_total:
+        if x[vu_pos] == 'y': 
+            count_unique['targets'][int(x[mm_pos])] += 1
+            count_unique_for_guide[guide_no_bulge]['targets'][int(x[mm_pos])] += 1
+    
+    if summary_samples:
+        for sample in x[-2].split(','):
+            if sample == 'n':
+                continue
+            #Initialization if sample, pop or superpop not in dict
+            if sample not in count_sample[guide_no_bulge]:
+                count_sample[guide_no_bulge][sample] = {'targets': [0]*10}
+                for item in annotationsSet:
+                    count_sample[guide_no_bulge][sample][item] = [0]*10
+                if dict_sample_to_pop[sample] not in count_pop[guide_no_bulge]:
+                    count_pop[guide_no_bulge][dict_sample_to_pop[sample]] = {'targets': [0]*10}
+                    for item in annotationsSet:
+                        count_pop[guide_no_bulge][dict_sample_to_pop[sample]][item] = [0]*10
+                if dict_pop_to_sup[dict_sample_to_pop[sample]] not in count_superpop[guide_no_bulge]:
+                    count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]] = {'targets': [0]*10}
+                    for item in annotationsSet:
+                        count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]][item] = [0]*10
+            #Add +1 to targets
+            count_sample[guide_no_bulge][sample]['targets'][int(x[mm_pos])] += 1
+            if dict_sample_to_pop[sample] not in visited_pop:
+                visited_pop.append(dict_sample_to_pop[sample])
+                count_pop[guide_no_bulge][dict_sample_to_pop[sample]]['targets'][int(x[mm_pos])] += 1
+            if dict_pop_to_sup[dict_sample_to_pop[sample]] not in visited_superpop:
+                visited_superpop.append(dict_pop_to_sup[dict_sample_to_pop[sample]])
+                count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]]['targets'][int(x[mm_pos])] += 1
+        visited_pop = []
+        visited_superpop = []
+    
+    #faccio match su albero
+    foundAnnotations = sorted(annotationsTree[int(x[4]):(int(x[4])+int(len(guide_no_bulge))+1)])
+    string_annotation = []
+    found_bool = False
+    for found in range(0, len(foundAnnotations)):
+        guide = foundAnnotations[found].data
+        guideSplit = guide.split('\t')
+        # print(guide, str(guideSplit[0]), str(x[3]))
+        if(str(guideSplit[0]) == str(x[3])):
+            found_bool = True
+            #outFileTargets.write(line.rstrip() + '\t' + str(guideSplit[1]) + "\n")
+            string_annotation.append(str(guideSplit[1]))
+            guideDict[guide_no_bulge][guideSplit[1]][int(x[mm_pos])] += 1
+            totalDict[guideSplit[1]][int(x[mm_pos])] += 1
+            
+            if summary_barplot_from_total:
+                if x[vu_pos] == 'y':
+                    count_unique[guideSplit[1]][int(x[mm_pos])] += 1
+                    count_unique_for_guide[guide_no_bulge][guideSplit[1]][int(x[mm_pos])] += 1
+            
+            if summary_samples:
+                for sample in x[-2].split(','):
+                    if sample == 'n':
+                        continue
+                    #Add +1 to annotation
+                    count_sample[guide_no_bulge][sample][guideSplit[1]][int(x[mm_pos])] += 1
+                    if dict_sample_to_pop[sample] not in visited_pop:
+                        visited_pop.append(dict_sample_to_pop[sample])
+                        count_pop[guide_no_bulge][dict_sample_to_pop[sample]][guideSplit[1]][int(x[mm_pos])] += 1
+                    if dict_pop_to_sup[dict_sample_to_pop[sample]] not in visited_superpop:
+                        visited_superpop.append(dict_pop_to_sup[dict_sample_to_pop[sample]])
+                        count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]][guideSplit[1]][int(x[mm_pos])] += 1
+                visited_pop = []
+                visited_superpop = []
+    if not found_bool:
+        x.append('n')
+        #outFileTargets.write(line.rstrip() + '\tn\n')
+    else:
+        x.append(','.join(string_annotation))
+        #outFileTargets.write(line.rstrip() + '\t' + ','.join(string_annotation) + '\n')
+
+    # #Save union samples + annotation
+    # outFileSampleAll.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')
+    
+    # #Create all combinations
+    # for i in itertools.product(*var):
+    #     t = list(target_string)
+    #     for p, el in enumerate(pos_snp):
+    #         t[el] = i[p]
+    #     target_combination.append(''.join(t))
+    
+    # samples_already_assigned = set()
+    # false_targets = 0 
+    # for t in target_combination:
+    #     set_list2 = []
+    #     final_result = x.copy()
+    #     # print(t, pos_snp_chr)
+    #     for ele_pos,p in enumerate(pos_snp_chr):
+    #         #print('pos_chr', p)
+    #         a = (datastore[chr_name + ',' + p])
+    #         #print('a', a)
+        
+    #         samples = a.split(';')[0] #a[:-4] 
+            
+    #         ref = a.split(';')[-1].split(',')[0]
+    #         var = a.split(';')[-1].split(',')[1]
+    #         if x[6] == '-':
+    #             ref = rev_comp(ref)
+    #             var = rev_comp(var)
+    #         # if int(p) == 10353471 or int(p) == 10353474:
+    #             # print(p)
+    #             # print('final result', final_result)
+    #             # print('Samp, ref, var: ',samples, ref, var)
+    #         #print('char in pos',t[pos_snp[ele_pos]].upper())
+    #         if t[pos_snp[ele_pos]].upper() == var:   
+    #             # print(t[pos_snp[ele_pos]])   
+    #             if samples:
+    #                 set_list2.append(set(samples.split(',')))
+    #             else:
+    #                 #print('Error None ', line, a)
+    #                 set_list2.append(set())
+    #             #     #returned_none = True 
+    #         # if int(p) == 10353471 or int(p) == 10353474:
+    #             # print('Set list2', set_list2 )
+    #     if set_list2:
+    #         #print('setlist2', set_list2)
+    #         common_samples = set.intersection(*set_list2)
+    #         common_samples = common_samples - samples_already_assigned
+    #         # print('common samples', common_samples)
+    #         samples_already_assigned = samples_already_assigned.union(common_samples)
+    #         # print('samp already assigned', samples_already_assigned)
+    #         # print('common_smples', common_samples)
+    #         if common_samples:
+    #             final_result[-3] = ','.join(common_samples)
+    #         else:
+    #             # final_result.append('No common samples')
+    #             final_result = []                       #DO not save results without samples
+    #             false_targets += 1
+    #     else:
+    #         # final_result.append('No samples')         #DO not save results without samples
+    #         final_result = []
+    #         false_targets += 1
+    #     # print('final_res', final_result)
+    #     if x[6] == '-':
+    #         t = t[::-1]
+    #     mm_new_t = 0
+        
+    #     if final_result:
+    #         guide_no_pam = final_result[1][pos_beg:pos_end]    
+    #         for position_t, char_t in enumerate(t[pos_beg:pos_end]):
+    #             # print(t)
+    #             # print(final_result[1])
+    #             if char_t.upper() != guide_no_pam[position_t]:
+    #                 mm_new_t += 1
+    #         final_result[2] = t
+        
+    #         #Check for pam status
+    #         pam_ok = True
+    #         for pam_chr_pos, pam_chr in enumerate(t[pam_begin:pam_end]):
+    #             if pam_chr.upper() not in iupac_code_set[pam[pam_chr_pos]]:
+    #                 pam_ok = False
+
+    #         if summary_barplot_from_total:          #Change to F only for variants/reference search
+    #             if not pam_ok or int(final_result[7]) < mm_new_t - int(final_result[8]):                      #TODO magari cambiare anche il valore in PAM creation/PAM disruption
+    #                 final_result[vu_pos] = 'F'      #TODO cambiare nel caso abbia ricerca solo var
+    #                 false_targets += 1
+            
+    #         final_result[7] = str(mm_new_t - int(final_result[8]))
+    #         outFileSample.write('\t'.join(final_result) + '\n') #final_result[1].replace('-','') for better grep
+    # if summary_barplot_from_total and false_targets >= len(target_combination):        #If all the scomposed targets have no sample or do not respect PAM/mm threasold, the iupac target does not really exist
+    #     line = line.strip().split('\t')
+    #     line[vu_pos] = 'F'
+    #     line = '\t'.join(line)
+    #Save union samples + annotation
+    outFileSampleAll.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')   
+    for t in target_scomposti_salvare:
+        outFileSample.write('\t'.join(t) + '\t' + x[-1] + '\n')
+
     lines_processed +=1
     if lines_processed % (mod_tot_line) == 0:
         print('Annotation: Total progress ' + str(round(lines_processed /total_line *100, 2)) + '%')

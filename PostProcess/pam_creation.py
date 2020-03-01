@@ -1,15 +1,9 @@
-#BUG X	CTAACAGTTGCTTTTATCACNNN	tYARCAKYTGgTTaTAaaWCASK	chr21	8989333	+	5	0	5	-	-	n	-;C;T;	y
-#BUG >chr21:8989353-8989356
-# agg
-# La pam esisteva gia dall'inizio, per questo la lettera è sbagliata  -> test per vedere se risolto
-
 # sys argv 1 is input file (uniq.sorted.txt)
 # sys argv 2 is pam NOTE tested only with NRG
 # sys argv 3 is reference genome dir
 # First scan of file: when IUPAC in pam, save position into bedfile
 # Use bedtools getfasta to extract all ref sequences
-# Second scan of file: add column with 
-# -; G; -;
+# Second scan of file: add column with AGG,CGG;
 # if from C to ref (and it was not a pam), we got S in enr (created new pam).
 # Not sure if calling bedtools for each iupac pam found + single scan of file is faster than single bedtools call + 2 scan of file 
 

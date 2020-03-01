@@ -1,0 +1,42 @@
+-Summary_Total
+targets	0	0	0	1	11	0	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	0	1	0	0	0	0	0
+exon	0	0	0	0	2	0	0	0	0	0
+intron	0	0	0	0	0	0	0	0	0	0
+promoter	0	0	0	0	2	0	0	0	0	0
+-Summary_EAS
+targets	0	0	0	1	0	0	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	0	0	0	0	0	0	0
+exon	0	0	0	0	0	0	0	0	0	0
+intron	0	0	0	0	0	0	0	0	0	0
+promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_EUR
+targets	0	0	0	1	2	0	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	0	0	0	0	0	0	0
+exon	0	0	0	0	0	0	0	0	0	0
+intron	0	0	0	0	0	0	0	0	0	0
+promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_AFR
+targets	0	0	0	1	2	0	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	0	0	0	0	0	0	0
+exon	0	0	0	0	0	0	0	0	0	0
+intron	0	0	0	0	0	0	0	0	0	0
+promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_AMR
+targets	0	0	0	1	1	0	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	0	0	0	0	0	0	0
+exon	0	0	0	0	0	0	0	0	0	0
+intron	0	0	0	0	0	0	0	0	0	0
+promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_SAS
+targets	0	0	0	1	0	0	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	0	0	0	0	0	0	0
+exon	0	0	0	0	0	0	0	0	0	0
+intron	0	0	0	0	0	0	0	0	0	0
+promoter	0	0	0	0	0	0	0	0	0	0
