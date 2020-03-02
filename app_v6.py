@@ -2513,7 +2513,27 @@ def resultPage(job_id):
     )
 
     final_list.append(html.Br())
-    
+
+    #TEST barplot for population distributions
+    final_list.append(
+        html.Div(
+            [
+                html.Button(
+                    "Show/Hide Target Distribution in Populations",
+                    id="btn-collapse-populations",
+                    # className="mb-3",
+                    # color="primary",
+                ),
+                dbc.Collapse(
+                    dbc.Card(dbc.CardBody(
+                        html.Div(id = 'content-collapse-population')
+                    )),
+                    id="collapse-populations",
+                ),
+            ]
+        )
+    )
+    final_list.append(html.Br())
     if genome_type == 'ref':
         final_list.append(
         dcc.Tabs(id="tabs-reports", value='tab-summary-by-guide', children=[
@@ -2685,6 +2705,68 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     ].to_dict('records')
     print(len(data_to_send))
     return data_to_send, [{'row':0, 'column':0}]
+
+
+#Open/close barplot for population distribution
+@app.callback(
+    Output("collapse-populations", "is_open"),
+    [Input("btn-collapse-populations", "n_clicks")],
+    [State("collapse-populations", "is_open")],
+)
+def toggleCollapseDistributionPopulations(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
+#Load barplot of population distribution for selected guide
+@app.callback(
+    Output('content-collapse-population', 'children'),
+    [Input('general-profile-table', 'selected_cells')],
+    [State('general-profile-table', 'data'),
+    State('url','search')]
+)
+def loadDistributionPopulations(sel_cel, all_guides, job_id):
+    if sel_cel is None or not sel_cel or not all_guides:
+        raise PreventUpdate
+    guide = all_guides[int(sel_cel[0]['row'])]['Guide']
+    job_id = job_id.split('=')[-1]
+
+    with open('Results/' + job_id + '/Params.txt') as p:
+        all_params = p.read()
+        mms = int((next(s for s in all_params.split('\n') if 'Mismatches' in s)).split('\t')[-1])
+        max_bulges = int((next(s for s in all_params.split('\n') if 'Max_bulges' in s)).split('\t')[-1])
+
+    distributions = []
+    try:
+        all_images = [dbc.Col(      #TODO modificare per aggiungere try except e guida nel nome dell'immagine
+            html.A(
+                html.Img(
+                    src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/distribution_' + str(mm) + 'MM.png', 'rb').read()).decode()),
+                    id = 'distribution-population' + str(mm), width="100%", height="auto"
+                ),
+                target="_blank",
+                href = 'assets/Img/' + job_id + '/' + 'distribution' + '_' + str(mm) + 'MM.png'
+            ),
+        ) for mm in range (mms + 1)]    #TODO cambiare da mms +1 a mms + max_bulge +1  -> ovvero considero total e non solo mms
+    except:
+        all_images = [dbc.Col(      #TODO modificare per aggiungere try except e guida nel nome dell'immagine
+            html.A(
+                html.Img(
+                    src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/summary_histogram_' + guide + '_' + str(mm) + 'mm.png', 'rb').read()).decode()),
+                    id = 'distribution-population' + str(mm), width="100%", height="auto"
+                ),
+                target="_blank",
+                href = 'assets/Img/' + job_id + '/' + 'summary_histogram_' + guide + '_' + str(mm) + 'mm.png'
+            ),
+        ) for mm in range (mms + 1)]    #TODO cambiare da mms +1 a mms + max_bulge +1  -> ovvero considero total e non solo mms
+
+
+    distributions.append(
+        dbc.Row(
+            all_images
+        )
+    )
+    return distributions
 
 @cache.memoize()
 def global_store_subset(value, bulge_t, bulge_s, mms, guide):

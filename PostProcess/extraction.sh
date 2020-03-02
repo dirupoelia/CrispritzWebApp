@@ -19,13 +19,14 @@ LC_ALL=C fgrep -f ref.chr_pos.txt $2.sort.txt > $3.semi_common_targets.txt #Sele
 # target senza iupac del var e corrispondenti target senza iupac del ref
 LC_ALL=C fgrep -f ref.chr_pos.txt $1.sort.txt >> $3.semi_common_targets.txt 
 
-LC_ALL=C sort -u -T ./ $3.semi_common_targets.txt > semi_common_targets.sort.txt
+LC_ALL=C sort -u -T ./ $3.semi_common_targets.txt > $3.semi_common_targets.sort.txt
 
 #unique variant targets extraction
-LC_ALL=C comm -13 semi_common_targets.sort.txt $2.sort.txt > $3.unique_targets.txt
+LC_ALL=C comm -13 $3.semi_common_targets.sort.txt $2.sort.txt > $3.unique_targets.txt
 
+mv $3.semi_common_targets.sort.txt $3.semi_common_targets.txt
 #Remove tmp files, NOTE maybe keep first two and change name to $1 and $2 ?
-rm $1.sort.txt $2.sort.txt ref.chr_pos.txt semi_common_targets.sort.txt
+rm $1.sort.txt $2.sort.txt ref.chr_pos.txt
 
 # # OLD semi common targets extraction
 # LC_ALL=C awk '{print $4"\t"$5}' $1 > ref.chr_pos.txt 

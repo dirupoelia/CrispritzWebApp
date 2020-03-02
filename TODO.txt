@@ -364,8 +364,15 @@ un target, appare sotto una nuova tabella con tutte le sue possibili combinazion
 -28/02
 X -Tabella delle guide, modificare Targets for 0-1-2 Mismatches in Targets for 0-1-2 Total (MM+bulge) e mettere la somma dei targets che hanno 0-1-2- come total
 X -Modificare colonna Off-targets in Off-targets Reference e Off-target Enriched (contenente solo off-target created by SNP)  --> posso usare summary by guide per i conti (?)
--Aggiungere barplot sotto la tabella e sopra le tab contenente targets per popolazione. Vedere se si possono mettere a comparsa.
--Fare i conti solo su targets che esistono realmente (per la parte dei sample con real nucleotide). Segnalare quelli che con caratteri reali vanno sopra threshold o con PAM disruption
+-Aggiungere barplot sotto la tabella e sopra le tab contenente targets per popolazione. 
+	-Creare script per barplot
+	X-Vedere se si possono mettere a comparsa.
+-Fare i conti solo su targets che esistono realmente (per la parte dei sample con real nucleotide). 
+	-problema nel sum by guide position: i target con F non sono in .cluster. ma solo in .samples.annotation e .samples.all.annotation
+	-Problema nel summary by guide riguardo la PAM creation se il target che la genera poi ha troppi mms.
+	-Aggiungere summary_by_guide.py in submit job final
+X-Segnalare quelli che con caratteri reali vanno sopra threshold o con PAM disruption
+	X-Segnalare meglio PAM disruption o PAM creation, specifico per ogni target scomposto
 -Modificare la creazione delle immagini per tenere conto del total e non del valore di mms (eg per 4 mm l'immagine mi calcola i targets X40 DNA410 RNA401, invece dovrebbe calcolare su X400, DNA310, RNA301)
 
 -Parte grafica: al momento solo per genoma umano, ma con vcf personali

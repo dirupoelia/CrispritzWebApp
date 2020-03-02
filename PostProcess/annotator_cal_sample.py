@@ -419,12 +419,23 @@ for line in inResult:
                     pam_ok = False
 
             if summary_barplot_from_total:          #Change to F only for variants/reference search
-                if not pam_ok or int(final_result[7]) < mm_new_t - int(final_result[8]):                      #TODO magari cambiare anche il valore in PAM creation/PAM disruption
+                if not pam_ok or int(final_result[7]) < mm_new_t - int(final_result[8]):                     
                     final_result[vu_pos] = 'F'      #TODO cambiare nel caso abbia ricerca solo var
                     false_targets += 1
                     x[-2] = ','.join(set(x[-2].split(',')) - set(common_samples))
-                    
+                if not pam_ok:
+                    if final_result[12] != 'n':
+                        final_result[12]= t[pam_begin:pam_end]
+                    elif final_result[13] != 'n':
+                        final_result[13] = 'n'
+                else:
+                    if final_result[12] != 'n':
+                        final_result[12]= 'n'     #There was PAM disruption but this sample has correct PAM, so put n
+                    elif final_result[13] != 'n':
+                        final_result[13] = t[pam_begin:pam_end] 
+
             final_result[7] = str(mm_new_t - int(final_result[8]))
+            final_result[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
             target_scomposti_salvare.append(final_result)
             # outFileSample.write('\t'.join(final_result) + '\n') #final_result[1].replace('-','') for better grep
     if summary_barplot_from_total and false_targets >= len(target_combination):        #If all the scomposed targets have no sample or do not respect PAM/mm threasold, the iupac target does not really exist

@@ -1,0 +1,21 @@
+-Summary_Total
+targets	0	0	0	13	167	0	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	3	15	0	0	0	0	0
+exon	0	0	0	1	6	0	0	0	0	0
+intron	0	0	0	0	0	0	0	0	0	0
+promoter	0	0	0	3	51	0	0	0	0	0
+-Summary_CCATCGGTGGCCGTTTGCCCNNN
+targets	0	0	0	3	42	0	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	1	4	0	0	0	0	0
+exon	0	0	0	1	1	0	0	0	0	0
+intron	0	0	0	0	0	0	0	0	0	0
+promoter	0	0	0	1	20	0	0	0	0	0
+-Summary_GAGTCCGAGCAGAAGAAGAANNN
+targets	0	0	0	10	125	0	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	2	11	0	0	0	0	0
+exon	0	0	0	0	5	0	0	0	0	0
+intron	0	0	0	0	0	0	0	0	0	0
+promoter	0	0	0	2	31	0	0	0	0	0

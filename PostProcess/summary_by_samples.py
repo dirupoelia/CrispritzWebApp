@@ -44,7 +44,7 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
         if '#' in line:
             continue
         line = line.strip().split('\t')
-        if 'n' not in line[-3]:
+        if 'n' != line[-3]:
             guide = line[1].replace('-','')
             if guide not in guides_dict:
                 guides_dict[guide] = dict()
@@ -55,11 +55,21 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
                 count_disruption[guide] = dict()
             words = line[-3].split(',')
             
-            if current_chr_pos != line[3]+line[4]:          #This if is not used
-                guides_dict_total[guide] += 1
-                current_chr_pos = line[3]+line[4]
-            checked_pop = []
-            checked_superpop = []
+            if current_chr_pos != guide + line[3]+line[4]:          
+                guides_dict_total[guide] += 1                        #This value is skipped on app_v6
+                current_chr_pos = guide + line[3]+line[4]
+                checked_pop = []
+                checked_superpop = []
+
+            #If it has F in Var uniq column and has PAM disruption, add only on PAM disruption count
+            if 'F' == line[-4]:
+                for word in words:
+                    if word not in count_disruption[guide]:
+                        count_disruption[guide][word] = [0,0]
+                    if line[12] != 'n':
+                        count_disruption[guide][word][0] +=1
+                continue
+                        
             for word in words:
                 try:
                     guides_dict[guide][word][0] += 1
@@ -67,6 +77,7 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
                     guides_dict[guide][word] = [1,0]
                 if word not in count_creation[guide]:
                     count_creation[guide][word] = [0,0]
+                if word not in count_disruption[guide]:
                     count_disruption[guide][word] = [0,0]
               
                 if line[12] != 'n':

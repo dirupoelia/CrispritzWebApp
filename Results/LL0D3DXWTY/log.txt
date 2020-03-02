@@ -1,0 +1,12 @@
+Job	Start	lun 2 mar 2020, 02.09.33, CET
+Search-index	Start	lun 2 mar 2020, 02.09.33, CET
+Search-index	Done	lun 2 mar 2020, 02.09.47, CET
+Search	Start	lun 2 mar 2020, 02.09.47, CET
+Search	Done	lun 2 mar 2020, 02.09.47, CET
+Report	Start	lun 2 mar 2020, 02.09.47, CET
+Annotation	Start	lun 2 mar 2020, 02.09.53, CET
+Annotation	Done	lun 2 mar 2020, 02.11.11, CET
+PostProcess	Done	lun 2 mar 2020, 02.11.14, CET
+Report	Start	lun 2 mar 2020, 02.11.14, CET
+Report	Done	lun 2 mar 2020, 02.11.27, CET
+Job	Done	lun 2 mar 2020, 02.11.27, CET
