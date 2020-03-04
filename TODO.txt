@@ -365,8 +365,9 @@ un target, appare sotto una nuova tabella con tutte le sue possibili combinazion
 X -Tabella delle guide, modificare Targets for 0-1-2 Mismatches in Targets for 0-1-2 Total (MM+bulge) e mettere la somma dei targets che hanno 0-1-2- come total
 X -Modificare colonna Off-targets in Off-targets Reference e Off-target Enriched (contenente solo off-target created by SNP)  --> posso usare summary by guide per i conti (?)
 -Aggiungere barplot sotto la tabella e sopra le tab contenente targets per popolazione. 
-	-Creare script per barplot
+	X-Creare script per barplot
 	X-Vedere se si possono mettere a comparsa.
+	-Modificare l'annotazione per contare i total e non solo i mms
 -Fare i conti solo su targets che esistono realmente (per la parte dei sample con real nucleotide). 
 	-problema nel sum by guide position: i target con F non sono in .cluster. ma solo in .samples.annotation e .samples.all.annotation
 	-Problema nel summary by guide riguardo la PAM creation se il target che la genera poi ha troppi mms.

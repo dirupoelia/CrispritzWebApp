@@ -54,11 +54,28 @@ with open(sys.argv[1]) as targets:
             if line[14] == 'F':                 #Save PAM Disruption even if target does not really exists (F status)
                 if line[12] != 'n':
                     if line[0] == 'X':
+                        guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1
                         count_disruption[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
                     elif line[0] == 'DNA':
+                        guide_dict[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1
                         count_disruption[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1 
                     else:
+                        guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
                         count_disruption[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
+                elif line[13] != 'n':
+                    if line[0] == 'X':
+                        count_creation[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
+                    elif line[0] == 'DNA':
+                        count_creation[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1 
+                    else:
+                        count_creation[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
+                else:       #PAM Disr and Creat are 'n'
+                    if line[0] == 'X':
+                        guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1
+                    elif line[0] == 'DNA':
+                        guide_dict[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1
+                    else:
+                        guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
                 continue
 
 

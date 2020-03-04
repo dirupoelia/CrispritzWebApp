@@ -61,13 +61,17 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
                 checked_pop = []
                 checked_superpop = []
 
-            #If it has F in Var uniq column and has PAM disruption, add only on PAM disruption count
+            #If it has F in Var uniq column, count 
             if 'F' == line[-4]:
                 for word in words:
                     if word not in count_disruption[guide]:
                         count_disruption[guide][word] = [0,0]
                     if line[12] != 'n':
                         count_disruption[guide][word][0] +=1
+                    if word not in count_creation[guide]:
+                        count_creation[guide][word] = [0,0]
+                    if line[13] != 'n':
+                        count_creation[guide][word][1] +=1
                 continue
                         
             for word in words:

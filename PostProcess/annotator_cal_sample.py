@@ -9,10 +9,11 @@ in samples.txt, poi calcola l'annotazione corrispondente e crea il file Annotati
 
 #NOTE serve 20130606_sample_info.xlsx nella stessa cartella di questo script 
 #argv1 è il file .bed con le annotazioni
-#argv2 è il file top1 ordinato per chr
+#argv2 è il file .cluster.txt, che è ordinato per cromosoma. Era (03/03) il file top1 ordinato per chr
 #argv3 è nome del file in output
 #argv4 è directory dei dizionari
 #argv5 is pamfile
+#argv 6 is max allowed mms
 
 import sys
 import json
@@ -171,6 +172,7 @@ else:                   #'Var' case: PAM creation and Variant_unique not calcula
     header = '#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPam_disr\tSamples\tReal Guide\tAnnotation Type'
 
 mm_pos = 7      #position of mismatch column
+bulge_pos = 8
 outFileSample.write(header + '\n')
 outFileSampleAll.write(header + '\n')
 summary_samples = True
@@ -264,13 +266,31 @@ iupac_code = {
             }
 start_time_total = time.time()
 lines_processed = 0
+allowed_mms = int(sys.argv[6])
+current_guide_chr_pos = 'no'
+cluster_update = open(outputFile + '.cluster.tmp.txt', 'w+')
+cluster_update.write(header + '\n')        #Write header
+save_cluster_targets = True
+change_status = False
+next(inResult)      #Skip header
 #with  open(outputFile + '.samples.annotation.txt','w+') as outFileSample, open(outputFile + '.samples.all.annotation.txt', 'w+') as outFileSampleAll:
 for line in inResult:
-    if '#' in line:
-        continue
     x = line.strip().split('\t')
     guide_no_bulge = x[1].replace("-","")
-    # x[1] = x[1].replace("-","")
+    if (guide_no_bulge + x[3] + x[5]) == current_guide_chr_pos:     #Target is in current cluster, simply save the sample and annotation and the F status
+        if save_cluster_targets:
+            if change_status:
+                line = line.strip().split('\t')
+                line[vu_pos] = 'F'
+                line = '\t'.join(line)
+            cluster_update.write(line.strip() + '\t.\t' + guide_no_bulge + '\t.\n')  #add Sample (None) GuideNoBulge and Annotation(None). Use (None) to save space
+        lines_processed +=1
+        if lines_processed % (mod_tot_line) == 0:
+            print('Annotation: Total progress ' + str(round(lines_processed /total_line *100, 2)) + '%')
+        continue
+    save_cluster_targets = True
+    change_status = False
+    current_guide_chr_pos = guide_no_bulge + x[3] + x[5]
     if x[3] != current_chr:
         if not os.path.exists(os.path.realpath(sys.argv[4]) + '/my_dict_' + x[3] + '.json'):
             pass
@@ -419,7 +439,7 @@ for line in inResult:
                     pam_ok = False
 
             if summary_barplot_from_total:          #Change to F only for variants/reference search
-                if not pam_ok or int(final_result[7]) < mm_new_t - int(final_result[8]):                     
+                if not pam_ok or allowed_mms < (mm_new_t - int(final_result[8])):                     
                     final_result[vu_pos] = 'F'      #TODO cambiare nel caso abbia ricerca solo var
                     false_targets += 1
                     x[-2] = ','.join(set(x[-2].split(',')) - set(common_samples))
@@ -440,6 +460,10 @@ for line in inResult:
             # outFileSample.write('\t'.join(final_result) + '\n') #final_result[1].replace('-','') for better grep
     if summary_barplot_from_total and false_targets >= len(target_combination):        #If all the scomposed targets have no sample or do not respect PAM/mm threasold, the iupac target does not really exist
         line = line.strip().split('\t')
+        change_status = True
+        if line[vu_pos] == 'y' and line[12] == 'n' and line[13] == 'n':
+            save_cluster_targets = False
+            continue    #DO NOT save this target because no ref homologous and no sample combination exists
         line[vu_pos] = 'F'
         x[-2] = 'n'     #Since iupac target has no scomposition, it means it has no sample associated
         line = '\t'.join(line)
@@ -468,13 +492,13 @@ for line in inResult:
             count_unique_for_guide[guide_no_bulge][item] = [0]*10
     
     #conto i target generali per mm threshold
-    totalDict['targets'][int(x[mm_pos])] += 1
-    guideDict[guide_no_bulge]['targets'][int(x[mm_pos])] += 1
+    totalDict['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
+    guideDict[guide_no_bulge]['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
 
     if summary_barplot_from_total:
         if x[vu_pos] == 'y': 
-            count_unique['targets'][int(x[mm_pos])] += 1
-            count_unique_for_guide[guide_no_bulge]['targets'][int(x[mm_pos])] += 1
+            count_unique['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
+            count_unique_for_guide[guide_no_bulge]['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
     
     if summary_samples:
         for sample in x[-2].split(','):
@@ -494,13 +518,13 @@ for line in inResult:
                     for item in annotationsSet:
                         count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]][item] = [0]*10
             #Add +1 to targets
-            count_sample[guide_no_bulge][sample]['targets'][int(x[mm_pos])] += 1
+            count_sample[guide_no_bulge][sample]['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
             if dict_sample_to_pop[sample] not in visited_pop:
                 visited_pop.append(dict_sample_to_pop[sample])
-                count_pop[guide_no_bulge][dict_sample_to_pop[sample]]['targets'][int(x[mm_pos])] += 1
+                count_pop[guide_no_bulge][dict_sample_to_pop[sample]]['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
             if dict_pop_to_sup[dict_sample_to_pop[sample]] not in visited_superpop:
                 visited_superpop.append(dict_pop_to_sup[dict_sample_to_pop[sample]])
-                count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]]['targets'][int(x[mm_pos])] += 1
+                count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]]['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
         visited_pop = []
         visited_superpop = []
     
@@ -516,26 +540,26 @@ for line in inResult:
             found_bool = True
             #outFileTargets.write(line.rstrip() + '\t' + str(guideSplit[1]) + "\n")
             string_annotation.append(str(guideSplit[1]))
-            guideDict[guide_no_bulge][guideSplit[1]][int(x[mm_pos])] += 1
-            totalDict[guideSplit[1]][int(x[mm_pos])] += 1
+            guideDict[guide_no_bulge][guideSplit[1]][int(x[mm_pos]) + int(x[bulge_pos])] += 1
+            totalDict[guideSplit[1]][int(x[mm_pos]) + int(x[bulge_pos])] += 1
             
             if summary_barplot_from_total:
                 if x[vu_pos] == 'y':
-                    count_unique[guideSplit[1]][int(x[mm_pos])] += 1
-                    count_unique_for_guide[guide_no_bulge][guideSplit[1]][int(x[mm_pos])] += 1
+                    count_unique[guideSplit[1]][int(x[mm_pos]) + int(x[bulge_pos])] += 1
+                    count_unique_for_guide[guide_no_bulge][guideSplit[1]][int(x[mm_pos]) + int(x[bulge_pos])] += 1
             
             if summary_samples:
                 for sample in x[-2].split(','):
                     if sample == 'n':
                         continue
                     #Add +1 to annotation
-                    count_sample[guide_no_bulge][sample][guideSplit[1]][int(x[mm_pos])] += 1
+                    count_sample[guide_no_bulge][sample][guideSplit[1]][int(x[mm_pos]) + int(x[bulge_pos])] += 1
                     if dict_sample_to_pop[sample] not in visited_pop:
                         visited_pop.append(dict_sample_to_pop[sample])
-                        count_pop[guide_no_bulge][dict_sample_to_pop[sample]][guideSplit[1]][int(x[mm_pos])] += 1
+                        count_pop[guide_no_bulge][dict_sample_to_pop[sample]][guideSplit[1]][int(x[mm_pos]) + int(x[bulge_pos])] += 1
                     if dict_pop_to_sup[dict_sample_to_pop[sample]] not in visited_superpop:
                         visited_superpop.append(dict_pop_to_sup[dict_sample_to_pop[sample]])
-                        count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]][guideSplit[1]][int(x[mm_pos])] += 1
+                        count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]][guideSplit[1]][int(x[mm_pos]) + int(x[bulge_pos])] += 1
                 visited_pop = []
                 visited_superpop = []
     if not found_bool:
@@ -639,13 +663,13 @@ for line in inResult:
     #     line = '\t'.join(line)
     #Save union samples + annotation
     outFileSampleAll.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')   
+    cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n') 
     for t in target_scomposti_salvare:
         outFileSample.write('\t'.join(t) + '\t' + x[-1] + '\n')
 
     lines_processed +=1
     if lines_processed % (mod_tot_line) == 0:
         print('Annotation: Total progress ' + str(round(lines_processed /total_line *100, 2)) + '%')
-
 
 ############ SAVE SUMMARIES ############
 

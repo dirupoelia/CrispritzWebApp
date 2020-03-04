@@ -2514,26 +2514,6 @@ def resultPage(job_id):
 
     final_list.append(html.Br())
 
-    #TEST barplot for population distributions
-    final_list.append(
-        html.Div(
-            [
-                html.Button(
-                    "Show/Hide Target Distribution in Populations",
-                    id="btn-collapse-populations",
-                    # className="mb-3",
-                    # color="primary",
-                ),
-                dbc.Collapse(
-                    dbc.Card(dbc.CardBody(
-                        html.Div(id = 'content-collapse-population')
-                    )),
-                    id="collapse-populations",
-                ),
-            ]
-        )
-    )
-    final_list.append(html.Br())
     if genome_type == 'ref':
         final_list.append(
         dcc.Tabs(id="tabs-reports", value='tab-summary-by-guide', children=[
@@ -2544,6 +2524,26 @@ def resultPage(job_id):
     )
         
     else:
+        #Barplot for population distributions
+        final_list.append(
+            html.Div(
+                [
+                    html.Button(
+                        "Show/Hide Target Distribution in Populations",
+                        id="btn-collapse-populations",
+                        # className="mb-3",
+                        # color="primary",
+                    ),
+                    dbc.Collapse(
+                        dbc.Card(dbc.CardBody(
+                            html.Div(id = 'content-collapse-population')
+                        )),
+                        id="collapse-populations",
+                    ),
+                ]
+            )
+        )
+        final_list.append(html.Br())
         final_list.append(
             dcc.Tabs(id="tabs-reports", value='tab-summary-by-guide', children=[
                 dcc.Tab(label='Summary by Guide', value='tab-summary-by-guide'),
@@ -2741,11 +2741,11 @@ def loadDistributionPopulations(sel_cel, all_guides, job_id):
         all_images = [dbc.Col(      #TODO modificare per aggiungere try except e guida nel nome dell'immagine
             html.A(
                 html.Img(
-                    src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/distribution_' + str(mm) + 'MM.png', 'rb').read()).decode()),
+                    src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/populations_distribution_' + guide + '_' + str(mm) + 'total.png', 'rb').read()).decode()),
                     id = 'distribution-population' + str(mm), width="100%", height="auto"
                 ),
                 target="_blank",
-                href = 'assets/Img/' + job_id + '/' + 'distribution' + '_' + str(mm) + 'MM.png'
+                href = 'assets/Img/' + job_id + '/' + 'populations_distribution_' + guide + '_' + str(mm) + 'total.png'
             ),
         ) for mm in range (mms + 1)]    #TODO cambiare da mms +1 a mms + max_bulge +1  -> ovvero considero total e non solo mms
     except:

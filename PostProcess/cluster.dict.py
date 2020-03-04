@@ -21,6 +21,8 @@
 #sys3 is True to keep column 5 (Pos cluster) and 9 (Total) and added guide, False to do clusterization but do not report the added columns
 #sys4 is True if cluster only (no append of Total column or adding of Cluster position, because already present), False otherwise
 #sys5 is guides.txt for slow clustering
+
+#if sys contains 'orderChr', clusters will be ordered by chr
 #Output column (not written): Bulge_type, Guide, Target, chr, pos, pos_cluster (optional), direction, mms, bulge, total(optional), real guide(optional)
 
 #NOTE with new search, cluster position is already present, so code for that column is commented
@@ -170,6 +172,8 @@ if total_line > MAX_LIMIT:
                 total_list[-1].sort(key = lambda x: (x[7], x[5]))       #Order last cluster by total and mms
 
                 total_list.sort(key = lambda x: x[0][7])        #Order all clusters by total of top1
+                if 'orderChr' in sys.argv[:]:
+                    total_list.sort(key = lambda x: x[0][1])    # and then for chr, needed for sample annotation and summary by position
                 if addGuide:
                     if keep_columns:
                         for cluster in total_list:
@@ -277,8 +281,9 @@ else:
                 total_list[-1].append(line)     
 
         total_list[-1].sort(key = lambda x: (x[7], x[5]))       #Order last cluster by total and mms
-
         total_list.sort(key = lambda x: x[0][7])        #Order all clusters by total of top1
+        if 'orderChr' in sys.argv[:]:
+            total_list.sort(key = lambda x: x[0][1])    # and then for chr, needed for sample annotation and summary by position
         if addGuide:
             if keep_columns:
                 for cluster in total_list:

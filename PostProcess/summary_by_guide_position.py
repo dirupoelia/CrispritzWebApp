@@ -120,9 +120,35 @@ with open(sys.argv[1]) as targets:
             
                 #Summar by guide
                 if line[0]+line[7]+line[8] not in sub_cluster_visited:
-                    # if line[1] == 'CCATCGGTGGCCGTTTGCCCNNN' and line[7] == '4':
-                    #     print(line)
                     sub_cluster_visited.append(line[0]+line[7]+line[8])
+                    if line[14] == 'F':                 
+                        if line[12] != 'n':         #Save PAM Disruption even if target does not really exists, because exists the reference target (F status)
+                            if line[0] == 'X':
+                                guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1
+                                count_disruption[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
+                            elif line[0] == 'DNA':
+                                guide_dict[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1
+                                count_disruption[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1 
+                            else:
+                                guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
+                                count_disruption[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
+                        elif line[13] != 'n':       #Save only PAM Creation, the reference target does not exists
+                            if line[0] == 'X':
+                                count_creation[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
+                            elif line[0] == 'DNA':
+                                count_creation[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1 
+                            else:
+                                count_creation[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
+                        else:       #PAM Disr and Creat are 'n'
+                            if line[0] == 'X':      #Save target, since reference target exists
+                                guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1
+                            elif line[0] == 'DNA':
+                                guide_dict[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1
+                            else:
+                                guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
+                        continue
+
+
                     if line[0] == 'X':
                         guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
                         if line[14] == 'y':
@@ -165,7 +191,7 @@ with open(sys.argv[1]) as targets:
 
                 tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'X', 'Bulge Size': 0, 'Mismatches': m, 'Number of Targets': guide_dict[guide][0][m][0], 'Targets Created by SNPs':guide_dict[guide][3][m][0],  'PAM Disruption':count_disruption[guide][0][m][0], 'PAM Creation':count_creation[guide][0][m][0] }, ignore_index = True)
             tab_summary.to_pickle(sys.argv[6] + '.summary_by_guide.' + guide +'.txt')
-    else:
+    else:   #TODO sistemare aggiungendo caso in cui ho F
         for line in targets:
             if '#' in line:
                 continue

@@ -26,7 +26,7 @@ jobid=$(basename $1)
 echo 'START '$jobid ${18}
 echo 'Job\tStart\t'$(date)> log.txt
 used_genome_dir=$2                 
-
+max_bulge=$([ $8 -ge $9 ] && echo "$8" || echo "$9")
 #Start search index     #NOTE new version 2.1.2 of crispritz needed
 echo 'Search-index\tStart\t'$(date) >> log.txt
 echo 'Search_output '${19} >  output.txt
@@ -165,7 +165,7 @@ elif [ ${19} = 'var' ]; then
     echo 'End sort'
     echo 'Annotation\tStart\t'$(date) >> log.txt
     echo 'Start calc samples and annotation'
-    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.top_1.txt $jobid ../../../dictionaries pam.txt  #> $jobid.samples.all.annotation.txt $jobid.samples.annotation.txt  with header
+    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.top_1.txt $jobid ../../../dictionaries pam.txt $7 #> $jobid.samples.all.annotation.txt $jobid.samples.annotation.txt  with header
                                                                                                                 # > $jobid.Annotation.summary.txt
                                                                                                                 # > $jobid.sample_annotation.GUIDE.sample.txt
                                                                                                                 # > $jobid.sumref.Annotation.summary.txt
@@ -255,12 +255,13 @@ else    #Type search = both
     #Cluster of jobid.total.txt and extraction of top 1
     echo 'Start cluster of total.txt'
     echo 'Calculating Scores... Step [4/6]' >>  output.txt
-    python3 ../../PostProcess/cluster.dict.py $jobid.total.txt 'no' 'True' 'True' guides.txt 'total'
+    python3 ../../PostProcess/cluster.dict.py $jobid.total.txt 'no' 'True' 'True' guides.txt 'total' 'orderChr'  #-> 03/03 il cluster ottenuto è ordinato per chr, uso questo per annotation
     echo 'End cluster of total.txt'
     echo 'Start extract top1 total.txt'
     python3 ../../PostProcess/extract_top.py $jobid.total.cluster.txt $jobid # > $jobid.top_1.txt
     
-    awk '{guide=$2;gsub("-","",guide); print $0"\t"guide}' $jobid.total.cluster.txt > tmp_add_guide && mv tmp_add_guide $jobid.total.cluster.txt  #add real guide column for show targets on sum by pos
+    #03/03 commentato riga sotto 
+    # awk '{guide=$2;gsub("-","",guide); print $0"\t"guide}' $jobid.total.cluster.txt > tmp_add_guide && mv tmp_add_guide $jobid.total.cluster.txt  #add real guide column for show targets on sum by pos
 
     echo 'End extract top1 total.txt'
 
@@ -269,10 +270,6 @@ else    #Type search = both
     python3 ../../PostProcess/scores_guide_table.py $jobid.top_1.txt ../../$used_genome_dir pam.txt guides.txt
     echo 'End Scoring'
 
-    #Summary guide, pos #NOTE the script automatically counts only for top subclusters
-    echo 'Start summary by guide and position'  #NOTE change to top_1 if in sum by pos want to see cluster count of top1
-    python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.cluster.txt $7 $8 $9 guides.txt $jobid 'Uniq'
-    echo 'End summary by guide and position'
 
     #Top1 expansion
     echo 'Start sort'
@@ -281,20 +278,34 @@ else    #Type search = both
     echo 'End sort'
     echo 'Start calc samples and annotation'
     echo 'Annotation\tStart\t'$(date) >> log.txt
-    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.top_1.txt $jobid ../../../dictionaries pam.txt   #> $jobid.samples.all.annotation.txt $jobid.samples.annotation.txt  with header
+    #03/03 modificato da top_1 a total.cluster
+    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.total.cluster.txt $jobid ../../../dictionaries pam.txt $7  #> $jobid.samples.all.annotation.txt $jobid.samples.annotation.txt  with header
                                                                                                                 # > $jobid.Annotation.summary.txt
                                                                                                                 # > $jobid.sample_annotation.GUIDE.sample.txt
                                                                                                                 # > $jobid.sumref.Annotation.summary.txt
-    
+                                                                                                                # > $jobid.cluster.tmp.txt
+    mv $jobid.cluster.tmp.txt $jobid.total.cluster.txt   #Now has sample and annotation (for top1, for other only blank column)
     #python3 ../../PostProcess/calc_samples_faster.py ../../../dictionaries $jobid.top_1.txt  #> $jobid.top_1.samples.txt $jobid.top_1.samples.all.txt
     echo 'End calc samples and annotation'
     echo 'Annotation\tDone\t'$(date) >> log.txt
     #Put right header into top_1.samples.all.txt
     # sed -i '1 i\#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPam_disr\tPAM_gen\tVar_uniq\tSamples\tReal Guide' $jobid.top_1.samples.all.txt
     
+    
+    echo 'Creating Summaries... Step [6/6]' >>  output.txt
+    #Summary guide, pos #NOTE the script automatically counts only for top subclusters
+    echo 'Start summary by guide and position'  #NOTE change to top_1 if in sum by pos want to see cluster count of top1
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.cluster.txt $7 $8 $9 guides.txt $jobid 'Uniq'  
+    echo 'End summary by guide and position'
+
+
+    # #Summary guide
+    # echo 'Start summary by guide'  
+    # python3 ../../PostProcess/summary_by_guide.py $jobid.samples.all.annotation.txt $7 $8 $9 guides.txt $jobid 'Uniq'
+    # echo 'End summary by guide'
+
     #Summary samples
     echo 'Start summary by samples'
-    echo 'Creating Summaries... Step [6/6]' >>  output.txt
     python3 ../../PostProcess/summary_by_samples.py $jobid.samples.all.annotation.txt $jobid ${19} guides.txt
     #python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt 
     echo 'End summary by samples'
@@ -335,12 +346,20 @@ else    #Type search = both
                     printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % crispritz.py generate-report $line -mm % -annotation $jobid'.Annotation.summary.txt' -extprofile *.extended_profile.xls -ws
                 fi
             fi
+            
+            #Generate Population Distributions
+            printf %s\\n $(seq 0 $max_bulge) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/populations_distribution.py $jobid.sample_annotation.$line.superpopulation.txt %
             echo $line >> output.txt
         done < guides.txt
         mkdir ../../assets/Img/$jobid
         cp *.png ../../assets/Img/$jobid/
     fi
     echo 'Report\tDone\t'$(date) >> log.txt
+
+    #Generate Population distributions
+    echo 'Populations Distribution Start'
+
+    echo 'Populations Distribution Done'
 
 fi
 
