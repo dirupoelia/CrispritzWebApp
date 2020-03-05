@@ -2738,7 +2738,7 @@ def loadDistributionPopulations(sel_cel, all_guides, job_id):
 
     distributions = []
     try:
-        all_images = [dbc.Col(      #TODO modificare per aggiungere try except e guida nel nome dell'immagine
+        all_images = [dbc.Col(  [   
             html.A(
                 html.Img(
                     src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/populations_distribution_' + guide + '_' + str(mm) + 'total.png', 'rb').read()).decode()),
@@ -2747,9 +2747,11 @@ def loadDistributionPopulations(sel_cel, all_guides, job_id):
                 target="_blank",
                 href = 'assets/Img/' + job_id + '/' + 'populations_distribution_' + guide + '_' + str(mm) + 'total.png'
             ),
-        ) for mm in range (mms + 1)]    #TODO cambiare da mms +1 a mms + max_bulge +1  -> ovvero considero total e non solo mms
+            html.Div(html.P('Distribution ' + str(mm) + ' Total ', style = {'display':'inline-block'} ),style = {'text-align':'center'})
+            ]
+        ) for mm in range (mms + max_bulges + 1)]    
     except:
-        all_images = [dbc.Col(      #TODO modificare per aggiungere try except e guida nel nome dell'immagine
+        all_images = [dbc.Col(  [    
             html.A(
                 html.Img(
                     src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/summary_histogram_' + guide + '_' + str(mm) + 'mm.png', 'rb').read()).decode()),
@@ -2757,8 +2759,10 @@ def loadDistributionPopulations(sel_cel, all_guides, job_id):
                 ),
                 target="_blank",
                 href = 'assets/Img/' + job_id + '/' + 'summary_histogram_' + guide + '_' + str(mm) + 'mm.png'
-            ),
-        ) for mm in range (mms + 1)]    #TODO cambiare da mms +1 a mms + max_bulge +1  -> ovvero considero total e non solo mms
+            ), 
+            html.Div(html.P('Distribution ' + str(mm) + ' Mismatches ', style = {'display':'inline-block'} ),style = {'text-align':'center'})
+            ]
+        ) for mm in range (mms + 1)]    #TODO cambiare da mms +1 a mms + max_bulge +1 quando ho fixato il report  -> ovvero considero total e non solo mms
 
 
     distributions.append(
@@ -2882,7 +2886,18 @@ def guidePagev3(job_id, hash):
                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
-                        }
+                        },
+                    {
+                        'if': {
+                                'filter_query': '{Variant Unique} eq F',
+                                #'filter_query': '{Direction} eq +', 
+                                #'column_id' :'Bulge Type'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(0, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                            
+                        },
+
                 ]            
             ),
             id = 'div-result-table',
@@ -3121,15 +3136,14 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
                         },
-                        {#TODO colora altro colore quelle con PAM Creation
+                        {
                         'if': {
-                                'filter_query': '{Variant Unique} eq y && {PAM Creation}  != "n"',
+                                'filter_query': '{Variant Unique} eq F',
                                 #'filter_query': '{Direction} eq +', 
                                 #'column_id' :'Bulge Type'
                             },
                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(255, 69, 0,0.15)'#'rgb(255, 102, 102)'
-                            
+                            'background-color':'rgba(0, 0, 0,0.15)'#'rgb(255, 102, 102)'
                         }
                 ]         
             )
@@ -3273,6 +3287,15 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
                         },
+                        {
+                        'if': {
+                                'filter_query': '{Variant Unique} eq F',
+                                #'filter_query': '{Direction} eq +', 
+                                #'column_id' :'Bulge Type'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(0, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                        }
                         # {#TODO colora altro colore quelle con PAM Creation
                         # 'if': {
                         #         'filter_query': '{Chromosome} eq "chr2"',
@@ -3418,6 +3441,16 @@ def samplePage(job_id, hash):
                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
+                        },
+                    {
+                        'if': {
+                                'filter_query': '{Variant Unique} eq F',
+                                #'filter_query': '{Direction} eq +', 
+                                #'column_id' :'Bulge Type'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(0, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                            
                         }
                 ],
                 css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
@@ -3553,16 +3586,13 @@ def clusterPage(job_id, hash):
     elif genome_type == 'var':
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'Samples Summary', 'Annotation Type']#'Samples', #'Correct Column'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text']
-        # file_to_grep = 'targets.cluster.minmaxdisr'
-        file_to_grep = '.targets.cluster.minmaxdisr.txt'  #get the cluster target, but still missing samples and annotation
-        #order_of_column = '$1\"\\t\"$2\"\\t\"$3\"\\t\"$4\"\\t\"$5\"\\t\"$6\"\\t\"$7\"\\t\"$8\"\\t\"$9\"\\t\"$10\"\\t\"$11\"\\t\"$12\"\\t\"$13\"\\t\"'     #All cols until PAM disruption except Real Guide ($14) #NOTE Change if add other column to report
-        #last_column = '$14'
+        file_to_grep = '.total.cluster.minmaxdisr.txt'  #TODO select right cluster file
+       
     else:
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique', 'Samples Summary', 'Annotation Type']#'Samples', 'Correct Column']
         col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text', 'text']
         file_to_grep = '.total.cluster.txt'
-        #order_of_column = '$1\"\\t\"$2\"\\t\"$3\"\\t\"$4\"\\t\"$5\"\\t\"$6\"\\t\"$7\"\\t\"$8\"\\t\"$9\"\\t\"$10\"\\t\"$11\"\\t\"$12\"\\t\"$13\"\\t\"$14\"\\t\"$15\"\\t\"'  #All cols until Var Uniq except Real Guide ($16) #NOTE Change if add other column to report
-        #last_column = '$16'
+       
     cluster_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.txt'
     if not os.path.exists(cluster_grep_result):    #Example    job_id.chr3_100.guide.txt
         #Grep annotation
@@ -3571,15 +3601,8 @@ def clusterPage(job_id, hash):
             out, err = get_annotation.communicate()
             annotation_type = out.decode('UTF-8').strip().split('\t')[-1]
             subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\" {print $0\"\\t' + annotation_type + '\"}\' > ' + cluster_grep_result], shell = True)
-        else:   #Get annotation and samples
-            # get_annotation = subprocess.Popen(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + '.samples.all.annotation.txt' + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\''], shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            # out, err = get_annotation.communicate()
-            # annotation_type = out.decode('UTF-8').strip().split('\t')[-1]
-            # samples_list = out.decode('UTF-8').strip().split('\t')[-3]
-            
-            #subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\" ; {print ' + order_of_column + samples_list + '\"\\t\"' + last_column + '\"\\t\"' + annotation_type + '\"}\' > ' + cluster_grep_result], shell = True)
-            #subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\" {print $0\"\\t' + samples_list + '\\t' + annotation_type +'\"}\' > ' + cluster_grep_result], shell = True)
-            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + cluster_grep_result], shell = True)  #NOTE file will not have sample and annotation column
+        else:               
+            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + cluster_grep_result], shell = True)  #NOTE top1 will have sample and annotation, other targets will have '.'
         subprocess.Popen(['zip ' + cluster_grep_result.replace('.txt','.zip') + ' ' + cluster_grep_result], shell = True)
     final_list.append(
         html.Div(job_id + '.' + chromosome + '_' + position + '.' + guide ,style = {'display':'none'}, id = 'div-info-sumbyposition-targets')
@@ -3617,6 +3640,16 @@ def clusterPage(job_id, hash):
                             },
                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                            
+                        },
+                    {
+                        'if': {
+                                'filter_query': '{Variant Unique} eq F',
+                                #'filter_query': '{Direction} eq +', 
+                                #'column_id' :'Bulge Type'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(0, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
                         }
                 ],
@@ -3676,6 +3709,16 @@ def clusterPage(job_id, hash):
                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
                             'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
+                        },
+                    {
+                        'if': {
+                                'filter_query': '{Variant Unique} eq F',
+                                #'filter_query': '{Direction} eq +', 
+                                #'column_id' :'Bulge Type'
+                            },
+                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                            'background-color':'rgba(0, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                            
                         }
                 ],
                 css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
@@ -3722,29 +3765,26 @@ def update_table_cluster(page_current, page_size, sort_by, filter, search, hash)
     if dff is None:
         raise PreventUpdate
 
-
-    if genome_type != 'ref':
-        #Grep annotation and samples #NOTE missing in txt file
-        get_annotation = subprocess.Popen(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + '.samples.all.annotation.txt' + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\''], shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = get_annotation.communicate()
-        annotation_type = out.decode('UTF-8').strip().split('\t')[-1]
-        samples_list = out.decode('UTF-8').strip().split('\t')[-3]
-        dff['Samples'] = samples_list
-        dff['Annotation Type'] = annotation_type
-
     if genome_type == 'ref':
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide',11:'Annotation Type'}, inplace = True)
-    elif genome_type == 'var':      #NOTE Correct guide and samples are inverted w.r.t. summary by sample and summary by guide
+    elif genome_type == 'var':      
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Correct Guide', 14:'Samples', 15:'Annotation Type', 16:'Top Subcluster'}, inplace = True)
-    else:                           #NOTE Correct guide and samples are inverted w.r.t. summary by sample and summary by guide
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide', 15:'Annotation Type', 16:'Top Subcluster'}, inplace = True)
+    else:                           
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Correct Guide', 16:'Samples',17:'Annotation Type', 18:'Top Subcluster'} , inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Annotation Type', 18:'Top Subcluster'} , inplace = True)
 
+    add_samples = [dff['Samples'][0]] * dff.shape[0]
+    check_minmms = dff['Min Mismatches']
+    if dff['Variant Unique'][0] != 'y' and dff['PAM Creation'][0] == 'n':
+        for pos_minmms, minmms in enumerate(check_minmms):
+            if minmms == '-':
+                add_samples[pos_minmms] = 'n'
+    dff['Samples'] = add_samples
+    dff['Annotation Type'] = dff['Annotation Type'][0]
     del dff['Correct Guide']
-    # dff['Annotation Type'] = annotation_type
-    #print(dff)
+
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
 

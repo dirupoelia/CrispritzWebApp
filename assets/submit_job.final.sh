@@ -27,6 +27,7 @@ echo 'START '$jobid ${18}
 echo 'Job\tStart\t'$(date)> log.txt
 used_genome_dir=$2                 
 max_bulge=$([ $8 -ge $9 ] && echo "$8" || echo "$9")
+total=$(($7+max_bulge))
 #Start search index     #NOTE new version 2.1.2 of crispritz needed
 echo 'Search-index\tStart\t'$(date) >> log.txt
 echo 'Search_output '${19} >  output.txt
@@ -306,7 +307,7 @@ else    #Type search = both
 
     #Summary samples
     echo 'Start summary by samples'
-    python3 ../../PostProcess/summary_by_samples.py $jobid.samples.all.annotation.txt $jobid ${19} guides.txt
+    python3 ../../PostProcess/summary_by_samples.py $jobid.samples.annotation.txt $jobid ${19} guides.txt
     #python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt 
     echo 'End summary by samples'
 
@@ -348,7 +349,7 @@ else    #Type search = both
             fi
             
             #Generate Population Distributions
-            printf %s\\n $(seq 0 $max_bulge) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/populations_distribution.py $jobid.sample_annotation.$line.superpopulation.txt %
+            printf %s\\n $(seq 0 $total) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/populations_distribution.py $jobid.sample_annotation.$line.superpopulation.txt %
             echo $line >> output.txt
         done < guides.txt
         mkdir ../../assets/Img/$jobid
