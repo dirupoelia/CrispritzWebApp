@@ -1,0 +1,21 @@
+-Summary_Total
+targets	2	1	2	65	880	4397	0	0	0	0
+CTCF	0	0	1	8	75	398	0	0	0	0
+DNaseI	1	0	1	13	224	1112	0	0	0	0
+Exon	1	0	1	5	77	420	0	0	0	0
+Intron	2	1	2	37	548	2577	0	0	0	0
+Promoter	0	0	0	0	3	6	0	0	0	0
+-Summary_GAGTCCGAGCAGAAGAAGAANNN
+targets	1	0	2	59	734	3690	0	0	0	0
+CTCF	0	0	1	7	57	299	0	0	0	0
+DNaseI	1	0	1	11	178	854	0	0	0	0
+Exon	1	0	1	4	55	314	0	0	0	0
+Intron	1	0	2	33	449	2160	0	0	0	0
+Promoter	0	0	0	0	1	5	0	0	0	0
+-Summary_CCATCGGTGGCCGTTTGCCCNNN
+targets	1	1	0	6	146	707	0	0	0	0
+CTCF	0	0	0	1	18	99	0	0	0	0
+DNaseI	0	0	0	2	46	258	0	0	0	0
+Exon	0	0	0	1	22	106	0	0	0	0
+Intron	1	1	0	4	99	417	0	0	0	0
+Promoter	0	0	0	0	2	1	0	0	0	0

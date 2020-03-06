@@ -271,7 +271,6 @@ current_guide_chr_pos = 'no'
 cluster_update = open(outputFile + '.cluster.tmp.txt', 'w+')
 cluster_update.write(header + '\n')        #Write header
 save_cluster_targets = True
-change_status = False
 next(inResult)      #Skip header
 #with  open(outputFile + '.samples.annotation.txt','w+') as outFileSample, open(outputFile + '.samples.all.annotation.txt', 'w+') as outFileSampleAll:
 for line in inResult:
@@ -279,10 +278,6 @@ for line in inResult:
     guide_no_bulge = x[1].replace("-","")
     if (guide_no_bulge + x[3] + x[5]) == current_guide_chr_pos:     #Target is in current cluster, simply save the sample and annotation and the F status
         if save_cluster_targets:
-            if change_status:
-                line = line.strip().split('\t')
-                line[vu_pos] = 'F'
-                line = '\t'.join(line)
             cluster_update.write(line.strip() + '\t.\t' + guide_no_bulge + '\t.\n')  #add Sample (None) GuideNoBulge and Annotation(None). Use (None) to save space
         lines_processed +=1
         if lines_processed % (mod_tot_line) == 0:
@@ -440,19 +435,20 @@ for line in inResult:
 
             if summary_barplot_from_total:          #Change to F only for variants/reference search
                 if not pam_ok or allowed_mms < (mm_new_t - int(final_result[8])):                     
-                    final_result[vu_pos] = 'F'      #TODO cambiare nel caso abbia ricerca solo var
+                    # final_result[vu_pos] = 'F'      #TODO cambiare nel caso abbia ricerca solo var
                     false_targets += 1
                     x[-2] = ','.join(set(x[-2].split(',')) - set(common_samples))
-                if not pam_ok:
-                    if final_result[12] != 'n':
-                        final_result[12]= t[pam_begin:pam_end]
-                    elif final_result[13] != 'n':
-                        final_result[13] = 'n'
-                else:
-                    if final_result[12] != 'n':
-                        final_result[12]= 'n'     #There was PAM disruption but this sample has correct PAM, so put n
-                    elif final_result[13] != 'n':
-                        final_result[13] = t[pam_begin:pam_end] 
+                    continue                #IF i have F status, remove the target
+                # if not pam_ok:
+                #     if final_result[12] != 'n':
+                #         final_result[12]= t[pam_begin:pam_end]
+                #     elif final_result[13] != 'n':
+                #         final_result[13] = 'n'
+                # else:
+                #     if final_result[12] != 'n':
+                #         final_result[12]= 'n'     #There was PAM disruption but this sample has correct PAM, so put n
+                #     elif final_result[13] != 'n':
+                #         final_result[13] = t[pam_begin:pam_end] 
 
             final_result[7] = str(mm_new_t - int(final_result[8]))
             final_result[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
@@ -460,13 +456,14 @@ for line in inResult:
             # outFileSample.write('\t'.join(final_result) + '\n') #final_result[1].replace('-','') for better grep
     if summary_barplot_from_total and false_targets >= len(target_combination):        #If all the scomposed targets have no sample or do not respect PAM/mm threasold, the iupac target does not really exist
         line = line.strip().split('\t')
-        change_status = True
         if line[vu_pos] == 'y' and line[12] == 'n' and line[13] == 'n':
             save_cluster_targets = False
             continue    #DO NOT save this target because no ref homologous and no sample combination exists
         line[vu_pos] = 'F'
         x[-2] = 'n'     #Since iupac target has no scomposition, it means it has no sample associated
         line = '\t'.join(line)
+        save_cluster_targets = False
+        continue    #Do not save iupac targets that have no scomposition
         
     #Annotate target
     visited_pop = []
@@ -569,101 +566,13 @@ for line in inResult:
         x.append(','.join(string_annotation))
         #outFileTargets.write(line.rstrip() + '\t' + ','.join(string_annotation) + '\n')
 
-    # #Save union samples + annotation
-    # outFileSampleAll.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')
-    
-    # #Create all combinations
-    # for i in itertools.product(*var):
-    #     t = list(target_string)
-    #     for p, el in enumerate(pos_snp):
-    #         t[el] = i[p]
-    #     target_combination.append(''.join(t))
-    
-    # samples_already_assigned = set()
-    # false_targets = 0 
-    # for t in target_combination:
-    #     set_list2 = []
-    #     final_result = x.copy()
-    #     # print(t, pos_snp_chr)
-    #     for ele_pos,p in enumerate(pos_snp_chr):
-    #         #print('pos_chr', p)
-    #         a = (datastore[chr_name + ',' + p])
-    #         #print('a', a)
-        
-    #         samples = a.split(';')[0] #a[:-4] 
-            
-    #         ref = a.split(';')[-1].split(',')[0]
-    #         var = a.split(';')[-1].split(',')[1]
-    #         if x[6] == '-':
-    #             ref = rev_comp(ref)
-    #             var = rev_comp(var)
-    #         # if int(p) == 10353471 or int(p) == 10353474:
-    #             # print(p)
-    #             # print('final result', final_result)
-    #             # print('Samp, ref, var: ',samples, ref, var)
-    #         #print('char in pos',t[pos_snp[ele_pos]].upper())
-    #         if t[pos_snp[ele_pos]].upper() == var:   
-    #             # print(t[pos_snp[ele_pos]])   
-    #             if samples:
-    #                 set_list2.append(set(samples.split(',')))
-    #             else:
-    #                 #print('Error None ', line, a)
-    #                 set_list2.append(set())
-    #             #     #returned_none = True 
-    #         # if int(p) == 10353471 or int(p) == 10353474:
-    #             # print('Set list2', set_list2 )
-    #     if set_list2:
-    #         #print('setlist2', set_list2)
-    #         common_samples = set.intersection(*set_list2)
-    #         common_samples = common_samples - samples_already_assigned
-    #         # print('common samples', common_samples)
-    #         samples_already_assigned = samples_already_assigned.union(common_samples)
-    #         # print('samp already assigned', samples_already_assigned)
-    #         # print('common_smples', common_samples)
-    #         if common_samples:
-    #             final_result[-3] = ','.join(common_samples)
-    #         else:
-    #             # final_result.append('No common samples')
-    #             final_result = []                       #DO not save results without samples
-    #             false_targets += 1
-    #     else:
-    #         # final_result.append('No samples')         #DO not save results without samples
-    #         final_result = []
-    #         false_targets += 1
-    #     # print('final_res', final_result)
-    #     if x[6] == '-':
-    #         t = t[::-1]
-    #     mm_new_t = 0
-        
-    #     if final_result:
-    #         guide_no_pam = final_result[1][pos_beg:pos_end]    
-    #         for position_t, char_t in enumerate(t[pos_beg:pos_end]):
-    #             # print(t)
-    #             # print(final_result[1])
-    #             if char_t.upper() != guide_no_pam[position_t]:
-    #                 mm_new_t += 1
-    #         final_result[2] = t
-        
-    #         #Check for pam status
-    #         pam_ok = True
-    #         for pam_chr_pos, pam_chr in enumerate(t[pam_begin:pam_end]):
-    #             if pam_chr.upper() not in iupac_code_set[pam[pam_chr_pos]]:
-    #                 pam_ok = False
-
-    #         if summary_barplot_from_total:          #Change to F only for variants/reference search
-    #             if not pam_ok or int(final_result[7]) < mm_new_t - int(final_result[8]):                      #TODO magari cambiare anche il valore in PAM creation/PAM disruption
-    #                 final_result[vu_pos] = 'F'      #TODO cambiare nel caso abbia ricerca solo var
-    #                 false_targets += 1
-            
-    #         final_result[7] = str(mm_new_t - int(final_result[8]))
-    #         outFileSample.write('\t'.join(final_result) + '\n') #final_result[1].replace('-','') for better grep
-    # if summary_barplot_from_total and false_targets >= len(target_combination):        #If all the scomposed targets have no sample or do not respect PAM/mm threasold, the iupac target does not really exist
-    #     line = line.strip().split('\t')
-    #     line[vu_pos] = 'F'
-    #     line = '\t'.join(line)
     #Save union samples + annotation
     outFileSampleAll.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')   
+
+    #Save cluster
     cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n') 
+    
+    #Save scomposed targets
     for t in target_scomposti_salvare:
         outFileSample.write('\t'.join(t) + '\t' + x[-1] + '\n')
 

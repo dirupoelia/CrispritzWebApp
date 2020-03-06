@@ -1,0 +1,1 @@
+#Chromosome	Position	Best Target	Min Mismatch	Min Bulge	Targets 0MM0B	Targets 1MM0B	Targets 2MM0B	Targets 3MM0B	Targets 4MM0B	Total

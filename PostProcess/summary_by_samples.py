@@ -61,18 +61,18 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
                 checked_pop = []
                 checked_superpop = []
 
-            #If it has F in Var uniq column, count 
-            if 'F' == line[-4]:
-                for word in words:
-                    if word not in count_disruption[guide]:
-                        count_disruption[guide][word] = [0,0]
-                    if line[12] != 'n':
-                        count_disruption[guide][word][0] +=1
-                    if word not in count_creation[guide]:
-                        count_creation[guide][word] = [0,0]
-                    if line[13] != 'n':
-                        count_creation[guide][word][1] +=1
-                continue
+            # #If it has F in Var uniq column, count 
+            # if 'F' == line[-4]:
+            #     for word in words:
+            #         if word not in count_disruption[guide]:
+            #             count_disruption[guide][word] = [0,0]
+            #         if line[12] != 'n':
+            #             count_disruption[guide][word][0] +=1
+            #         if word not in count_creation[guide]:
+            #             count_creation[guide][word] = [0,0]
+            #         if line[13] != 'n':
+            #             count_creation[guide][word][1] +=1
+            #     continue
                         
             for word in words:
                 try:
@@ -90,13 +90,13 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
                     count_creation[guide][word][0] +=1
 
                 if sys.argv[3] == 'both':
-                    if 'y' in line[-4]:
-                        guides_dict[guide][word][1] += 1
-                        
-                        if line[12] != 'n':
-                            count_disruption[guide][word][1] +=1
-                        if line[13] != 'n':
-                            count_creation[guide][word][1] +=1
+                    # if 'y' in line[-4]:               #No more distinction for unique, 
+                    guides_dict[guide][word][1] += 1
+                    
+                    if line[12] != 'n':
+                        count_disruption[guide][word][1] +=1
+                    if line[13] != 'n':
+                        count_creation[guide][word][1] +=1
 
                 #NOTE se voglio contare solo gli y il codice sotto lo idento una volta
                 if dict_pop[word] not in checked_pop:       #I wanna count the target only once even if multiple samples of the same pop are in line[-3]

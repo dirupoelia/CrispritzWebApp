@@ -39,6 +39,7 @@ import math
 exeggutor = concurrent.futures.ProcessPoolExecutor(max_workers=2)
 
 PAGE_SIZE = 10                    #number of entries in each page of the table in view report
+BARPLOT_LEN = 4                   #number of barplots in each row of Populations Distributions
 URL = 'http://crispritz.di.univr.it'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -2429,9 +2430,9 @@ def resultPage(job_id):
         acfd = [float(a.split('\t')[1]) for a in all_scores if a not in list_error_guides]
         doench = [int(a.split('\t')[2]) for a in all_scores if a not in list_error_guides]
         acfd  = [int(round((100/(100 + x))*100)) for x in acfd]
-        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-Targets in Reference', 'id' : 'Total Off-Targets in Reference', 'type':'numeric'}, {'name':'Total Off-Targets in Enriched', 'id' : 'Total Off-Targets in Enriched', 'type':'numeric'}]
+        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Off-Targets in Reference', 'id' : 'Total Off-Targets in Reference', 'type':'numeric'}, {'name':'Off-Targets in Enriched', 'id' : 'Total Off-Targets in Enriched', 'type':'numeric'}]
     else:
-        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'Total On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Total Off-Targets in Reference', 'id' : 'Total Off-Targets in Reference', 'type':'numeric'}, {'name':'Total Off-Targets in Enriched', 'id' : 'Total Off-Targets in Enriched', 'type':'numeric'}]
+        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'On-Targets', 'id' : 'Total On-Targets', 'type':'numeric'}, {'name':'Off-Targets in Reference', 'id' : 'Total Off-Targets in Reference', 'type':'numeric'}, {'name':'Off-Targets in Enriched', 'id' : 'Total Off-Targets in Enriched', 'type':'numeric'}]
 
     keep_column = ['GUIDE', 'ONT', 'OFFT']
     for i in range (mms):
@@ -2445,7 +2446,7 @@ def resultPage(job_id):
         # rename_columns[str(i+1) + 'MM'] = str(i+1) + ' Mismatches'
         col_targetfor = col_targetfor + str(i) + '-'
     col_targetfor = col_targetfor + str(mms + int(max_bulges))
-    col_targetfor = col_targetfor + ' Total (Mismatches + Bulges)'
+    col_targetfor = col_targetfor + ' Mismatches + Bulges'
     columns_profile_table.append({'name': col_targetfor, 'id' : 'col_targetfor', 'type':'text'})
     # profile.rename(columns = rename_columns, inplace = True)    #Now profile is Guide, Total On-targets, ...
     # col_to_add = []
@@ -2737,39 +2738,65 @@ def loadDistributionPopulations(sel_cel, all_guides, job_id):
         max_bulges = int((next(s for s in all_params.split('\n') if 'Max_bulges' in s)).split('\t')[-1])
 
     distributions = []
-    try:
-        all_images = [dbc.Col(  [   
-            html.A(
-                html.Img(
-                    src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/populations_distribution_' + guide + '_' + str(mm) + 'total.png', 'rb').read()).decode()),
-                    id = 'distribution-population' + str(mm), width="100%", height="auto"
-                ),
-                target="_blank",
-                href = 'assets/Img/' + job_id + '/' + 'populations_distribution_' + guide + '_' + str(mm) + 'total.png'
-            ),
-            html.Div(html.P('Distribution ' + str(mm) + ' Total ', style = {'display':'inline-block'} ),style = {'text-align':'center'})
-            ]
-        ) for mm in range (mms + max_bulges + 1)]    
-    except:
-        all_images = [dbc.Col(  [    
-            html.A(
-                html.Img(
-                    src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/summary_histogram_' + guide + '_' + str(mm) + 'mm.png', 'rb').read()).decode()),
-                    id = 'distribution-population' + str(mm), width="100%", height="auto"
-                ),
-                target="_blank",
-                href = 'assets/Img/' + job_id + '/' + 'summary_histogram_' + guide + '_' + str(mm) + 'mm.png'
-            ), 
-            html.Div(html.P('Distribution ' + str(mm) + ' Mismatches ', style = {'display':'inline-block'} ),style = {'text-align':'center'})
-            ]
-        ) for mm in range (mms + 1)]    #TODO cambiare da mms +1 a mms + max_bulge +1 quando ho fixato il report  -> ovvero considero total e non solo mms
 
-
-    distributions.append(
-        dbc.Row(
-            all_images
+    for i in range(math.ceil((mms + max_bulges + 1) / BARPLOT_LEN)):
+        all_images = []
+        for mm in range (i * BARPLOT_LEN, (i + 1) * BARPLOT_LEN ):
+            if mm < (mms + max_bulges + 1):
+                try:
+                    all_images.append(
+                        dbc.Col(  
+                            [   
+                                html.A(
+                                    html.Img(
+                                        src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/populations_distribution_' + guide + '_' + str(mm) + 'total.png', 'rb').read()).decode()),
+                                        id = 'distribution-population' + str(mm), width="100%", height="auto"
+                                    ),
+                                    target="_blank",
+                                    href = 'assets/Img/' + job_id + '/' + 'populations_distribution_' + guide + '_' + str(mm) + 'total.png'
+                                ),
+                                html.Div(html.P('Distribution ' + str(mm) + ' Mismatches + Bulges ', style = {'display':'inline-block'} ),style = {'text-align':'center'})
+                            ]
+                        )
+                    )
+                except:
+                    all_images.append(
+                        dbc.Col(
+                            [
+                                html.Div(html.P('No Targets found with ' + str(mm) + ' Mismatches + Bulges' , style = {'display':'inline-block'}), style = {'text-align':'center'}),
+                                html.Div(html.P('Distribution ' + str(mm) + ' Mismatches + Bulges ', style = {'display':'inline-block'} ),style = {'text-align':'center'})
+                            ],
+                            align = 'center'
+                        )
+                    )
+            else:
+                all_images.append(dbc.Col(html.P('')))
+        
+        distributions.append(
+            dbc.Row(
+                all_images
+            )
         )
-    )
+
+        # all_images = [dbc.Col(  [   
+        #     html.A(
+        #         html.Img(
+        #             src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/populations_distribution_' + guide + '_' + str(mm) + 'total.png', 'rb').read()).decode()),
+        #             id = 'distribution-population' + str(mm), width="100%", height="auto"
+        #         ),
+        #         target="_blank",
+        #         href = 'assets/Img/' + job_id + '/' + 'populations_distribution_' + guide + '_' + str(mm) + 'total.png'
+        #     ),
+        #     html.Div(html.P('Distribution ' + str(mm) + ' Mismatches + Bulges ', style = {'display':'inline-block'} ),style = {'text-align':'center'})
+        #     ]
+        # ) if mm < (mms + max_bulges + 1) else dbc.Col(html.P('')) for mm in range (i * BARPLOT_LEN, (i + 1) * BARPLOT_LEN )]   #fill other columns with html.P to keep size consistent
+
+
+        # distributions.append(
+        #     dbc.Row(
+        #         all_images
+        #     )
+        # )
     return distributions
 
 @cache.memoize()

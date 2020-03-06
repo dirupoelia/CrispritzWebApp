@@ -60,16 +60,10 @@ p1 = plt.bar(ind, barplot_values.values(), width, color=['purple', 'yellow', 'gr
 
 # plt.legend(p1[0], ('Reference Genome'), fontsize=30)
 
-plt.title('Targets found in each Population - ' +
-            str(total) + ' Total (Mismatches + Bulges)', size=25)
+plt.title('Targets found in each Superpopulation - ' + str(total) + ' Mismatches + Bulges', size=25)
 
 if no_result:
-    plt.annotate('No targets found with ' + str(total)  + ' mismatches + bulges', (2.5,0) ,size = 22, ha = 'center', va = 'center') #NOTE with 0-mm print only the mm pdf; 1.35 modificare se cambia la str
-# else:
-#     for k in range(0, n_annotation):
-#         plt.annotate('%.2fx' % percentageGain[k, total], [
-#                     k+0.05, arraySummaryCountTwo[k, total]+(max(arraySummaryCountTwo[:, total])/100)], size=22)
-    # plt.ylim([0, max(arraySummaryCountTwo[:, total])+2000],size=25)
+    plt.annotate('No targets found with ' + str(total)  + ' mismatches + bulges', (2.5,0) ,size = 22, ha = 'center', va = 'center')  #2.5 is x position
 
 
 plt.xticks(ind+0.25, barplot_values.keys(), size=25)

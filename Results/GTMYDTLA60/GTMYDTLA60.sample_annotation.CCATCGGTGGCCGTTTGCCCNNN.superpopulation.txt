@@ -1,0 +1,42 @@
+-Summary_Total
+targets	1	1	0	6	146	707	0	0	0	0
+CTCF	0	0	0	1	18	99	0	0	0	0
+DNaseI	0	0	0	2	46	258	0	0	0	0
+Exon	0	0	0	1	22	106	0	0	0	0
+Intron	1	1	0	4	99	417	0	0	0	0
+Promoter	0	0	0	0	2	1	0	0	0	0
+-Summary_EAS
+targets	0	0	0	0	13	62	0	0	0	0
+CTCF	0	0	0	0	0	8	0	0	0	0
+DNaseI	0	0	0	0	3	21	0	0	0	0
+Exon	0	0	0	0	1	11	0	0	0	0
+Intron	0	0	0	0	10	40	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_EUR
+targets	0	0	0	1	15	72	0	0	0	0
+CTCF	0	0	0	0	1	7	0	0	0	0
+DNaseI	0	0	0	0	3	26	0	0	0	0
+Exon	0	0	0	0	2	9	0	0	0	0
+Intron	0	0	0	0	11	47	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_AFR
+targets	0	0	0	2	19	114	0	0	0	0
+CTCF	0	0	0	0	3	15	0	0	0	0
+DNaseI	0	0	0	0	2	40	0	0	0	0
+Exon	0	0	0	0	4	21	0	0	0	0
+Intron	0	0	0	1	15	72	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_AMR
+targets	0	0	0	2	24	83	0	0	0	0
+CTCF	0	0	0	0	5	7	0	0	0	0
+DNaseI	0	0	0	0	6	24	0	0	0	0
+Exon	0	0	0	0	4	9	0	0	0	0
+Intron	0	0	0	1	17	53	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_SAS
+targets	0	0	0	3	17	74	0	0	0	0
+CTCF	0	0	0	0	3	9	0	0	0	0
+DNaseI	0	0	0	0	7	26	0	0	0	0
+Exon	0	0	0	0	3	12	0	0	0	0
+Intron	0	0	0	2	13	52	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0

@@ -1,0 +1,189 @@
+-Summary_Total
+targets	1	0	2	59	734	3690	0	0	0	0
+CTCF	0	0	1	7	57	299	0	0	0	0
+DNaseI	1	0	1	11	178	854	0	0	0	0
+Exon	1	0	1	4	55	314	0	0	0	0
+Intron	1	0	2	33	449	2160	0	0	0	0
+Promoter	0	0	0	0	1	5	0	0	0	0
+-Summary_GIH
+targets	0	0	0	6	42	217	0	0	0	0
+CTCF	0	0	0	0	4	20	0	0	0	0
+DNaseI	0	0	0	2	16	46	0	0	0	0
+Exon	0	0	0	0	4	13	0	0	0	0
+Intron	0	0	0	3	25	136	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_PJL
+targets	0	0	0	5	42	216	0	0	0	0
+CTCF	0	0	0	0	3	19	0	0	0	0
+DNaseI	0	0	0	1	13	46	0	0	0	0
+Exon	0	0	0	0	4	10	0	0	0	0
+Intron	0	0	0	2	26	126	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_BEB
+targets	0	0	0	5	41	214	0	0	0	0
+CTCF	0	0	0	0	4	16	0	0	0	0
+DNaseI	0	0	0	2	14	39	0	0	0	0
+Exon	0	0	0	0	5	9	0	0	0	0
+Intron	0	0	0	2	24	128	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_LWK
+targets	0	0	1	10	80	340	0	0	0	0
+CTCF	0	0	1	1	4	21	0	0	0	0
+DNaseI	0	0	1	2	25	77	0	0	0	0
+Exon	0	0	1	0	6	20	0	0	0	0
+Intron	0	0	1	5	45	195	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_PUR
+targets	0	0	0	10	58	269	0	0	0	0
+CTCF	0	0	0	1	5	21	0	0	0	0
+DNaseI	0	0	0	2	20	54	0	0	0	0
+Exon	0	0	0	0	5	17	0	0	0	0
+Intron	0	0	0	5	30	146	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_CEU
+targets	0	0	0	8	44	193	0	0	0	0
+CTCF	0	0	0	0	1	14	0	0	0	0
+DNaseI	0	0	0	3	14	35	0	0	0	0
+Exon	0	0	0	1	4	11	0	0	0	0
+Intron	0	0	0	4	25	105	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_MSL
+targets	0	0	1	10	69	335	0	0	0	0
+CTCF	0	0	1	1	6	20	0	0	0	0
+DNaseI	0	0	1	2	25	71	0	0	0	0
+Exon	0	0	1	0	5	19	0	0	0	0
+Intron	0	0	1	5	40	183	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_PEL
+targets	0	0	1	7	44	203	0	0	0	0
+CTCF	0	0	1	0	3	14	0	0	0	0
+DNaseI	0	0	1	2	19	35	0	0	0	0
+Exon	0	0	1	1	6	12	0	0	0	0
+Intron	0	0	1	5	23	110	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_CHS
+targets	0	0	0	6	34	186	0	0	0	0
+CTCF	0	0	0	1	1	15	0	0	0	0
+DNaseI	0	0	0	2	10	35	0	0	0	0
+Exon	0	0	0	1	3	10	0	0	0	0
+Intron	0	0	0	3	19	112	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_ITU
+targets	0	0	1	6	47	220	0	0	0	0
+CTCF	0	0	0	0	4	18	0	0	0	0
+DNaseI	0	0	0	1	15	45	0	0	0	0
+Exon	0	0	0	0	3	12	0	0	0	0
+Intron	0	0	1	3	22	124	0	0	0	0
+Promoter	0	0	0	0	0	1	0	0	0	0
+-Summary_GBR
+targets	0	0	0	6	38	192	0	0	0	0
+CTCF	0	0	0	0	1	16	0	0	0	0
+DNaseI	0	0	0	2	14	36	0	0	0	0
+Exon	0	0	0	0	3	11	0	0	0	0
+Intron	0	0	0	2	19	108	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_ESN
+targets	0	0	1	10	79	319	0	0	0	0
+CTCF	0	0	1	1	8	18	0	0	0	0
+DNaseI	0	0	1	2	26	70	0	0	0	0
+Exon	0	0	1	0	8	19	0	0	0	0
+Intron	0	0	1	5	43	175	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_IBS
+targets	0	0	1	7	53	236	0	0	0	0
+CTCF	0	0	0	0	4	17	0	0	0	0
+DNaseI	0	0	0	3	15	42	0	0	0	0
+Exon	0	0	0	1	6	16	0	0	0	0
+Intron	0	0	1	4	30	129	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_ASW
+targets	0	0	1	8	60	317	0	0	0	0
+CTCF	0	0	1	0	4	18	0	0	0	0
+DNaseI	0	0	1	1	22	73	0	0	0	0
+Exon	0	0	1	0	6	24	0	0	0	0
+Intron	0	0	1	5	33	177	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_CHB
+targets	0	0	0	5	38	183	0	0	0	0
+CTCF	0	0	0	0	1	16	0	0	0	0
+DNaseI	0	0	0	1	11	38	0	0	0	0
+Exon	0	0	0	0	3	12	0	0	0	0
+Intron	0	0	0	2	22	113	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_STU
+targets	0	0	0	5	47	221	0	0	0	0
+CTCF	0	0	0	0	4	15	0	0	0	0
+DNaseI	0	0	0	1	13	42	0	0	0	0
+Exon	0	0	0	0	4	9	0	0	0	0
+Intron	0	0	0	3	23	129	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_ACB
+targets	0	0	1	14	70	316	0	0	0	0
+CTCF	0	0	1	1	7	23	0	0	0	0
+DNaseI	0	0	1	3	27	71	0	0	0	0
+Exon	0	0	1	0	6	21	0	0	0	0
+Intron	0	0	1	7	41	170	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_FIN
+targets	0	0	0	6	36	176	0	0	0	0
+CTCF	0	0	0	0	2	17	0	0	0	0
+DNaseI	0	0	0	3	10	36	0	0	0	0
+Exon	0	0	0	1	5	9	0	0	0	0
+Intron	0	0	0	3	19	104	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_JPT
+targets	0	0	1	6	35	176	0	0	0	0
+CTCF	0	0	1	0	0	11	0	0	0	0
+DNaseI	0	0	1	1	10	37	0	0	0	0
+Exon	0	0	1	0	3	12	0	0	0	0
+Intron	0	0	1	3	20	108	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_TSI
+targets	0	0	0	6	46	224	0	0	0	0
+CTCF	0	0	0	0	4	15	0	0	0	0
+DNaseI	0	0	0	2	13	45	0	0	0	0
+Exon	0	0	0	0	5	14	0	0	0	0
+Intron	0	0	0	2	25	122	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_GWD
+targets	0	0	1	12	69	343	0	0	0	0
+CTCF	0	0	1	0	5	26	0	0	0	0
+DNaseI	0	0	1	3	26	80	0	0	0	0
+Exon	0	0	1	0	6	20	0	0	0	0
+Intron	0	0	1	7	41	194	0	0	0	0
+Promoter	0	0	0	0	0	1	0	0	0	0
+-Summary_KHV
+targets	0	0	0	6	39	207	0	0	0	0
+CTCF	0	0	0	0	2	16	0	0	0	0
+DNaseI	0	0	0	1	11	36	0	0	0	0
+Exon	0	0	0	0	4	12	0	0	0	0
+Intron	0	0	0	2	25	129	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_MXL
+targets	0	0	0	10	44	205	0	0	0	0
+CTCF	0	0	0	0	3	16	0	0	0	0
+DNaseI	0	0	0	4	18	41	0	0	0	0
+Exon	0	0	0	1	4	13	0	0	0	0
+Intron	0	0	0	4	22	116	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_CDX
+targets	0	0	0	7	39	180	0	0	0	0
+CTCF	0	0	0	0	1	16	0	0	0	0
+DNaseI	0	0	0	1	12	37	0	0	0	0
+Exon	0	0	0	0	4	9	0	0	0	0
+Intron	0	0	0	3	22	109	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_YRI
+targets	0	0	1	8	67	321	0	0	0	0
+CTCF	0	0	1	0	5	19	0	0	0	0
+DNaseI	0	0	1	1	21	73	0	0	0	0
+Exon	0	0	1	0	5	19	0	0	0	0
+Intron	0	0	1	5	39	181	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0
+-Summary_CLM
+targets	0	0	1	11	61	255	0	0	0	0
+CTCF	0	0	1	1	4	17	0	0	0	0
+DNaseI	0	0	1	4	23	51	0	0	0	0
+Exon	0	0	1	2	5	13	0	0	0	0
+Intron	0	0	1	5	34	138	0	0	0	0
+Promoter	0	0	0	0	0	0	0	0	0	0

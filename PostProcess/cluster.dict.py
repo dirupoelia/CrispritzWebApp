@@ -32,7 +32,7 @@ import sys
 import subprocess
 import os 
 MAX_LIMIT = 50000000
-
+alphabet = '-RYSWKMBDHVryswkmbdhvACGTacgt'      #For forcing IUPAC before reference target
 pam_at_end = True
 guides_to_check = set()        #Set of error guides, do not do computation on them
 if os.path.exists('./guides_error.txt'):
@@ -110,9 +110,9 @@ if total_line > MAX_LIMIT:
                         del guides_dict[guide]
                         break
                     try:
-                        guides_dict[line[1].replace('-','')].append(('\t'.join(line[:3]), line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]), '\t'.join(line[10:])))    #[('type\tguide\target', 'chr', pos, clusterpos, 'dir', mm, bul, tot)]
+                        guides_dict[line[1].replace('-','')].append(('\t'.join(line[:2]), line[2], line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]), '\t'.join(line[10:])))    #[('type\tguide', 'target', 'chr', pos, clusterpos, 'dir', mm, bul, tot)]
                     except:
-                        guides_dict[line[1].replace('-','')] = [('\t'.join(line[:3]), line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]),'\t'.join(line[10:]) )]
+                        guides_dict[line[1].replace('-','')] = [('\t'.join(line[:2]), line[2], line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]),'\t'.join(line[10:]) )]
                     #total_targets.append(line)
             if not cluster_ok:
                 continue
@@ -123,7 +123,7 @@ if total_line > MAX_LIMIT:
             start = time.time()
             # total_targets.sort(key = lambda x: ( x[3] , int(x[-1]) ))
             for k in guides_dict.keys():
-                guides_dict[k].sort(key = lambda x: ( x[1] , x[3] ))    #Order by chr_clusterpos
+                guides_dict[k].sort(key = lambda x: ( x[2] , x[4] ))    #Order by chr_clusterpos
             #total_targets.sort(key = lambda x: ( x[3] , int(x[5]) ))
 
             print('Targets sorted:', time.time() - start)
@@ -154,26 +154,26 @@ if total_line > MAX_LIMIT:
 
                 first_line = total_targets[0]
                 # current_chr_pos = first_line[3] + ' ' + first_line[9]
-                current_chr_pos = first_line[1] + ' ' + str(first_line[3])
+                current_chr_pos = first_line[2] + ' ' + str(first_line[4])
 
                 total_list.append([first_line])
 
                 for line in total_targets[1:]:
                     #if line[3] + ' ' + line[9] != current_chr_pos:
-                    if line[1] + ' ' + str(line[3]) != current_chr_pos:
+                    if line[2] + ' ' + str(line[4]) != current_chr_pos:
                         # total_list[-1].sort(key = lambda x: int(x[8]))
-                        total_list[-1].sort(key = lambda x: (x[7], x[5]))   #Order cluster by total and mms
+                        total_list[-1].sort(key = lambda x: (x[8], x[6], [alphabet.index(c) for c in x[1]]))   #Order cluster by total and mms, and prioritize targets with IUPAC 
                         total_list.append([line])
                         # current_chr_pos = line[3] + ' ' + line[9]
-                        current_chr_pos = line[1] + ' ' + str(line[3])
+                        current_chr_pos = line[2] + ' ' + str(line[4])
                     else:
                         total_list[-1].append(line)     
 
-                total_list[-1].sort(key = lambda x: (x[7], x[5]))       #Order last cluster by total and mms
+                total_list[-1].sort(key = lambda x: (x[8], x[6], [alphabet.index(c) for c in x[1]]))       #Order last cluster by total and mms, and prioritize targets with IUPAC
 
-                total_list.sort(key = lambda x: x[0][7])        #Order all clusters by total of top1
+                total_list.sort(key = lambda x: x[0][8])        #Order all clusters by total of top1
                 if 'orderChr' in sys.argv[:]:
-                    total_list.sort(key = lambda x: x[0][1])    # and then for chr, needed for sample annotation and summary by position
+                    total_list.sort(key = lambda x: x[0][2])    # and then for chr, needed for sample annotation and summary by position
                 if addGuide:
                     if keep_columns:
                         for cluster in total_list:
@@ -182,7 +182,7 @@ if total_line > MAX_LIMIT:
                     else:
                         for cluster in total_list:
                             for target in cluster:
-                                result.write('\t'.join(str(x) for x in target[:3]) + '\t' + '\t'.join(str(x) for x in target[4:7]) +'\t' + target[8].strip() + '\t' + target[0].split('\t')[1].replace('-','') + '\n')
+                                result.write('\t'.join(str(x) for x in target[:4]) + '\t' + '\t'.join(str(x) for x in target[5:8]) +'\t' + target[9].strip() + '\t' + target[0].split('\t')[1].replace('-','') + '\n')
 
                 else:
                     if keep_columns:
@@ -192,7 +192,7 @@ if total_line > MAX_LIMIT:
                     else:
                         for cluster in total_list:
                             for target in cluster:
-                                result.write('\t'.join(str(x) for x in target[:3]) + '\t' + '\t'.join(str(x) for x in target[4:7]) +'\t' + target[8].strip() + '\n')
+                                result.write('\t'.join(str(x) for x in target[:4]) + '\t' + '\t'.join(str(x) for x in target[5:8]) +'\t' + target[9].strip() + '\n')
             del guides_dict[guide]
             ok_guides.append(guide)
             print("Clustering runtime: %s seconds" % (time.time() - start_time))
@@ -221,9 +221,9 @@ else:
                 #     # line.append(line[4])
                 #     line.insert(5, line[4])
             try:
-                guides_dict[line[1].replace('-','')].append(('\t'.join(line[:3]), line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]), '\t'.join(line[10:])))    #[('type\tguide\target', 'chr', pos, clusterpos, 'dir', mm, bul, tot)]
+                guides_dict[line[1].replace('-','')].append(('\t'.join(line[:2]), line[2], line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]), '\t'.join(line[10:])))    #[('type\tguide', 'target', 'chr', pos, clusterpos, 'dir', mm, bul, tot)]
             except:
-                guides_dict[line[1].replace('-','')] = [('\t'.join(line[:3]), line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]),'\t'.join(line[10:]) )]
+                guides_dict[line[1].replace('-','')] = [('\t'.join(line[:2]), line[2], line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]),'\t'.join(line[10:]) )]
             #total_targets.append(line)
     if not cluster_only:       
         print('Created \'Total\' and \'Position Cluster\' columns:', time.time() - start)
@@ -232,7 +232,7 @@ else:
     start = time.time()
     # total_targets.sort(key = lambda x: ( x[3] , int(x[-1]) ))
     for k in guides_dict.keys():
-        guides_dict[k].sort(key = lambda x: ( x[1] , x[3] ))        #Order by chr_clusterpos
+        guides_dict[k].sort(key = lambda x: ( x[2] , x[4] ))        #Order by chr_clusterpos
     #total_targets.sort(key = lambda x: ( x[3] , int(x[5]) ))
 
     print('Targets sorted:', time.time() - start)
@@ -265,25 +265,25 @@ else:
             sys.exit()
         first_line = total_targets[0]
         # current_chr_pos = first_line[3] + ' ' + first_line[9]
-        current_chr_pos = first_line[1] + ' ' + str(first_line[3])
+        current_chr_pos = first_line[2] + ' ' + str(first_line[4])
 
         total_list.append([first_line])
 
         for line in total_targets[1:]:
             #if line[3] + ' ' + line[9] != current_chr_pos:
-            if line[1] + ' ' + str(line[3]) != current_chr_pos:
+            if line[2] + ' ' + str(line[4]) != current_chr_pos:
                 # total_list[-1].sort(key = lambda x: int(x[8]))
-                total_list[-1].sort(key = lambda x: (x[7], x[5]))   #Order cluster by total and mms #TODO sistemare ordine per favorire caratteri iupac
+                total_list[-1].sort(key = lambda x: (x[8], x[6], [alphabet.index(c) for c in x[1]]))   #Order cluster by total and mms #TODO sistemare ordine per favorire caratteri iupac
                 total_list.append([line])
                 # current_chr_pos = line[3] + ' ' + line[9]
-                current_chr_pos = line[1] + ' ' + str(line[3])
+                current_chr_pos = line[2] + ' ' + str(line[4])
             else:
                 total_list[-1].append(line)     
 
-        total_list[-1].sort(key = lambda x: (x[7], x[5]))       #Order last cluster by total and mms #TODO sistemare ordine per favorire caratteri iupac
-        total_list.sort(key = lambda x: x[0][7])        #Order all clusters by total of top1
+        total_list[-1].sort(key = lambda x: (x[8], x[6], [alphabet.index(c) for c in x[1]]))       #Order last cluster by total and mms #TODO sistemare ordine per favorire caratteri iupac
+        total_list.sort(key = lambda x: x[0][8])        #Order all clusters by total of top1
         if 'orderChr' in sys.argv[:]:
-            total_list.sort(key = lambda x: x[0][1])    # and then for chr, needed for sample annotation and summary by position
+            total_list.sort(key = lambda x: x[0][2])    # and then for chr, needed for sample annotation and summary by position
         if addGuide:
             if keep_columns:
                 for cluster in total_list:
@@ -292,7 +292,7 @@ else:
             else:
                 for cluster in total_list:
                     for target in cluster:
-                        result.write('\t'.join(str(x) for x in target[:3]) + '\t' + '\t'.join(str(x) for x in target[4:7]) +'\t' + target[8].strip() + '\t' + target[0].split('\t')[1].replace('-','') + '\n')
+                        result.write('\t'.join(str(x) for x in target[:4]) + '\t' + '\t'.join(str(x) for x in target[5:8]) +'\t' + target[9].strip() + '\t' + target[0].split('\t')[1].replace('-','') + '\n')
 
         else:
             if keep_columns:
@@ -302,6 +302,6 @@ else:
             else:
                 for cluster in total_list:
                     for target in cluster:
-                        result.write('\t'.join(str(x) for x in target[:3]) + '\t' + '\t'.join(str(x) for x in target[4:7]) +'\t' + target[8].strip() + '\n')
+                        result.write('\t'.join(str(x) for x in target[:4]) + '\t' + '\t'.join(str(x) for x in target[5:8]) +'\t' + target[9].strip() + '\n')
 
     print("Clustering runtime: %s seconds" % (time.time() - start_time))
