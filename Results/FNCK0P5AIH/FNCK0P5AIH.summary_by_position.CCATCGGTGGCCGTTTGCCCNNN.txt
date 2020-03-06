@@ -1,1 +1,4 @@
 #Chromosome	Position	Best Target	Min Mismatch	Min Bulge	Targets 0MM0B	Targets 1MM0B	Targets 2MM0B	Targets 3MM0B	Targets 4MM0B	Total
+chr21	33410982	CCATCGGgGGCCaTgTGgCCTGG	4	0	0	0	0	0	1	4
+chr22	22881128	CCcTCRGWKyYYGKgYcYMYRSG	4	0	0	0	0	0	1	4
+chr22	27241566	CaATaGGaGtCYRTTTGCCCARR	4	0	0	0	0	0	1	4

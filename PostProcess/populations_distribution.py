@@ -64,6 +64,7 @@ plt.title('Targets found in each Superpopulation - ' + str(total) + ' Mismatches
 
 if no_result:
     plt.annotate('No targets found with ' + str(total)  + ' mismatches + bulges', (2.5,0) ,size = 22, ha = 'center', va = 'center')  #2.5 is x position
+    sys.exit()
 
 
 plt.xticks(ind+0.25, barplot_values.keys(), size=25)

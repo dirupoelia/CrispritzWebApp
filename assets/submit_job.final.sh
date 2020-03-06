@@ -237,10 +237,10 @@ else    #Type search = both
     #Cluster semicommon (that also contains common -> see extraction.sh) e uniq
     echo 'Start cluster semicommon'
     echo 'Clustering... Step [2/6]' >>  output.txt
-    python3 ../../PostProcess/cluster.dict.py $jobid.semi_common_targets.txt 'no' 'True' 'False' guides.txt
+    python3 ../../PostProcess/cluster.dict.py $jobid.semi_common_targets.txt 'no' 'True' 'False' guides.txt     #solo per aggiungere colonna total -> forse si può togliere
     echo 'End cluster semicommon'
     echo 'Start cluster unique'     #NOTE doing cluster separately does not create the right order of cluster (first clusters of uniq, then clusters of semi_common)
-    python3 ../../PostProcess/cluster.dict.py $jobid.unique_targets.txt 'no' 'True' 'False' guides.txt
+    python3 ../../PostProcess/cluster.dict.py $jobid.unique_targets.txt 'no' 'True' 'False' guides.txt      #solo per aggiungere colonna total -> forse si può togliere
     echo 'End cluster unique'
 
     #Pam analysis
@@ -268,15 +268,15 @@ else    #Type search = both
 
     #Scoring of top1
     echo 'Start Scoring'
-    python3 ../../PostProcess/scores_guide_table.py $jobid.top_1.txt ../../$used_genome_dir pam.txt guides.txt
+    python3 ../../PostProcess/scores_guide_table.py $jobid.top_1.txt ../../$used_genome_dir pam.txt guides.txt  #TODO da calcolare solo su target esistenti
     echo 'End Scoring'
 
 
     #Top1 expansion
-    echo 'Start sort'
+    # echo 'Start sort'
     echo 'Extracting Samples and Annotation... (This operation has a long execution time, Please Wait) Step [5/6]' >>  output.txt
-    sort -k4,4 $jobid.top_1.txt > $jobid.top_1.sort.txt && mv $jobid.top_1.sort.txt $jobid.top_1.txt 
-    echo 'End sort'
+    # sort -k4,4 $jobid.top_1.txt > $jobid.top_1.sort.txt && mv $jobid.top_1.sort.txt $jobid.top_1.txt 
+    # echo 'End sort'
     echo 'Start calc samples and annotation'
     echo 'Annotation\tStart\t'$(date) >> log.txt
     #03/03 modificato da top_1 a total.cluster

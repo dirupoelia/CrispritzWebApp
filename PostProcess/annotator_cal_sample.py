@@ -276,9 +276,9 @@ next(inResult)      #Skip header
 for line in inResult:
     x = line.strip().split('\t')
     guide_no_bulge = x[1].replace("-","")
-    if (guide_no_bulge + x[3] + x[5]) == current_guide_chr_pos:     #Target is in current cluster, simply save the sample and annotation and the F status
+    if (guide_no_bulge + x[3] + x[5]) == current_guide_chr_pos:     #Target is in current cluster, simply save the sample and annotation, discard if status is F
         if save_cluster_targets:
-            cluster_update.write(line.strip() + '\t.\t' + guide_no_bulge + '\t.\n')  #add Sample (None) GuideNoBulge and Annotation(None). Use (None) to save space
+            cluster_update.write(line.strip() + '\t.\t' + guide_no_bulge + '\t.\n')  #add Sample (.) GuideNoBulge and Annotation(.). Use (.) to save space
         lines_processed +=1
         if lines_processed % (mod_tot_line) == 0:
             print('Annotation: Total progress ' + str(round(lines_processed /total_line *100, 2)) + '%')
@@ -307,7 +307,7 @@ for line in inResult:
                 print ('Load ' + current_chr + ' done', time.time() - start_time)
     
     pos_snp = []
-    var = []
+    tuple_var_ref = []
     target_combination = []
     pos_snp_chr = []
     set_list = []
@@ -333,7 +333,7 @@ for line in inResult:
                 a = a.split(';')[0]
                 pos_snp.append(pos)
                 pos_snp_chr.append(iupac_pos)
-                var.append((var_char, ref_char))
+                tuple_var_ref.append((var_char, ref_char))
             except Exception as e:      #NOTE this error can occure if i have an IUPAC in a target that has no vcf file
                 print(e)
                 print('Error at ' + line.rstrip() + ', with char ' + char + ', at pos ', iupac_pos, '. No corresponding SNP position was found in the vcf file')
@@ -351,10 +351,9 @@ for line in inResult:
     else:
         x.append('n')
     x.append(guide_no_bulge)
-
     #Get all combinations to remove targets that have no haplotype 
     #Create all combinations
-    for i in itertools.product(*var):
+    for i in itertools.product(*tuple_var_ref):
         t = list(target_string)
         for p, el in enumerate(pos_snp):
             t[el] = i[p]
@@ -456,14 +455,41 @@ for line in inResult:
             # outFileSample.write('\t'.join(final_result) + '\n') #final_result[1].replace('-','') for better grep
     if summary_barplot_from_total and false_targets >= len(target_combination):        #If all the scomposed targets have no sample or do not respect PAM/mm threasold, the iupac target does not really exist
         line = line.strip().split('\t')
-        if line[vu_pos] == 'y' and line[12] == 'n' and line[13] == 'n':
+        # print('line', line)
+        if line[vu_pos] == 'y':         #Do not do annotation because target does not exists, and do not save his cluster
             save_cluster_targets = False
             continue    #DO NOT save this target because no ref homologous and no sample combination exists
-        line[vu_pos] = 'F'
+        #target does not exists in enriched, but exists in reference (semi_common), so change x[2] into the reference target and do annotation, but do not save his cluster
+        if line[6] == '-':
+            reference_semicommon = list(x[2][::-1])
+        else:
+            reference_semicommon = list(x[2])
+        # print('ref semicommon', reference_semicommon, 'tup var ref', tuple_var_ref, 'pos snp', pos_snp)
+        for tuple_var_ref_pos, tuple_var_ref_chars in enumerate(tuple_var_ref):
+            # print('tuple var ref pos', tuple_var_ref_pos)
+            # print('tuple var ref chars', tuple_var_ref_chars)
+            reference_semicommon[pos_snp[tuple_var_ref_pos]] = tuple_var_ref_chars[1]
+        new_ref_target = ''.join(reference_semicommon)
+        if line[6] == '-':
+            new_ref_target = new_ref_target[::-1]
+        # print('newreftarget', new_ref_target)
+        line[2] = new_ref_target
+        x[2] = new_ref_target  
+        guide_no_pam = line[1][pos_beg:pos_end]    
+        for position_t, char_t in enumerate(new_ref_target[pos_beg:pos_end]):
+            # print(t)
+            # print(final_result[1])
+            if char_t.upper() != guide_no_pam[position_t]:          #TODO mettere lettere minuscole
+                mm_new_t += 1     
         x[-2] = 'n'     #Since iupac target has no scomposition, it means it has no sample associated
+        x[7] = str(mm_new_t - int(x[8]))
+        x[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
+        line[7] = str(mm_new_t - int(line[8]))
+        line[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
         line = '\t'.join(line)
-        save_cluster_targets = False
-        continue    #Do not save iupac targets that have no scomposition
+        save_cluster_targets = False        #TODO salvare il cluster ma togliendo gli iupac
+        # print('line2', line)
+        # print('x', x)
         
     #Annotate target
     visited_pop = []
@@ -475,7 +501,7 @@ for line in inResult:
         guideDict[guide_no_bulge]['targets'] = {}
         guideDict[guide_no_bulge]['targets'] = [0]*10
 
-        count_unique_for_guide[guide_no_bulge] = dict()
+        count_unique_for_guide[guide_no_bulge] = dict()                 #NOTE count_unique means that the target have at least 1 sample
         count_unique_for_guide[guide_no_bulge]['targets'] = [0]*10
 
         count_sample[guide_no_bulge] = dict()
@@ -493,7 +519,7 @@ for line in inResult:
     guideDict[guide_no_bulge]['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
 
     if summary_barplot_from_total:
-        if x[vu_pos] == 'y': 
+        if x[-2] != 'n': 
             count_unique['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
             count_unique_for_guide[guide_no_bulge]['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
     
@@ -541,7 +567,7 @@ for line in inResult:
             totalDict[guideSplit[1]][int(x[mm_pos]) + int(x[bulge_pos])] += 1
             
             if summary_barplot_from_total:
-                if x[vu_pos] == 'y':
+                if x[-2] != 'n':
                     count_unique[guideSplit[1]][int(x[mm_pos]) + int(x[bulge_pos])] += 1
                     count_unique_for_guide[guide_no_bulge][guideSplit[1]][int(x[mm_pos]) + int(x[bulge_pos])] += 1
             
