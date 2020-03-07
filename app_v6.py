@@ -1413,7 +1413,6 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         )
         fl.append(html.Br())
         df = pd.read_pickle(job_directory + job_id + '.summary_by_guide.' + guide + '.txt')
-        
         df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | ((df['Number of Targets'] == 0) & (df['Targets Created by SNPs'] == 0))  ].index, inplace = True)
         more_info_col = []
         total_col = []
@@ -1438,12 +1437,12 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
             html.P('Summary table counting the number of targets found for each sample. Filter the table by selecting the Population or Superpopulation desired from the dropdowns.')
         )
         if genome_type == 'both':
-            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of Targets', 'Targets created by SNPs', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Disruption', 'PAM Creation']
+            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of Targets', 'Targets created by SNPs', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation']
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
             df = df.sort_values('Targets created by SNPs', ascending = False)
             df.drop(['Number of Targets'], axis = 1, inplace = True)
         else:
-            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of Targets', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Disruption', 'PAM Creation']
+            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of Targets', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation']
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
             df = df.sort_values('Number of Targets', ascending = False)
         more_info_col = []
@@ -2083,9 +2082,9 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
 
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     if genome_type == 'both':
-        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of Targets', 'Targets Created by SNPs', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Disruption', 'PAM Creation']
+        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of Targets', 'Targets Created by SNPs', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation']
     else:
-        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of Targets', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Disruption', 'PAM Creation']
+        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Number of Targets', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation']
     if max(btn_sample_section) == n:              #Last button pressed is filtering, return the first page of the filtered table
         if genome_type == 'both':
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
@@ -2818,12 +2817,12 @@ def guidePagev3(job_id, hash):
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'text']
         file_to_grep = '.Annotation.targets.txt'#'.top_1.txt'
     elif genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'Samples Summary', 'Annotation Type'] 
-        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'Samples Summary', 'Annotation Type'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
         file_to_grep = '.samples.all.annotation.txt'#'.top_1.samples.all.txt'
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique', 'Samples Summary', 'Annotation Type']#, 'Samples']
-        col_type = ['text','text','text','text','numeric','text', 'text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text', 'text']#, 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Creation', 'Variant Unique', 'Samples Summary', 'Annotation Type']#, 'Samples']
+        col_type = ['text','text','text','text','numeric','text', 'text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']#, 'text']
         file_to_grep = '.samples.all.annotation.txt'#'.top_1.samples.all.txt'
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     job_directory = 'Results/' + job_id + '/'
@@ -2953,10 +2952,10 @@ def update_table_subset(page_current, page_size, sort_by, filter, search, hash_g
         7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Annotation Type', 12:'Top Subcluster'}, inplace = True)
     elif genome_type == 'var':
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide',15:'Annotation Type' ,16:'Top Subcluster'}, inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide',14:'Annotation Type' ,15:'Top Subcluster'}, inplace = True)
     else:
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Annotation Type', 18:'Top Subcluster'} , inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide',16:'Annotation Type', 17:'Top Subcluster'} , inplace = True)
     # sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
     # sort_by.insert(1, {'column_id' : 'Bulge Size', 'direction': 'asc'})
     #sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
@@ -3235,10 +3234,10 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
    
     if genome_type == 'var':
         df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide', 15:'Annotation Type', 16:'Top Subcluster'}, inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide', 14:'Annotation Type', 15:'Top Subcluster'}, inplace = True)
     else:    
         df.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide', 17:'Annotation Type', 18:'Top Subcluster'} , inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide', 16:'Annotation Type', 17:'Top Subcluster'} , inplace = True)
     df.drop(df[(~( df['Cluster Position'] == int(data[active_cel['row']]['Cluster Position']))) | (~( df['Chromosome'] == data[active_cel['row']]['Chromosome']))].index, inplace = True)
     dff = df
     
@@ -3379,14 +3378,13 @@ def samplePage(job_id, hash):
             ]
         )
     )
-    # col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique', 'Samples']
     
     if genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption',  'Samples Summary', 'Annotation Type']#'Samples', 'Correct Guide'] 
-        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches',  'Samples Summary', 'Annotation Type']#'Samples', 'Correct Guide'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique',  'Samples Summary', 'Annotation Type']# 'Samples', 'Correct Guide']
-        col_type = ['text','text','text','text','numeric','numeric','text', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text','text', 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Creation', 'Variant Unique',  'Samples Summary', 'Annotation Type']# 'Samples', 'Correct Guide']
+        col_type = ['text','text','text','text','numeric','numeric','text', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
     
     file_to_grep = '.samples.annotation.txt'
     sample_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt'
@@ -3484,10 +3482,10 @@ def update_table_sample(page_current, page_size, sort_by, filter, search, hash):
         raise PreventUpdate
     if genome_type == 'var':
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide', 15:'Annotation Type', 16:'Top Subcluster'}, inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide', 14:'Annotation Type', 15:'Top Subcluster'}, inplace = True)
     else:
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide', 17:'Annotation Type', 18:'Top Subcluster'} , inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide', 16:'Annotation Type', 17:'Top Subcluster'} , inplace = True)
     del dff['Correct Guide']         #NOTE Drop the Correct Guide column
     
     for filter_part in filtering_expressions:
@@ -3574,13 +3572,13 @@ def clusterPage(job_id, hash):
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'text']
         file_to_grep = '.targets.cluster.txt'
     elif genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'Samples Summary', 'Annotation Type']#'Samples', #'Correct Column'] 
-        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'Samples Summary', 'Annotation Type']#'Samples', #'Correct Column'] 
+        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
         file_to_grep = '.total.cluster.minmaxdisr.txt'  #TODO select right cluster file
        
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Disruption', 'PAM Creation', 'Variant Unique', 'Samples Summary', 'Annotation Type']#'Samples', 'Correct Column']
-        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text', 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Creation', 'Variant Unique', 'Samples Summary', 'Annotation Type']#'Samples', 'Correct Column']
+        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
         file_to_grep = '.total.cluster.txt'
        
     cluster_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.txt'
@@ -3760,10 +3758,10 @@ def update_table_cluster(page_current, page_size, sort_by, filter, search, hash)
         7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide',11:'Annotation Type'}, inplace = True)
     elif genome_type == 'var':      
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide', 15:'Annotation Type', 16:'Top Subcluster'}, inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide', 14:'Annotation Type', 15:'Top Subcluster'}, inplace = True)
     else:                           
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Annotation Type', 18:'Top Subcluster'} , inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide',16:'Annotation Type', 17:'Top Subcluster'} , inplace = True)
 
     add_samples = [dff['Samples'][0]] * dff.shape[0]
     check_minmms = dff['Min Mismatches']
@@ -3865,10 +3863,10 @@ def update_iupac_scomposition_table_cluster(page_current, page_size, sort_by, fi
     
     if genome_type == 'var':           
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption',13:'Samples', 14:'Correct Guide', 15:'Annotation Type',16:'Top Subcluster'}, inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide', 14:'Annotation Type',15:'Top Subcluster'}, inplace = True)
     else:
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12: 'PAM Disruption', 13:'PAM Creation', 14 : 'Variant Unique', 15:'Samples', 16:'Correct Guide',17:'Annotation Type',18:'Top Subcluster'} , inplace = True)
+        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide',16:'Annotation Type',17:'Top Subcluster'} , inplace = True)
     # dff.drop(dff.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
     del dff['Correct Guide']
     #dff['Annotation Type'] = annotation_type
@@ -3977,9 +3975,5 @@ if __name__ == '__main__':
     #app.run_server(host='0.0.0.0',  port=8080) #NOTE to not reload the page when creating new images in graphical report
     cache.clear()       #delete cache when server is closed
 
-    #NOTE quando visualizzo per samples, la colonna PAM Creation/ PAM Disruption possono risultare non accurate in quanto non ho iupac ma il
-    #carattere esatto. Inoltre alcuni samples non possono esistere in quanto la pam non è NGG (o quella selezionata dall'utente)
     #BUG nel filtering se ho, in min mismatch etc, la stringa '-', che non è considerata numero
     #NOTE: l'ordinamento su Samples Summary o su Samples è fatto su stringhe, e non su numero di samples (potrebbe essere più utile)
-    #BUG: quando creo il file per il Show target del summary by position, i sample e le annotazioni sono aggiunte real time al sito, quindi se l'utente fa download file
-    # queste colonne non sono presenti

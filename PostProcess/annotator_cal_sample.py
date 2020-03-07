@@ -14,7 +14,7 @@ in samples.txt, poi calcola l'annotazione corrispondente e crea il file Annotati
 #argv4 è directory dei dizionari
 #argv5 is pamfile
 #argv 6 is max allowed mms
-
+# NOTE 06/03  -> removed PAM Disruption calculation
 import sys
 import json
 import time
@@ -27,8 +27,7 @@ import pandas as pd
 print('ESECUZIONE DI ANNOTATION E CALC SAMPLE INSIEME')
 print('TEST PER ANNOTAZIONE COMPLETA: I TARGET SENZA ANNOTAZIONE SONO SALVATI COME \"n\"')
 print('SE UN  TARGET HA 1+ ANNOTAZIONI, LE SALVA IN SINGOLA UNICA RIGA')
-print('Test: quando scompongo i sample, rifaccio il calcolo dei mms. Se almeno un target nella scomposizione è ok, tengo la y nel target iupac. Se nessun target scomposto è ok, cambio\
-    il target iupac in F. Stessa cosa per i target scomposti')
+print('RIMOZIONE DEI TARGET CHE NON HANNO SAMPLES')
 print("READING INPUT FILES")
 #Dictionaries for annotating samples
 
@@ -166,10 +165,10 @@ print("EXECUTING ANNOTATION")
 with open(resultsFile, 'r') as resFile:
     header_len = len(resFile.readline().strip().split('\t'))
 
-if header_len == 15:    #'Both' case : comparison variant/ref is active
-    header = '#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPam_disr\tPAM_gen\tVar_uniq\tSamples\tReal Guide\tAnnotation Type'
+if header_len == 14:    #'Both' case : comparison variant/ref is active
+    header = '#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPAM_gen\tVar_uniq\tSamples\tReal Guide\tAnnotation Type'
 else:                   #'Var' case: PAM creation and Variant_unique not calculated
-    header = '#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPam_disr\tSamples\tReal Guide\tAnnotation Type'
+    header = '#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tSamples\tReal Guide\tAnnotation Type'
 
 mm_pos = 7      #position of mismatch column
 bulge_pos = 8
@@ -272,7 +271,6 @@ cluster_update = open(outputFile + '.cluster.tmp.txt', 'w+')
 cluster_update.write(header + '\n')        #Write header
 save_cluster_targets = True
 next(inResult)      #Skip header
-#with  open(outputFile + '.samples.annotation.txt','w+') as outFileSample, open(outputFile + '.samples.all.annotation.txt', 'w+') as outFileSampleAll:
 for line in inResult:
     x = line.strip().split('\t')
     guide_no_bulge = x[1].replace("-","")
@@ -289,14 +287,6 @@ for line in inResult:
     if x[3] != current_chr:
         if not os.path.exists(os.path.realpath(sys.argv[4]) + '/my_dict_' + x[3] + '.json'):
             pass
-            # x.append('n')       #No sample since no dictionary
-            # x.append(x[1])
-
-            # #Get annotation
-
-
-            # outFileSampleAll.write(line.rstrip() + '\t' + 'n' + '\t' +x[1] + '\n')
-            # continue 
         else:
             print('Done ', current_chr)
             current_chr = x[3]
@@ -338,7 +328,6 @@ for line in inResult:
                 print(e)
                 print('Error at ' + line.rstrip() + ', with char ' + char + ', at pos ', iupac_pos, '. No corresponding SNP position was found in the vcf file')
                 a = []
-                #sys.exit()
                 total_error = total_error + 1
             if a:
                 set_list.append(set(a.split(',')))

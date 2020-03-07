@@ -26,7 +26,7 @@
 #Output column (not written): Bulge_type, Guide, Target, chr, pos, pos_cluster (optional), direction, mms, bulge, total(optional), real guide(optional)
 
 #NOTE with new search, cluster position is already present, so code for that column is commented
-
+#NOTE 06/07 PAM  -> removed PAM Disruption calculation
 import time
 import sys
 import subprocess
@@ -90,17 +90,6 @@ if total_line > MAX_LIMIT:
                     if not cluster_only:
                         line.append(str(int(line[7]) + int(line[8])))   #Total column
                         
-                        # if line[5] == strand_to_check:  #Cluster Position column
-                        #     if line[0] == 'DNA':
-                        #         # line.append(str(int(line[4]) + int(line[7])))
-                        #         line.insert(5, str(int(line[4]) + int(line[7])))
-                        #     else:
-                        #         # line.append(str(int(line[4]) - int(line[7])))
-                        #         line.insert(5,str(int(line[4]) - int(line[7])))
-                        # else:
-                        #     # line.append(line[4])
-                        #     line.insert(5, line[4])
-                        
                     current_count += 1
                     if current_count > MAX_LIMIT:
                         print('The guide ' + guide + ' has more than ' + str(MAX_LIMIT) + ' targets. Skipping...')
@@ -113,7 +102,6 @@ if total_line > MAX_LIMIT:
                         guides_dict[line[1].replace('-','')].append(('\t'.join(line[:2]), line[2], line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]), '\t'.join(line[10:])))    #[('type\tguide', 'target', 'chr', pos, clusterpos, 'dir', mm, bul, tot)]
                     except:
                         guides_dict[line[1].replace('-','')] = [('\t'.join(line[:2]), line[2], line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]),'\t'.join(line[10:]) )]
-                    #total_targets.append(line)
             if not cluster_ok:
                 continue
             if not cluster_only:       
@@ -145,7 +133,7 @@ if total_line > MAX_LIMIT:
                             else:
                                 result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\n')
                     else:
-                        result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPam_disr\tPAM_gen\tVar_uniq\n')
+                        result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPAM_gen\tVar_uniq\n')
                     write_header = False
                 total_targets = []
                 for k in guides_dict.keys():
@@ -210,16 +198,7 @@ else:
                 continue
             if not cluster_only:
                 line.append(str(int(line[7]) + int(line[8])))   #Add Total column
-                # if line[5] == strand_to_check:                  #Add Cluster Position column
-                #     if line[0] == 'DNA':
-                #         # line.append(str(int(line[4]) + int(line[7])))
-                #         line.insert(5, str(int(line[4]) + int(line[7])))
-                #     else:
-                #         # line.append(str(int(line[4]) - int(line[7])))
-                #         line.insert(5,str(int(line[4]) - int(line[7])))
-                # else:
-                #     # line.append(line[4])
-                #     line.insert(5, line[4])
+                
             try:
                 guides_dict[line[1].replace('-','')].append(('\t'.join(line[:2]), line[2], line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]), '\t'.join(line[10:])))    #[('type\tguide', 'target', 'chr', pos, clusterpos, 'dir', mm, bul, tot)]
             except:
@@ -253,7 +232,7 @@ else:
                 else:
                     result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\n')
         else:
-            result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPam_disr\tPAM_gen\tVar_uniq\n')
+            result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPAM_gen\tVar_uniq\n')
 
         total_targets = []
         for k in guides_dict.keys():

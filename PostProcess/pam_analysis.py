@@ -25,6 +25,8 @@
 #       NMG     -> segnalo C
 #       NGG
 #       NBG     -> segnalo C,T
+
+#NOTE 06/03 -> removed PAM Disruption calculation
 import sys
 import itertools
 #argv 1 is cluster file
@@ -111,7 +113,7 @@ iupac_code_set = {
 
 name_output = sys.argv[1][:sys.argv[1].rfind('.')]
 with open (sys.argv[1]) as t, open(name_output + '.minmaxdisr.txt','w+') as result:
-    header = '#Bulge type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge Size\tTotal\tMin_mismatches\tMax_mismatches\tPam_disr'
+    header = '#Bulge type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge Size\tTotal\tMin_mismatches\tMax_mismatches'
     if fill_column:
         header += '\tPAM_gen\tVar_uniq'
     header += '\n'
@@ -122,13 +124,10 @@ with open (sys.argv[1]) as t, open(name_output + '.minmaxdisr.txt','w+') as resu
         found_iupac_pam = False
         line = line.strip().split('\t')
         max_mm = int(line[7])
-        #for pos, char in enumerate(line[2]):
         
         for char in line[2][pos_beg: pos_end]:      
             if char in iupac_code:      
-                found_iupac = True
-                # if any(line[1][pos] != x for x in iupac_code[char]):        #TODO add IUPAC guide char support: a=line[1][pos] -> for each chr in iupac_code[a]
-                #     max_mm = max_mm + 1  
+                found_iupac = True 
                 if char.isupper():
                     max_mm = max_mm + 1
     
@@ -143,43 +142,32 @@ with open (sys.argv[1]) as t, open(name_output + '.minmaxdisr.txt','w+') as resu
                     found_iupac_pam = True
                 else:
                     pam_disr.append(iupac_code_set[char])
-                
-
-                # if pam[pos] in iupac_code:      #both are IUPAC
-                #     for normal_pam_char in iupac_code[pam[pos]]:
-                #         for normal_target_char in iupac_code[char]:
-                #             if normal_pam_char != normal_target_char:
-                #                 corr_targ_disr = corr_targ_disr + normal_target_char + ','
-                #         if corr_targ_disr:    
-                #             pam_disr = pam_disr +  '(' + str(pos) + ',' + normal_pam_char + ') -> (' + corr_targ_disr[:-1] + ')' + ';'
-                #         corr_targ_disr = ''
-                # else: #confronto normale
-                #     for normal_target_char in iupac_code[char]:
-                #         if pam[pos] != normal_target_char:
-                #             corr_targ_disr = corr_targ_disr + pam[pos] + ','
-                #     if corr_targ_disr:
-                #        pam_disr = pam_disr +  '(' + str(pos) + ',' + pam[pos] + ') -> (' + corr_targ_disr[:-1] + ')' + ';' 
-                #     corr_targ_disr = ''
             else:
                 pam_disr.append(char)
-        #print (pam_disr)
+        
+        #Add min, max mismatches
         if found_iupac:
             line.append(line[7])
             line.append(str(max_mm))
         else:
             line.append('-')
             line.append('-')
-        if (found_iupac_pam):
-            pam_disr_list = []
-            for p in itertools.product(*pam_disr):
-                pam_disr_list.append(''.join(p))
-            line.append(','.join(pam_disr_list))
-        else:
-            line.append('n')
+        
+        #Add PAM Disruption  #06/03 Removed
+        # if (found_iupac_pam):
+        #     pam_disr_list = []
+        #     for p in itertools.product(*pam_disr):
+        #         pam_disr_list.append(''.join(p))
+        #     line.append(','.join(pam_disr_list))
+        # else:
+        #     line.append('n')
+        
         #Pam creation
         if fill_column:
             line.append('n')
+        
         #Uniq var
             line.append('n')
+        
         result.write('\t'.join(line) + '\n')
         

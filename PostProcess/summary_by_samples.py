@@ -11,11 +11,8 @@ import pandas as pd
 # argv4 is guides file
 #NOTE Function only with vcf of HG38 and population info from the 20130606_sample_info.xlsx file
 
-# total_sample_per_guide = 0
-#Load population info
-# try:
-#     pop_file = pd.read_excel('../../PostProcess/20130606_sample_info.xlsx')
-# except:
+# NOTE PAM Disruptio  -> removed PAM Disruption calculation
+
 pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/20130606_sample_info.xlsx')
 all_samples = pop_file.Sample.to_list()
 all_pop = pop_file.Population.to_list()
@@ -36,7 +33,6 @@ guides_dict = dict()
 guides_dict_total = dict()  #contains total_sample_per_guide, did not merge the dict because didn't have time to do it
 guides_population_targets = dict()
 guides_superpopulation_targets = dict()
-count_disruption = dict()
 count_creation = dict() #{GUIDE1 -> {SAMPLE1 -> 0, SAMPLE2->1}, GUIDE2 -> {SAMPLE1 -> 0, SAMPLE2->1}}
 current_chr_pos = '0'
 with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_samples.' + guide + '.txt', 'w+') as result:
@@ -52,7 +48,6 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
                 guides_population_targets[guide] = dict()       #{GUIDE -> {POP->count,POP2 -> count}, GUIDE2 -> {POP1 -> count}}
                 guides_superpopulation_targets[guide] = dict()  #{GUIDE -> {SUPOP->count,SUPOP2 -> count}, GUIDE2 -> {SUPOP1 -> count}}
                 count_creation[guide] = dict()
-                count_disruption[guide] = dict()
             words = line[-3].split(',')
             
             if current_chr_pos != guide + line[3]+line[4]:          
@@ -60,19 +55,6 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
                 current_chr_pos = guide + line[3]+line[4]
                 checked_pop = []
                 checked_superpop = []
-
-            # #If it has F in Var uniq column, count 
-            # if 'F' == line[-4]:
-            #     for word in words:
-            #         if word not in count_disruption[guide]:
-            #             count_disruption[guide][word] = [0,0]
-            #         if line[12] != 'n':
-            #             count_disruption[guide][word][0] +=1
-            #         if word not in count_creation[guide]:
-            #             count_creation[guide][word] = [0,0]
-            #         if line[13] != 'n':
-            #             count_creation[guide][word][1] +=1
-            #     continue
                         
             for word in words:
                 try:
@@ -81,21 +63,14 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
                     guides_dict[guide][word] = [1,0]
                 if word not in count_creation[guide]:
                     count_creation[guide][word] = [0,0]
-                if word not in count_disruption[guide]:
-                    count_disruption[guide][word] = [0,0]
-              
+                
                 if line[12] != 'n':
-                    count_disruption[guide][word][0] +=1
-                if line[13] != 'n':
                     count_creation[guide][word][0] +=1
 
                 if sys.argv[3] == 'both':
-                    # if 'y' in line[-4]:               #No more distinction for unique, 
-                    guides_dict[guide][word][1] += 1
+                    guides_dict[guide][word][1] += 1    #No more distinction for unique, add +1 to the [1] position meaning that the target was found in enriched
                     
                     if line[12] != 'n':
-                        count_disruption[guide][word][1] +=1
-                    if line[13] != 'n':
                         count_creation[guide][word][1] +=1
 
                 #NOTE se voglio contare solo gli y il codice sotto lo idento una volta
@@ -128,7 +103,6 @@ for k in guides_dict.keys():
                 if i not in guides_dict[k]:
                     guides_dict[k][i] = [0,0]
                     count_creation[k][i] = [0,0]
-                    count_disruption[k][i] = [0,0]
                 if dict_pop[i] not in guides_population_targets[k]:
                     guides_population_targets[k][dict_pop[i]] = 0
                 if population_1000gp[dict_pop[i]] not in guides_superpopulation_targets[k]:
@@ -138,13 +112,14 @@ for k in guides_dict.keys():
                 result.write(i + '\t' + gender_sample[i] + '\t' + dict_pop[i] + '\t' + population_1000gp[dict_pop[i]] +'\t' + str(guides_dict[k][i][0]) + '\t' + str(guides_dict[k][i][1]) +
                             '\t' + str(guides_population_targets[k][dict_pop[i]]) + '\t' + 
                             str(guides_superpopulation_targets[k][population_1000gp[dict_pop[i]]])  + 
-                            '\t' + str(count_disruption[k][i][0]) + '\t' + str(count_creation[k][i][1]) +'\n')
+                            '\t' + 
+                            # str(count_disruption[k][i][0]) + 
+                            '\t' + str(count_creation[k][i][1]) +'\n')
         else:
             for i in all_samples:
                 if i not in guides_dict[k]:
                     guides_dict[k][i] = [0,0]
                     count_creation[k][i] = [0,0]
-                    count_disruption[k][i] = [0,0]
                 if dict_pop[i] not in guides_population_targets[k]:
                     guides_population_targets[k][dict_pop[i]] = 0
                 if population_1000gp[dict_pop[i]] not in guides_superpopulation_targets[k]:
@@ -152,5 +127,7 @@ for k in guides_dict.keys():
 
                 result.write(i + '\t' + gender_sample[i] + '\t' + dict_pop[i] + '\t' + population_1000gp[dict_pop[i]] +'\t' + str(guides_dict[k][i][0]) +
                             '\t' + str(guides_population_targets[k][dict_pop[i]]) + '\t' + str(guides_superpopulation_targets[k][population_1000gp[dict_pop[i]]])  + 
-                            '\t' + str(count_disruption[k][i][0]) + '\t' + str(count_creation[k][i][1]) +'\n')
+                            '\t' + 
+                            # str(count_disruption[k][i][0]) + 
+                            '\t' + str(count_creation[k][i][1]) +'\n')
 

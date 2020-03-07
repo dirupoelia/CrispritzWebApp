@@ -7,6 +7,8 @@
 # if from C to ref (and it was not a pam), we got S in enr (created new pam).
 # Not sure if calling bedtools for each iupac pam found + single scan of file is faster than single bedtools call + 2 scan of file 
 
+#06/03 PAM Disruption removed
+
 import sys
 import subprocess
 import os 
@@ -175,72 +177,36 @@ open_file = dict()
 
 for i in onlyfile:
     open_file[i.split('.fa')[0]] =  open('tmp_seq/' + i)
-    #open_file.append([i, open('tmp_seq/' + onlyfile)])
-
-# for i in range (1,23):
-#     try:
-#         open_file.append(open('chr' + str(i) + '.fa_seq.txt'))
-#     except:
-#         open_file.append(open('chr' + '1' + '.fa_seq.txt')) #TODO sistemare per indicare che se non ho iupac nella pam non ho questo file
-# try:
-#     open_file.append(open('chrX.fa_seq.txt'))
-# except:
-#     open_file.append(open('chr' + '1' + '.fa_seq.txt')) #TODO sistemare per indicare che se non ho iupac nella pam non ho questo file
-# count21 = 0
-# count22 = 0
+    
 with open(sys.argv[1]) as uniq, open(name_output + '.pamcreation.txt', 'w+') as res:
     for line in uniq:
         if '#' in line:
             continue
         line = line.strip().split('\t')
         file_corresponding = line[3]
-        # if file_corresponding == 'chr21':
-        #     count21 = count21 + 1
-        # elif file_corresponding == 'chr22':
-        #     count22 = count22 + 1
         total_line = []
         found_creation = False
-        # if int(line[4]) == 22687078:
-        #     print(line[2])
         for pos, char in enumerate(line[2][pam_begin:pam_end]):  
-            # if int(line[4]) == 22687078:
-            #     print('Char:', char)
             if char in iupac_code:
                 ref_char = open_file[file_corresponding].readline().strip().upper()
-                # print('file_corresponding', file_corresponding)
-                # print('ref_char', ref_char)
-                # print('21', count21)
-                # print('22', count22)
                 if line[6] == '-':
                     ref_char = rev_comp(ref_char)
-                # if int(line[4]) == 22687078:
-                #     print('Ref char:' , ref_char)
                 
                 char_to_write = iupac_code_set[pam[pos]] & iupac_code_set[ref_char]
                 
-                # if int(line[4]) == 22687078:
-                #     print('Char to write:', char_to_write)
                 if not char_to_write:
-                    #char_to_write =   iupac_code_set[char] - iupac_code_set[ref_char] #char_to_write
-                    # if int(line[4]) == 22687078:
-                    #     print('Char to write2: ', char_to_write)
                     found_creation = True
                 char_to_write = iupac_code_set[pam[pos]] & iupac_code_set[char]
-                #char_to_write = ','.join(char_to_write)
                 total_line.append(char_to_write)
             else: 
                 total_line.append(char)
-            # if int(line[4]) == 22687078:
-            #     print('Total_line', total_line)
         
-        #Total
-        #line.append(str(int(line[6]) + int(line[7])))
-         #Min
+        #Min
         line.append('-')
         #max
         line.append('-')
-        #PAM dis
-        line.append('n')
+        #PAM dis    #06/03 REMOVED
+        # line.append('n')
         #Pam create
         if found_creation:
             list_pam = []
@@ -253,44 +219,5 @@ with open(sys.argv[1]) as uniq, open(name_output + '.pamcreation.txt', 'w+') as 
         line.append('y')
         
         res.write('\t'.join(line) + '\n') 
-
-
-
-# with open(sys.argv[1]) as uniq, open(name_output + '.pamcreation.txt', 'w+') as res:
-#     for line in uniq:
-#         line = line.strip().split('\t')
-#         file_corresponding = line[3].split('chr')[-1]
-#         if file_corresponding == 'X':
-#             file_corresponding = -1
-#         else:
-#             file_corresponding = int(file_corresponding) -1
-#         total_line = ''
-#         for pos, char in enumerate(line[2][-3:]):           #TODO depend on PAM size, begin/end
-#             if char in iupac_code:
-#                 ref_char = open_file[file_corresponding].readline().strip().upper()
-#                 if line[5] == '-':
-#                     ref_char = rev_comp(ref_char)
-#                 char_to_write =   iupac_code_set[char] - iupac_code_set[ref_char]
-#                 char_to_write = ','.join(char_to_write)
-#                 total_line = total_line + char_to_write +';'
-#             else: 
-#                 total_line = total_line + '-;'
-            
-#         line.append(str(int(line[6]) + int(line[7])))
-#          #Min
-#         line.append('-')
-#         #max
-#         line.append('-')
-#         #PAM dis
-#         line.append('n')
-#         #Pam create
-#         line.append(total_line)
-#         #Var uniq
-#         line.append('y')
-        
-#         res.write('\t'.join(line) + '\n') 
-
-# for i in range(len(open_file)):
-#     open_file[i].close
 
 print('Done', time.time() - start_time)
