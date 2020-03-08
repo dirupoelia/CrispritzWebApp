@@ -259,7 +259,7 @@ else    #Type search = both
     python3 ../../PostProcess/cluster.dict.py $jobid.total.txt 'no' 'True' 'True' guides.txt 'total' 'orderChr'  #-> 03/03 il cluster ottenuto è ordinato per chr, uso questo per annotation
     echo 'End cluster of total.txt'
     echo 'Start extract top1 total.txt'
-    python3 ../../PostProcess/extract_top.py $jobid.total.cluster.txt $jobid # > $jobid.top_1.txt
+    # python3 ../../PostProcess/extract_top.py $jobid.total.cluster.txt $jobid # > $jobid.top_1.txt
     
     #03/03 commentato riga sotto 
     # awk '{guide=$2;gsub("-","",guide); print $0"\t"guide}' $jobid.total.cluster.txt > tmp_add_guide && mv tmp_add_guide $jobid.total.cluster.txt  #add real guide column for show targets on sum by pos
@@ -268,7 +268,7 @@ else    #Type search = both
 
     #Scoring of top1
     echo 'Start Scoring'
-    python3 ../../PostProcess/scores_guide_table.py $jobid.top_1.txt ../../$used_genome_dir pam.txt guides.txt  #TODO da calcolare solo su target esistenti
+    # python3 ../../PostProcess/scores_guide_table.py $jobid.top_1.txt ../../$used_genome_dir pam.txt guides.txt  #TODO da calcolare solo su target esistenti
     echo 'End Scoring'
 
 
@@ -280,11 +280,13 @@ else    #Type search = both
     echo 'Start calc samples and annotation'
     echo 'Annotation\tStart\t'$(date) >> log.txt
     #03/03 modificato da top_1 a total.cluster
-    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.total.cluster.txt $jobid ../../../dictionaries pam.txt $7  #> $jobid.samples.all.annotation.txt $jobid.samples.annotation.txt  with header
-                                                                                                                # > $jobid.Annotation.summary.txt
-                                                                                                                # > $jobid.sample_annotation.GUIDE.sample.txt
-                                                                                                                # > $jobid.sumref.Annotation.summary.txt
-                                                                                                                # > $jobid.cluster.tmp.txt
+    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.total.cluster.txt $jobid ../../../dictionaries pam.txt $7 ./../$used_genome_dir guides.txt
+                                                            #> $jobid.samples.all.annotation.txt $jobid.samples.annotation.txt  with header
+                                                            # > $jobid.Annotation.summary.txt
+                                                            # > $jobid.sample_annotation.GUIDE.sample.txt
+                                                            # > $jobid.sumref.Annotation.summary.txt
+                                                            # > $jobid.cluster.tmp.txt
+                                                            # > acfd.txt
     mv $jobid.cluster.tmp.txt $jobid.total.cluster.txt   #Now has sample and annotation (for top1, for other only blank column)
     #python3 ../../PostProcess/calc_samples_faster.py ../../../dictionaries $jobid.top_1.txt  #> $jobid.top_1.samples.txt $jobid.top_1.samples.all.txt
     echo 'End calc samples and annotation'

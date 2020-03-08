@@ -14,6 +14,8 @@ in samples.txt, poi calcola l'annotazione corrispondente e crea il file Annotati
 #argv4 è directory dei dizionari
 #argv5 is pamfile
 #argv 6 is max allowed mms
+#argv 7 is genome directory (Eg ../../Genomes/hg38_ref+hg38_1000genomeproject)
+#argv8 is guide file
 # NOTE 06/03  -> removed PAM Disruption calculation
 import sys
 import json
@@ -24,10 +26,78 @@ from intervaltree import Interval, IntervalTree
 import concurrent.futures
 import subprocess
 import pandas as pd
+import pickle       #to read CFD matrices
+import numpy as np
+import azimuth.model_comparison
+import string
+import multiprocessing
+
+SIZE_DOENCH = 10000
+N_THR = 3
+
+#Return max doench value among list of extended targets
+def doenchParallel(targets, model, result):
+    doench_score =  azimuth.model_comparison.predict(targets,None, None, model= model, pam_audit=False)
+    doench_score = [np.around(i * 100) for i in doench_score]
+    max_doench = int(max(doench_score))
+    result.append(max_doench)
+
+def doenchForIupac(sequence_doench, guide_seq): 
+    pos_iupac = []
+    var = []
+    for pos, c in enumerate(sequence_doench):
+        if c in iupac_code:
+            pos_iupac.append(pos)
+            var.append(iupac_code[c])
+  
+    if var:
+        for i in itertools.product(*var):
+            t = list(sequence_doench)
+            for p, el in enumerate(pos_iupac):
+                t[el] = i[p]
+            targets_for_doench[guide_seq].append(''.join(t))
+    else:
+        targets_for_doench[guide_seq].append(sequence_doench)
+
+def get_mm_pam_scores():
+    try:
+        mm_scores = pickle.load(open(os.path.dirname(os.path.realpath(__file__)) + '/mismatch_score.pkl', 'rb'))
+        pam_scores = pickle.load(open(os.path.dirname(os.path.realpath(__file__)) +'/PAM_scores.pkl', 'rb'))
+        return (mm_scores, pam_scores)
+    except:
+        raise Exception("Could not find file with mismatch scores or PAM scores")
+
+
+def revcom(s):
+    basecomp = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'U': 'A'}
+    letters = list(s[::-1])
+    letters = [basecomp[base] for base in letters]
+    return ''.join(letters)
+
+# Calculates CFD score
+def calc_cfd(guide_seq, sg, pam, mm_scores, pam_scores):
+    score = 1
+    dna_gp = 0
+    sg = sg.replace('T', 'U')
+    guide_seq = guide_seq.replace('T', 'U')
+    s_list = list(sg)
+    guide_seq_list = list(guide_seq)
+    for i, sl in enumerate(s_list):  
+        if guide_seq_list[i] == sl:
+            score *= 1
+        else:
+            key = 'r' + guide_seq_list[i] + ':d' + revcom(sl) + ',' + str(i + 1)
+            score *= mm_scores[key]
+            if '-' in guide_seq_list[i]:
+                dna_gp = dna_gp + 1 
+    score *= pam_scores[pam]
+    return score
+
 print('ESECUZIONE DI ANNOTATION E CALC SAMPLE INSIEME')
 print('TEST PER ANNOTAZIONE COMPLETA: I TARGET SENZA ANNOTAZIONE SONO SALVATI COME \"n\"')
 print('SE UN  TARGET HA 1+ ANNOTAZIONI, LE SALVA IN SINGOLA UNICA RIGA')
 print('RIMOZIONE DEI TARGET CHE NON HANNO SAMPLES')
+print('CALCOLO SCORES')
 print("READING INPUT FILES")
 #Dictionaries for annotating samples
 
@@ -83,6 +153,12 @@ with open (sys.argv[5]) as pam:
         pos_end = len_pam * (-1)
         pam_begin = len_pam * (-1)
         pam_end = None
+
+do_scores = True
+if guide_len != 20 or 'NGG' != pam:
+    with open('acfd.txt', 'w+') as result:
+        result.write('NO SCORES')
+        do_scores = False
 
 iupac_code_set = {
           "R":{"A", "G"},
@@ -263,6 +339,36 @@ iupac_code = {
             "v":("A", "C", "G"),
             'N':('A', 'T', 'C', 'G')
             }
+
+#For scoring of CFD And Doench
+tab = str.maketrans("ACTGRYSWMKHDBVactgryswmkhdbv", "TGACYRSWKMDHVBtgacyrswkmdhvb") 
+
+def reverse_complement_table(seq):
+    return seq.translate(tab)[::-1]
+
+mm_scores, pam_scores = get_mm_pam_scores()
+guides_dict = dict()
+guides_dict_doench = dict()
+targets_for_doench = dict()
+
+N_THR = multiprocessing.cpu_count() // 2
+
+enr = sys.argv[7].split('/')
+enr_str = ''
+if enr[-1]:
+    if'+' in enr[-1]:
+        enr_str = '.enriched'
+else:
+    if'+' in enr[-2]:
+        enr_str = '.enriched'
+refgenomedir = sys.argv[2].split('+')[-2]
+with open( os.path.dirname(os.path.realpath(__file__)) + "/azimuth/saved_models/V3_model_nopos.pickle", 'rb') as f:
+    model = pickle.load(f)
+max_doench = 0
+sum_cfd = 0
+cfd_scores = []
+
+
 start_time_total = time.time()
 lines_processed = 0
 allowed_mms = int(sys.argv[6])
@@ -270,6 +376,7 @@ current_guide_chr_pos = 'no'
 cluster_update = open(outputFile + '.cluster.tmp.txt', 'w+')
 cluster_update.write(header + '\n')        #Write header
 save_cluster_targets = True
+
 next(inResult)      #Skip header
 for line in inResult:
     x = line.strip().split('\t')
@@ -588,8 +695,82 @@ for line in inResult:
     cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n') 
     
     #Save scomposed targets
-    for t in target_scomposti_salvare:
-        outFileSample.write('\t'.join(t) + '\t' + x[-1] + '\n')
+    if do_scores:
+        for t in target_scomposti_salvare:
+            outFileSample.write('\t'.join(t) + '\t' + x[-1] + '\n')
+            
+            #Calc scores for scomposed targets
+            if t[0] == 'X':
+                cfd_score = calc_cfd(t[1], t[2].upper()[:-3], t[2].upper()[-2:], mm_scores, pam_scores)
+                sum_cfd = sum_cfd + cfd_score
+                try:
+                    guides_dict[t[1]] = guides_dict[t[1]] + cfd_score
+                except:
+                    guides_dict[t[1]] = cfd_score
+
+                if t[mm_pos] == '0':    #DOENCH
+                    #estraggo sequenza
+                    with open('bedfile_tmp.bed', 'w+') as bedfile:
+                        if t[6] == '+':
+                            bedfile.write(t[3] + '\t' + str(int(t[4]) - 4 ) + '\t' + str(int(t[4]) + 23 + 3 ))
+                        else:
+                            bedfile.write(t[3] + '\t' + str(int(t[4]) - 3 ) + '\t' + str(int(t[4]) + 23 + 4 ))
+                        
+                    extr = subprocess.Popen(['bedtools getfasta -fi ' + sys.argv[2] + '/' + t[3] +  enr_str +'.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
+                    extr.wait()
+                    out, err = extr.communicate()
+                    out = out.decode('UTF-8')
+                    if t[6] == '+':
+                        sequence_doench = out.strip().split('\n')[-1].upper()
+                        print('seq doenc before', sequence_doench, 't[2]', t[2] )
+                        sequence_doench = sequence_doench[:4] + t[2] + sequence_doench[-3:]
+                        print('seq doench after', sequence_doench)
+                    else:
+                        sequence_doench = reverse_complement_table(out.strip().split('\n')[-1].upper())
+                        sequence_doench = sequence_doench[:4] + t[2] + sequence_doench[-3:]
+                    
+                    if t[1] not in targets_for_doench:
+                        targets_for_doench[target[1]] = []
+                    doenchForIupac(sequence_doench, t[1])  #Get all possible targets with iupac itertools for doench
+        
+        if not tuple_var_ref and x[0] == 'X':       #Calculate scores for reference targets
+            cfd_score = calc_cfd(x[1], x[2].upper()[:-3], x[2].upper()[-2:], mm_scores, pam_scores)
+            sum_cfd = sum_cfd + cfd_score
+            try:
+                guides_dict[x[1]] = guides_dict[x[1]] + cfd_score
+            except:
+                guides_dict[x[1]] = cfd_score
+
+            if x[mm_pos] == '0':    #DOENCH
+                #estraggo sequenza
+                with open('bedfile_tmp.bed', 'w+') as bedfile:
+                    if x[6] == '+':
+                        bedfile.write(x[3] + '\t' + str(int(x[4]) - 4 ) + '\t' + str(int(x[4]) + 23 + 3 ))
+                    else:
+                        bedfile.write(x[3] + '\t' + str(int(x[4]) - 3 ) + '\t' + str(int(x[4]) + 23 + 4 ))
+                #Extract sequence from REFERENCE
+                extr = subprocess.Popen(['bedtools getfasta -fi ' + refgenomedir + '/' + x[3] +'.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
+                extr.wait()
+                out, err = extr.communicate()
+                out = out.decode('UTF-8')
+                if x[6] == '+':
+                    sequence_doench = out.strip().split('\n')[-1].upper()
+                    print('seq doenc before +', sequence_doench, 'x[2]', x[2] )
+                    sequence_doench = sequence_doench[:4] + x[2] + sequence_doench[-3:]
+                    print('seq doench after+', sequence_doench)
+                else:
+                    sequence_doench = reverse_complement_table(out.strip().split('\n')[-1].upper())
+                    print('seq doenc before -', sequence_doench, 'x[2]', x[2] )
+                    sequence_doench = sequence_doench[:4] + x[2] + sequence_doench[-3:]
+                    print('seq doench after -', sequence_doench)
+                
+                if x[1] not in targets_for_doench:
+                    targets_for_doench[target[1]] = []
+                doenchForIupac(sequence_doench, x[1])  #Get all possible targets with iupac itertools for doench
+
+    else:
+        for t in target_scomposti_salvare:
+            outFileSample.write('\t'.join(t) + '\t' + x[-1] + '\n')
 
     lines_processed +=1
     if lines_processed % (mod_tot_line) == 0:
@@ -686,6 +867,43 @@ if summary_barplot_from_total:
             result.write('targets' + '\t' + '\t'.join(str(i - count_unique_for_guide[guide]['targets'][pos]) for pos,i in enumerate(guideDict[guide]['targets'])) + '\n')
             for annotation in sorted(annotationsSet, key = lambda s : s.lower()):
                 result.write(annotation + '\t' + '\t'.join(str(i - count_unique_for_guide[guide][annotation][pos]) for pos, i in enumerate(guideDict[guide][annotation])) + '\n')
+
+#SAVE SCORES#
+with open( 'acfd.txt', 'w+') as res, open(sys.argv[8], 'r') as guides:
+    man = multiprocessing.Manager()
+    shared_doench = man.list() #list containing max doech for each thread
+    guides = guides.read().strip().split('\n')
+    for g in guides:
+        guides_dict_doench[g] = 0
+        if g not in guides_dict:
+            guides_dict[g] = 0    
+        if g not in targets_for_doench:
+            guides_dict_doench[g] = 0
+        else:
+            if len (targets_for_doench[g]) > SIZE_DOENCH:
+                jobs = []
+                remaining_splits = (len(targets_for_doench[g])//SIZE_DOENCH) + 1
+                for i in range ((len(targets_for_doench[g])//SIZE_DOENCH) + 1):
+                    for thr in range (min(N_THR, remaining_splits)):
+                        p = multiprocessing.Process(target = doenchParallel, args=(np.asarray(targets_for_doench[g][i*N_THR*SIZE_DOENCH + thr*SIZE_DOENCH : min( i*N_THR*SIZE_DOENCH + (thr+1)*SIZE_DOENCH,len(targets_for_doench[g]))]), model, shared_doench,) )
+                        remaining_splits -= 1
+                        p.start()
+                        jobs.append(p)
+                    for i in jobs:
+                        i.join()
+                
+                guides_dict_doench[g] = max(shared_doench)
+                shared_doench =  man.list()
+            else:
+                start_time = time.time()
+                doench_score =  azimuth.model_comparison.predict(np.asarray(targets_for_doench[g]), None, None, model= model, pam_audit=False)
+                doench_score = [np.around(i * 100) for i in doench_score]
+                guides_dict_doench[g] =  int(max(doench_score))
+        res.write(g + '\t' + str(guides_dict[g]) + '\t' + str(guides_dict_doench[g]) + '\n')
+
+
+
+
 if total_error > 0:
     print('Skipped SNP:', total_error)
 print('Annotation: Total progress 100%')
