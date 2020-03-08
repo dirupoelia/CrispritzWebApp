@@ -352,16 +352,17 @@ guides_dict_doench = dict()
 targets_for_doench = dict()
 
 N_THR = multiprocessing.cpu_count() // 2
-
 enr = sys.argv[7].split('/')
 enr_str = ''
+refgenomedir = sys.argv[7]
 if enr[-1]:
     if'+' in enr[-1]:
         enr_str = '.enriched'
+        refgenomedir = sys.argv[7].split('+')[-2]
 else:
     if'+' in enr[-2]:
         enr_str = '.enriched'
-refgenomedir = sys.argv[2].split('+')[-2]
+        refgenomedir = sys.argv[7].split('+')[-2]
 with open( os.path.dirname(os.path.realpath(__file__)) + "/azimuth/saved_models/V3_model_nopos.pickle", 'rb') as f:
     model = pickle.load(f)
 max_doench = 0
@@ -716,21 +717,19 @@ for line in inResult:
                         else:
                             bedfile.write(t[3] + '\t' + str(int(t[4]) - 3 ) + '\t' + str(int(t[4]) + 23 + 4 ))
                         
-                    extr = subprocess.Popen(['bedtools getfasta -fi ' + sys.argv[2] + '/' + t[3] +  enr_str +'.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
+                    extr = subprocess.Popen(['bedtools getfasta -fi ' + sys.argv[7] + '/' + t[3] +  enr_str +'.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
                     extr.wait()
                     out, err = extr.communicate()
                     out = out.decode('UTF-8')
                     if t[6] == '+':
                         sequence_doench = out.strip().split('\n')[-1].upper()
-                        print('seq doenc before', sequence_doench, 't[2]', t[2] )
                         sequence_doench = sequence_doench[:4] + t[2] + sequence_doench[-3:]
-                        print('seq doench after', sequence_doench)
                     else:
                         sequence_doench = reverse_complement_table(out.strip().split('\n')[-1].upper())
                         sequence_doench = sequence_doench[:4] + t[2] + sequence_doench[-3:]
                     
                     if t[1] not in targets_for_doench:
-                        targets_for_doench[target[1]] = []
+                        targets_for_doench[t[1]] = []
                     doenchForIupac(sequence_doench, t[1])  #Get all possible targets with iupac itertools for doench
         
         if not tuple_var_ref and x[0] == 'X':       #Calculate scores for reference targets
@@ -755,17 +754,13 @@ for line in inResult:
                 out = out.decode('UTF-8')
                 if x[6] == '+':
                     sequence_doench = out.strip().split('\n')[-1].upper()
-                    print('seq doenc before +', sequence_doench, 'x[2]', x[2] )
                     sequence_doench = sequence_doench[:4] + x[2] + sequence_doench[-3:]
-                    print('seq doench after+', sequence_doench)
                 else:
                     sequence_doench = reverse_complement_table(out.strip().split('\n')[-1].upper())
-                    print('seq doenc before -', sequence_doench, 'x[2]', x[2] )
                     sequence_doench = sequence_doench[:4] + x[2] + sequence_doench[-3:]
-                    print('seq doench after -', sequence_doench)
                 
                 if x[1] not in targets_for_doench:
-                    targets_for_doench[target[1]] = []
+                    targets_for_doench[x[1]] = []
                 doenchForIupac(sequence_doench, x[1])  #Get all possible targets with iupac itertools for doench
 
     else:

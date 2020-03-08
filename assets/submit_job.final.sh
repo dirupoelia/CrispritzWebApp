@@ -280,7 +280,7 @@ else    #Type search = both
     echo 'Start calc samples and annotation'
     echo 'Annotation\tStart\t'$(date) >> log.txt
     #03/03 modificato da top_1 a total.cluster
-    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.total.cluster.txt $jobid ../../../dictionaries pam.txt $7 ./../$used_genome_dir guides.txt
+    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.total.cluster.txt $jobid ../../../dictionaries pam.txt $7 ../../$used_genome_dir guides.txt
                                                             #> $jobid.samples.all.annotation.txt $jobid.samples.annotation.txt  with header
                                                             # > $jobid.Annotation.summary.txt
                                                             # > $jobid.sample_annotation.GUIDE.sample.txt
