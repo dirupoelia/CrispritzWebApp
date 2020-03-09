@@ -462,12 +462,8 @@ for line in inResult:
     for t in target_combination:
         set_list2 = []
         final_result = x.copy()
-        # print(t, pos_snp_chr)
         for ele_pos,p in enumerate(pos_snp_chr):
-            #print('pos_chr', p)
-            a = (datastore[chr_name + ',' + p])
-            #print('a', a)
-        
+            a = (datastore[chr_name + ',' + p])        
             samples = a.split(';')[0] #a[:-4] 
             
             ref = a.split(';')[-1].split(',')[0]
@@ -475,29 +471,17 @@ for line in inResult:
             if x[6] == '-':
                 ref = rev_comp(ref)
                 var = rev_comp(var)
-            # if int(p) == 10353471 or int(p) == 10353474:
-                # print(p)
-                # print('final result', final_result)
-                # print('Samp, ref, var: ',samples, ref, var)
-            #print('char in pos',t[pos_snp[ele_pos]].upper())
+            
             if t[pos_snp[ele_pos]].upper() == var:   
-                # print(t[pos_snp[ele_pos]])   
                 if samples:
                     set_list2.append(set(samples.split(',')))
                 else:
-                    #print('Error None ', line, a)
                     set_list2.append(set())
-                #     #returned_none = True 
-            # if int(p) == 10353471 or int(p) == 10353474:
-                # print('Set list2', set_list2 )
+        
         if set_list2:
-            #print('setlist2', set_list2)
             common_samples = set.intersection(*set_list2)
             common_samples = common_samples - samples_already_assigned
-            # print('common samples', common_samples)
             samples_already_assigned = samples_already_assigned.union(common_samples)
-            # print('samp already assigned', samples_already_assigned)
-            # print('common_smples', common_samples)
             if common_samples:
                 final_result[-2] = ','.join(common_samples)
             else:
@@ -507,9 +491,8 @@ for line in inResult:
         else:
             # final_result.append('No samples')         #DO not save results without samples
             final_result = []
-            if set_list:            #Eventually put F only on targets that have at least 1 IUPAC
+            if set_list:            #Increase false_targets on targets that have at least 1 IUPAC
                 false_targets += 1
-        # print('final_res', final_result)
         if x[6] == '-':
             t = t[::-1]
         mm_new_t = 0
@@ -517,8 +500,6 @@ for line in inResult:
         if final_result:
             guide_no_pam = final_result[1][pos_beg:pos_end]    
             for position_t, char_t in enumerate(t[pos_beg:pos_end]):
-                # print(t)
-                # print(final_result[1])
                 if char_t.upper() != guide_no_pam[position_t]:
                     mm_new_t += 1
             final_result[2] = t
@@ -529,30 +510,16 @@ for line in inResult:
                 if pam_chr.upper() not in iupac_code_set[pam[pam_chr_pos]]:
                     pam_ok = False
 
-            if summary_barplot_from_total:          #Change to F only for variants/reference search
-                if not pam_ok or allowed_mms < (mm_new_t - int(final_result[8])):                     
-                    # final_result[vu_pos] = 'F'      #TODO cambiare nel caso abbia ricerca solo var
-                    false_targets += 1
-                    x[-2] = ','.join(set(x[-2].split(',')) - set(common_samples))
-                    continue                #IF i have F status, remove the target
-                # if not pam_ok:
-                #     if final_result[12] != 'n':
-                #         final_result[12]= t[pam_begin:pam_end]
-                #     elif final_result[13] != 'n':
-                #         final_result[13] = 'n'
-                # else:
-                #     if final_result[12] != 'n':
-                #         final_result[12]= 'n'     #There was PAM disruption but this sample has correct PAM, so put n
-                #     elif final_result[13] != 'n':
-                #         final_result[13] = t[pam_begin:pam_end] 
+            if not pam_ok or allowed_mms < (mm_new_t - int(final_result[8])):                     
+                false_targets += 1
+                x[-2] = ','.join(set(x[-2].split(',')) - set(common_samples))
+                continue                #Remove target since id does not respect PAM or mms constrains
 
             final_result[7] = str(mm_new_t - int(final_result[8]))
             final_result[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
             target_scomposti_salvare.append(final_result)
-            # outFileSample.write('\t'.join(final_result) + '\n') #final_result[1].replace('-','') for better grep
-    if summary_barplot_from_total and false_targets >= len(target_combination):        #If all the scomposed targets have no sample or do not respect PAM/mm threasold, the iupac target does not really exist
+    if false_targets >= len(target_combination):        #If all the scomposed targets have no sample or do not respect PAM/mm threasold, the iupac target does not really exist
         line = line.strip().split('\t')
-        # print('line', line)
         if line[vu_pos] == 'y':         #Do not do annotation because target does not exists, and do not save his cluster
             save_cluster_targets = False
             continue    #DO NOT save this target because no ref homologous and no sample combination exists
@@ -561,32 +528,24 @@ for line in inResult:
             reference_semicommon = list(x[2][::-1])
         else:
             reference_semicommon = list(x[2])
-        # print('ref semicommon', reference_semicommon, 'tup var ref', tuple_var_ref, 'pos snp', pos_snp)
         for tuple_var_ref_pos, tuple_var_ref_chars in enumerate(tuple_var_ref):
-            # print('tuple var ref pos', tuple_var_ref_pos)
-            # print('tuple var ref chars', tuple_var_ref_chars)
             reference_semicommon[pos_snp[tuple_var_ref_pos]] = tuple_var_ref_chars[1]
         new_ref_target = ''.join(reference_semicommon)
         if line[6] == '-':
             new_ref_target = new_ref_target[::-1]
-        # print('newreftarget', new_ref_target)
-        line[2] = new_ref_target
-        x[2] = new_ref_target  
-        guide_no_pam = line[1][pos_beg:pos_end]    
-        for position_t, char_t in enumerate(new_ref_target[pos_beg:pos_end]):
-            # print(t)
-            # print(final_result[1])
-            if char_t.upper() != guide_no_pam[position_t]:          #TODO mettere lettere minuscole
-                mm_new_t += 1     
+        # line[2] = new_ref_target  #TODO fixare perchè il carattere ref potrebbe non essere corretto (non esiste il ref che ha lo stesso gap che nel top1)
+        # x[2] = new_ref_target  
+        # guide_no_pam = line[1][pos_beg:pos_end]    
+        # for position_t, char_t in enumerate(new_ref_target[pos_beg:pos_end]):
+        #     if char_t.upper() != guide_no_pam[position_t]:          #TODO mettere lettere minuscole
+        #         mm_new_t += 1     
         x[-2] = 'n'     #Since iupac target has no scomposition, it means it has no sample associated
-        x[7] = str(mm_new_t - int(x[8]))
-        x[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
-        line[7] = str(mm_new_t - int(line[8]))
-        line[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
+        # x[7] = str(mm_new_t - int(x[8]))
+        # x[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
+        # line[7] = str(mm_new_t - int(line[8]))
+        # line[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
         line = '\t'.join(line)
-        save_cluster_targets = False        #TODO salvare il cluster ma togliendo gli iupac
-        # print('line2', line)
-        # print('x', x)
+        save_cluster_targets = True        #TODO salvare il cluster ma togliendo gli iupac
         
     #Annotate target
     visited_pop = []

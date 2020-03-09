@@ -140,15 +140,15 @@ with open(sys.argv[1]) as targets:
 
         
         for guide in guide_dict.keys():
-            tab_summary = pd.DataFrame(columns = ['Guide', 'Bulge Type', 'Bulge Size', 'Mismatches', 'Number of Targets', 'Targets Created by SNPs', 'PAM Creation'])
+            tab_summary = pd.DataFrame(columns = ['Guide', 'Bulge Type', 'Bulge Size', 'Mismatches', 'Targets in Reference', 'Targets in Enriched', 'PAM Creation'])
             for m in range(mms + 1):
                 for b_d in range(bulges_dna +1):
-                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'DNA', 'Bulge Size': b_d, 'Mismatches': m, 'Number of Targets': guide_dict[guide][1][m][b_d], 'Targets Created by SNPs':guide_dict[guide][4][m][b_d], 'PAM Creation':count_creation[guide][1][m][b_d]  }, ignore_index = True)            
+                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'DNA', 'Bulge Size': b_d, 'Mismatches': m, 'Targets in Reference': guide_dict[guide][1][m][b_d], 'Targets in Enriched':guide_dict[guide][4][m][b_d], 'PAM Creation':count_creation[guide][1][m][b_d]  }, ignore_index = True)            
 
                 for b_r in range(bulges_rna +1):
-                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'RNA', 'Bulge Size': b_r, 'Mismatches': m, 'Number of Targets': guide_dict[guide][2][m][b_r], 'Targets Created by SNPs': guide_dict[guide][5][m][b_r], 'PAM Creation':count_creation[guide][2][m][b_r] }, ignore_index = True)
+                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'RNA', 'Bulge Size': b_r, 'Mismatches': m, 'Targets in Reference': guide_dict[guide][2][m][b_r], 'Targets in Enriched': guide_dict[guide][5][m][b_r], 'PAM Creation':count_creation[guide][2][m][b_r] }, ignore_index = True)
 
-                tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'X', 'Bulge Size': 0, 'Mismatches': m, 'Number of Targets': guide_dict[guide][0][m][0], 'Targets Created by SNPs':guide_dict[guide][3][m][0], 'PAM Creation':count_creation[guide][0][m][0] }, ignore_index = True)
+                tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'X', 'Bulge Size': 0, 'Mismatches': m, 'Targets in Reference': guide_dict[guide][0][m][0], 'Targets in Enriched':guide_dict[guide][3][m][0], 'PAM Creation':count_creation[guide][0][m][0] }, ignore_index = True)
             tab_summary.to_pickle(sys.argv[6] + '.summary_by_guide.' + guide +'.txt')
     else:   #TODO sistemare aggiungendo caso in cui ho F
         for line in targets:
@@ -180,15 +180,15 @@ with open(sys.argv[1]) as targets:
                         guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
 
         for guide in guide_dict.keys():    
-            tab_summary = pd.DataFrame(columns = ['Guide', 'Bulge Type', 'Bulge Size', 'Mismatches', 'Number of Targets'])
+            tab_summary = pd.DataFrame(columns = ['Guide', 'Bulge Type', 'Bulge Size', 'Mismatches', 'Targets in Reference'])
             for m in range(mms + 1):
                 for b_d in range(bulges_dna +1):
-                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'DNA', 'Bulge Size': b_d, 'Mismatches': m, 'Number of Targets': guide_dict[guide][1][m][b_d] }, ignore_index = True)            
+                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'DNA', 'Bulge Size': b_d, 'Mismatches': m, 'Targets in Reference': guide_dict[guide][1][m][b_d] }, ignore_index = True)            
 
                 for b_r in range(bulges_rna +1):
-                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'RNA', 'Bulge Size': b_r, 'Mismatches': m, 'Number of Targets': guide_dict[guide][2][m][b_r] }, ignore_index = True)
+                    tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'RNA', 'Bulge Size': b_r, 'Mismatches': m, 'Targets in Reference': guide_dict[guide][2][m][b_r] }, ignore_index = True)
 
-                tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'X', 'Bulge Size': 0, 'Mismatches': m, 'Number of Targets': guide_dict[guide][0][m][0] }, ignore_index = True)
+                tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'X', 'Bulge Size': 0, 'Mismatches': m, 'Targets in Reference': guide_dict[guide][0][m][0] }, ignore_index = True)
                 tab_summary.to_pickle(sys.argv[6] + '.summary_by_guide.' + guide +'.txt')
 
 for guide in guide_d_cluster.keys():

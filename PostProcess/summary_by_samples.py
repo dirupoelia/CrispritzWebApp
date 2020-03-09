@@ -112,7 +112,7 @@ for k in guides_dict.keys():
                 result.write(i + '\t' + gender_sample[i] + '\t' + dict_pop[i] + '\t' + population_1000gp[dict_pop[i]] +'\t' + str(guides_dict[k][i][0]) + '\t' + str(guides_dict[k][i][1]) +
                             '\t' + str(guides_population_targets[k][dict_pop[i]]) + '\t' + 
                             str(guides_superpopulation_targets[k][population_1000gp[dict_pop[i]]])  + 
-                            '\t' + 
+                            # '\t' + 
                             # str(count_disruption[k][i][0]) + 
                             '\t' + str(count_creation[k][i][1]) +'\n')
         else:
@@ -127,7 +127,7 @@ for k in guides_dict.keys():
 
                 result.write(i + '\t' + gender_sample[i] + '\t' + dict_pop[i] + '\t' + population_1000gp[dict_pop[i]] +'\t' + str(guides_dict[k][i][0]) +
                             '\t' + str(guides_population_targets[k][dict_pop[i]]) + '\t' + str(guides_superpopulation_targets[k][population_1000gp[dict_pop[i]]])  + 
-                            '\t' + 
+                            # '\t' + 
                             # str(count_disruption[k][i][0]) + 
                             '\t' + str(count_creation[k][i][1]) +'\n')
 
