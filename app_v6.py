@@ -2634,7 +2634,23 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
         column_sep_by_mm_value_enriched.append(' - '.join(str(int(x)) for x in zero_to_n_mms_onlySNP))
         column_off_target_enriched.append(str(int(sum(zero_to_n_mms_onlySNP[1:]))) + ' (' + column_sep_by_mm_value_enriched[-1] + ')')
         column_off_target_ref.append(str(int(sum(zero_to_n_mms[1:]))) + ' (' + column_sep_by_mm_value[-1] + ')')
-        
+
+    #NOTE TEMPORANEO USO IL CONTEGGIO PRESO DA jobid.general_target_count.txt
+    with open('Results/' + job_id + '/' + job_id + '.general_target_count.txt') as general_count:
+        header_general = next(general_count) #skip header
+        general_count_content = general_count.read().strip().split('\n')
+        general_count_content.sort(key = lambda x : x[0])
+    column_on_target = []
+    column_off_target_ref = []
+    column_off_target_enriched = []
+
+    for tmp in general_count_content:
+        tmp = tmp.split('\t')
+        column_on_target.append(tmp[1])
+        column_off_target_ref.append(tmp[2])
+        column_off_target_enriched.append(tmp[3])
+
+    #NOTE FINE TEST TEMPORANEO
     if 'NO SCORES' not in all_scores:
         data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On-Targets in Reference':column_on_target, 'Total On-Targets in Enriched':column_on_target_enriched, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched,'col_targetfor': column_sep_by_mm_value}
     else:

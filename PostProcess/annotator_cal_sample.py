@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-Merge of annotator and calc_samples_faster.py
+Merge of annotator, calc_samples_faster.py and scores
 Prende in input il file dei top1, ordinati per chr, e estrae i samples corrispondenti. Per ogni target, salva l'insieme dei sample in samples.all.txt, crea le combinazioni tenendo i target reali
 in samples.txt, poi calcola l'annotazione corrispondente e crea il file Annotation.targets e  i vari summaries.
 '''
@@ -14,7 +14,7 @@ in samples.txt, poi calcola l'annotazione corrispondente e crea il file Annotati
 #argv4 è directory dei dizionari
 #argv5 is pamfile
 #argv 6 is max allowed mms
-#argv 7 is genome directory (Eg ../../Genomes/hg38_ref+hg38_1000genomeproject)
+#argv 7 is genome reference directory (Eg ../../Genomes/hg38_ref)
 #argv8 is guide file
 # NOTE 06/03  -> removed PAM Disruption calculation
 import sys
@@ -352,17 +352,8 @@ guides_dict_doench = dict()
 targets_for_doench = dict()
 
 N_THR = multiprocessing.cpu_count() // 2
-enr = sys.argv[7].split('/')
-enr_str = ''
 refgenomedir = sys.argv[7]
-if enr[-1]:
-    if'+' in enr[-1]:
-        enr_str = '.enriched'
-        refgenomedir = sys.argv[7].split('+')[-2]
-else:
-    if'+' in enr[-2]:
-        enr_str = '.enriched'
-        refgenomedir = sys.argv[7].split('+')[-2]
+
 with open( os.path.dirname(os.path.realpath(__file__)) + "/azimuth/saved_models/V3_model_nopos.pickle", 'rb') as f:
     model = pickle.load(f)
 max_doench = 0
@@ -377,6 +368,7 @@ current_guide_chr_pos = 'no'
 cluster_update = open(outputFile + '.cluster.tmp.txt', 'w+')
 cluster_update.write(header + '\n')        #Write header
 save_cluster_targets = True
+remove_iupac = False
 
 next(inResult)      #Skip header
 for line in inResult:
@@ -384,13 +376,20 @@ for line in inResult:
     guide_no_bulge = x[1].replace("-","")
     if (guide_no_bulge + x[3] + x[5]) == current_guide_chr_pos:     #Target is in current cluster, simply save the sample and annotation, discard if status is F
         if save_cluster_targets:
+            if remove_iupac:
+                for c in x[2]:
+                    if c in iupac_code:
+                        break
+                else:
+                    cluster_update.write(line.strip() + '\t.\t' + guide_no_bulge + '\t.\n')
+                continue        
             cluster_update.write(line.strip() + '\t.\t' + guide_no_bulge + '\t.\n')  #add Sample (.) GuideNoBulge and Annotation(.). Use (.) to save space
         lines_processed +=1
         if lines_processed % (mod_tot_line) == 0:
             print('Annotation: Total progress ' + str(round(lines_processed /total_line *100, 2)) + '%')
         continue
     save_cluster_targets = True
-    change_status = False
+    remove_iupac = False
     current_guide_chr_pos = guide_no_bulge + x[3] + x[5]
     if x[3] != current_chr:
         if not os.path.exists(os.path.realpath(sys.argv[4]) + '/my_dict_' + x[3] + '.json'):
@@ -523,16 +522,16 @@ for line in inResult:
         if line[vu_pos] == 'y':         #Do not do annotation because target does not exists, and do not save his cluster
             save_cluster_targets = False
             continue    #DO NOT save this target because no ref homologous and no sample combination exists
-        #target does not exists in enriched, but exists in reference (semi_common), so change x[2] into the reference target and do annotation, but do not save his cluster
-        if line[6] == '-':
-            reference_semicommon = list(x[2][::-1])
-        else:
-            reference_semicommon = list(x[2])
-        for tuple_var_ref_pos, tuple_var_ref_chars in enumerate(tuple_var_ref):
-            reference_semicommon[pos_snp[tuple_var_ref_pos]] = tuple_var_ref_chars[1]
-        new_ref_target = ''.join(reference_semicommon)
-        if line[6] == '-':
-            new_ref_target = new_ref_target[::-1]
+        #target does not exists in enriched, but exists in reference (semi_common), so keep only the reference targets (from his cluster)
+        # if line[6] == '-':
+        #     reference_semicommon = list(x[2][::-1])
+        # else:
+        #     reference_semicommon = list(x[2])
+        # for tuple_var_ref_pos, tuple_var_ref_chars in enumerate(tuple_var_ref):
+        #     reference_semicommon[pos_snp[tuple_var_ref_pos]] = tuple_var_ref_chars[1]
+        # new_ref_target = ''.join(reference_semicommon)
+        # if line[6] == '-':
+        #     new_ref_target = new_ref_target[::-1]
         # line[2] = new_ref_target  #TODO fixare perchè il carattere ref potrebbe non essere corretto (non esiste il ref che ha lo stesso gap che nel top1)
         # x[2] = new_ref_target  
         # guide_no_pam = line[1][pos_beg:pos_end]    
@@ -546,6 +545,23 @@ for line in inResult:
         # line[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
         line = '\t'.join(line)
         save_cluster_targets = True        #TODO salvare il cluster ma togliendo gli iupac
+        remove_iupac = True
+        x = next(inResult).strip().split('\t')   #get next target of the cluster
+        while (x[1].replace('-','') + x[3] + x[5]) == current_guide_chr_pos:   #while still in same cluster
+            for c in x[2]:
+                if c in iupac_code:
+                    break
+            else:   #no break triggered in previous for --> x[2] has no iupac char
+                break
+            x = next(inResult).strip().split('\t')
+        line = '\t'.join(x)                 #Fist target in the cluster that is REF
+        x.append('n')                       #Fist target in the cluster that is REF
+        x.append(x[1].replace('-',''))      #Fist target in the cluster that is REF
+        tuple_var_ref = []      #Since this is now a REF target, it has no iupac --> needed to save to sample.annotation file
+    if target_scomposti_salvare:        #Keep the target with lowest total and mms as representative of the IUPAC target
+        target_scomposti_salvare.sort(key = lambda x : (int(x[mm_pos + 2]), int(x[mm_pos]))) #Order scomposition by total and mms values
+        x[mm_pos] = target_scomposti_salvare[0][mm_pos]
+        x[mm_pos + 2] = target_scomposti_salvare[0][mm_pos + 2]     #Adjust IUPAC with min total and mms of his scomposition
         
     #Annotate target
     visited_pop = []
@@ -649,10 +665,10 @@ for line in inResult:
         #outFileTargets.write(line.rstrip() + '\t' + ','.join(string_annotation) + '\n')
 
     #Save union samples + annotation
-    outFileSampleAll.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')   
+    outFileSampleAll.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')   #TODO modificare per salvare con il mms minimo delle sue scomposizioni?
 
     #Save cluster
-    cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n') 
+    cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n') #TODO rivedere cosa salvare
     
     #Save scomposed targets
     if do_scores:
@@ -676,16 +692,16 @@ for line in inResult:
                         else:
                             bedfile.write(t[3] + '\t' + str(int(t[4]) - 3 ) + '\t' + str(int(t[4]) + 23 + 4 ))
                         
-                    extr = subprocess.Popen(['bedtools getfasta -fi ' + sys.argv[7] + '/' + t[3] +  enr_str +'.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
+                    extr = subprocess.Popen(['bedtools getfasta -fi ' + refgenomedir + '/' + t[3] +'.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
                     extr.wait()
                     out, err = extr.communicate()
                     out = out.decode('UTF-8')
                     if t[6] == '+':
                         sequence_doench = out.strip().split('\n')[-1].upper()
-                        sequence_doench = sequence_doench[:4] + t[2] + sequence_doench[-3:]
+                        # sequence_doench = sequence_doench[:4] + t[2] + sequence_doench[-3:]   #Uncomment to use sequence specific for sample
                     else:
                         sequence_doench = reverse_complement_table(out.strip().split('\n')[-1].upper())
-                        sequence_doench = sequence_doench[:4] + t[2] + sequence_doench[-3:]
+                        # sequence_doench = sequence_doench[:4] + t[2] + sequence_doench[-3:]   #Uncomment to use sequence specific for sample
                     
                     if t[1] not in targets_for_doench:
                         targets_for_doench[t[1]] = []
@@ -713,10 +729,10 @@ for line in inResult:
                 out = out.decode('UTF-8')
                 if x[6] == '+':
                     sequence_doench = out.strip().split('\n')[-1].upper()
-                    sequence_doench = sequence_doench[:4] + x[2] + sequence_doench[-3:]
+                    # sequence_doench = sequence_doench[:4] + x[2] + sequence_doench[-3:]
                 else:
                     sequence_doench = reverse_complement_table(out.strip().split('\n')[-1].upper())
-                    sequence_doench = sequence_doench[:4] + x[2] + sequence_doench[-3:]
+                    # sequence_doench = sequence_doench[:4] + x[2] + sequence_doench[-3:]
                 
                 if x[1] not in targets_for_doench:
                     targets_for_doench[x[1]] = []
@@ -726,6 +742,8 @@ for line in inResult:
         for t in target_scomposti_salvare:
             outFileSample.write('\t'.join(t) + '\t' + x[-1] + '\n')
 
+    if not tuple_var_ref:
+        outFileSample.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n') #Save REF target in samples.annotation, needed for sum by guide
     lines_processed +=1
     if lines_processed % (mod_tot_line) == 0:
         print('Annotation: Total progress ' + str(round(lines_processed /total_line *100, 2)) + '%')

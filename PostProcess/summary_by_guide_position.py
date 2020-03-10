@@ -129,7 +129,7 @@ with open(sys.argv[1]) as targets:
                             guide_dict[line[1].replace('-','')][5][int(line[7])][int(line[8])] += 1
                         else:
                             guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
-                #Count pam creation or disruption:
+                #Count pam creation:
                 if line[12] != 'n':
                     if line[0] == 'X':
                         count_creation[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
