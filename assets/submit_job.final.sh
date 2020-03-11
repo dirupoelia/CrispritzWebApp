@@ -235,77 +235,79 @@ else    #Type search = both
     echo 'End creation semicommon, common, unique'                                          
     
     #Cluster semicommon (that also contains common -> see extraction.sh) e uniq
-    echo 'Start cluster semicommon'
-    echo 'Clustering... Step [2/6]' >>  output.txt
-    python3 ../../PostProcess/cluster.dict.py $jobid.semi_common_targets.txt 'no' 'True' 'False' guides.txt     #solo per aggiungere colonna total -> forse si può togliere
-    echo 'End cluster semicommon'
-    echo 'Start cluster unique'     #NOTE doing cluster separately does not create the right order of cluster (first clusters of uniq, then clusters of semi_common)
-    python3 ../../PostProcess/cluster.dict.py $jobid.unique_targets.txt 'no' 'True' 'False' guides.txt      #solo per aggiungere colonna total -> forse si può togliere
-    echo 'End cluster unique'
+    # echo 'Start cluster semicommon'
+    # echo 'Clustering... Step [2/6]' >>  output.txt
+    # python3 ../../PostProcess/cluster.dict.py $jobid.semi_common_targets.txt 'no' 'True' 'False' guides.txt     #solo per aggiungere colonna total -> forse si può togliere
+    # echo 'End cluster semicommon'
+    # echo 'Start cluster unique'     #NOTE doing cluster separately does not create the right order of cluster (first clusters of uniq, then clusters of semi_common)
+    # python3 ../../PostProcess/cluster.dict.py $jobid.unique_targets.txt 'no' 'True' 'False' guides.txt      #solo per aggiungere colonna total -> forse si può togliere
+    # echo 'End cluster unique'
+    #Colonna total già aggiunta dal search
 
     #Pam analysis
     echo 'Start pam analysis'
-    echo 'PAM Analysis... Step [3/6]' >>  output.txt
-    python3 ../../PostProcess/pam_analysis.py $jobid.semi_common_targets.cluster.txt pam.txt ${19}  # > $jobid.semi_common_targets.cluster.minmaxdisr.txt
+    echo 'PAM Analysis... Step [2/5]' >>  output.txt
+    python3 ../../PostProcess/pam_analysis.py $jobid.semi_common_targets.txt pam.txt ${19}  # > $jobid.semi_common_targets.minmaxdisr.txt
     echo 'End pam analysis'
     echo 'Start pam creation'
-    python3 ../../PostProcess/pam_creation.py $jobid.unique_targets.cluster.txt pam.txt ../../$3 # > $jobid.unique_targets.cluster.pamcreation.txt
+    python3 ../../PostProcess/pam_creation.py $jobid.unique_targets.txt pam.txt ../../$3 # > $jobid.unique_targets.pamcreation.txt
     echo 'End pam creation'
-    cat $jobid.unique_targets.cluster.pamcreation.txt $jobid.semi_common_targets.cluster.minmaxdisr.txt > $jobid.total.txt
+    cat $jobid.unique_targets.pamcreation.txt $jobid.semi_common_targets.minmaxdisr.txt > $jobid.total.txt
 
     #Cluster of jobid.total.txt and extraction of top 1
     echo 'Start cluster of total.txt'
-    echo 'Calculating Scores... Step [4/6]' >>  output.txt
+    echo 'Clustering... Step [3/5]' >>  output.txt
     python3 ../../PostProcess/cluster.dict.py $jobid.total.txt 'no' 'True' 'True' guides.txt 'total' 'orderChr'  #-> 03/03 il cluster ottenuto è ordinato per chr, uso questo per annotation
     echo 'End cluster of total.txt'
-    echo 'Start extract top1 total.txt'
-    # python3 ../../PostProcess/extract_top.py $jobid.total.cluster.txt $jobid # > $jobid.top_1.txt
+    # echo 'Start extract top1 total.txt'
+    # # python3 ../../PostProcess/extract_top.py $jobid.total.cluster.txt $jobid # > $jobid.top_1.txt
     
-    #03/03 commentato riga sotto 
-    # awk '{guide=$2;gsub("-","",guide); print $0"\t"guide}' $jobid.total.cluster.txt > tmp_add_guide && mv tmp_add_guide $jobid.total.cluster.txt  #add real guide column for show targets on sum by pos
+    # #03/03 commentato riga sotto 
+    # # awk '{guide=$2;gsub("-","",guide); print $0"\t"guide}' $jobid.total.cluster.txt > tmp_add_guide && mv tmp_add_guide $jobid.total.cluster.txt  #add real guide column for show targets on sum by pos
 
-    echo 'End extract top1 total.txt'
+    # echo 'End extract top1 total.txt'
 
     #Scoring of top1
-    echo 'Start Scoring'
-    # python3 ../../PostProcess/scores_guide_table.py $jobid.top_1.txt ../../$used_genome_dir pam.txt guides.txt  #TODO da calcolare solo su target esistenti
-    echo 'End Scoring'
+    # echo 'Start Scoring'
+    # # python3 ../../PostProcess/scores_guide_table.py $jobid.top_1.txt ../../$used_genome_dir pam.txt guides.txt  #TODO da calcolare solo su target esistenti
+    # echo 'End Scoring'
 
 
     #Top1 expansion
     # echo 'Start sort'
-    echo 'Extracting Samples and Annotation... (This operation has a long execution time, Please Wait) Step [5/6]' >>  output.txt
+    echo 'Extracting Samples and Annotation... (This operation has a long execution time, Please Wait) Step [4/5]' >>  output.txt
     # sort -k4,4 $jobid.top_1.txt > $jobid.top_1.sort.txt && mv $jobid.top_1.sort.txt $jobid.top_1.txt 
     # echo 'End sort'
-    echo 'Start calc samples and annotation'
+    echo 'Start calc samples and annotation and scores'
     echo 'Annotation\tStart\t'$(date) >> log.txt
     #03/03 modificato da top_1 a total.cluster
     python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.total.cluster.txt $jobid ../../../dictionaries pam.txt $7 ../../$3 guides.txt
-                                                            #> $jobid.samples.all.annotation.txt $jobid.samples.annotation.txt  with header
-                                                            # > $jobid.Annotation.summary.txt
-                                                            # > $jobid.sample_annotation.GUIDE.sample.txt
-                                                            # > $jobid.sumref.Annotation.summary.txt
-                                                            # > $jobid.cluster.tmp.txt
-                                                            # > acfd.txt
+        # > $jobid.samples.all.annotation.txt with header AGGIORNAMENTO 11/03 QUESTO FILE NON VIENE CREATO 
+        # > $jobid.samples.annotation.txt  with header AGGIORNAMENTO 11/03 Contiene top1 scomposti e top1 reference (usato per sum guide e show target guide, sample)
+        # > $jobid.Annotation.summary.txt
+        # > $jobid.sample_annotation.GUIDE.sample.txt
+        # > $jobid.sumref.Annotation.summary.txt
+        # > $jobid.cluster.tmp.txt AGGIORNAMENTO Top1 sostituito col min mms scomposto, il resto del cluster ha ancora IUPAC
+        # > acfd.txt
     mv $jobid.cluster.tmp.txt $jobid.total.cluster.txt   #Now has sample and annotation (for top1, for other only blank column)
-    #python3 ../../PostProcess/calc_samples_faster.py ../../../dictionaries $jobid.top_1.txt  #> $jobid.top_1.samples.txt $jobid.top_1.samples.all.txt
-    echo 'End calc samples and annotation'
+
+    echo 'End calc samples and annotation and scores'
     echo 'Annotation\tDone\t'$(date) >> log.txt
     #Put right header into top_1.samples.all.txt
     # sed -i '1 i\#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPam_disr\tPAM_gen\tVar_uniq\tSamples\tReal Guide' $jobid.top_1.samples.all.txt
     
     
-    echo 'Creating Summaries... Step [6/6]' >>  output.txt
+    echo 'Creating Summaries... Step [5/5]' >>  output.txt
     #Summary guide, pos #NOTE the script automatically counts only for top subclusters
-    echo 'Start summary by guide and position'  #NOTE change to top_1 if in sum by pos want to see cluster count of top1
+    echo 'Start summary by guide and position'  #NOTE summary by guide will be overwritten
     python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.cluster.txt $7 $8 $9 guides.txt $jobid 'Uniq'  
     echo 'End summary by guide and position'
 
 
-    # #Summary guide
-    # echo 'Start summary by guide'  
-    # python3 ../../PostProcess/summary_by_guide.py $jobid.samples.all.annotation.txt $7 $8 $9 guides.txt $jobid 'Uniq'
-    # echo 'End summary by guide'
+    #Summary guide
+    echo 'Start summary by guide'  
+    python3 ../../PostProcess/summary_by_guide.py $jobid.samples.annotation.txt $7 $8 $9 guides.txt $jobid 'Uniq'
+    echo 'End summary by guide'
 
     #Summary samples
     echo 'Start summary by samples'
@@ -313,23 +315,10 @@ else    #Type search = both
     #python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt 
     echo 'End summary by samples'
 
-    #Rimettere i samples nel file di cluster (solo nel top1)
-    #echo 'Start creating final file'
-    #python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.total.cluster.txt $jobid.top_1.samples.txt $jobid  # > $jobid.final.txt
-    #echo 'End creating final file'
-    #echo 'Preparing Files... Step [7/7]' >>  output.txt
     echo 'PostProcess\tDone\t'$(date) >> log.txt
 
-    #Annotation of top1 with samples
-    #echo 'Annotation\tStart\t'$(date) >> log.txt
-    #echo 'Annotate_output '${19} >  output.txt
-    #echo 'Start Annotation'
-    #crispritz.py annotate-results $jobid.top_1.samples.all.txt ../../${18} $jobid >> output.txt # > $jobid.Annotation.targets.txt $jobid.Annotation.summary.txt
-                                                                                # $jobid.sample_annotation.guide.sample.txt $jobid..sumref.Annotation.summary.txt
-    #echo 'End Annotation'
-    # echo 'Annotation\tDone\t'$(date) >> log.txt
-
     #Generate report
+    echo 'START Generate Report and Population Distribution'
     echo 'Report\tStart\t'$(date) >> log.txt
     if [ ${13} = 'True' ]; then
         echo 'Generate_report' >  output.txt
@@ -359,10 +348,7 @@ else    #Type search = both
     fi
     echo 'Report\tDone\t'$(date) >> log.txt
 
-    #Generate Population distributions
-    echo 'Populations Distribution Start'
-
-    echo 'Populations Distribution Done'
+    echo 'END Generate Report and Population Distribution'
 
 fi
 

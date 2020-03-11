@@ -2413,7 +2413,7 @@ def resultPage(job_id):
                 list_error_guides.append(e_g.strip())
 
     col_targetfor = '('
-    for i in range(mms + int(max_bulges)):
+    for i in range(1, mms + int(max_bulges)):
         col_targetfor = col_targetfor + str(i) + '-'
     col_targetfor = col_targetfor + str(mms + int(max_bulges))
     col_targetfor = col_targetfor + ' Mismatches + Bulges)'
@@ -2846,11 +2846,11 @@ def guidePagev3(job_id, hash):
     elif genome_type == 'var':
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'Samples Summary', 'Annotation Type'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
-        file_to_grep = '.samples.all.annotation.txt'#'.top_1.samples.all.txt'
+        file_to_grep = '.samples.annotation.txt'#'.top_1.samples.all.txt'
     else:
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Creation', 'Variant Unique', 'Samples Summary', 'Annotation Type']#, 'Samples']
         col_type = ['text','text','text','text','numeric','text', 'text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']#, 'text']
-        file_to_grep = '.samples.all.annotation.txt'#'.top_1.samples.all.txt'
+        file_to_grep = '.samples.annotation.txt'
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     job_directory = 'Results/' + job_id + '/'
     

@@ -196,7 +196,7 @@ iupac_code_set = {
 #OPEN INPUT FILES AND PREPARE OUTPUT FILE
 inResult = open(resultsFile, "r")  # resultfile open
 inAnnotationFile = open(annotationFile, "r")  # file with annotations open
-outFileSampleAll = open(outputFile + '.samples.all.annotation.txt', 'w')  # outfile open (file with IUPAC targets and associated samples and annotation)
+# outFileSampleAll = open(outputFile + '.samples.all.annotation.txt', 'w')  # outfile open (file with IUPAC targets and associated samples and annotation)
 outFileSample = open(outputFile + '.samples.annotation.txt', 'w') #file with real nucleotides with associated samples and annotation
 outFileSummary = open(outputFile + '.Annotation.summary.txt', 'w')  # outfile open (summary file calculated on top1file)
 
@@ -249,7 +249,7 @@ else:                   #'Var' case: PAM creation and Variant_unique not calcula
 mm_pos = 7      #position of mismatch column
 bulge_pos = 8
 outFileSample.write(header + '\n')
-outFileSampleAll.write(header + '\n')
+# outFileSampleAll.write(header + '\n')
 summary_samples = True
 
 header_list = header.strip().split('\t')
@@ -301,8 +301,7 @@ for item in annotationsSet:
 
 #Variables for samples calculation
 total_error = 0
-resu_name = outputFile + '.samples.txt'
-test_resu_name = outputFile + '.samples.all.txt' #Put in a line all the samples, not the intersection, keep original line
+
 
 current_chr = 'none'
 chr_name = 'none'
@@ -560,6 +559,7 @@ for line in inResult:
         tuple_var_ref = []      #Since this is now a REF target, it has no iupac --> needed to save to sample.annotation file
     if target_scomposti_salvare:        #Keep the target with lowest total and mms as representative of the IUPAC target
         target_scomposti_salvare.sort(key = lambda x : (int(x[mm_pos + 2]), int(x[mm_pos]))) #Order scomposition by total and mms values
+        x[2] = target_scomposti_salvare[0][2]       #Adjust Target sequence, from IUPAC to first of scomposition
         x[mm_pos] = target_scomposti_salvare[0][mm_pos]
         x[mm_pos + 2] = target_scomposti_salvare[0][mm_pos + 2]     #Adjust IUPAC with min total and mms of his scomposition
         
@@ -665,10 +665,11 @@ for line in inResult:
         #outFileTargets.write(line.rstrip() + '\t' + ','.join(string_annotation) + '\n')
 
     #Save union samples + annotation
-    outFileSampleAll.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')   #TODO modificare per salvare con il mms minimo delle sue scomposizioni?
+    # outFileSampleAll.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')   #TODO modificare per salvare con il mms minimo delle sue scomposizioni?
 
     #Save cluster
-    cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n') #TODO rivedere cosa salvare
+    # cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')
+    cluster_update.write('\t'.join(x) + '\n')
     
     #Save scomposed targets
     if do_scores:

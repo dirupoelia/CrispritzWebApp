@@ -26,7 +26,8 @@
 #Output column (not written): Bulge_type, Guide, Target, chr, pos, pos_cluster (optional), direction, mms, bulge, total(optional), real guide(optional)
 
 #NOTE with new search, cluster position is already present, so code for that column is commented
-#NOTE 06/07 PAM  -> removed PAM Disruption calculation
+#NOTE 06/03 PAM  -> removed PAM Disruption calculation
+#NOTE 11/03 Removed TOTAL column (already present in search phase)
 import time
 import sys
 import subprocess
@@ -87,8 +88,8 @@ if total_line > MAX_LIMIT:
                     line = line.strip().split('\t')
                     if '#' in line[0] or line[1].replace('-','') != guide:
                         continue
-                    if not cluster_only:
-                        line.append(str(int(line[7]) + int(line[8])))   #Total column
+                    # if not cluster_only:
+                    #     line.append(str(int(line[7]) + int(line[8])))   #Total column
                         
                     current_count += 1
                     if current_count > MAX_LIMIT:
@@ -196,8 +197,8 @@ else:
             line = line.strip().split('\t')
             if line[1].replace('-','') in guides_to_check:
                 continue
-            if not cluster_only:
-                line.append(str(int(line[7]) + int(line[8])))   #Add Total column
+            # if not cluster_only:
+            #     line.append(str(int(line[7]) + int(line[8])))   #Add Total column
                 
             try:
                 guides_dict[line[1].replace('-','')].append(('\t'.join(line[:2]), line[2], line[3], int(line[4]), int(line[5]), str(line[6]), int(line[7]), int(line[8]), int(line[9]), '\t'.join(line[10:])))    #[('type\tguide', 'target', 'chr', pos, clusterpos, 'dir', mm, bul, tot)]

@@ -408,7 +408,7 @@ DA RISOLVERE:
 		DNA     GAGTCC-GAGCAGAAGAAGAANNN        GAGcYCARcGaAtAAGAAGAATGG        chr5    1524353 1524353 -       4       1       5
 		DNA     GAGTCCGA-GCAGAAGAAGAANNN        GAGcYCaRCGaAtAAGAAGAATGG        chr5    1524353 1524353 -       4       1       5
 		DNA     GAGTCCGA-GCAGAAGAAGAANNN        GAGcCCaACGaAtAAGAAGAATGG        chr5    1524353 1524353 -       4       1       5
-	--> Se non esiste, rimuovo tutti quelli con iupac e tengo solo quelli reference
+	X--> Se non esiste, rimuovo tutti quelli con iupac e tengo solo quelli reference
 -scores:
 	-calcolo dove possibile con sequenze caratteri esatti
 	-differenziare tra Reference e Enriched ?
