@@ -104,8 +104,11 @@ with open(sys.argv[1]) as targets:
             else:   #New cluster
                 
                 sub_cluster_visited = []
-                guide_d_cluster[line[1].replace('-','')].append(Cluster(line[3] + '\t' + line[5] + '\t' + line[2] + '\t' + line[7] + '\t' + line[8], [[0 for i in range (mms + 1)] for i in range (bulge + 1)] ))    
+                #For the summary page save info from target without iupac (first line of cluster)
+                guide_d_cluster[line[1].replace('-','')].append(Cluster(line[3] + '\t' + line[5] + '\t' + line[2] + '\t' + line[7] + '\t' + line[8], [[0 for i in range (mms + 1)] for i in range (bulge + 1)] ))  #Save info of target with no iupac for summary page  
                 current_cluster = line[1].replace('-','') +line[3] + ' ' + line[5]
+                #The skip to next line (top1 with iupac) and start counting
+                line = next(targets).strip().split('\t') 
                 mms_current_line = int(line[7])
                 bulge_current_line = int(line[8])
                 guide_d_cluster[line[1].replace('-','')][-1].count[bulge_current_line][mms_current_line] += 1 

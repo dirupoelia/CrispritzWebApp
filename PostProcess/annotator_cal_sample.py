@@ -669,8 +669,11 @@ for line in inResult:
 
     #Save cluster
     # cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')
-    cluster_update.write('\t'.join(x) + '\n')
-    
+    if target_scomposti_salvare:
+        cluster_update.write('\t'.join(x[:-3]) + '\t' + target_scomposti_salvare[0][-2] + '\t' + '\t'.join(x[-2:]) + '\n')  ##This line does not contain IUPAC, needed for summary by position; Adjust sample list for target scomposed
+    else:
+        cluster_update.write('\t'.join(x) + '\n')       #This line does not contain IUPAC, needed for summary by position
+    cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')   #Write line with iupac (if present)
     #Save scomposed targets
     if do_scores:
         for t in target_scomposti_salvare:

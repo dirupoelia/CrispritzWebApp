@@ -1494,7 +1494,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
     elif value == 'tab-summary-by-position':
         #Show Summary by position table
         fl.append(
-            html.P('Summary table containing all the targets found in a specific position of the genome. For each position, the best target is shown, along with his Mismatch and Bulge Size values.' + 
+            html.P('Summary table containing all the targets found in a specific position of the genome. For each position, the enriched target with the lowest Mismatch + Bulge count is shown (if no target was found in the enriched genome, the correspondig reference one is shown), along with his Mismatch and Bulge Size values.' + 
             ' The subtable \'Targets in Cluster by Mismatch Value\' represents the number of targets found in that position for a particular Mismatch-Bulge Size pair.')
         )
 
@@ -2635,22 +2635,22 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
         column_off_target_enriched.append(str(int(sum(zero_to_n_mms_onlySNP[1:]))) + ' (' + column_sep_by_mm_value_enriched[-1] + ')')
         column_off_target_ref.append(str(int(sum(zero_to_n_mms[1:]))) + ' (' + column_sep_by_mm_value[-1] + ')')
 
-    #NOTE TEMPORANEO USO IL CONTEGGIO PRESO DA jobid.general_target_count.txt
-    with open('Results/' + job_id + '/' + job_id + '.general_target_count.txt') as general_count:
-        header_general = next(general_count) #skip header
-        general_count_content = general_count.read().strip().split('\n')
-        general_count_content.sort(key = lambda x : x[0])
-    column_on_target = []
-    column_off_target_ref = []
-    column_off_target_enriched = []
+    # #NOTE TEMPORANEO USO IL CONTEGGIO PRESO DA jobid.general_target_count.txt
+    # with open('Results/' + job_id + '/' + job_id + '.general_target_count.txt') as general_count:
+    #     header_general = next(general_count) #skip header
+    #     general_count_content = general_count.read().strip().split('\n')
+    #     general_count_content.sort(key = lambda x : x[0])
+    # column_on_target = []
+    # column_off_target_ref = []
+    # column_off_target_enriched = []
 
-    for tmp in general_count_content:
-        tmp = tmp.split('\t')
-        column_on_target.append(tmp[1])
-        column_off_target_ref.append(tmp[2])
-        column_off_target_enriched.append(tmp[3])
+    # for tmp in general_count_content:
+    #     tmp = tmp.split('\t')
+    #     column_on_target.append(tmp[1])
+    #     column_off_target_ref.append(tmp[2])
+    #     column_off_target_enriched.append(tmp[3])
 
-    #NOTE FINE TEST TEMPORANEO
+    # #NOTE FINE TEST TEMPORANEO
     if 'NO SCORES' not in all_scores:
         data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On-Targets in Reference':column_on_target, 'Total On-Targets in Enriched':column_on_target_enriched, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched,'col_targetfor': column_sep_by_mm_value}
     else:
@@ -2809,7 +2809,9 @@ def guidePagev3(job_id, hash):
         bulge_t = 'RNA'
     else:
         bulge_t = 'X'
-    
+    add_header = ' - Mismatches ' + str(mms)
+    if bulge_t != 'X':
+        add_header += ' - ' + str(bulge_t) + ' ' + str(bulge_s) 
     value = job_id
     if (not isdir('Results/' + job_id)):
         return html.Div(dbc.Alert("The selected result does not exist", color = "danger"))
@@ -2824,11 +2826,11 @@ def guidePagev3(job_id, hash):
     if 'True' in ref_comp:
         genome_type = 'both'
     final_list = []
-    final_list.append(html.H3('Selected Guide: ' + guide))
+    final_list.append(html.H3('Selected Guide: ' + guide + add_header))
     final_list.append(
         html.P(
             [
-                        'List of Targets found for the selected guide. Select a row to view the target IUPAC character scomposition. The rows highlighted in red indicates that the target was found only in the genome with variants.',
+                        'List of Targets found for the selected guide.', # 'Select a row to view the target IUPAC character scomposition. The rows highlighted in red indicates that the target was found only in the genome with variants.',
                         dcc.Checklist(options = [{'label': 'Hide Reference Targets', 'value': 'hide-ref'}], id='hide-reference-targets', value = ['hide-ref']),
                         html.Div(
                             [   
@@ -2848,8 +2850,8 @@ def guidePagev3(job_id, hash):
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
         file_to_grep = '.samples.annotation.txt'#'.top_1.samples.all.txt'
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Creation', 'Variant Unique', 'Samples Summary', 'Annotation Type']#, 'Samples']
-        col_type = ['text','text','text','text','numeric','text', 'text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']#, 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Creation', 'Samples Summary', 'Annotation Type']#, 'Samples']
+        col_type = ['text','text','text','text','numeric','text', 'text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']#, 'text']
         file_to_grep = '.samples.annotation.txt'
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(col_list, col_type)]
     job_directory = 'Results/' + job_id + '/'
@@ -2994,7 +2996,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, hide_reference
     if 'hide-ref' in hide_reference:
         dff.drop( df[(df['Samples'] == 'n')].index, inplace = True)
     
-    
+    del dff['Variant Unique']
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
         if col_name == 'Samples Summary':
@@ -3096,6 +3098,9 @@ def update_table_subset(page_current, page_size, sort_by, filter, hide_reference
     State('table-subset-target', 'selected_cells')]
 )
 def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
+    #NOTE tabella secondaria della scomposizione ora non serve, non cancello il codice ma uso PreventUpdate per non azionare la funzione
+    if True:
+        raise PreventUpdate
     if active_cel is  None:
         raise PreventUpdate
     fl = []
@@ -3222,6 +3227,9 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
     State('table-subset-target', 'data')]
 )
 def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, search, hash_guide, active_cel, data):
+    #NOTE tabella secondaria della scomposizione ora non serve, non cancello il codice ma uso PreventUpdate per non azionare la funzione
+    if True:
+        raise PreventUpdate
     if active_cel is None:
         raise PreventUpdate
     job_id = search.split('=')[-1]
@@ -3398,7 +3406,7 @@ def samplePage(job_id, hash):
     final_list.append(
         html.P(
             [
-                'List of Targets found for the selected sample. The rows highlighted in red indicates that the target was found only in the genome with variants.',
+                'List of Targets found for the selected sample.', #'The rows highlighted in red indicates that the target was found only in the genome with variants.',
                 html.Div(
                     [   
                         html.P('Generating download link, Please wait...', id = 'download-link-sumbysample'), 
@@ -3414,8 +3422,8 @@ def samplePage(job_id, hash):
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches',  'Samples Summary', 'Annotation Type']#'Samples', 'Correct Guide'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Creation', 'Variant Unique',  'Samples Summary', 'Annotation Type']# 'Samples', 'Correct Guide']
-        col_type = ['text','text','text','text','numeric','numeric','text', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Creation',  'Samples Summary', 'Annotation Type']# 'Samples', 'Correct Guide']
+        col_type = ['text','text','text','text','numeric','numeric','text', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text']
     
     file_to_grep = '.samples.annotation.txt'
     sample_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt'
@@ -3518,7 +3526,7 @@ def update_table_sample(page_current, page_size, sort_by, filter, search, hash):
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide', 16:'Annotation Type', 17:'Top Subcluster'} , inplace = True)
     del dff['Correct Guide']         #NOTE Drop the Correct Guide column
-
+    del dff['Variant Unique']
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
 
@@ -3586,7 +3594,7 @@ def clusterPage(job_id, hash):
     )
     final_list.append(html.P(
         [
-            'List of Targets found for the selected position. The rows highlighted in red indicates that the target was found only in the genome with variants.',
+            'List of Targets found for the selected position. If a target has one or more IUPAC characters, the table \"IUPAC Scomposition\" lists the possible real sequences along with the corresponding samples list.', # The rows highlighted in red indicates that the target was found only in the genome with variants.',
             dcc.Checklist(options = [{'label': 'Hide Reference Targets', 'value': 'hide-ref'}], id='hide-reference-targets', value = ['hide-ref']),
             html.Div(
                 [   
@@ -3609,8 +3617,8 @@ def clusterPage(job_id, hash):
         file_to_grep = '.total.cluster.minmaxdisr.txt'  #TODO select right cluster file
        
     else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Creation', 'Variant Unique', 'Samples Summary', 'Annotation Type']#'Samples', 'Correct Column']
-        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text', 'text']
+        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Creation', 'Samples Summary', 'Annotation Type']#'Samples', 'Correct Column']
+        col_type = ['text','text','text','text','numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']
         file_to_grep = '.total.cluster.txt'
        
     cluster_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.txt'
@@ -3748,7 +3756,31 @@ def clusterPage(job_id, hash):
         )
     )
 
+    # final_list.append(html.Div('', id ='target-to-highlight'))
     return html.Div(final_list, style = {'margin':'1%'})
+
+# #Save the first scomposition target from the second table, in order to highlight it in the first table
+# @app.callback(
+#     Output('target-to-highlight','children'),
+#     [Input('table-scomposition-cluster', 'data')],
+#     [State('target-to-highlight','children')]
+# )
+# def saveFirstScomposedTarget(data_scomp, current_target):
+#     if current_target != '' or current_target is None:
+#         raise PreventUpdate
+#     if data_scomp is None or not data_scomp:
+#         raise PreventUpdate
+#     return data_scomp[0]['DNA']
+
+# #update the Color of the top1 scomposed target in the first table
+# @app.callback(
+#     Output('table-position-target', 'style_data_conditional'),
+#     [Input('target-to-highlight', 'children')]
+# )
+# def highlightSummaryTarget(to_highlight):
+#     if to_highlight is None or to_highlight is '':
+#         raise PreventUpdate
+#     return [{'if': {'filter_query': '{DNA} eq ' + to_highlight}, 'font-weight':'bold'}]
 
 #Filter/sort cluster
 #Filter and sorting sample targets
@@ -3805,9 +3837,13 @@ def update_table_cluster(page_current, page_size, sort_by, filter, hide_referenc
     dff['Samples'] = add_samples
     dff['Annotation Type'] = dff['Annotation Type'][0]
     del dff['Correct Guide']
-
+    del dff['Variant Unique']
     if 'hide-ref' in hide_reference:
         dff.drop( dff[(dff['Samples'] == 'n')].index, inplace = True)
+
+    dff.drop(dff.head(1).index, inplace=True)       #Remove first target, that is the top1 with no iupac (lowest mm of scomposed target) and is 
+                                                    #needed only for summary by guide, not the show target part
+
 
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
@@ -3906,7 +3942,7 @@ def update_iupac_scomposition_table_cluster(page_current, page_size, sort_by, fi
     # dff.drop(dff.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
     del dff['Correct Guide']
     #dff['Annotation Type'] = annotation_type
-
+    del dff['Variant Unique']
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
 
@@ -3940,7 +3976,7 @@ def update_iupac_scomposition_table_cluster(page_current, page_size, sort_by, fi
             summarized_sample_cell = dict()
             for s in row['Samples'].split(','):
                 if s == 'n':
-                    break
+                    raise PreventUpdate     #If a target have n, it means it's REF, because either all have samples or the single target is REF
                 try:
                     summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] += 1
                 except:
