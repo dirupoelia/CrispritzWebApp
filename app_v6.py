@@ -1413,7 +1413,10 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         )
         fl.append(html.Br())
         df = pd.read_pickle(job_directory + job_id + '.summary_by_guide.' + guide + '.txt')
-        df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | ((df['Targets in Reference'] == 0) & (df['Targets in Enriched'] == 0))  ].index, inplace = True)
+        try: #For VAR and BOTH
+            df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | ((df['Targets in Reference'] == 0) & (df['Targets in Enriched'] == 0))  ].index, inplace = True)
+        except:
+            df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | ((df['Targets in Reference'] == 0))  ].index, inplace = True)
         more_info_col = []
         total_col = []
         for i in range(df.shape[0]):
@@ -2424,9 +2427,15 @@ def resultPage(job_id):
         acfd = [float(a.split('\t')[1]) for a in all_scores if a not in list_error_guides]
         doench = [int(a.split('\t')[2]) for a in all_scores if a not in list_error_guides]
         acfd  = [int(round((100/(100 + x))*100)) for x in acfd]
-        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets (Reference - Enriched)', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
+        if genome_type == 'ref':
+            columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets Reference', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}]
+        else:
+            columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets (Reference - Enriched)', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
     else:
-        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'On-Targets in Reference', 'id' : 'Total On-Targets in Reference', 'type':'numeric'}, {'name':'On-Targets in Enriched', 'id' : 'Total On-Targets in Enriched', 'type':'numeric'}, {'name':'Off-Targets in Reference', 'id' : 'Total Off-Targets in Reference', 'type':'numeric'}, {'name':'Off-Targets in Enriched', 'id' : 'Total Off-Targets in Enriched', 'type':'numeric'}]
+        if genome_type == 'ref':
+            columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'On-Targets Reference', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}]
+        else:
+            columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'On-Targets (Reference - Enriched)', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
 
     
     # col_targetfor = 'Targets for '
@@ -2611,29 +2620,31 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
 
     #Get target counting from summary by guide
     column_on_target = []
-    column_on_target_enriched = []
     column_off_target_ref = []
     column_off_target_enriched = []
     column_sep_by_mm_value = []
     column_sep_by_mm_value_enriched = []
     for g in guides:
-        zero_to_n_mms = []
-        zero_to_n_mms_onlySNP = []
+        one_to_n_mms = []
+        one_to_n_mms_onlySNP = []
         df_profile = pd.read_pickle('Results/' + job_id + '/' + job_id + '.summary_by_guide.' + g + '.txt')
         on_t_ref = int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Reference'])
-        on_t_enr = int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Enriched'])
-        column_on_target.append(str(on_t_ref + on_t_enr) + ' (' + str(on_t_ref) + ' - ' + str(on_t_enr) + ')')
-        column_on_target_enriched.append('n')
-        # column_on_target.append(int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Reference']))
-        # column_on_target_enriched.append(int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Enriched']))
+        try: #For VAR or BOTH, read enriched values
+            on_t_enr = int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Enriched']) 
+            column_on_target.append(str(on_t_ref + on_t_enr) + ' (' + str(on_t_ref) + ' - ' + str(on_t_enr) + ')')
+        except: #For REF, read only reference values
+            column_on_target.append(str(on_t_ref))
         
-        for i in range (mms + 1 + int(max_bulges)):         #For column Targets for 0-1-2 Total (Mismatches + Bulges), sum values for row with same total
-            zero_to_n_mms.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Targets in Reference'].to_list())) 
-            zero_to_n_mms_onlySNP.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Targets in Enriched'].to_list())) 
-        column_sep_by_mm_value.append(' - '.join(str(int(x)) for x in zero_to_n_mms))
-        column_sep_by_mm_value_enriched.append(' - '.join(str(int(x)) for x in zero_to_n_mms_onlySNP))
-        column_off_target_enriched.append(str(int(sum(zero_to_n_mms_onlySNP[1:]))) + ' (' + column_sep_by_mm_value_enriched[-1] + ')')
-        column_off_target_ref.append(str(int(sum(zero_to_n_mms[1:]))) + ' (' + column_sep_by_mm_value[-1] + ')')
+        for i in range (1, mms + 1 + int(max_bulges)):         #For column Targets for 1-2 Total (Mismatches + Bulges), sum values for row with same total
+            one_to_n_mms.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Targets in Reference'].to_list()))
+            try:    #For VAR and BOTH
+                one_to_n_mms_onlySNP.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Targets in Enriched'].to_list())) 
+            except: #For REF
+                pass
+        column_sep_by_mm_value.append(' - '.join(str(int(x)) for x in one_to_n_mms))
+        column_sep_by_mm_value_enriched.append(' - '.join(str(int(x)) for x in one_to_n_mms_onlySNP))
+        column_off_target_enriched.append(str(int(sum(one_to_n_mms_onlySNP[1:]))) + ' (' + column_sep_by_mm_value_enriched[-1] + ')')
+        column_off_target_ref.append(str(int(sum(one_to_n_mms[1:]))) + ' (' + column_sep_by_mm_value[-1] + ')')
 
     # #NOTE TEMPORANEO USO IL CONTEGGIO PRESO DA jobid.general_target_count.txt
     # with open('Results/' + job_id + '/' + job_id + '.general_target_count.txt') as general_count:
@@ -2652,9 +2663,9 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
 
     # #NOTE FINE TEST TEMPORANEO
     if 'NO SCORES' not in all_scores:
-        data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On-Targets in Reference':column_on_target, 'Total On-Targets in Enriched':column_on_target_enriched, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched,'col_targetfor': column_sep_by_mm_value}
+        data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On-Targets in Reference':column_on_target, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched,'col_targetfor': column_sep_by_mm_value}
     else:
-        data_guides = {'Guide': guides, 'Total On-Targets in Reference':column_on_target, 'Total On-Targets in Enriched':column_on_target_enriched, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched, 'col_targetfor': column_sep_by_mm_value}
+        data_guides = {'Guide': guides, 'Total On-Targets in Reference':column_on_target, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched, 'col_targetfor': column_sep_by_mm_value}
 
     dff = pd.DataFrame(data_guides)
     
@@ -2821,17 +2832,21 @@ def guidePagev3(job_id, hash):
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
         
     genome_type = 'ref'
+    style_hide_reference = {'display':'none'}
+    value_hide_reference = []
     if '+' in genome_type_f:
         genome_type = 'var'
     if 'True' in ref_comp:
         genome_type = 'both'
+        style_hide_reference = {}
+        value_hide_reference = ['hide-ref']
     final_list = []
     final_list.append(html.H3('Selected Guide: ' + guide + add_header))
     final_list.append(
         html.P(
             [
                         'List of Targets found for the selected guide.', # 'Select a row to view the target IUPAC character scomposition. The rows highlighted in red indicates that the target was found only in the genome with variants.',
-                        dcc.Checklist(options = [{'label': 'Hide Reference Targets', 'value': 'hide-ref'}], id='hide-reference-targets', value = ['hide-ref']),
+                        dcc.Checklist(options = [{'label': 'Hide Reference Targets', 'value': 'hide-ref'}], id='hide-reference-targets', value = value_hide_reference, style = style_hide_reference),
                         html.Div(
                             [   
                                 html.P('Generating download link, Please wait...', id = 'download-link-sumbyguide'), 
@@ -2996,7 +3011,11 @@ def update_table_subset(page_current, page_size, sort_by, filter, hide_reference
     if 'hide-ref' in hide_reference:
         dff.drop( df[(df['Samples'] == 'n')].index, inplace = True)
     
-    del dff['Variant Unique']
+    try:    #For VAR and BOTH
+        del dff['Variant Unique']
+    except: #For REF
+        pass
+
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)
         if col_name == 'Samples Summary':
@@ -3584,10 +3603,14 @@ def clusterPage(job_id, hash):
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
         
     genome_type = 'ref'
+    style_hide_reference = {'display':'none'}
+    value_hide_reference = []
     if '+' in genome_type_f:
         genome_type = 'var'
     if 'True' in ref_comp:
         genome_type = 'both'
+        style_hide_reference = {}
+        value_hide_reference = ['hide-ref']
     final_list = []
     final_list.append(
         html.H3('Selected Position: ' + chromosome + ' - ' + position)
@@ -3595,7 +3618,7 @@ def clusterPage(job_id, hash):
     final_list.append(html.P(
         [
             'List of Targets found for the selected position. If a target has one or more IUPAC characters, the table \"IUPAC Scomposition\" lists the possible real sequences along with the corresponding samples list.', # The rows highlighted in red indicates that the target was found only in the genome with variants.',
-            dcc.Checklist(options = [{'label': 'Hide Reference Targets', 'value': 'hide-ref'}], id='hide-reference-targets', value = ['hide-ref']),
+            dcc.Checklist(options = [{'label': 'Hide Reference Targets', 'value': 'hide-ref'}], id='hide-reference-targets', value = value_hide_reference, style = style_hide_reference),
             html.Div(
                 [   
                     html.P('Generating download link, Please wait...', id = 'download-link-sumbyposition'), 
@@ -3828,22 +3851,22 @@ def update_table_cluster(page_current, page_size, sort_by, filter, hide_referenc
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide',16:'Annotation Type', 17:'Top Subcluster'} , inplace = True)
 
-    add_samples = [dff['Samples'][0]] * dff.shape[0]
-    check_minmms = dff['Min Mismatches']
-    if dff['Variant Unique'][0] != 'y' and dff['PAM Creation'][0] == 'n':
-        for pos_minmms, minmms in enumerate(check_minmms):
-            if minmms == '-':
-                add_samples[pos_minmms] = 'n'
-    dff['Samples'] = add_samples
+    if genome_type != 'ref':
+        add_samples = [dff['Samples'][0]] * dff.shape[0]
+        check_minmms = dff['Min Mismatches']
+        if dff['Variant Unique'][0] != 'y' and dff['PAM Creation'][0] == 'n':
+            for pos_minmms, minmms in enumerate(check_minmms):
+                if minmms == '-':
+                    add_samples[pos_minmms] = 'n'
+        dff['Samples'] = add_samples
+        del dff['Variant Unique']
+        dff.drop(dff.head(1).index, inplace=True)       #Remove first target, that is the top1 with no iupac (lowest mm of scomposed target) and is 
+                                                    #needed only for summary by guide, not the show target part
     dff['Annotation Type'] = dff['Annotation Type'][0]
     del dff['Correct Guide']
-    del dff['Variant Unique']
+    
     if 'hide-ref' in hide_reference:
         dff.drop( dff[(dff['Samples'] == 'n')].index, inplace = True)
-
-    dff.drop(dff.head(1).index, inplace=True)       #Remove first target, that is the top1 with no iupac (lowest mm of scomposed target) and is 
-                                                    #needed only for summary by guide, not the show target part
-
 
     for filter_part in filtering_expressions:
         col_name, operator, filter_value = split_filter_part(filter_part)

@@ -153,30 +153,31 @@ with open(sys.argv[1]) as targets:
 
                 tab_summary =tab_summary.append({'Guide': guide, 'Bulge Type': 'X', 'Bulge Size': 0, 'Mismatches': m, 'Targets in Reference': guide_dict[guide][0][m][0], 'Targets in Enriched':guide_dict[guide][3][m][0], 'PAM Creation':count_creation[guide][0][m][0] }, ignore_index = True)
             tab_summary.to_pickle(sys.argv[6] + '.summary_by_guide.' + guide +'.txt')
-    else:   #TODO sistemare aggiungendo caso in cui ho F
+    else:       #REF search case
         for line in targets:
+            
             if '#' in line:
                 continue
             line = line.strip().split('\t')
-
             #Summary by position
-            if current_cluster == line[3] + ' ' + line[5]:
+            if current_cluster == line[1].replace('-','') + line[3] + ' ' + line[5]:
                 mms_current_line = int(line[7])
                 bulge_current_line = int(line[8])
                 guide_d_cluster[line[1].replace('-','')][-1].count[bulge_current_line][mms_current_line] += 1 
-            else:       #New Cluster
+            else:   #New cluster
                 sub_cluster_visited = []
-                guide_d_cluster[line[1].replace('-','')].append(Cluster(line[3] + '\t' + line[5] + '\t' + line[2] + '\t' + line[7] + '\t' + line[8], [[0 for i in range (mms + 1)] for i in range (bulge + 1)] ))    
-                current_cluster = line[3] + ' ' + line[5]
+                #Save info for summary by position page
+                guide_d_cluster[line[1].replace('-','')].append(Cluster(line[3] + '\t' + line[5] + '\t' + line[2] + '\t' + line[7] + '\t' + line[8], [[0 for i in range (mms + 1)] for i in range (bulge + 1)] ))  
+                current_cluster = line[1].replace('-','') +line[3] + ' ' + line[5]
                 mms_current_line = int(line[7])
                 bulge_current_line = int(line[8])
-                guide_d_cluster[line[1].replace('-','')][-1].count[bulge_current_line][mms_current_line] += 1    
-            
+                guide_d_cluster[line[1].replace('-','')][-1].count[bulge_current_line][mms_current_line] += 1 
                 #Summary by guide
                 if line[0]+line[7]+line[8] not in sub_cluster_visited:
                     sub_cluster_visited.append(line[0]+line[7]+line[8])
+
                     if line[0] == 'X':
-                        guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1
+                        guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
                     elif line[0] == 'DNA':
                         guide_dict[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1
                     else:

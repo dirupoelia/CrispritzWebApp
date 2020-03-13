@@ -77,7 +77,7 @@ if [ ${19} = 'ref' ]; then
 
     echo 'Start Scoring'
     echo 'Calculating Scores... Step [2/3]' >>  output.txt
-    python3 ../../PostProcess/scores_guide_table.py $jobid.top_1.txt ../../$used_genome_dir pam.txt guides.txt
+    python3 ../../PostProcess/scores_guide_table.py $jobid.top_1.txt ../../$3 pam.txt guides.txt
     echo 'End Scoring'
 
     echo 'Start summary by pos-guide'
