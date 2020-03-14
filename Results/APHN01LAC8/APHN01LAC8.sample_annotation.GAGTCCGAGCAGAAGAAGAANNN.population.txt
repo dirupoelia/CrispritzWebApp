@@ -1,0 +1,189 @@
+-Summary_Total
+targets	1	1	2	111	1792	15874	0	0	0	0
+CTCF	0	0	0	0	0	15	0	0	0	0
+dnasei	0	0	1	13	129	1077	0	0	0	0
+exon	0	0	0	4	63	581	0	0	0	0
+intron	1	1	1	34	601	5024	0	0	0	0
+promoter	0	0	2	30	367	3143	0	0	0	0
+-Summary_MXL
+targets	0	0	0	16	123	987	0	0	0	0
+CTCF	0	0	0	0	0	2	0	0	0	0
+dnasei	0	0	0	3	8	82	0	0	0	0
+exon	0	0	0	1	2	29	0	0	0	0
+intron	0	0	0	6	43	314	0	0	0	0
+promoter	0	0	0	11	24	193	0	0	0	0
+-Summary_FIN
+targets	0	0	0	10	101	831	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	0	2	66	0	0	0	0
+exon	0	0	0	1	4	28	0	0	0	0
+intron	0	0	0	5	38	263	0	0	0	0
+promoter	0	0	0	11	34	137	0	0	0	0
+-Summary_ESN
+targets	0	0	1	16	197	1528	0	0	0	0
+CTCF	0	0	0	0	0	2	0	0	0	0
+dnasei	0	0	1	1	13	113	0	0	0	0
+exon	0	0	0	1	4	66	0	0	0	0
+intron	0	0	0	10	72	522	0	0	0	0
+promoter	0	0	2	4	32	335	0	0	0	0
+-Summary_LWK
+targets	0	0	1	17	200	1615	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	1	2	18	130	0	0	0	0
+exon	0	0	0	1	4	64	0	0	0	0
+intron	0	0	0	8	72	533	0	0	0	0
+promoter	0	0	2	6	37	384	0	0	0	0
+-Summary_ASW
+targets	0	0	1	13	167	1505	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	1	1	8	120	0	0	0	0
+exon	0	0	0	1	1	66	0	0	0	0
+intron	0	0	0	7	60	502	0	0	0	0
+promoter	0	0	2	4	32	333	0	0	0	0
+-Summary_ITU
+targets	0	0	0	11	124	1023	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	1	8	73	0	0	0	0
+exon	0	0	0	1	1	30	0	0	0	0
+intron	0	0	0	6	38	314	0	0	0	0
+promoter	0	0	0	2	15	158	0	0	0	0
+-Summary_BEB
+targets	0	0	0	9	120	1052	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	0	0	6	81	0	0	0	0
+exon	0	0	0	1	3	34	0	0	0	0
+intron	0	0	0	7	46	322	0	0	0	0
+promoter	0	0	0	2	20	183	0	0	0	0
+-Summary_JPT
+targets	0	0	1	14	105	812	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	1	2	5	60	0	0	0	0
+exon	0	0	0	1	1	31	0	0	0	0
+intron	0	0	0	6	41	263	0	0	0	0
+promoter	0	0	2	4	23	147	0	0	0	0
+-Summary_PJL
+targets	0	0	0	9	120	1030	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	0	1	6	77	0	0	0	0
+exon	0	0	0	1	2	31	0	0	0	0
+intron	0	0	0	4	40	327	0	0	0	0
+promoter	0	0	0	4	24	168	0	0	0	0
+-Summary_CHB
+targets	0	0	0	12	116	870	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	0	1	6	68	0	0	0	0
+exon	0	0	0	1	4	26	0	0	0	0
+intron	0	0	0	4	41	284	0	0	0	0
+promoter	0	0	0	2	27	153	0	0	0	0
+-Summary_PUR
+targets	0	0	0	14	165	1328	0	0	0	0
+CTCF	0	0	0	0	0	3	0	0	0	0
+dnasei	0	0	0	1	9	99	0	0	0	0
+exon	0	0	0	1	2	54	0	0	0	0
+intron	0	0	0	7	57	438	0	0	0	0
+promoter	0	0	0	2	23	284	0	0	0	0
+-Summary_IBS
+targets	0	0	0	12	140	1058	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	0	1	8	81	0	0	0	0
+exon	0	0	0	1	2	33	0	0	0	0
+intron	0	0	0	6	41	353	0	0	0	0
+promoter	0	0	0	11	30	148	0	0	0	0
+-Summary_GIH
+targets	0	0	0	7	115	1012	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	0	7	73	0	0	0	0
+exon	0	0	0	1	1	31	0	0	0	0
+intron	0	0	0	4	37	318	0	0	0	0
+promoter	0	0	0	2	16	174	0	0	0	0
+-Summary_KHV
+targets	0	0	0	13	109	911	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	0	1	7	66	0	0	0	0
+exon	0	0	0	1	3	26	0	0	0	0
+intron	0	0	0	5	39	288	0	0	0	0
+promoter	0	0	0	2	19	142	0	0	0	0
+-Summary_ACB
+targets	0	0	1	18	203	1624	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	1	2	12	126	0	0	0	0
+exon	0	0	0	2	5	69	0	0	0	0
+intron	0	0	0	8	74	547	0	0	0	0
+promoter	0	0	2	4	41	378	0	0	0	0
+-Summary_PEL
+targets	0	0	1	13	123	988	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	1	2	7	76	0	0	0	0
+exon	0	0	0	1	1	42	0	0	0	0
+intron	0	0	0	6	36	319	0	0	0	0
+promoter	0	0	2	13	28	204	0	0	0	0
+-Summary_CLM
+targets	0	0	1	14	160	1194	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	1	2	10	90	0	0	0	0
+exon	0	0	0	2	2	45	0	0	0	0
+intron	0	0	0	6	53	387	0	0	0	0
+promoter	0	0	2	13	28	251	0	0	0	0
+-Summary_CHS
+targets	0	0	0	12	106	855	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	0	1	6	69	0	0	0	0
+exon	0	0	0	1	4	28	0	0	0	0
+intron	0	0	0	4	38	266	0	0	0	0
+promoter	0	0	0	2	23	142	0	0	0	0
+-Summary_GBR
+targets	0	0	0	9	108	912	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	1	6	72	0	0	0	0
+exon	0	0	0	1	2	27	0	0	0	0
+intron	0	0	0	4	39	303	0	0	0	0
+promoter	0	0	0	2	16	180	0	0	0	0
+-Summary_STU
+targets	0	0	0	12	132	1065	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	2	8	78	0	0	0	0
+exon	0	0	0	1	2	37	0	0	0	0
+intron	0	0	0	5	44	335	0	0	0	0
+promoter	0	0	0	2	20	175	0	0	0	0
+-Summary_TSI
+targets	0	0	0	11	122	1033	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	0	1	6	82	0	0	0	0
+exon	0	0	0	1	3	40	0	0	0	0
+intron	0	0	0	4	45	349	0	0	0	0
+promoter	0	0	0	2	14	194	0	0	0	0
+-Summary_GWD
+targets	0	0	1	15	194	1623	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	1	1	9	126	0	0	0	0
+exon	0	0	0	2	4	73	0	0	0	0
+intron	0	0	0	5	78	537	0	0	0	0
+promoter	0	0	2	6	31	348	0	0	0	0
+-Summary_YRI
+targets	0	0	1	14	189	1568	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	1	1	15	122	0	0	0	0
+exon	0	0	0	1	3	62	0	0	0	0
+intron	0	0	0	4	63	531	0	0	0	0
+promoter	0	0	2	4	26	317	0	0	0	0
+-Summary_CEU
+targets	0	0	0	11	118	933	0	0	0	0
+CTCF	0	0	0	0	0	0	0	0	0	0
+dnasei	0	0	0	1	4	71	0	0	0	0
+exon	0	0	0	1	2	33	0	0	0	0
+intron	0	0	0	5	40	304	0	0	0	0
+promoter	0	0	0	11	25	154	0	0	0	0
+-Summary_MSL
+targets	0	0	1	14	193	1565	0	0	0	0
+CTCF	0	0	0	0	0	3	0	0	0	0
+dnasei	0	0	1	1	9	127	0	0	0	0
+exon	0	0	0	1	1	69	0	0	0	0
+intron	0	0	0	5	70	513	0	0	0	0
+promoter	0	0	2	4	30	349	0	0	0	0
+-Summary_CDX
+targets	0	0	0	14	108	838	0	0	0	0
+CTCF	0	0	0	0	0	1	0	0	0	0
+dnasei	0	0	0	1	6	69	0	0	0	0
+exon	0	0	0	2	3	26	0	0	0	0
+intron	0	0	0	8	38	277	0	0	0	0
+promoter	0	0	0	2	19	161	0	0	0	0
