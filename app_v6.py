@@ -2624,48 +2624,50 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     column_off_target_enriched = []
     column_sep_by_mm_value = []
     column_sep_by_mm_value_enriched = []
-    for g in guides:
-        one_to_n_mms = []
-        one_to_n_mms_onlySNP = []
-        df_profile = pd.read_pickle('Results/' + job_id + '/' + job_id + '.summary_by_guide.' + g + '.txt')
-        on_t_ref = int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Reference'])
-        try: #For VAR or BOTH, read enriched values
-            on_t_enr = int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Enriched']) 
-            column_on_target.append(str(on_t_ref + on_t_enr) + ' (' + str(on_t_ref) + ' - ' + str(on_t_enr) + ')')
-        except: #For REF, read only reference values
-            column_on_target.append(str(on_t_ref))
-        
-        for i in range (1, mms + 1 + int(max_bulges)):         #For column Targets for 1-2 Total (Mismatches + Bulges), sum values for row with same total
-            one_to_n_mms.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Targets in Reference'].to_list()))
-            try:    #For VAR and BOTH
-                one_to_n_mms_onlySNP.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Targets in Enriched'].to_list())) 
-            except: #For REF
-                pass
-        column_sep_by_mm_value.append(' - '.join(str(int(x)) for x in one_to_n_mms))
-        column_sep_by_mm_value_enriched.append(' - '.join(str(int(x)) for x in one_to_n_mms_onlySNP))
-        column_off_target_enriched.append(str(int(sum(one_to_n_mms_onlySNP[1:]))) + ' (' + column_sep_by_mm_value_enriched[-1] + ')')
-        column_off_target_ref.append(str(int(sum(one_to_n_mms[1:]))) + ' (' + column_sep_by_mm_value[-1] + ')')
-
+    if genome_type == 'ref':
+        for g in guides:
+            one_to_n_mms = []
+            one_to_n_mms_onlySNP = []
+            df_profile = pd.read_pickle('Results/' + job_id + '/' + job_id + '.summary_by_guide.' + g + '.txt')
+            on_t_ref = int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Reference'])
+            try: #For VAR or BOTH, read enriched values
+                on_t_enr = int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Enriched']) 
+                column_on_target.append(str(on_t_ref + on_t_enr) + ' (' + str(on_t_ref) + ' - ' + str(on_t_enr) + ')')
+            except: #For REF, read only reference values
+                column_on_target.append(str(on_t_ref))
+            
+            for i in range (1, mms + 1 + int(max_bulges)):         #For column Targets for 1-2 Total (Mismatches + Bulges), sum values for row with same total
+                one_to_n_mms.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Targets in Reference'].to_list()))
+                try:    #For VAR and BOTH
+                    one_to_n_mms_onlySNP.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Targets in Enriched'].to_list())) 
+                except: #For REF
+                    pass
+            column_sep_by_mm_value.append(' - '.join(str(int(x)) for x in one_to_n_mms))
+            column_sep_by_mm_value_enriched.append(' - '.join(str(int(x)) for x in one_to_n_mms_onlySNP))
+            column_off_target_enriched.append(str(int(sum(one_to_n_mms_onlySNP[1:]))) + ' (' + column_sep_by_mm_value_enriched[-1] + ')')
+            column_off_target_ref.append(str(int(sum(one_to_n_mms[1:]))) + ' (' + column_sep_by_mm_value[-1] + ')')
+    else:
     # #NOTE TEMPORANEO USO IL CONTEGGIO PRESO DA jobid.general_target_count.txt
-    # with open('Results/' + job_id + '/' + job_id + '.general_target_count.txt') as general_count:
-    #     header_general = next(general_count) #skip header
-    #     general_count_content = general_count.read().strip().split('\n')
-    #     general_count_content.sort(key = lambda x : x[0])
-    # column_on_target = []
-    # column_off_target_ref = []
-    # column_off_target_enriched = []
-
-    # for tmp in general_count_content:
-    #     tmp = tmp.split('\t')
-    #     column_on_target.append(tmp[1])
-    #     column_off_target_ref.append(tmp[2])
-    #     column_off_target_enriched.append(tmp[3])
+        with open('Results/' + job_id + '/' + job_id + '.general_target_count.txt') as general_count:
+            header_general = next(general_count) #skip header
+            general_count_content = general_count.read().strip().split('\n')
+            general_count_content.sort(key = lambda x : x[0])
+        column_on_target = []
+        column_off_target_ref = []
+        column_off_target_enriched = []
+        guides = []
+        for tmp in general_count_content:
+            tmp = tmp.split('\t')
+            guides.append(tmp[0])
+            column_on_target.append(tmp[1])
+            column_off_target_ref.append(tmp[2])
+            column_off_target_enriched.append(tmp[3])
 
     # #NOTE FINE TEST TEMPORANEO
     if 'NO SCORES' not in all_scores:
-        data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On-Targets in Reference':column_on_target, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched,'col_targetfor': column_sep_by_mm_value}
+        data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On-Targets in Reference':column_on_target, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched}
     else:
-        data_guides = {'Guide': guides, 'Total On-Targets in Reference':column_on_target, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched, 'col_targetfor': column_sep_by_mm_value}
+        data_guides = {'Guide': guides, 'Total On-Targets in Reference':column_on_target, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched}
 
     dff = pd.DataFrame(data_guides)
     
@@ -3001,12 +3003,6 @@ def update_table_subset(page_current, page_size, sort_by, filter, hide_reference
     else:
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide',16:'Annotation Type', 17:'Top Subcluster'} , inplace = True)
-    # sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
-    # sort_by.insert(1, {'column_id' : 'Bulge Size', 'direction': 'asc'})
-    #sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
-    
-    #Remove not top1 subcluster:
-    dff.drop( df[(df['Top Subcluster'] == 's')].index, inplace = True)
 
     if 'hide-ref' in hide_reference:
         dff.drop( df[(df['Samples'] == 'n')].index, inplace = True)
@@ -3862,7 +3858,7 @@ def update_table_cluster(page_current, page_size, sort_by, filter, hide_referenc
         del dff['Variant Unique']
         dff.drop(dff.head(1).index, inplace=True)       #Remove first target, that is the top1 with no iupac (lowest mm of scomposed target) and is 
                                                     #needed only for summary by guide, not the show target part
-    dff['Annotation Type'] = dff['Annotation Type'][0]
+    dff['Annotation Type'] = list(dff['Annotation Type'])[0]
     del dff['Correct Guide']
     
     if 'hide-ref' in hide_reference:

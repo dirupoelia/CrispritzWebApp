@@ -59,59 +59,48 @@ with open(sys.argv[1]) as targets:
                 continue
             line = line.strip().split('\t')
             
-            #Summary by guide
+            if line[0] == 'X':
+                if line[14] != 'n':     #If there are samples, add to enriched count, else add to reference count (SUM BY GUIDE)
+                    guide_dict[line[1].replace('-','')][3][int(line[7])][int(line[8])] += 1
+                else:
+                    guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
+            elif line[0] == 'DNA':
+                if line[14] != 'n':
+                    guide_dict[line[1].replace('-','')][4][int(line[7])][int(line[8])] += 1
+                else:
+                    guide_dict[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1
+            else:
+                if line[14] != 'n':
+                    guide_dict[line[1].replace('-','')][5][int(line[7])][int(line[8])] += 1
+                else:
+                    guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
             if line[1].replace('-','') + line[3] + line[5] != current_scomposition:
                 #New scomposition
-                current_scomposition = line[1].replace('-','') + line[3] + line[5]
-
-                if line[0] == 'X':
-                    if line[14] != 'n':     #If there are samples, add to enriched count, else add to reference count
-                        guide_dict[line[1].replace('-','')][3][int(line[7])][int(line[8])] += 1
-                    else:
-                        guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
-                elif line[0] == 'DNA':
-                    if line[14] != 'n':
-                        guide_dict[line[1].replace('-','')][4][int(line[7])][int(line[8])] += 1
-                    else:
-                        guide_dict[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1
-                else:
-                    if line[14] != 'n':
-                        guide_dict[line[1].replace('-','')][5][int(line[7])][int(line[8])] += 1
-                    else:
-                        guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
-                
-                if line[14] != 'n':         #sample associated, meaning it's an enriched target
+                current_scomposition = line[1].replace('-','') + line[3] + line[5]   
+                if line[14] != 'n':         #sample associated, meaning it's an enriched target (GENERAL TABLE)
                     general_table[line[1].replace('-','')]['var'][int(line[7]) + int(line[8])] += 1
                 else:
                     general_table[line[1].replace('-','')]['ref'][int(line[7]) + int(line[8])] += 1
-                # else:
-                #     #Still in same scomposition
-                #     if line[0] == 'X':
-                #         if line[14] != 'n':     #If there are samples, add to enriched count, else add to reference count
-                #             guide_dict[line[1].replace('-','')][3][int(line[7])][int(line[8])] += 1
-                #         else:
-                #             guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
-                #     elif line[0] == 'DNA':
-                #         if line[14] != 'n':
-                #             guide_dict[line[1].replace('-','')][4][int(line[7])][int(line[8])] += 1
-                #         else:
-                #             guide_dict[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1
-                #     else:
-                #         if line[14] != 'n':
-                #             guide_dict[line[1].replace('-','')][5][int(line[7])][int(line[8])] += 1
-                #         else:
-                #             guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
 
-                #Count pam creation: -> Currently count is done on every line #Count only on first of scomposition
-                if line[12] != 'n':
-                    if line[0] == 'X':
-                        count_creation[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
-                    elif line[0] == 'DNA':
-                        count_creation[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1 
-                    else:
-                        count_creation[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1 
+            #Count pam creation: -> Currently count is done on every line #Count only on first of scomposition
+            if line[12] != 'n':
+                if line[0] == 'X':
+                    count_creation[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
+                elif line[0] == 'DNA':
+                    count_creation[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1 
+                else:
+                    count_creation[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1 
+
+        #Open addToGeneralTable.txt and add to each guide the values of 'ref' semicommon
+        with open (sys.argv[6] + '.addToGeneralTable.txt') as add_values:
+            for ref_semicommon_counts in add_values:
+                ref_semicommon_counts = ref_semicommon_counts.strip().split('\t')   #GUIDE 0total 1total 2total ... 10total
+                for i in range(mms + bulge + 1):
+                    general_table[ref_semicommon_counts[0]]['ref'][i] = general_table[ref_semicommon_counts[0]]['ref'][i] + int(ref_semicommon_counts[i + 1]) 
+
+        #Save results
         with open(sys.argv[6] + '.general_target_count.txt', 'w+') as general_count:
-            count_for = '(' + ' - '.join([str(tot) for tot in range (mms + bulge + 1)]) + ' Mismatches + Bulges)'
+            count_for = '(' + ' - '.join([str(tot) for tot in range (1, mms + bulge + 1)]) + ' Mismatches + Bulges)'
             general_count.write('#Guide\tOn-Targets (Reference - Enriched)\tOff-Targets Reference ' + count_for + '\tOff-Targets Enriched ' + count_for + '\n')
             for guide in guide_dict.keys():
                 tab_summary = pd.DataFrame(columns = ['Guide', 'Bulge Type', 'Bulge Size', 'Mismatches', 'Targets in Reference', 'Targets in Enriched', 'PAM Creation'])

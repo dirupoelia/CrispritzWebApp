@@ -397,22 +397,30 @@ X-Aggiustare clustering per favorire caratteri IUPAC
 -Fixare tutti i sorting e filtering delle dashtable
 
 DA RISOLVERE:
--target con iupac in una categoria (eg X 0 0), che poi scomposti sono di un'altra categoria (X 1 0)
-	-Tengo i target che non rispettano i mms (li coloro di grigio) ma non li conto
-	-Show target sum by guide mostro i target da sample.annotation
-	-Problema -> se uno iupac si scompone in due o più, viene contato una volta ma nello show target ne ho due
--target semicommon che sono in realtà ref:
-	-devo cambiare la sequenza mettendo i caratteri del ref ?
+X-target con iupac in una categoria (eg X 0 0), che poi scomposti sono di un'altra categoria (X 1 0)
+	X-Tengo i target che non rispettano i mms (li coloro di grigio) ma non li conto
+		X-Elimino target che non rispettano mms
+	X-Show target sum by guide mostro i target da sample.annotation
+	X-Problema -> se uno iupac si scompone in due o più, viene contato una volta ma nello show target ne ho due
+X-target semicommon che sono in realtà ref:
+	X-devo cambiare la sequenza mettendo i caratteri del ref ?
 		-problema: top1 non ha sample, ma la sua sequenza ref è diversa nel gap sulla guida -> calcolo mms errato
 		DNA     GAG-TCCGAGCAGAAGAAGAANNN        GAGCYCaRcGaAtAAGAAGAATGG        chr5    1524353 1524353 -       4       1       5
 		DNA     GAGTCC-GAGCAGAAGAAGAANNN        GAGcYCARcGaAtAAGAAGAATGG        chr5    1524353 1524353 -       4       1       5
 		DNA     GAGTCCGA-GCAGAAGAAGAANNN        GAGcYCaRCGaAtAAGAAGAATGG        chr5    1524353 1524353 -       4       1       5
 		DNA     GAGTCCGA-GCAGAAGAAGAANNN        GAGcCCaACGaAtAAGAAGAATGG        chr5    1524353 1524353 -       4       1       5
 	X--> Se non esiste, rimuovo tutti quelli con iupac e tengo solo quelli reference
--scores:
-	-calcolo dove possibile con sequenze caratteri esatti
-	-differenziare tra Reference e Enriched ?
+X-scores:
+	X-calcolo dove possibile con sequenze caratteri esatti
+	X-differenziare tra Reference e Enriched ?
 		-esempio, doench va da 52 a 0 se metto uno SNP 
 	X--> Usare la sequenza in reference per il Doench
+
+	
+13/03
+-Se un target è semicommon, aumento di 1 sia REF che ENR nella tabella generale
+-Nel summary by guide conto e faccio vedere anche i subscomposition
+		-I conti non torneranno tra tabella generale e sum by guide, ma basta spiegare il pechè
+	
 -profile extended non supporta total
 -Parte grafica: al momento solo per genoma umano, ma con vcf personali

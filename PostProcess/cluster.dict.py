@@ -253,14 +253,14 @@ else:
             #if line[3] + ' ' + line[9] != current_chr_pos:
             if line[2] + ' ' + str(line[4]) != current_chr_pos:
                 # total_list[-1].sort(key = lambda x: int(x[8]))
-                total_list[-1].sort(key = lambda x: (x[8], x[6], [alphabet.index(c) for c in x[1]]))   #Order cluster by total and mms #TODO sistemare ordine per favorire caratteri iupac
+                total_list[-1].sort(key = lambda x: (x[8], x[6], [alphabet.index(c) for c in x[1]]))   #Order cluster by total and mms 
                 total_list.append([line])
                 # current_chr_pos = line[3] + ' ' + line[9]
                 current_chr_pos = line[2] + ' ' + str(line[4])
             else:
                 total_list[-1].append(line)     
 
-        total_list[-1].sort(key = lambda x: (x[8], x[6], [alphabet.index(c) for c in x[1]]))       #Order last cluster by total and mms #TODO sistemare ordine per favorire caratteri iupac
+        total_list[-1].sort(key = lambda x: (x[8], x[6], [alphabet.index(c) for c in x[1]]))       #Order last cluster by total and mms 
         total_list.sort(key = lambda x: x[0][8])        #Order all clusters by total of top1
         if 'orderChr' in sys.argv[:]:
             total_list.sort(key = lambda x: x[0][2])    # and then for chr, needed for sample annotation and summary by position

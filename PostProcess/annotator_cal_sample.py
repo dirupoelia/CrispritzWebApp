@@ -368,6 +368,8 @@ cluster_update = open(outputFile + '.cluster.tmp.txt', 'w+')
 cluster_update.write(header + '\n')        #Write header
 save_cluster_targets = True
 remove_iupac = False
+save_total_general_table = False
+add_to_general_table = dict()   #target semicommon da aggiungere alla tab generale delle guide, metto i valori di total presi dal primo target REF nel cluster di un semicommon che esiste
 
 next(inResult)      #Skip header
 for line in inResult:
@@ -379,9 +381,18 @@ for line in inResult:
                 for c in x[2]:
                     if c in iupac_code:
                         break
-                else:
+                else:       #no break triggered
                     cluster_update.write(line.strip() + '\t.\t' + guide_no_bulge + '\t.\n')
                 continue        
+            #Keep the semicommon ref total value to be added to general table
+            if save_total_general_table:
+                for c in x[2]:
+                    if c in iupac_code:
+                        break
+                else: #Found first REF target in cluster of semicommon
+                    add_to_general_table[guide_no_bulge][int(x[mm_pos]) +  int(x[bulge_pos])] += 1
+                    save_total_general_table = False
+                    
             cluster_update.write(line.strip() + '\t.\t' + guide_no_bulge + '\t.\n')  #add Sample (.) GuideNoBulge and Annotation(.). Use (.) to save space
         lines_processed +=1
         if lines_processed % (mod_tot_line) == 0:
@@ -558,6 +569,8 @@ for line in inResult:
         x.append(x[1].replace('-',''))      #Fist target in the cluster that is REF
         tuple_var_ref = []      #Since this is now a REF target, it has no iupac --> needed to save to sample.annotation file
     if target_scomposti_salvare:        #Keep the target with lowest total and mms as representative of the IUPAC target
+        if x[vu_pos] == 'n':                #Save mms of REF of a semicommon
+            save_total_general_table = True
         target_scomposti_salvare.sort(key = lambda x : (int(x[mm_pos + 2]), int(x[mm_pos]))) #Order scomposition by total and mms values
         x[2] = target_scomposti_salvare[0][2]       #Adjust Target sequence, from IUPAC to first of scomposition
         x[mm_pos] = target_scomposti_salvare[0][mm_pos]
@@ -572,6 +585,8 @@ for line in inResult:
         guideDict[guide_no_bulge] = {}
         guideDict[guide_no_bulge]['targets'] = {}
         guideDict[guide_no_bulge]['targets'] = [0]*10
+
+        add_to_general_table[guide_no_bulge] = [0] * 10    # GUIDE -> [ 0 0 0 0 0 ...] valori per total (mms + bulge)
 
         count_unique_for_guide[guide_no_bulge] = dict()                 #NOTE count_unique means that the target have at least 1 sample
         count_unique_for_guide[guide_no_bulge]['targets'] = [0]*10
@@ -665,7 +680,7 @@ for line in inResult:
         #outFileTargets.write(line.rstrip() + '\t' + ','.join(string_annotation) + '\n')
 
     #Save union samples + annotation
-    # outFileSampleAll.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')   #TODO modificare per salvare con il mms minimo delle sue scomposizioni?
+    # outFileSampleAll.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')  
 
     #Save cluster
     # cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')
@@ -877,6 +892,10 @@ with open( 'acfd.txt', 'w+') as res, open(sys.argv[8], 'r') as guides:
                 guides_dict_doench[g] =  int(max(doench_score))
         res.write(g + '\t' + str(guides_dict[g]) + '\t' + str(guides_dict_doench[g]) + '\n')
 
+#Save additional values from semicommon for general guide table
+with open(outputFile + '.addToGeneralTable.txt', 'w+') as add_file:
+    for guide in add_to_general_table:
+        add_file.write(guide + '\t' + '\t'.join([str(x) for x in add_to_general_table[guide]]) + '\n')
 
 
 
