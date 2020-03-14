@@ -37,9 +37,9 @@ La pagina principale si trova su:
 ```
 Esempio di pagina wait job:
 ```
-127.0.0.1:8050/load?job=QVFHZMMBRA
+127.0.0.1:8050/load?job=APHN01LAC8
 ```
 Esempio di result summary:
 ```
-127.0.0.1:8050/result?job=QVFHZMMBRA
+127.0.0.1:8050/result?job=APHN01LAC8
 ```
