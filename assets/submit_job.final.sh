@@ -130,73 +130,52 @@ elif [ ${19} = 'var' ]; then
     echo 'PostProcess\tStart\t'$(date) >> log.txt
     echo 'Start cluster var'
     echo 'PostProcess_output' > output.txt
-    echo 'Clustering... Step [1/5]' >>  output.txt
-    python3 ../../PostProcess/cluster.dict.py $jobid.targets.txt 'no' 'True' 'False' guides.txt # > $jobid.targets.cluster.txt
-    echo 'End cluster var'
-
-    echo 'Start extraction top1 var'
-    python3 ../../PostProcess/extract_top.py $jobid.targets.cluster.txt $jobid  # > $jobid.top_1.txt
-    echo 'End extraction top1 var'
-
-    echo 'Start Scoring'
-    echo 'Calculating Scores... Step [2/5]' >>  output.txt
-    python3 ../../PostProcess/scores_guide_table.py $jobid.top_1.txt ../../$used_genome_dir pam.txt guides.txt
-    echo 'End Scoring'
-
-    type_post='No'
-    python3 ../../PostProcess/summary_by_guide_position.py $jobid.targets.cluster.txt $7 $8 $9 guides.txt $jobid $type_post
-
+ 
     echo 'Start pam analysis'
-    echo 'PAM Analysis... Step [3/5]' >>  output.txt
-    python3 ../../PostProcess/pam_analysis.py $jobid.targets.cluster.txt pam.txt ${19}
+    echo 'PAM Analysis... Step [1/4]' >>  output.txt
+    python3 ../../PostProcess/pam_analysis.py $jobid.targets.txt pam.txt 'both'     # 'both' to add PAM creation and Var Unique column -> set to n
+                # > $jobid.targets.minmaxdisr.txt
     echo 'End pam analysis'
-    
-    # Extract top 1
-    echo 'Start extract top1'
-    
-    echo 'Extracting Samples and Annotation... (This operation has a long execution time, Please Wait) Step [4/5]' >>  output.txt
-    python3 ../../PostProcess/extract_top.py $jobid.targets.cluster.minmaxdisr.txt $jobid # > $jobid.top_1.txt
 
-    awk '{guide=$2;gsub("-","",guide); print $0"\t"guide}' $jobid.targets.cluster.minmaxdisr.txt > tmp_add_guide && mv tmp_add_guide $jobid.targets.cluster.minmaxdisr.txt  #add real guide column for show targets on sum by pos
+    echo 'Clustering... Step [2/4]' >>  output.txt
+    python3 ../../PostProcess/cluster.dict.py $jobid.targets.minmaxdisr.txt 'no' 'True' 'False' guides.txt 'total' 'orderChr' # > $jobid.targets.minmaxdisr.cluster.txt 
+    echo 'End cluster var'
     
-    echo 'End extract top1'
-    # Expand top 1
-    echo 'Start sort'
-    sort -k4,4 $jobid.top_1.txt > $jobid.top_1.sort.txt && mv $jobid.top_1.sort.txt $jobid.top_1.txt 
-    echo 'End sort'
+    echo 'Extracting Samples and Annotation... (This operation has a long execution time, Please Wait) Step [3/4]' >>  output.txt
+    echo 'Start calc samples and annotation and scores'
     echo 'Annotation\tStart\t'$(date) >> log.txt
-    echo 'Start calc samples and annotation'
-    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.top_1.txt $jobid ../../../dictionaries pam.txt $7 #> $jobid.samples.all.annotation.txt $jobid.samples.annotation.txt  with header
-                                                                                                                # > $jobid.Annotation.summary.txt
-                                                                                                                # > $jobid.sample_annotation.GUIDE.sample.txt
-                                                                                                                # > $jobid.sumref.Annotation.summary.txt
-    #python3 ../../PostProcess/calc_samples_faster.py ../../../dictionaries $jobid.top_1.txt   #> $jobid.top_1.samples.txt $jobid.top_1.samples.all.txt
+    python3 ../../PostProcess/annotator_for_onlyvar.py ../../${18} $jobid.targets.minmaxdisr.cluster.txt $jobid ../../../dictionaries pam.txt $7 ../../$2 guides.txt
+        # > $jobid.samples.all.annotation.txt with header AGGIORNAMENTO 11/03 QUESTO FILE NON VIENE CREATO 
+        # > $jobid.samples.annotation.txt  with header AGGIORNAMENTO 11/03 Contiene top1 scomposti e top1 reference (usato per sum guide e show target guide, sample)
+        # > $jobid.Annotation.summary.txt
+        # > $jobid.sample_annotation.GUIDE.sample.txt
+        # > $jobid.sumref.Annotation.summary.txt
+        # > $jobid.cluster.tmp.txt AGGIORNAMENTO Top1 sostituito col min mms scomposto, il resto del cluster ha ancora IUPAC
+        # > acfd.txt
+    mv $jobid.cluster.tmp.txt $jobid.total.cluster.txt   #Now has sample and annotation (for top1, for other only blank column)
+
+    echo 'End calc samples and annotation and scores'
     echo 'Annotation\tDone\t'$(date) >> log.txt
-    echo 'End calc samples'
     
-    #Put right header into top_1.samples.all.txt
-    #sed -i '1 i\#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPam_disr\tSamples\tReal Guide' $jobid.top_1.samples.all.txt
-    
-    # Summary by samples table
+    echo 'Creating Summaries... Step [4/4]' >>  output.txt
+    #Summary guide, pos #NOTE the script automatically counts only for top subclusters
+    echo 'Start summary by guide and position'  #NOTE summary by guide will be overwritten
+    python3 ../../PostProcess/summary_by_guide_position.py $jobid.total.cluster.txt $7 $8 $9 guides.txt $jobid 'Uniq'  
+    echo 'End summary by guide and position' 
+
+
+    #Summary guide
+    echo 'Start summary by guide'  
+    python3 ../../PostProcess/summary_by_guide.py $jobid.samples.annotation.txt $7 $8 $9 guides.txt $jobid 'no'
+    echo 'End summary by guide'
+
+    #Summary samples
     echo 'Start summary by samples'
-    echo 'Creating Summaries... Step [5/5]' >>  output.txt
-    python3 ../../PostProcess/summary_by_samples.py $jobid.samples.all.annotation.txt $jobid ${19} guides.txt
-    #python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt
+    python3 ../../PostProcess/summary_by_samples.py $jobid.samples.annotation.txt $jobid 'both' guides.txt
+    #python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt 
     echo 'End summary by samples'
 
-    #Rimettere i samples nel file di cluster (solo nel top1)
-    #echo 'Start creating final file'
-    #echo 'Preparing Files... Step [6/6]' >>  output.txt
-    #python3 ../../PostProcess/reassign_sample_to_cluster.py $jobid.targets.cluster.minmaxdisr.txt $jobid.top_1.samples.txt $jobid # > $jobid.final.txt
-    #final.txt = $jobid.samples.all.annotation.txt (for samples and annotation) + $jobid.targets.cluster.minmaxdisr.txt (for cluster targets)
-    #echo 'End creating final file'
     echo 'PostProcess\tDone\t'$(date) >> log.txt
-
-    #Annotation of top1 with samples
-    
-    #crispritz.py annotate-results $jobid.top_1.samples.all.txt ../../${18} $jobid >> output.txt # > $jobid.Annotation.targets.txt $jobid.Annotation.summary.txt
-                                                                                # $jobid.sample_annotation.guide.sample.txt $jobid..sumref.Annotation.summary.txt
-    
 
     #Start generate report
     echo 'Report\tStart\t'$(date) >> log.txt
@@ -218,6 +197,8 @@ elif [ ${19} = 'var' ]; then
                     printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % crispritz.py generate-report $line -mm % -annotation $jobid'.Annotation.summary.txt' -extprofile *.extended_profile.xls -ws
                 fi
             fi
+            #Generate Population Distributions
+            printf %s\\n $(seq 0 $total) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/populations_distribution.py $jobid.sample_annotation.$line.superpopulation.txt %
             echo $line >> output.txt
         done < guides.txt
         mkdir ../../assets/Img/$jobid

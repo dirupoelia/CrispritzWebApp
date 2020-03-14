@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-Merge of annotator, calc_samples_faster.py and scores
+Merge of annotator, calc_samples_faster.py and scores. ONLY FOR VAR SEARCH since no distinction between semicommon etc
 Prende in input il file dei top1, ordinati per chr, e estrae i samples corrispondenti. Per ogni target, salva l'insieme dei sample in samples.all.txt, crea le combinazioni tenendo i target reali
 in samples.txt, poi calcola l'annotazione corrispondente e crea il file Annotation.targets e  i vari summaries.
 '''
@@ -291,7 +291,6 @@ count_superpop = dict()
 #Create -Summary_total for a file ref.Annotation.summary.txt from the y and n values of Var_uniq column
 summary_barplot_from_total = False
 if 'Var_uniq' in header:
-    summary_barplot_from_total = True
     vu_pos = header_list.index('Var_uniq')
 count_unique = dict()
 count_unique['targets'] = [0]*10
@@ -421,7 +420,7 @@ for line in inResult:
                                 else:
                                     bedfile.write(x[3] + '\t' + str(int(x[4]) - 3 ) + '\t' + str(int(x[4]) + 23 + 4 ))
                             #Extract sequence from REFERENCE
-                            extr = subprocess.Popen(['bedtools getfasta -fi ' + refgenomedir + '/' + x[3] +'.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
+                            extr = subprocess.Popen(['bedtools getfasta -fi ' + refgenomedir + '/' + x[3] +'.enriched.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
                             extr.wait()
                             out, err = extr.communicate()
                             out = out.decode('UTF-8')
@@ -573,9 +572,9 @@ for line in inResult:
             target_scomposti_salvare.append(final_result)
     if false_targets >= len(target_combination):        #If all the scomposed targets have no sample or do not respect PAM/mm threasold, the iupac target does not really exist
         line = line.strip().split('\t')
-        if line[vu_pos] == 'y':         #Do not do annotation because target does not exists, and do not save his cluster
-            save_cluster_targets = False
-            continue    #DO NOT save this target because no ref homologous and no sample combination exists
+                 #Do not do annotation because target does not exists, and do not save his cluster
+        save_cluster_targets = False
+        continue    #DO NOT save this target because no ref homologous and no sample combination exists
         #target does not exists in enriched, but exists in reference (semi_common), so keep only the reference targets (from his cluster)
         # if line[6] == '-':
         #     reference_semicommon = list(x[2][::-1])
@@ -613,8 +612,6 @@ for line in inResult:
         x.append(x[1].replace('-',''))      #Fist target in the cluster that is REF
         tuple_var_ref = []      #Since this is now a REF target, it has no iupac --> needed to save to sample.annotation file
     if target_scomposti_salvare:        #Keep the target with lowest total and mms as representative of the IUPAC target
-        if x[vu_pos] == 'n':                #Save mms of REF of a semicommon
-            save_total_general_table = True
         target_scomposti_salvare.sort(key = lambda x : (int(x[mm_pos + 2]), int(x[mm_pos]))) #Order scomposition by total and mms values
         x[2] = target_scomposti_salvare[0][2]       #Adjust Target sequence, from IUPAC to first of scomposition
         x[mm_pos] = target_scomposti_salvare[0][mm_pos]
@@ -755,7 +752,7 @@ for line in inResult:
                         else:
                             bedfile.write(t[3] + '\t' + str(int(t[4]) - 3 ) + '\t' + str(int(t[4]) + 23 + 4 ))
                         
-                    extr = subprocess.Popen(['bedtools getfasta -fi ' + refgenomedir + '/' + t[3] +'.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
+                    extr = subprocess.Popen(['bedtools getfasta -fi ' + refgenomedir + '/' + t[3] +'.enriched.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
                     extr.wait()
                     out, err = extr.communicate()
                     out = out.decode('UTF-8')
@@ -786,7 +783,7 @@ for line in inResult:
                     else:
                         bedfile.write(x[3] + '\t' + str(int(x[4]) - 3 ) + '\t' + str(int(x[4]) + 23 + 4 ))
                 #Extract sequence from REFERENCE
-                extr = subprocess.Popen(['bedtools getfasta -fi ' + refgenomedir + '/' + x[3] +'.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
+                extr = subprocess.Popen(['bedtools getfasta -fi ' + refgenomedir + '/' + x[3] +'.enriched.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
                 extr.wait()
                 out, err = extr.communicate()
                 out = out.decode('UTF-8')

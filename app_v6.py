@@ -1413,9 +1413,12 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         )
         fl.append(html.Br())
         df = pd.read_pickle(job_directory + job_id + '.summary_by_guide.' + guide + '.txt')
-        try: #For VAR and BOTH
+        if genome_type == 'both':
             df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | ((df['Targets in Reference'] == 0) & (df['Targets in Enriched'] == 0))  ].index, inplace = True)
-        except:
+        elif genome_type == 'var': 
+            df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | ((df['Targets in Enriched'] == 0))  ].index, inplace = True)
+            del df['Targets in Reference']
+        else:
             df.drop( df[(df['Bulge Size'] == 0) & ((df['Bulge Type'] == 'DNA') | ((df['Bulge Type'] == 'RNA'))) | ((df['Targets in Reference'] == 0))  ].index, inplace = True)
         more_info_col = []
         total_col = []
@@ -1424,7 +1427,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
             total_col.append(df['Bulge Size'])
         df[''] = more_info_col
         df['Total'] = df['Bulge Size'] + df['Mismatches']
-        if genome_type == 'both':
+        if genome_type == 'both' and genome_type == 'var':
             df = df.sort_values(['Total', 'Targets in Enriched'], ascending = [True, False])
         else:
             df = df.sort_values('Total', ascending = True)
@@ -1445,9 +1448,10 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
             df = df.sort_values('Targets in Enriched', ascending = False)
             df.drop(['Targets in Reference'], axis = 1, inplace = True)
         else:
-            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation']
+            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation']
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
-            df = df.sort_values('Targets in Reference', ascending = False)
+            df = df.sort_values('Targets in Enriched', ascending = False)
+            df.drop(['Targets in Reference'], axis = 1, inplace = True)
         more_info_col = []
         for i in range(df.shape[0]):
             more_info_col.append('Show Targets')
@@ -2429,13 +2433,17 @@ def resultPage(job_id):
         acfd  = [int(round((100/(100 + x))*100)) for x in acfd]
         if genome_type == 'ref':
             columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets Reference', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}]
-        else:
+        elif genome_type == 'both':
             columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets (Reference - Enriched)', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
+        else:
+            columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets Enriched', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
     else:
         if genome_type == 'ref':
             columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'On-Targets Reference', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}]
-        else:
+        elif genome_type == 'both':
             columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'On-Targets (Reference - Enriched)', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
+        else:
+            columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'On-Targets Enriched', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
 
     
     # col_targetfor = 'Targets for '
@@ -2624,15 +2632,16 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     column_off_target_enriched = []
     column_sep_by_mm_value = []
     column_sep_by_mm_value_enriched = []
-    if genome_type == 'ref':
+    if genome_type == 'ref' or genome_type == 'var':
         for g in guides:
             one_to_n_mms = []
             one_to_n_mms_onlySNP = []
             df_profile = pd.read_pickle('Results/' + job_id + '/' + job_id + '.summary_by_guide.' + g + '.txt')
             on_t_ref = int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Reference'])
-            try: #For VAR or BOTH, read enriched values
+            try: #For VAR, read enriched values
                 on_t_enr = int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Enriched']) 
-                column_on_target.append(str(on_t_ref + on_t_enr) + ' (' + str(on_t_ref) + ' - ' + str(on_t_enr) + ')')
+                # column_on_target.append(str(on_t_ref + on_t_enr) + ' (' + str(on_t_ref) + ' - ' + str(on_t_enr) + ')')
+                column_on_target.append(str(on_t_enr))
             except: #For REF, read only reference values
                 column_on_target.append(str(on_t_ref))
             
@@ -2647,7 +2656,7 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
             column_off_target_enriched.append(str(int(sum(one_to_n_mms_onlySNP[1:]))) + ' (' + column_sep_by_mm_value_enriched[-1] + ')')
             column_off_target_ref.append(str(int(sum(one_to_n_mms[1:]))) + ' (' + column_sep_by_mm_value[-1] + ')')
     else:
-    # #NOTE TEMPORANEO USO IL CONTEGGIO PRESO DA jobid.general_target_count.txt
+    # #NOTE  USO IL CONTEGGIO PRESO DA jobid.general_target_count.txt
         with open('Results/' + job_id + '/' + job_id + '.general_target_count.txt') as general_count:
             header_general = next(general_count) #skip header
             general_count_content = general_count.read().strip().split('\n')
@@ -2662,8 +2671,8 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
             column_on_target.append(tmp[1])
             column_off_target_ref.append(tmp[2])
             column_off_target_enriched.append(tmp[3])
+    # #NOTE FINE 
 
-    # #NOTE FINE TEST TEMPORANEO
     if 'NO SCORES' not in all_scores:
         data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On-Targets in Reference':column_on_target, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched}
     else:
@@ -2674,7 +2683,7 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     if 'NO SCORES' not in all_scores:
         dff = dff.sort_values(['CFD', 'Doench 2016'], ascending = [False, False])
     else:
-        dff = dff.sort_values('Total Off-Targets', ascending = False)
+        dff = dff.sort_values('Total On-Targets in Reference', ascending = True)
             
 
     for filter_part in filtering_expressions:
@@ -2862,10 +2871,10 @@ def guidePagev3(job_id, hash):
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Annotation Type'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'text']
         file_to_grep = '.Annotation.targets.txt'#'.top_1.txt'
-    elif genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'Samples Summary', 'Annotation Type'] 
-        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
-        file_to_grep = '.samples.annotation.txt'#'.top_1.samples.all.txt'
+    # elif genome_type == 'var':
+    #     col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'Samples Summary', 'Annotation Type'] 
+    #     col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
+    #     file_to_grep = '.samples.annotation.txt'#'.top_1.samples.all.txt'
     else:
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Creation', 'Samples Summary', 'Annotation Type']#, 'Samples']
         col_type = ['text','text','text','text','numeric','text', 'text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text', 'text']#, 'text']
@@ -2997,14 +3006,14 @@ def update_table_subset(page_current, page_size, sort_by, filter, hide_reference
     if genome_type == 'ref':
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide', 11:'Annotation Type', 12:'Top Subcluster'}, inplace = True)
-    elif genome_type == 'var':
-        dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide',14:'Annotation Type' ,15:'Top Subcluster'}, inplace = True)
+    # elif genome_type == 'var':
+    #     dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+    #     7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide',14:'Annotation Type' ,15:'Top Subcluster'}, inplace = True)
     else:
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide',16:'Annotation Type', 17:'Top Subcluster'} , inplace = True)
 
-    if 'hide-ref' in hide_reference:
+    if 'hide-ref' in hide_reference or genome_type == 'var':
         dff.drop( df[(df['Samples'] == 'n')].index, inplace = True)
     
     try:    #For VAR and BOTH
@@ -3433,12 +3442,12 @@ def samplePage(job_id, hash):
         )
     )
     
-    if genome_type == 'var':
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches',  'Samples Summary', 'Annotation Type']#'Samples', 'Correct Guide'] 
-        col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
-    else:
-        col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Creation',  'Samples Summary', 'Annotation Type']# 'Samples', 'Correct Guide']
-        col_type = ['text','text','text','text','numeric','numeric','text', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text']
+    # if genome_type == 'var':
+    #     col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches',  'Samples Summary', 'Annotation Type']#'Samples', 'Correct Guide'] 
+    #     col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
+    # else:
+    col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Creation',  'Samples Summary', 'Annotation Type']# 'Samples', 'Correct Guide']
+    col_type = ['text','text','text','text','numeric','numeric','text', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text', 'text']
     
     file_to_grep = '.samples.annotation.txt'
     sample_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt'
@@ -3534,11 +3543,11 @@ def update_table_sample(page_current, page_size, sort_by, filter, search, hash):
     dff = global_store_general('Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt')
     if dff is None:
         raise PreventUpdate
-    if genome_type == 'var':
-        dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide', 14:'Annotation Type', 15:'Top Subcluster'}, inplace = True)
-    else:
-        dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+    # if genome_type == 'var':
+    #     dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+    #     7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide', 14:'Annotation Type', 15:'Top Subcluster'}, inplace = True)
+    # else:
+    dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide', 16:'Annotation Type', 17:'Top Subcluster'} , inplace = True)
     del dff['Correct Guide']         #NOTE Drop the Correct Guide column
     del dff['Variant Unique']
@@ -3633,7 +3642,7 @@ def clusterPage(job_id, hash):
     elif genome_type == 'var':
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position' ,'Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'Samples Summary', 'Annotation Type']#'Samples', #'Correct Column'] 
         col_type = ['text','text','text','text','numeric', 'numeric','text','numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'text', 'text']
-        file_to_grep = '.total.cluster.minmaxdisr.txt'  #TODO select right cluster file
+        file_to_grep = '.total.cluster.txt'  #TODO select right cluster file
        
     else:
         col_list = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Position','Direction', 'Mismatches', 'Bulge Size', 'Total', 'Min Mismatches', 'Max Mismatches', 'PAM Creation', 'Samples Summary', 'Annotation Type']#'Samples', 'Correct Column']
@@ -3840,9 +3849,9 @@ def update_table_cluster(page_current, page_size, sort_by, filter, hide_referenc
     if genome_type == 'ref':
         dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total',10:'Correct Guide',11:'Annotation Type'}, inplace = True)
-    elif genome_type == 'var':      
-        dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide', 14:'Annotation Type', 15:'Top Subcluster'}, inplace = True)
+    # elif genome_type == 'var':      
+    #     dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+    #     7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide', 14:'Annotation Type', 15:'Top Subcluster'}, inplace = True)
     else:                           
         dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide',16:'Annotation Type', 17:'Top Subcluster'} , inplace = True)
@@ -3861,7 +3870,7 @@ def update_table_cluster(page_current, page_size, sort_by, filter, hide_referenc
     dff['Annotation Type'] = list(dff['Annotation Type'])[0]
     del dff['Correct Guide']
     
-    if 'hide-ref' in hide_reference:
+    if 'hide-ref' in hide_reference or genome_type == 'var':
         dff.drop( dff[(dff['Samples'] == 'n')].index, inplace = True)
 
     for filter_part in filtering_expressions:
@@ -3952,12 +3961,12 @@ def update_iupac_scomposition_table_cluster(page_current, page_size, sort_by, fi
     # out, err = get_annotation.communicate()
     # annotation_type = out.decode('UTF-8').strip().split('\t')[-1]
     
-    if genome_type == 'var':           
-        dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide', 14:'Annotation Type',15:'Top Subcluster'}, inplace = True)
-    else:
-        dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide',16:'Annotation Type',17:'Top Subcluster'} , inplace = True)
+    # if genome_type == 'var':           
+    #     dff.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+    #     7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide', 14:'Annotation Type',15:'Top Subcluster'}, inplace = True)
+    # else:
+    dff.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+    7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide',16:'Annotation Type',17:'Top Subcluster'} , inplace = True)
     # dff.drop(dff.columns[[-1,]], axis=1, inplace=True)         #NOTE Drop the Correct Guide column
     del dff['Correct Guide']
     #dff['Annotation Type'] = annotation_type
