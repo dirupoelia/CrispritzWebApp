@@ -24,22 +24,22 @@ Scaricare CrispritzWebApp tramite questo github. Per poter funzionare, è necess
   * Indici: scaricare questo [zip](https://www.dropbox.com/s/wd297qosnl82xto/genome_lib.zip?dl=0) e spostare le cartelle NGG_2_hg38_ref e NGG_2_hg38_ref+hg38_1000genomeproject all'interno della cartella genome_library
   * Dizionari: scaricare questo [zip](https://www.dropbox.com/s/g2pe8tig7g6oj9c/dict.zip?dl=0), creare una cartella dal nome dictionaries , e spostare entrambi i file .json all'interno di questa cartella. NB la cartella dictionaries deve essere situata nello stesso livello della cartella CrispritzWebApp
 
-Dentro la cartella CrispritzWebApp, eseguire:
+Da terminale, spostarsi all'interno della cartella CrispritzWebApp, ed eseguire:
 ```
 python3 app_v6.py
 ```
 Per attivare CRISPRme
 
 
-La pagina principale si trova su:
+Usando un browser, la pagina principale si trova su:
 ```
 127.0.0.1:8080
 ```
 Esempio di pagina wait job:
 ```
-127.0.0.1:8050/load?job=QVFHZMMBRA
+127.0.0.1:8080/load?job=APHN01LAC8
 ```
 Esempio di result summary:
 ```
-127.0.0.1:8050/result?job=QVFHZMMBRA
+127.0.0.1:8080/result?job=APHN01LAC8
 ```
