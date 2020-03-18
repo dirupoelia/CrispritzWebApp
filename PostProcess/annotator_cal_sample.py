@@ -16,6 +16,8 @@ in samples.txt, poi calcola l'annotazione corrispondente e crea il file Annotati
 #argv 6 is max allowed mms
 #argv 7 is genome reference directory (Eg ../../Genomes/hg38_ref)
 #argv8 is guide file
+#argv9 is max allowed DNA bulges
+#argv10 is max allowed RNA bulges
 # NOTE 06/03  -> removed PAM Disruption calculation
 import sys
 import json
@@ -31,6 +33,7 @@ import numpy as np
 import azimuth.model_comparison
 import string
 import multiprocessing
+import re
 
 SIZE_DOENCH = 10000
 N_THR = 3
@@ -98,6 +101,7 @@ print('TEST PER ANNOTAZIONE COMPLETA: I TARGET SENZA ANNOTAZIONE SONO SALVATI CO
 print('SE UN  TARGET HA 1+ ANNOTAZIONI, LE SALVA IN SINGOLA UNICA RIGA')
 print('RIMOZIONE DEI TARGET CHE NON HANNO SAMPLES')
 print('CALCOLO SCORES')
+print('SOSTITUZIONE IUPAC DI TUTTI I TARGET CON CHAR DEL TOP1SCOMPOSTO')
 print("READING INPUT FILES")
 #Dictionaries for annotating samples
 
@@ -248,6 +252,8 @@ else:                   #'Var' case: PAM creation and Variant_unique not calcula
 
 mm_pos = 7      #position of mismatch column
 bulge_pos = 8
+max_dna_bulges = int(sys.argv[9])
+max_rna_bulges = int(sys.argv[10])
 outFileSample.write(header + '\n')
 # outFileSampleAll.write(header + '\n')
 summary_samples = True
@@ -371,19 +377,19 @@ remove_iupac = False
 save_total_general_table = False
 add_to_general_table = dict()   #target semicommon da aggiungere alla tab generale delle guide, metto i valori di total presi dal primo target REF nel cluster di un semicommon che esiste
 last_annotation = ''    #needed when counting the ref part of a semicommon in order to not redo the annotation
-
+last_samples = ''       #needed for save cluster part
 next(inResult)      #Skip header
 for line in inResult:
     x = line.strip().split('\t')
     guide_no_bulge = x[1].replace("-","")
     if (guide_no_bulge + x[3] + x[5]) == current_guide_chr_pos:     #Target is in current cluster, simply save the sample and annotation, discard if status is F
         if save_cluster_targets:
-            if remove_iupac:
+            if remove_iupac:        #Save only Reference target of the cluster
                 for c in x[2]:
                     if c in iupac_code:
                         break
                 else:       #no break triggered
-                    cluster_update.write(line.strip() + '\t.\t' + guide_no_bulge + '\t.\n')
+                    cluster_update.write(line.strip() + '\tn\t' + guide_no_bulge + '\t' + last_annotation + '\n')
                 continue        
             #Keep the semicommon ref total value to be added to general table
             if save_total_general_table:
@@ -436,14 +442,95 @@ for line in inResult:
                                 targets_for_doench[x[1]] = []
                             doenchForIupac(sequence_doench, x[1])  #Get all possible targets with iupac itertools for doench
                     save_total_general_table = False
+            #Save target (with or without IUPAC in cluster file)
+            #Put top1 scomposed nucleotide in target in cluster that have IUPAC characters
+            line = line.strip().split('\t')
+            for c in line[2]:
+                if c in iupac_code:
+                    break
+            else:   #No break triggered: target doesn't have iupac
+                line = '\t'.join(line)
+                cluster_update.write(line.strip() + '\tn\t' + guide_no_bulge + '\t' + last_annotation + '\n') 
+                continue
+            #From now, all the target have at least one IUPAC
+            tmp_gap_position = []
+            if line[0] == 'X':  #TODo fixare per pam inizio
+                target_to_modify = list(' ' * max_dna_bulges + line[2])
+            elif line[0] == 'DNA':
+                target_to_modify = list(' ' * (max_dna_bulges - int(line[bulge_pos])) + line[2])
+            else:
+                tmp_gap_position = [g.start() for g in re.finditer('-', line[2])]
+                target_to_modify = list(' ' * (max_dna_bulges + int(line[bulge_pos])) + line[2].replace('-',''))   
+            
+            for elem in  pos_char_for_cluster:      #elem is tuple (position in target, character that was substituted in top1scomposed)
+                if target_to_modify[elem[0]] == ' ':       #if target to modify is ' '
+                    continue
+                if target_to_modify[elem[0]] not in iupac_code:                 #Non IUPAC char should not be targeted
+                    print('Error: Substituting into a NON IUPAC character:', line, str(elem[0]) , pos_char_for_cluster) 
+                target_to_modify[elem[0]] = elem[1]
+                
+            #Fix the removed '-' in RNA targets
+            for tmp_g_p in tmp_gap_position:
+                target_to_modify.insert(tmp_g_p + max_dna_bulges + int(line[bulge_pos]), '-')
+            
+            #DNA and X cases can have more characters at beginning #TODO fix for pam at beginning
+            remove_target = False
+            if line[0] != 'RNA':
+                iupac_pos = 0
+                no_char = 0
+                tmp_intersection = set()
+                for i in range (0, max_dna_bulges + max_rna_bulges):    #Check only on some characters, not all target
+                    if target_to_modify[i] == ' ':
+                        no_char += 1
+                    if target_to_modify[i] in iupac_code:
+                        if line[6] == '-':
+                            iupac_pos = str(int(line[4]) + (len(target_to_modify) - i - 1) + 1 - no_char)
+                        else:
+                            iupac_pos = str(int(line[4]) + i + 1 - no_char)
+                        try:
+                            a = (datastore[chr_name + ',' + iupac_pos])   #NOTE se non ha samples, ritorna ;ref,var
+                        except Exception as e:
+                            print(e)
+                            print('Error at', target_to_modify, ' pos line', line[4], ', iupac pos', str(iupac_pos), ', i:', str(i))
+                            continue
+                        if 'n' in last_samples:
+                            target_to_modify[i] = a.split(';')[-1].split(',')[0]   #RefChar
+                        else:       #Some samples were already calculated for the target
+                            sample_set = set(a.split(';')[0].split(','))   #set of sample associated with the current IUPAC
+                            tmp_intersection = sample_set & last_samples        #Intersection
+                            if tmp_intersection:
+                                if len(last_samples) == len(tmp_intersection):      #Put car char only if all sample of the top1 are in this new iupac
+                                    target_to_modify[i] = a.split(';')[-1].split(',')[1]   #VarChar
+                                else:
+                                    remove_target = True
+                            else:   #No intersection, put ref char
+                                target_to_modify[i] = a.split(';')[-1].split(',')[0]   #RefChar
+
+            if remove_target:
+                continue
+            else:       #Do also a check for new mm value and if mm value > threshold, do not save target
+                line[2] = ''.join(target_to_modify).strip()
+                mm_new_t = 0
+                guide_no_pam = line[1][pos_beg:pos_end]    
+                for position_t, char_t in enumerate(line[2][pos_beg:pos_end]): 
+                    if char_t.upper() != guide_no_pam[position_t]:
+                        mm_new_t += 1
                     
-            cluster_update.write(line.strip() + '\t.\t' + guide_no_bulge + '\t.\n')  #add Sample (.) GuideNoBulge and Annotation(.). Use (.) to save space
+                if allowed_mms < (mm_new_t - int(line[bulge_pos])):        
+                    continue                #Remove target since id does not respect mms constrains
+        
+                line[mm_pos] = str(mm_new_t - int(line[bulge_pos]))
+                line[bulge_pos + 1] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
+
+            line = '\t'.join(line) 
+            cluster_update.write(line.strip() + '\t' + ','.join(last_samples) + '\t' + guide_no_bulge + '\t' + last_annotation + '\n') 
         lines_processed +=1
         if lines_processed % (mod_tot_line) == 0:
             print('Annotation: Total progress ' + str(round(lines_processed /total_line *100, 2)) + '%')
         continue
     save_cluster_targets = True
     remove_iupac = False
+    pos_char_for_cluster = []       #contains (pos, char) where to change nucleotides for writing the cluster targets --> see conversione_caratteri_cluster.txt
     current_guide_chr_pos = guide_no_bulge + x[3] + x[5]
     if x[3] != current_chr:
         if not os.path.exists(os.path.realpath(sys.argv[4]) + '/my_dict_' + x[3] + '.json'):
@@ -576,29 +663,10 @@ for line in inResult:
         if line[vu_pos] == 'y':         #Do not do annotation because target does not exists, and do not save his cluster
             save_cluster_targets = False
             continue    #DO NOT save this target because no ref homologous and no sample combination exists
-        #target does not exists in enriched, but exists in reference (semi_common), so keep only the reference targets (from his cluster)
-        # if line[6] == '-':
-        #     reference_semicommon = list(x[2][::-1])
-        # else:
-        #     reference_semicommon = list(x[2])
-        # for tuple_var_ref_pos, tuple_var_ref_chars in enumerate(tuple_var_ref):
-        #     reference_semicommon[pos_snp[tuple_var_ref_pos]] = tuple_var_ref_chars[1]
-        # new_ref_target = ''.join(reference_semicommon)
-        # if line[6] == '-':
-        #     new_ref_target = new_ref_target[::-1]
-        # line[2] = new_ref_target  #TODO fixare perchè il carattere ref potrebbe non essere corretto (non esiste il ref che ha lo stesso gap che nel top1)
-        # x[2] = new_ref_target  
-        # guide_no_pam = line[1][pos_beg:pos_end]    
-        # for position_t, char_t in enumerate(new_ref_target[pos_beg:pos_end]):
-        #     if char_t.upper() != guide_no_pam[position_t]:          #TODO mettere lettere minuscole
-        #         mm_new_t += 1     
+        
         x[-2] = 'n'     #Since iupac target has no scomposition, it means it has no sample associated
-        # x[7] = str(mm_new_t - int(x[8]))
-        # x[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
-        # line[7] = str(mm_new_t - int(line[8]))
-        # line[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
         line = '\t'.join(line)
-        save_cluster_targets = True        #TODO salvare il cluster ma togliendo gli iupac
+        save_cluster_targets = True        #salvare il cluster ma togliendo gli iupac
         remove_iupac = True
         x = next(inResult).strip().split('\t')   #get next target of the cluster
         while (x[1].replace('-','') + x[3] + x[5]) == current_guide_chr_pos:   #while still in same cluster
@@ -619,7 +687,28 @@ for line in inResult:
         x[2] = target_scomposti_salvare[0][2]       #Adjust Target sequence, from IUPAC to first of scomposition
         x[mm_pos] = target_scomposti_salvare[0][mm_pos]
         x[mm_pos + 2] = target_scomposti_salvare[0][mm_pos + 2]     #Adjust IUPAC with min total and mms of his scomposition
-        
+        original_targ_len = len(target_scomposti_salvare[0][2])
+        if target_scomposti_salvare[0][0] == 'RNA':
+            gap_position = [g.start() for g in re.finditer('-', target_scomposti_salvare[0][2])]    #list of indices where '-' is located
+        for elem in pos_snp:
+            add_to_count = 0
+            add_blank = int(target_scomposti_salvare[0][bulge_pos])
+            if target_scomposti_salvare[0][0] == 'RNA':
+                add_blank = 0
+                for i in gap_position:
+                    if target_scomposti_salvare[0][6]=='-':
+                        if (original_targ_len - elem - 1) < i:
+                            add_to_count += 1
+                    else:
+                        if elem < i:
+                            add_to_count += 1
+            if target_scomposti_salvare[0][6]=='-':
+                pos_char_for_cluster.append(((len(target_scomposti_salvare[0][2]) - elem - 1) + add_to_count + (max_dna_bulges - int(add_blank) ), target_scomposti_salvare[0][2][(len(target_scomposti_salvare[0][2]) - elem - 1)]))
+            else:
+                pos_char_for_cluster.append((elem + add_to_count + (max_dna_bulges - int(add_blank) ), target_scomposti_salvare[0][2][elem]))   #save (position, character) of best scomposition
+    # print(x)
+    # print('pos snp', pos_snp)       
+    # print(pos_char_for_cluster)
     #Annotate target
     visited_pop = []
     visited_superpop = []
@@ -723,16 +812,16 @@ for line in inResult:
         x.append(','.join(string_annotation))
         #outFileTargets.write(line.rstrip() + '\t' + ','.join(string_annotation) + '\n')
     last_annotation = x[-1]
+    last_samples = set(x[-3].split(','))
     #Save union samples + annotation
     # outFileSampleAll.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')  
 
     #Save cluster
-    # cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')
     if target_scomposti_salvare:
         cluster_update.write('\t'.join(x[:-3]) + '\t' + target_scomposti_salvare[0][-2] + '\t' + '\t'.join(x[-2:]) + '\n')  ##This line does not contain IUPAC, needed for summary by position; Adjust sample list for target scomposed
     else:
         cluster_update.write('\t'.join(x) + '\n')       #This line does not contain IUPAC, needed for summary by position
-    cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')   #Write line with iupac (if present)
+    # cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')   #Write line with iupac (if present)
     #Save scomposed targets
     if do_scores:
         for t in target_scomposti_salvare:
@@ -804,7 +893,7 @@ for line in inResult:
     else:
         for t in target_scomposti_salvare:
             outFileSample.write('\t'.join(t) + '\t' + x[-1] + '\n')
-
+    
     if not tuple_var_ref:
         outFileSample.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n') #Save REF target in samples.annotation, needed for sum by guide
     lines_processed +=1

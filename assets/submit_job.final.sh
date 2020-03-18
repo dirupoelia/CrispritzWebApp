@@ -262,7 +262,7 @@ else    #Type search = both
     echo 'Start calc samples and annotation and scores'
     echo 'Annotation\tStart\t'$(date) >> log.txt
     #03/03 modificato da top_1 a total.cluster
-    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.total.cluster.txt $jobid ../../../dictionaries pam.txt $7 ../../$3 guides.txt
+    python3 ../../PostProcess/annotator_cal_sample.py ../../${18} $jobid.total.cluster.txt $jobid ../../../dictionaries pam.txt $7 ../../$3 guides.txt $8 $9
         # > $jobid.samples.all.annotation.txt with header AGGIORNAMENTO 11/03 QUESTO FILE NON VIENE CREATO 
         # > $jobid.samples.annotation.txt  with header AGGIORNAMENTO 11/03 Contiene top1 scomposti e top1 reference (usato per sum guide e show target guide, sample)
         # > $jobid.Annotation.summary.txt

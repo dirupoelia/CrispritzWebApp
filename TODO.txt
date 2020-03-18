@@ -418,9 +418,19 @@ X-scores:
 
 	
 13/03
--Se un target è semicommon, aumento di 1 sia REF che ENR nella tabella generale
--Nel summary by guide conto e faccio vedere anche i subscomposition
-		-I conti non torneranno tra tabella generale e sum by guide, ma basta spiegare il pechè
-	
+X-Se un target è semicommon, aumento di 1 sia REF che ENR nella tabella generale
+X-Nel summary by guide conto e faccio vedere anche i subscomposition
+		X-I conti non torneranno tra tabella generale e sum by guide, ma basta spiegare il pechè
+
+16/03
+X-Aggiungere Enriched nella descrizione di ogni summary by
+X-Non contare i target reference dal summary by position
+			X-Nel file cluster, far vedere solo la sequenza reale, senza iupac, della scomposizione più pericolosa
+X-Tabella del cluster far vedere per default solo il top1 con la sequenza top1scomposta
+	X-Mettere checbox per far vedere tutto il cluster
+X-Spostare la tabella scomposizioni in cima, mettere sotto quella del cluster
+	X-Aggiornare descrizioni delle tabelle
+-Eseguire ricerca Dan e fare mail con file txt essenziali + screenshot per far vedere la pagina
+
 -profile extended non supporta total
 -Parte grafica: al momento solo per genoma umano, ma con vcf personali
