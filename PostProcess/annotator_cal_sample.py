@@ -254,6 +254,21 @@ mm_pos = 7      #position of mismatch column
 bulge_pos = 8
 max_dna_bulges = int(sys.argv[9])
 max_rna_bulges = int(sys.argv[10])
+
+blank_add_begin = ' '               #Needed for replacing IUPAC in cluster targets
+blank_add_end = ''
+pam_multiplier = 1
+pam_multiplier_negative = 0
+start_sample_for_cluster = 0
+end_sample_for_cluster = max_dna_bulges + max_rna_bulges  #Values to check new iupac when working on cluster targets
+if pam_at_beginning:
+    blank_add_begin = ''
+    blank_add_end = ' '
+    pam_multiplier = 0              #Since ' ' are at end, and '-' to reinsert are before the ' ', need to put max_dna_bulges and rna_bulges of target to 0
+    pam_multiplier_negative = 1
+    start_sample_for_cluster = len_pam + guide_len - max_rna_bulges
+    end_sample_for_cluster = len_pam + guide_len + max_dna_bulges
+
 outFileSample.write(header + '\n')
 # outFileSampleAll.write(header + '\n')
 summary_samples = True
@@ -454,13 +469,13 @@ for line in inResult:
                 continue
             #From now, all the target have at least one IUPAC
             tmp_gap_position = []
-            if line[0] == 'X':  #TODo fixare per pam inizio
-                target_to_modify = list(' ' * max_dna_bulges + line[2])
+            if line[0] == 'X':  
+                target_to_modify = list(blank_add_begin * max_dna_bulges + line[2] + blank_add_end * max_dna_bulges)        #Eg if max bulge dna is 1: pam end -> [' ', 'A','C','G',...,'A','G','G']; pam begin -> ['T','G','T','C','A','G',...,'A','T',' '] 
             elif line[0] == 'DNA':
-                target_to_modify = list(' ' * (max_dna_bulges - int(line[bulge_pos])) + line[2])
+                target_to_modify = list(blank_add_begin * (max_dna_bulges - int(line[bulge_pos])) + line[2] + blank_add_end * (max_dna_bulges - int(line[bulge_pos])))
             else:
                 tmp_gap_position = [g.start() for g in re.finditer('-', line[2])]
-                target_to_modify = list(' ' * (max_dna_bulges + int(line[bulge_pos])) + line[2].replace('-',''))   
+                target_to_modify = list(blank_add_begin * (max_dna_bulges + int(line[bulge_pos])) + line[2].replace('-','') + blank_add_end * (max_dna_bulges + int(line[bulge_pos])))   
             
             for elem in  pos_char_for_cluster:      #elem is tuple (position in target, character that was substituted in top1scomposed)
                 if target_to_modify[elem[0]] == ' ':       #if target to modify is ' '
@@ -471,7 +486,7 @@ for line in inResult:
                 
             #Fix the removed '-' in RNA targets
             for tmp_g_p in tmp_gap_position:
-                target_to_modify.insert(tmp_g_p + max_dna_bulges + int(line[bulge_pos]), '-')
+                target_to_modify.insert(tmp_g_p + (max_dna_bulges * pam_multiplier) + int(line[bulge_pos]) * pam_multiplier, '-')
             
             #DNA and X cases can have more characters at beginning #TODO fix for pam at beginning
             remove_target = False
@@ -479,12 +494,12 @@ for line in inResult:
                 iupac_pos = 0
                 no_char = 0
                 tmp_intersection = set()
-                for i in range (0, max_dna_bulges + max_rna_bulges):    #Check only on some characters, not all target
+                for i in range (start_sample_for_cluster, end_sample_for_cluster):    #Check only on some characters, not all target
                     if target_to_modify[i] == ' ':
                         no_char += 1
                     if target_to_modify[i] in iupac_code:
                         if line[6] == '-':
-                            iupac_pos = str(int(line[4]) + (len(target_to_modify) - i - 1) + 1 - no_char)
+                            iupac_pos = str(int(line[4]) + (len(target_to_modify) - i - 1) + 1 - (no_char * pam_multiplier_negative)  )
                         else:
                             iupac_pos = str(int(line[4]) + i + 1 - no_char)
                         try:
@@ -493,6 +508,12 @@ for line in inResult:
                             print(e)
                             print('Error at', target_to_modify, ' pos line', line[4], ', iupac pos', str(iupac_pos), ', i:', str(i))
                             continue
+                        ref_char = a.split(';')[-1].split(',')[0]
+                        var_char = a.split(';')[-1].split(',')[1]
+                        if line[6] == '-':
+                            ref_char = rev_comp(ref_char)
+                            var_char = rev_comp(var_char)
+
                         if 'n' in last_samples:
                             target_to_modify[i] = a.split(';')[-1].split(',')[0]   #RefChar
                         else:       #Some samples were already calculated for the target
@@ -696,16 +717,25 @@ for line in inResult:
             if target_scomposti_salvare[0][0] == 'RNA':
                 add_blank = 0
                 for i in gap_position:
-                    if target_scomposti_salvare[0][6]=='-':
-                        if (original_targ_len - elem - 1) < i:
-                            add_to_count += 1
+                    if not pam_at_beginning:        #TODO try to remove the pam_at_beginning check to improve performances (it's done only on top1 so maybe it's ok)
+                        if target_scomposti_salvare[0][6]=='-':
+                            if (original_targ_len - elem - 1) < i:
+                                add_to_count += 1
+                        else:
+                            if elem < i:
+                                add_to_count += 1
                     else:
-                        if elem < i:
-                            add_to_count += 1
+                        if target_scomposti_salvare[0][6]=='-':
+                            if (original_targ_len - elem - 1) > i:
+                                add_to_count -= 1
+                        else:
+                            if elem > i:
+                                add_to_count -= 1
+
             if target_scomposti_salvare[0][6]=='-':
-                pos_char_for_cluster.append(((len(target_scomposti_salvare[0][2]) - elem - 1) + add_to_count + (max_dna_bulges - int(add_blank) ), target_scomposti_salvare[0][2][(len(target_scomposti_salvare[0][2]) - elem - 1)]))
+                pos_char_for_cluster.append(((len(target_scomposti_salvare[0][2]) - elem - 1) + add_to_count + (max_dna_bulges - int(add_blank) ) * pam_multiplier, target_scomposti_salvare[0][2][(len(target_scomposti_salvare[0][2]) - elem - 1)]))
             else:
-                pos_char_for_cluster.append((elem + add_to_count + (max_dna_bulges - int(add_blank) ), target_scomposti_salvare[0][2][elem]))   #save (position, character) of best scomposition
+                pos_char_for_cluster.append((elem + add_to_count + (max_dna_bulges - int(add_blank) ) * pam_multiplier, target_scomposti_salvare[0][2][elem]))   #save (position, character) of best scomposition
     # print(x)
     # print('pos snp', pos_snp)       
     # print(pos_char_for_cluster)
