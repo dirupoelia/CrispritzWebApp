@@ -94,6 +94,18 @@ with open(sys.argv[4], 'r') as g_file:
             with open(sys.argv[2] + '.summary_by_samples.' + line + '.txt', 'w+') as result:
                 result.write('No samples found with ' + line + ' guide')
 
+#Add class from jobid.SampleClasses.txt
+dict_sample_classes = dict()
+with open (sys.argv[2] + '.SampleClasses.txt') as sample_classes:
+    headerclass = next(sample_classes).strip().split('\t')[1:]      #List of guides
+    for g in headerclass:
+        dict_sample_classes[g] = dict()
+    for line in sample_classes:
+        if 'Total for' in line:
+            break
+        line = line.strip().split('\t')
+        for g, el in enumerate(line[1:]):             #iterate over the row, each cell is a class value for the specified guide (column)
+            dict_sample_classes[headerclass[g]][line[0]] = el               #line[0] is sample
 
 for k in guides_dict.keys():
     with open(sys.argv[2] + '.summary_by_samples.' + k + '.txt', 'w+') as result:
@@ -114,7 +126,8 @@ for k in guides_dict.keys():
                             str(guides_superpopulation_targets[k][population_1000gp[dict_pop[i]]])  + 
                             # '\t' + 
                             # str(count_disruption[k][i][0]) + 
-                            '\t' + str(count_creation[k][i][1]) +'\n')
+                            '\t' + str(count_creation[k][i][1]) +
+                            '\t' + str(dict_sample_classes[k][i]) + '\n')
         else:
             for i in all_samples:
                 if i not in guides_dict[k]:

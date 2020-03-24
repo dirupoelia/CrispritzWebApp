@@ -1290,7 +1290,7 @@ def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
     #filtering_expressions.append(['{crRNA} = ' + guide])     
     df = global_store(value)
     dff = df[df['crRNA'] == guide]
-    print('len index before', len(dff.index))
+
     sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
     sort_by.insert(1, {'column_id' : 'BulgeSize', 'direction': 'asc'})
     #sort_by.insert(2, {'column_id': 'CFD', 'direction':'desc'})
@@ -1312,7 +1312,6 @@ def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
             # only works with complete fields in standard format
             dff = dff.loc[dff[col_name].str.startswith(filter_value)]
 
-    print('len index after', len(dff.index))
     #NOTE sort_by: [{'column_id': 'BulgeType', 'direction': 'asc'}, {'column_id': 'crRNA', 'direction': 'asc'}]
     #sort_by.insert(0, {'column_id' : 'Mismatches', 'direction': 'asc'})
     #sort_by.insert(0, {'column_id' : 'BulgeSize', 'direction': 'asc'})
@@ -1443,12 +1442,12 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
             html.P('Summary table counting the number of targets found in the Enriched Genome for each sample. Filter the table by selecting the Population or Superpopulation desired from the dropdowns.')
         )
         if genome_type == 'both':
-            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation']
+            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Targets in Population', 'Targets in Super Population', 'PAM Creation', 'Class']
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
             df = df.sort_values('Targets in Enriched', ascending = False)
             df.drop(['Targets in Reference'], axis = 1, inplace = True)
         else:
-            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation']
+            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Targets in Population', 'Targets in Super Population', 'PAM Creation']
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
             df = df.sort_values('Targets in Enriched', ascending = False)
             df.drop(['Targets in Reference'], axis = 1, inplace = True)
@@ -2091,7 +2090,7 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
 
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     if genome_type == 'both':
-        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation']
+        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation', 'Class']
     else:
         col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation']
     if max(btn_sample_section) == n:              #Last button pressed is filtering, return the first page of the filtered table
@@ -2434,14 +2433,14 @@ def resultPage(job_id):
         if genome_type == 'ref':
             columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets Reference', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}]
         elif genome_type == 'both':
-            columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets (Reference - Enriched)', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
+            columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'Samples in Class 0 - 0+ - 1 - 1+', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
         else:
             columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets Enriched', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
     else:
         if genome_type == 'ref':
             columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'On-Targets Reference', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}]
         elif genome_type == 'both':
-            columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'On-Targets (Reference - Enriched)', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
+            columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'Samples in Class 0 - 0+ - 1 - 1+', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
         else:
             columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'On-Targets Enriched', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
 
@@ -2476,7 +2475,32 @@ def resultPage(job_id):
     #profile['Doench 2016'] = doench
     # if len(DataFrame.index) > 
     #profile = profile.sort_values(['CFD', 'Doench 2016'], ascending = [False, False])
-    final_list.append(html.P('Select a guide by clicking on a row to view more information'))
+    add_to_description = html.P(
+        'General summary for the given guides. For each guide, the number of Off-Targets found for each Mismatch + Bulge value is shown.'
+    )
+    if genome_type == 'both':
+        add_to_description = html.P(
+            [
+                'General summary for the given guides. For each guide, the number of ',  
+                html.Span(
+                    "Samples for each Class is provided",
+                    id="tooltip-sample-class",
+                    style={"textDecoration": "underline", "cursor": "pointer"}
+                ),
+                ', along with the number of Off-Targets found for each Mismatch + Bulge value, for both Reference and Enriched Genomes.',
+                dbc.Tooltip(
+                    [
+                        html.Div([html.P([html.B('Class 0:'), ' Samples that does not have any On-Targets']),
+                        html.P([html.B('Class 0+:'), ' Samples that have a subset of the Reference Genome On-Targets']),
+                        html.P([html.B('Class 1:'), ' Samples that have the same On-Targets as the Reference Genome']),
+                        html.P([html.B('Class 1+:'), ' Samples that creates at least a new On-Target, that is not present in the Reference Genome'])], 
+                        style = {'display':'inline-block'})
+                    ],
+                    target="tooltip-sample-class", style = {'font-size': '12px'}
+                )
+            ]
+        )
+    final_list.append(add_to_description)
     final_list.append(
         html.Div(
             dash_table.DataTable(
@@ -2665,12 +2689,25 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
         column_off_target_ref = []
         column_off_target_enriched = []
         guides = []
+        column_on_target_tmp_test = dict()      #For adding count on REF on target on Sample class column
         for tmp in general_count_content:
             tmp = tmp.split('\t')
             guides.append(tmp[0])
+            column_on_target_tmp_test[tmp[0]] = tmp[1]      #tmp[1] =  3(1 - 2)
             column_on_target.append(tmp[1])
             column_off_target_ref.append(tmp[2])
             column_off_target_enriched.append(tmp[3])
+        #23/03 On target column is now Samples for Class 0 - 0+ - 1 - 1+
+        with open('Results/' + job_id + '/' + job_id + '.SampleClasses.txt') as samp_classes:
+            header_classes = next(samp_classes).strip().split('\t')[1:]     #List of Guides
+            for line in samp_classes:
+                if 'Total for Class' in line:
+                    value_classes = line.strip().split('\t')[1:]            #List of values of classes for each guide
+        dict_classes = dict(zip(header_classes, value_classes))
+        column_on_target = []
+        for g in guides:
+            column_on_target.append(dict_classes[g] + ' (On-Targets Reference: ' + column_on_target_tmp_test[g].split('(')[-1].split('-')[0] + ' )')
+
     # #NOTE FINE 
 
     if 'NO SCORES' not in all_scores:
@@ -2714,7 +2751,6 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     data_to_send=dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
     ].to_dict('records')
-    print(len(data_to_send))
     return data_to_send, [{'row':0, 'column':0}]
 
 
@@ -2856,7 +2892,7 @@ def guidePagev3(job_id, hash):
     final_list.append(
         html.P(
             [
-                        'List of Targets found for the selected guide.', # 'Select a row to view the target IUPAC character scomposition. The rows highlighted in red indicates that the target was found only in the genome with variants.',
+                        'List of Targets found for the selected guide. Select a row to view other possible configurations of the target, along with the corresponding samples list.', # 'Select a row to view the target IUPAC character scomposition. The rows highlighted in red indicates that the target was found only in the genome with variants.',
                         dcc.Checklist(options = [{'label': 'Hide Reference Targets', 'value': 'hide-ref'}], id='hide-reference-targets', value = value_hide_reference, style = style_hide_reference),
                         html.Div(
                             [   
@@ -3123,7 +3159,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, hide_reference
 )
 def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
     #NOTE tabella secondaria della scomposizione ora non serve, non cancello il codice ma uso PreventUpdate per non azionare la funzione
-    if True:
+    if False:
         raise PreventUpdate
     if active_cel is  None:
         raise PreventUpdate
@@ -3146,7 +3182,7 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
     fl.append(html.Hr())
     #Table for IUPAC scomposition
     #fl.append(html.Br())
-    fl.append('IUPAC scomposition for the selected target.')
+    fl.append('List of all the configurations for the selected target.')
     fl.append(html.Br())
     cols.append({"name": 'Samples', "id": 'Samples', 'type':'text', 'hideable':True})  
 
@@ -3252,7 +3288,7 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
 )
 def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, search, hash_guide, active_cel, data):
     #NOTE tabella secondaria della scomposizione ora non serve, non cancello il codice ma uso PreventUpdate per non azionare la funzione
-    if True:
+    if False:
         raise PreventUpdate
     if active_cel is None:
         raise PreventUpdate
@@ -3295,12 +3331,12 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
     else:
         raise PreventUpdate
    
-    if genome_type == 'var':
-        df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide', 14:'Annotation Type', 15:'Top Subcluster'}, inplace = True)
-    else:    
-        df.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
-        7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide', 16:'Annotation Type', 17:'Top Subcluster'} , inplace = True)
+    # if genome_type == 'var':
+    #     df.rename(columns = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+    #     7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'Samples', 13:'Correct Guide', 14:'Annotation Type', 15:'Top Subcluster'}, inplace = True)
+    # else:    
+    df.rename(columns ={0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
+    7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'Min Mismatches', 11:'Max Mismatches', 12:'PAM Creation', 13 : 'Variant Unique', 14:'Samples', 15:'Correct Guide', 16:'Annotation Type', 17:'Top Subcluster'} , inplace = True)
     df.drop(df[(~( df['Cluster Position'] == int(data[active_cel['row']]['Cluster Position']))) | (~( df['Chromosome'] == data[active_cel['row']]['Chromosome']))].index, inplace = True)
     dff = df
     

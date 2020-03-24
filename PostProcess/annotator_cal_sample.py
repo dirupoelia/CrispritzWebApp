@@ -254,6 +254,9 @@ mm_pos = 7      #position of mismatch column
 bulge_pos = 8
 max_dna_bulges = int(sys.argv[9])
 max_rna_bulges = int(sys.argv[10])
+max_bulges = max_dna_bulges
+if max_rna_bulges > max_bulges:
+    max_bulges = max_rna_bulges
 
 blank_add_begin = ' '               #Needed for replacing IUPAC in cluster targets
 blank_add_end = ''
@@ -305,9 +308,16 @@ header_list = header.strip().split('\t')
 
 Per pop e superpop, se ho due sample stessa famiglia stesso target, conto solo una volta (visited_pop and visited_superpop array)
 '''
-count_sample = dict()
+count_sample = dict()       #NOTE cout_sample -> GUIDE -> SAMPLE -> has targets + ann1 + ann2 ... + refposition
+    #refposition is a key unrelated to the other keys (targets ann1 ann2 ...) and it's used to classify the sample (0 0+ 1 1+).
+    #it's put in here just to avoid to duplicate the entire guide -> sample ->     structure
+    # refposition -> [class , number of specific VAR on target to add/remove]  #Save class (0 at start) and number of ontarget var specific
+    #for that sample.
+ontarget_reference_count = dict() #Count number of REF target and REF part of semicommon
 count_pop = dict()
-count_superpop = dict()
+count_superpop = dict()     #NOTE added key 'distributions' for population distribution images
+    #count_superpop-> GUIDE -> SUPERPOP -> targets ann1 ann2 ... distributions
+    # distributions is an array of len mms+bulge, each position contains an array [0,0,0] of len bulge+1 (indicating no bulge, 1 bulge, 2bulge ...)
 
 #Create -Summary_total for a file ref.Annotation.summary.txt from the y and n values of Var_uniq column
 summary_barplot_from_total = False
@@ -412,6 +422,15 @@ for line in inResult:
                     if c in iupac_code:
                         break
                 else: #Found first REF target in cluster of semicommon
+                    if x[bulge_pos + 1] == '0':     #If total column is 0  -> On-target
+                        ontarget_reference_count[guide_no_bulge] +=1        #Add +1 to Ref count
+                        for s in decrease_ref_count.split(','):                        #But Decrease count for samples that do not have the REF (ie sample with ok target but not 0 total, or sample with not ok target)
+                            try:
+                                count_sample[guide_no_bulge][s]['refposition'][2] -= 1
+                            except:
+                                count_sample[guide_no_bulge][s]['refposition'] = [0,0,-1]
+                            count_sample[guide_no_bulge][s]['refposition'][0] += 1      #Visited +1
+                         
                     add_to_general_table[guide_no_bulge][int(x[mm_pos]) +  int(x[bulge_pos])] += 1
                     #Do annotation to keep numbers consistent between images and general table
                     #conto i target generali per mm threshold
@@ -551,6 +570,7 @@ for line in inResult:
         continue
     save_cluster_targets = True
     remove_iupac = False
+    decrease_ref_count = []     #Samples that does not have REF or VAR part of semicommon
     pos_char_for_cluster = []       #contains (pos, char) where to change nucleotides for writing the cluster targets --> see conversione_caratteri_cluster.txt
     current_guide_chr_pos = guide_no_bulge + x[3] + x[5]
     if x[3] != current_chr:
@@ -674,6 +694,7 @@ for line in inResult:
             if not pam_ok or allowed_mms < (mm_new_t - int(final_result[8])):                     
                 false_targets += 1
                 x[-2] = ','.join(set(x[-2].split(',')) - set(common_samples))
+                decrease_ref_count.append(','.join(common_samples))   #This samples does not have the VAR version nor the REF version
                 continue                #Remove target since id does not respect PAM or mms constrains
 
             final_result[7] = str(mm_new_t - int(final_result[8]))
@@ -757,7 +778,7 @@ for line in inResult:
         count_sample[guide_no_bulge] = dict()
         count_pop[guide_no_bulge] = dict()
         count_superpop[guide_no_bulge] = dict()
-
+        ontarget_reference_count[guide_no_bulge] = 0 #List of chr,clusterpos of on target of reference, needed for classify samples
         for item in annotationsSet:
             guideDict[guide_no_bulge][item]= {}
             guideDict[guide_no_bulge][item] = [0]*10
@@ -782,6 +803,7 @@ for line in inResult:
                 count_sample[guide_no_bulge][sample] = {'targets': [0]*10}
                 for item in annotationsSet:
                     count_sample[guide_no_bulge][sample][item] = [0]*10
+                count_sample[guide_no_bulge][sample]['refposition'] = [0, 0, 0]        #[Visited count, new ontargetVAR, noOntargetVAR/REF]Needed for classify samples
                 if dict_sample_to_pop[sample] not in count_pop[guide_no_bulge]:
                     count_pop[guide_no_bulge][dict_sample_to_pop[sample]] = {'targets': [0]*10}
                     for item in annotationsSet:
@@ -790,6 +812,7 @@ for line in inResult:
                     count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]] = {'targets': [0]*10}
                     for item in annotationsSet:
                         count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]][item] = [0]*10
+                    count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]]['distributions'] = [[0] * (max_bulges + 1) for x in range(10)]
             #Add +1 to targets
             count_sample[guide_no_bulge][sample]['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
             if dict_sample_to_pop[sample] not in visited_pop:
@@ -798,6 +821,7 @@ for line in inResult:
             if dict_pop_to_sup[dict_sample_to_pop[sample]] not in visited_superpop:
                 visited_superpop.append(dict_pop_to_sup[dict_sample_to_pop[sample]])
                 count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]]['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
+                count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]]['distributions'][int(x[mm_pos]) + int(x[bulge_pos])][int(x[bulge_pos])] +=1 #add +1 to array in pos TOTAL, in cell corrresponding to bulge size
         visited_pop = []
         visited_superpop = []
     
@@ -867,7 +891,11 @@ for line in inResult:
                     guides_dict[t[1]] = cfd_score
 
                 if t[mm_pos] == '0':    #DOENCH
-                    #estraggo sequenza
+                    #Total = 0 -> do Classification
+                    for samp in t[-2].split(','):
+                        count_sample[guide_no_bulge][samp]['refposition'][1] += 1  #Add +1 at specific VAR onTarget
+                        count_sample[guide_no_bulge][samp]['refposition'][0] += 1   #Visited +1
+                    #DOENCH: estraggo sequenza
                     with open('bedfile_tmp.bed', 'w+') as bedfile:
                         if t[6] == '+':
                             bedfile.write(t[3] + '\t' + str(int(t[4]) - 4 ) + '\t' + str(int(t[4]) + 23 + 3 ))
@@ -888,7 +916,10 @@ for line in inResult:
                     if t[1] not in targets_for_doench:
                         targets_for_doench[t[1]] = []
                     doenchForIupac(sequence_doench, t[1])  #Get all possible targets with iupac itertools for doench
-        
+                else:
+                    decrease_ref_count.append(t[-2]) #Save X and total not 0
+            else:
+                decrease_ref_count.append(t[-2]) # Save DNA, RNA -> they surely have total not 0
         if not tuple_var_ref and x[0] == 'X':       #Calculate scores for reference targets
             cfd_score = calc_cfd(x[1], x[2].upper()[:-3], x[2].upper()[-2:], mm_scores, pam_scores)
             sum_cfd = sum_cfd + cfd_score
@@ -922,10 +953,20 @@ for line in inResult:
 
     else:
         for t in target_scomposti_salvare:
+            if t[bulge_pos + 1] == '0':
+                for samp in t[-2].split(','):
+                    count_sample[guide_no_bulge][samp]['refposition'][1] += 1  #Add +1 at specific VAR onTarget
+                    count_sample[guide_no_bulge][samp]['refposition'][0] += 1   #Visited +1
+            else:
+                decrease_ref_count.append(t[-2])        #Save samples that have not 0 on Total column --> if in next iteration i need to save 
+                                # the REF, i decrease this samples because they do not have REF of VAR On target
             outFileSample.write('\t'.join(t) + '\t' + x[-1] + '\n')
     
     if not tuple_var_ref:
+        if x[bulge_pos + 1] == '0':     #If total column is 0  -> On-target REF
+            ontarget_reference_count[guide_no_bulge] +=1      #Add +1 to count ontarget for all samples (all samples have this on target)
         outFileSample.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n') #Save REF target in samples.annotation, needed for sum by guide
+    decrease_ref_count = ','.join(decrease_ref_count)
     lines_processed +=1
     if lines_processed % (mod_tot_line) == 0:
         print('Annotation: Total progress ' + str(round(lines_processed /total_line *100, 2)) + '%')
@@ -1007,8 +1048,12 @@ if summary_samples:
                         result.write(item + '\t' + '\t'.join(str(i) for i in count_superpop[guide][superpop][item]) + '\n')
                     except:
                         result.write(item + '\t' + '\t'.join(str(i) for i in [0]*10) + '\n')
-
-
+    with open(outputFile + '.PopulationDistribution.txt', 'w+') as pop_distribution:
+        for g in guideDict:
+            pop_distribution.write('-Summary_' + g + '\n')
+            for superpop in superpopulation:
+                pop_distribution.write(superpop + '\t' + '\t'.join([ ','.join(str(v) for v in t) for t in count_superpop[g][superpop]['distributions']]) + '\n')
+                #[[0 0 0] [0 0 0] [0 0 0] [0 0 0] [0 0 0]] ->   0,0,0   0,0,0   0,0,0   0,0,0   0,0,0 
 #Write sumref for barplot for targets in top1 form of var/ref search
 if summary_barplot_from_total:
     with open(outputFile + '.sumref.Annotation.summary.txt', 'w+') as result:
@@ -1060,8 +1105,48 @@ with open(outputFile + '.addToGeneralTable.txt', 'w+') as add_file:
     for guide in add_to_general_table:
         add_file.write(guide + '\t' + '\t'.join([str(x) for x in add_to_general_table[guide]]) + '\n')
 
-
-
+#Calculate and save classes for each sample
+total_class = dict()    #For each guide, Save total of class [0, 1 , 1+]
+with open(outputFile + '.SampleClasses.txt', 'w+') as sample_class:
+    #Header
+    sample_class.write('Sample')
+    for g in count_sample.keys():
+        total_class[g] = [0, 0, 0, 0]   #0 0+ 1 1+
+        sample_class.write('\t' + g)
+    sample_class.write('\n')
+    #Write classes
+    for s in all_samples:
+        sample_class.write(s)
+        for g in count_sample.keys():
+            # count_on_target = (count_sample[g][s]['refposition'][1] + count_sample[g][s]['refposition'][2] + ontarget_reference_count[g]) #Sum created new ontarget + destroyed ontarget + ontarget on all samples
+            if s not in count_sample[g]:
+                if ontarget_reference_count[g] > 0:
+                    sample_class.write('\t1')
+                    total_class[g][2] += 1
+                else:
+                    sample_class.write('\t0')   #If there are no REF, the samples has 0 on targets
+                    total_class[g][0] += 1
+                continue
+            if count_sample[g][s]['refposition'][1] > 0: #CLASS 1+ : sample have at least 1 new on target w.r.t the reference 
+                sample_class.write('\t1+')
+                total_class[g][3] += 1
+            elif count_sample[g][s]['refposition'][0] == 0 : #CLASS 1: sample have the same ontarget as ref
+                if ontarget_reference_count[g] > 0:
+                    sample_class.write('\t1')
+                    total_class[g][2] += 1
+                else:
+                    sample_class.write('\t0')   #If there are no REF, the samples has 0 on targets
+                    total_class[g][0] += 1
+            elif ontarget_reference_count[g] + count_sample[g][s]['refposition'][2] == 0: #Class 0: all the reference targets were destroyed
+                sample_class.write('\t0')       #NOTE samples that have at least one new OnTarget, but ontarget_ref + ['refpos'][2] == 0 are counted as 1+
+                total_class[g][0] +=1
+            else:
+                sample_class.write('\t0+')      #Class 0+: only some REF were destroyed, sample is still targetable
+                total_class[g][1] +=1
+        sample_class.write('\n')
+    sample_class.write('Total for Class 0 - 0+ - 1 - 1+')
+    for g in count_sample.keys():
+        sample_class.write('\t' + '-'.join([str(x) for x in total_class[g]]))
 if total_error > 0:
     print('Skipped SNP:', total_error)
 print('Annotation: Total progress 100%')

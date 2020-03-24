@@ -1,9 +1,24 @@
 '''
-Generate barplot with population distribution from the summary_by_sample.GUIDE.superpopulation.txt file. Create a barplot for each mm (soon to be total) value
+Generate barplot with population distribution from the PopulationDistribution.txt file. Create a barplot for each total value, dividing
+into 0 bulge, 1 bulge, 2 bulge etc
+Example of PopulationDistribution file (with 1 bulge max):
+-Summary_CCATCGGTGGCCGTTTGCCCNNN
+EAS     0,0     0,0     0,0     0,0     0,4     0,22    0,0     0,0     0,0     0,0
+EUR     0,0     0,0     0,0     0,0     2,1     0,28    0,0     0,0     0,0     0,0
+AFR     0,0     1,0     0,1     0,0     1,6     0,42    0,0     0,0     0,0     0,0
+AMR     0,0     0,0     0,0     0,0     2,4     0,30    0,0     0,0     0,0     0,0
+SAS     0,0     0,0     0,0     0,0     1,1     0,34    0,0     0,0     0,0     0,0
+-Summary_GAGTCCGAGCAGAAGAAGAANNN
+EAS     0,0     0,0     0,0     1,1     1,18    0,147   0,0     0,0     0,0     0,0
+EUR     0,0     0,0     0,0     1,1     3,20    0,128   0,0     0,0     0,0     0,0
+AFR     0,0     0,0     0,0     1,1     3,31    0,253   0,0     0,0     0,0     0,0
+AMR     0,0     0,0     0,0     1,1     3,26    0,146   0,0     0,0     0,0     0,0
+SAS     0,0     0,0     0,0     2,1     3,21    0,153   0,0     0,0     0,0     0,0
 '''
 
-# argv 1 is jobid.sample_annotation.GUIDE.superpopulation.txt
+# argv 1 is jobid.PopulationDistribution.txt
 # argv 2 is total value
+# argv 3 is Guide
 import math
 import matplotlib
 matplotlib.use("TkAgg")
@@ -25,25 +40,46 @@ from os.path import isfile, join
 warnings.filterwarnings("ignore")
 
 from operator import itemgetter
+import colorsys
+import matplotlib.colors as mc
+from matplotlib.legend_handler import  HandlerTuple
 
+
+def adjust_lightness(color, amount=0.5):
+    try:
+        c = mc.cnames[color]
+    except:
+        c = color
+    c = colorsys.rgb_to_hls(*mc.to_rgb(c))
+    return colorsys.hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2])
 
 plt.style.use('seaborn-poster')
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype'] = 42
 
-guide = sys.argv[1].split('.')[-3]
-barplot_values = dict()
+barplot_values = dict()         #barplot_values -> EAS -> [1,2]
 total = int(sys.argv[2])
+guide = sys.argv[3]
 max_value = 0
+number_bars = 0
+previous_bar = []
 with open(sys.argv[1]) as summary:
     for line in summary:
-        if '-Summary_' in line:
-            if '_Total' in line:
-                continue
-            value = int(next(summary).strip().split('\t')[total + 1])
-            barplot_values[line.strip().split('_')[-1]] = value        #+1 to skip label -> targets 0 1 2 81 980 0 0 0 0 0
-            if value > max_value:
-                max_value = value
+        if guide in line:
+            while True:
+                try:
+                    line = next(summary).strip()
+                except:
+                    break
+                if '-Summary_' in line:
+                    break
+                line = line.split('\t')
+                number_bars = len(line[total + 1].split(','))
+                barplot_values[line[0]] = [int(x) for x in line[total + 1].split(',')]       #line = EAS 0,7 1,2 5,3 10,11                
+                value = sum([int(x) for x in line[total + 1].split(',')] )
+                previous_bar.append(0)
+                if value > max_value:
+                    max_value = value
 
 ind = np.arange(0, len(barplot_values.keys()), 1)       #[0 1 2 3 4]
 no_result = False
@@ -54,13 +90,21 @@ except:
     no_result = True
 width = 0.5
 
+population_color = ['purple', 'orange', 'green', 'blue', 'red']
+all_bar = []
+for i in range(number_bars):     #For 0 bulge, 1 bulge, 2 bulge ...
+    current_bar = [x[i] for x in barplot_values.values()] 
+    all_bar.append(plt.bar(ind, current_bar, width, color=[adjust_lightness(x, 1 + i*0.3) if current_bar[pos] != 0 else 'white' for pos, x in enumerate(population_color)], align='edge', bottom = previous_bar, edgecolor = 'black'))
+    previous_bar = [ x + previous_bar[k] for k, x in enumerate(current_bar)]
 
-p1 = plt.bar(ind, barplot_values.values(), width, color=['purple', 'yellow', 'green', 'blue', 'red'], align='edge')       #color = '#67a9cf'
+# p1 = plt.bar(ind, barplot_values.values(), width, color=population_color, align='edge')       #color = '#67a9cf'
 
+# p2 = plt.bar(ind, barplot_values.values() , width, color=[adjust_lightness(x, 1.3) for x in population_color], align='edge', bottom = list(barplot_values.values()))
 
-# plt.legend(p1[0], ('Reference Genome'), fontsize=30)
-
-plt.title('Targets found in each Superpopulation - ' + str(total) + ' Mismatches + Bulges', size=25)
+plt.legend([(x[:]) for x in all_bar], [str(total - x ) + ' MM + ' + str(x) + ' B' if x > 0 else str(total) + ' MM' for x in range(number_bars)], fontsize=15, handlelength = 10,handler_map={tuple: HandlerTuple(ndivide=None)})
+# first param is for the colored rectangles of legens, second parameter for labels, handlelength is size of rectangles, handlermap is for grouping different colors in single label
+#[(first bar color, second bar color, ...), (first bar light color, second bar light color,...)]
+plt.title('Targets found in each Superpopulation - ' + str(total) + ' Mismatches(MM) + Bulges(B)', size=23)
 
 if no_result:
     plt.annotate('No targets found with ' + str(total)  + ' mismatches + bulges', (2.5,0) ,size = 22, ha = 'center', va = 'center')  #2.5 is x position

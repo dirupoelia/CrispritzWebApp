@@ -321,7 +321,7 @@ else    #Type search = both
             fi
             
             #Generate Population Distributions
-            printf %s\\n $(seq 0 $total) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/populations_distribution.py $jobid.sample_annotation.$line.superpopulation.txt %
+            printf %s\\n $(seq 0 $total) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/populations_distribution.py $jobid.PopulationDistribution.txt % $line
             echo $line >> output.txt
         done < guides.txt
         mkdir ../../assets/Img/$jobid
