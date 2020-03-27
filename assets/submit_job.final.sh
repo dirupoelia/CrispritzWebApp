@@ -118,6 +118,16 @@ if [ ${19} = 'ref' ]; then
                     printf %s\\n $(seq 0 $7) | xargs -n 1 -P $proc -I % crispritz.py generate-report $line -mm % -annotation $jobid'.Annotation.summary.txt' -extprofile *.extended_profile.xls -ws
                 fi
             fi
+
+            #Create a zip file, for each guide, containing the targets from jobid.samples.annotation.txt
+            #Grep all the targets with the selected guide
+            touch $jobid.targets.$line.txt
+            head -1 $jobid.Annotation.targets.txt > $jobid.targets.$line.txt        #Put header
+            LC_ALL=C grep $line $jobid.Annotation.targets.txt >> $jobid.targets.$line.txt
+
+            zip $jobid.targets.$line.zip $jobid.targets.$line.txt
+            rm $jobid.targets.$line.txt  #NOTE this file could be used for grepping when 'Show Targets' is selected
+
             echo $line >> output.txt
         done < guides.txt
 
@@ -199,6 +209,19 @@ elif [ ${19} = 'var' ]; then
             fi
             #Generate Population Distributions
             printf %s\\n $(seq 0 $total) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/populations_distribution.py $jobid.PopulationDistribution.txt % $line
+            
+            #Create a zip file, for each guide, containing the targets from jobid.samples.annotation.txt
+            #Grep all the targets with the selected guide
+            LC_ALL=C grep $line $jobid.samples.annotation.txt > $jobid.targets.$line.txt
+
+            #Clusterize results
+            python3 ../../PostProcess/cluster.dict.py $jobid.targets.$line.txt 'no' 'True' 'True' guides.txt 'total' 'addForFinal'    #> $jobid.targets.$line.cluster.txt
+
+            mv $jobid.targets.$line.cluster.txt $jobid.targets.$line.txt
+
+            zip $jobid.targets.$line.zip $jobid.targets.$line.txt
+            rm $jobid.targets.$line.txt  #NOTE this file could be used for grepping when 'Show Targets' is selected
+            
             echo $line >> output.txt
         done < guides.txt
         mkdir ../../assets/Img/$jobid
