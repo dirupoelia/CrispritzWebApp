@@ -144,7 +144,7 @@ elif [ ${19} = 'var' ]; then
     echo 'Extracting Samples and Annotation... (This operation has a long execution time, Please Wait) Step [3/4]' >>  output.txt
     echo 'Start calc samples and annotation and scores'
     echo 'Annotation\tStart\t'$(date) >> log.txt
-    python3 ../../PostProcess/annotator_for_onlyvar.py ../../${18} $jobid.targets.minmaxdisr.cluster.txt $jobid ../../../dictionaries pam.txt $7 ../../$2 guides.txt
+    python3 ../../PostProcess/annotator_for_onlyvar.py ../../${18} $jobid.targets.minmaxdisr.cluster.txt $jobid ../../../dictionaries pam.txt $7 ../../$2 guides.txt $8 $9
         # > $jobid.samples.all.annotation.txt with header AGGIORNAMENTO 11/03 QUESTO FILE NON VIENE CREATO 
         # > $jobid.samples.annotation.txt  with header AGGIORNAMENTO 11/03 Contiene top1 scomposti e top1 reference (usato per sum guide e show target guide, sample)
         # > $jobid.Annotation.summary.txt
@@ -198,7 +198,7 @@ elif [ ${19} = 'var' ]; then
                 fi
             fi
             #Generate Population Distributions
-            printf %s\\n $(seq 0 $total) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/populations_distribution.py $jobid.sample_annotation.$line.superpopulation.txt %
+            printf %s\\n $(seq 0 $total) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/populations_distribution.py $jobid.PopulationDistribution.txt % $line
             echo $line >> output.txt
         done < guides.txt
         mkdir ../../assets/Img/$jobid
@@ -322,6 +322,19 @@ else    #Type search = both
             
             #Generate Population Distributions
             printf %s\\n $(seq 0 $total) | xargs -n 1 -P $proc -I % python3 ../../PostProcess/populations_distribution.py $jobid.PopulationDistribution.txt % $line
+            
+            #Create a zip file, for each guide, containing the targets from jobid.samples.annotation.txt
+            #Grep all the targets with the selected guide
+            LC_ALL=C grep $line $jobid.samples.annotation.txt > $jobid.targets.$line.txt
+
+            #Clusterize results
+            python3 ../../PostProcess/cluster.dict.py $jobid.targets.$line.txt 'no' 'True' 'True' guides.txt 'total' 'addForFinal'    #> $jobid.targets.$line.cluster.txt
+
+            mv $jobid.targets.$line.cluster.txt $jobid.targets.$line.txt
+
+            zip $jobid.targets.$line.zip $jobid.targets.$line.txt
+            rm $jobid.targets.$line.txt  #NOTE this file could be used for grepping when 'Show Targets' is selected
+
             echo $line >> output.txt
         done < guides.txt
         mkdir ../../assets/Img/$jobid

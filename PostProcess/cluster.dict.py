@@ -63,6 +63,10 @@ if sys.argv[3] == 'True':
 else:
     keep_columns = False
 
+add_for_final = '\n'        #To extend teh header for last clustering for each guide to provide downloads
+if 'addForFinal' in sys.argv[:]:
+    add_for_final = '\tSamples\tReal Guide\tAnnotation Type\n'
+
 result_name = sys.argv[1][:sys.argv[1].rfind('.')] + '.cluster.txt'
 cluster_only = False
 if sys.argv[4] == 'True':
@@ -134,7 +138,7 @@ if total_line > MAX_LIMIT:
                             else:
                                 result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\n')
                     else:
-                        result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPAM_gen\tVar_uniq\n')
+                        result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPAM_gen\tVar_uniq' + add_for_final)
                     write_header = False
                 total_targets = []
                 for k in guides_dict.keys():
@@ -143,18 +147,18 @@ if total_line > MAX_LIMIT:
 
                 first_line = total_targets[0]
                 # current_chr_pos = first_line[3] + ' ' + first_line[9]
-                current_chr_pos = first_line[2] + ' ' + str(first_line[4])
+                current_chr_pos = first_line[2] + str(first_line[4]) + first_line[5]  #chr clusterpos direction
 
                 total_list.append([first_line])
 
                 for line in total_targets[1:]:
                     #if line[3] + ' ' + line[9] != current_chr_pos:
-                    if line[2] + ' ' + str(line[4]) != current_chr_pos:
+                    if line[2] + str(line[4]) + line[5] != current_chr_pos:
                         # total_list[-1].sort(key = lambda x: int(x[8]))
                         total_list[-1].sort(key = lambda x: (x[8], x[6], [alphabet.index(c) for c in x[1]]))   #Order cluster by total and mms, and prioritize targets with IUPAC 
                         total_list.append([line])
                         # current_chr_pos = line[3] + ' ' + line[9]
-                        current_chr_pos = line[2] + ' ' + str(line[4])
+                        current_chr_pos = line[2] + str(line[4]) + line[5]
                     else:
                         total_list[-1].append(line)     
 
@@ -233,7 +237,7 @@ else:
                 else:
                     result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\n')
         else:
-            result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPAM_gen\tVar_uniq\n')
+            result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPAM_gen\tVar_uniq' + add_for_final)
 
         total_targets = []
         for k in guides_dict.keys():
@@ -245,18 +249,18 @@ else:
             sys.exit()
         first_line = total_targets[0]
         # current_chr_pos = first_line[3] + ' ' + first_line[9]
-        current_chr_pos = first_line[2] + ' ' + str(first_line[4])
+        current_chr_pos = first_line[2] + str(first_line[4]) + first_line[5]
 
         total_list.append([first_line])
 
         for line in total_targets[1:]:
             #if line[3] + ' ' + line[9] != current_chr_pos:
-            if line[2] + ' ' + str(line[4]) != current_chr_pos:
+            if line[2] + str(line[4]) + line[5] != current_chr_pos:
                 # total_list[-1].sort(key = lambda x: int(x[8]))
                 total_list[-1].sort(key = lambda x: (x[8], x[6], [alphabet.index(c) for c in x[1]]))   #Order cluster by total and mms 
                 total_list.append([line])
                 # current_chr_pos = line[3] + ' ' + line[9]
-                current_chr_pos = line[2] + ' ' + str(line[4])
+                current_chr_pos = line[2] + str(line[4]) + line[5]
             else:
                 total_list[-1].append(line)     
 

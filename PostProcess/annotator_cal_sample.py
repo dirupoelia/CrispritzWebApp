@@ -407,7 +407,7 @@ next(inResult)      #Skip header
 for line in inResult:
     x = line.strip().split('\t')
     guide_no_bulge = x[1].replace("-","")
-    if (guide_no_bulge + x[3] + x[5]) == current_guide_chr_pos:     #Target is in current cluster, simply save the sample and annotation, discard if status is F
+    if (guide_no_bulge + x[3] + x[5] + x[6]) == current_guide_chr_pos:     #Target is in current cluster, simply save the sample and annotation, discard if status is F
         if save_cluster_targets:
             if remove_iupac:        #Save only Reference target of the cluster
                 for c in x[2]:
@@ -572,7 +572,7 @@ for line in inResult:
     remove_iupac = False
     decrease_ref_count = []     #Samples that does not have REF or VAR part of semicommon
     pos_char_for_cluster = []       #contains (pos, char) where to change nucleotides for writing the cluster targets --> see conversione_caratteri_cluster.txt
-    current_guide_chr_pos = guide_no_bulge + x[3] + x[5]
+    current_guide_chr_pos = guide_no_bulge + x[3] + x[5] + x[6]
     if x[3] != current_chr:
         if not os.path.exists(os.path.realpath(sys.argv[4]) + '/my_dict_' + x[3] + '.json'):
             pass
@@ -639,7 +639,20 @@ for line in inResult:
     
     target_scomposti_salvare = []
     samples_already_assigned = set()
-    false_targets = 0 
+    false_targets = 0
+
+    #Get PAM of reference
+    if x[6] == '-':
+        tmp_t = target_combination[-1][::-1]
+        reference_pam = tmp_t[pam_begin:pam_end]
+    else:
+        reference_pam = target_combination[-1][pam_begin:pam_end]
+    
+    found_creation = False
+    for pos_pam_ref, pam_char_ref in enumerate(reference_pam):
+        if not iupac_code_set[pam[pos_pam_ref]] & iupac_code_set[pam_char_ref]:     #ref char not in set of general pam char
+            found_creation = True
+
     for t in target_combination:
         set_list2 = []
         final_result = x.copy()
@@ -699,6 +712,9 @@ for line in inResult:
 
             final_result[7] = str(mm_new_t - int(final_result[8]))
             final_result[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
+            if found_creation:
+                final_result[12] = t[pam_begin:pam_end]
+            
             target_scomposti_salvare.append(final_result)
     if false_targets >= len(target_combination):        #If all the scomposed targets have no sample or do not respect PAM/mm threasold, the iupac target does not really exist
         line = line.strip().split('\t')
@@ -711,7 +727,7 @@ for line in inResult:
         save_cluster_targets = True        #salvare il cluster ma togliendo gli iupac
         remove_iupac = True
         x = next(inResult).strip().split('\t')   #get next target of the cluster
-        while (x[1].replace('-','') + x[3] + x[5]) == current_guide_chr_pos:   #while still in same cluster
+        while (x[1].replace('-','') + x[3] + x[5] + x[6]) == current_guide_chr_pos:   #while still in same cluster
             for c in x[2]:
                 if c in iupac_code:
                     break
@@ -722,6 +738,8 @@ for line in inResult:
         x.append('n')                       #Fist target in the cluster that is REF
         x.append(x[1].replace('-',''))      #Fist target in the cluster that is REF
         tuple_var_ref = []      #Since this is now a REF target, it has no iupac --> needed to save to sample.annotation file
+    
+    
     if target_scomposti_salvare:        #Keep the target with lowest total and mms as representative of the IUPAC target
         if x[vu_pos] == 'n':                #Save mms of REF of a semicommon
             save_total_general_table = True
@@ -757,9 +775,7 @@ for line in inResult:
                 pos_char_for_cluster.append(((len(target_scomposti_salvare[0][2]) - elem - 1) + add_to_count + (max_dna_bulges - int(add_blank) ) * pam_multiplier, target_scomposti_salvare[0][2][(len(target_scomposti_salvare[0][2]) - elem - 1)]))
             else:
                 pos_char_for_cluster.append((elem + add_to_count + (max_dna_bulges - int(add_blank) ) * pam_multiplier, target_scomposti_salvare[0][2][elem]))   #save (position, character) of best scomposition
-    # print(x)
-    # print('pos snp', pos_snp)       
-    # print(pos_char_for_cluster)
+    
     #Annotate target
     visited_pop = []
     visited_superpop = []
@@ -1052,7 +1068,11 @@ if summary_samples:
         for g in guideDict:
             pop_distribution.write('-Summary_' + g + '\n')
             for superpop in superpopulation:
-                pop_distribution.write(superpop + '\t' + '\t'.join([ ','.join(str(v) for v in t) for t in count_superpop[g][superpop]['distributions']]) + '\n')
+                try:
+                    pop_distribution.write(superpop + '\t' + '\t'.join([ ','.join(str(v) for v in t) for t in count_superpop[g][superpop]['distributions']]) + '\n')
+                except:
+                    pop_distribution.write(superpop + '\t' + '\t'.join([ ','.join(str(v) for v in t) for t in [[0] * (max_bulges + 1) for x in range(10)]]) + '\n')
+
                 #[[0 0 0] [0 0 0] [0 0 0] [0 0 0] [0 0 0]] ->   0,0,0   0,0,0   0,0,0   0,0,0   0,0,0 
 #Write sumref for barplot for targets in top1 form of var/ref search
 if summary_barplot_from_total:

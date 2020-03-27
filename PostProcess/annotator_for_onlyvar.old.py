@@ -1,16 +1,9 @@
 #!/usr/bin/env python
 
 '''
-Merge of annotator, calc_samples_faster.py and scores
+Merge of annotator, calc_samples_faster.py and scores. ONLY FOR VAR SEARCH since no distinction between semicommon etc
 Prende in input il file dei top1, ordinati per chr, e estrae i samples corrispondenti. Per ogni target, salva l'insieme dei sample in samples.all.txt, crea le combinazioni tenendo i target reali
 in samples.txt, poi calcola l'annotazione corrispondente e crea il file Annotation.targets e  i vari summaries.
-Differences from annotato_calc_cample.py:
--save_total_general_table always False
--Remove if condition on save_general_table when sorting target_scomposti_salvare (anchor 'REMOVEDFORONLYVAR')
--if false_targets >= len(target_combination):    just put 
-    save_cluster_targets = False
-	continue
--add '.enriched' to scores
 '''
 
 
@@ -23,8 +16,6 @@ Differences from annotato_calc_cample.py:
 #argv 6 is max allowed mms
 #argv 7 is genome reference directory (Eg ../../Genomes/hg38_ref)
 #argv8 is guide file
-#argv9 is max allowed DNA bulges
-#argv10 is max allowed RNA bulges
 # NOTE 06/03  -> removed PAM Disruption calculation
 import sys
 import json
@@ -40,7 +31,6 @@ import numpy as np
 import azimuth.model_comparison
 import string
 import multiprocessing
-import re
 
 SIZE_DOENCH = 10000
 N_THR = 3
@@ -108,7 +98,6 @@ print('TEST PER ANNOTAZIONE COMPLETA: I TARGET SENZA ANNOTAZIONE SONO SALVATI CO
 print('SE UN  TARGET HA 1+ ANNOTAZIONI, LE SALVA IN SINGOLA UNICA RIGA')
 print('RIMOZIONE DEI TARGET CHE NON HANNO SAMPLES')
 print('CALCOLO SCORES')
-print('SOSTITUZIONE IUPAC DI TUTTI I TARGET CON CHAR DEL TOP1SCOMPOSTO')
 print("READING INPUT FILES")
 #Dictionaries for annotating samples
 
@@ -259,26 +248,6 @@ else:                   #'Var' case: PAM creation and Variant_unique not calcula
 
 mm_pos = 7      #position of mismatch column
 bulge_pos = 8
-max_dna_bulges = int(sys.argv[9])
-max_rna_bulges = int(sys.argv[10])
-max_bulges = max_dna_bulges
-if max_rna_bulges > max_bulges:
-    max_bulges = max_rna_bulges
-
-blank_add_begin = ' '               #Needed for replacing IUPAC in cluster targets
-blank_add_end = ''
-pam_multiplier = 1
-pam_multiplier_negative = 0
-start_sample_for_cluster = 0
-end_sample_for_cluster = max_dna_bulges + max_rna_bulges  #Values to check new iupac when working on cluster targets
-if pam_at_beginning:
-    blank_add_begin = ''
-    blank_add_end = ' '
-    pam_multiplier = 0              #Since ' ' are at end, and '-' to reinsert are before the ' ', need to put max_dna_bulges and rna_bulges of target to 0
-    pam_multiplier_negative = 1
-    start_sample_for_cluster = len_pam + guide_len - max_rna_bulges
-    end_sample_for_cluster = len_pam + guide_len + max_dna_bulges
-
 outFileSample.write(header + '\n')
 # outFileSampleAll.write(header + '\n')
 summary_samples = True
@@ -315,21 +284,13 @@ header_list = header.strip().split('\t')
 
 Per pop e superpop, se ho due sample stessa famiglia stesso target, conto solo una volta (visited_pop and visited_superpop array)
 '''
-count_sample = dict()       #NOTE cout_sample -> GUIDE -> SAMPLE -> has targets + ann1 + ann2 ... + refposition
-    #refposition is a key unrelated to the other keys (targets ann1 ann2 ...) and it's used to classify the sample (0 0+ 1 1+).
-    #it's put in here just to avoid to duplicate the entire guide -> sample ->     structure
-    # refposition -> [class , number of specific VAR on target to add/remove]  #Save class (0 at start) and number of ontarget var specific
-    #for that sample.
-ontarget_reference_count = dict() #Count number of REF target and REF part of semicommon
+count_sample = dict()
 count_pop = dict()
-count_superpop = dict()     #NOTE added key 'distributions' for population distribution images
-    #count_superpop-> GUIDE -> SUPERPOP -> targets ann1 ann2 ... distributions
-    # distributions is an array of len mms+bulge, each position contains an array [0,0,0] of len bulge+1 (indicating no bulge, 1 bulge, 2bulge ...)
+count_superpop = dict()
 
 #Create -Summary_total for a file ref.Annotation.summary.txt from the y and n values of Var_uniq column
 summary_barplot_from_total = False
 if 'Var_uniq' in header:
-    summary_barplot_from_total = True
     vu_pos = header_list.index('Var_uniq')
 count_unique = dict()
 count_unique['targets'] = [0]*10
@@ -409,19 +370,19 @@ remove_iupac = False
 save_total_general_table = False
 add_to_general_table = dict()   #target semicommon da aggiungere alla tab generale delle guide, metto i valori di total presi dal primo target REF nel cluster di un semicommon che esiste
 last_annotation = ''    #needed when counting the ref part of a semicommon in order to not redo the annotation
-last_samples = ''       #needed for save cluster part
+
 next(inResult)      #Skip header
 for line in inResult:
     x = line.strip().split('\t')
     guide_no_bulge = x[1].replace("-","")
-    if (guide_no_bulge + x[3] + x[5] + x[6]) == current_guide_chr_pos:     #Target is in current cluster, simply save the sample and annotation, discard if status is F
+    if (guide_no_bulge + x[3] + x[5]) == current_guide_chr_pos:     #Target is in current cluster, simply save the sample and annotation, discard if status is F
         if save_cluster_targets:
-            if remove_iupac:        #Save only Reference target of the cluster
+            if remove_iupac:
                 for c in x[2]:
                     if c in iupac_code:
                         break
                 else:       #no break triggered
-                    cluster_update.write(line.strip() + '\tn\t' + guide_no_bulge + '\t' + last_annotation + '\n')
+                    cluster_update.write(line.strip() + '\t.\t' + guide_no_bulge + '\t.\n')
                 continue        
             #Keep the semicommon ref total value to be added to general table
             if save_total_general_table:
@@ -429,15 +390,6 @@ for line in inResult:
                     if c in iupac_code:
                         break
                 else: #Found first REF target in cluster of semicommon
-                    if x[bulge_pos + 1] == '0':     #If total column is 0  -> On-target
-                        ontarget_reference_count[guide_no_bulge] +=1        #Add +1 to Ref count
-                        for s in decrease_ref_count.split(','):                        #But Decrease count for samples that do not have the REF (ie sample with ok target but not 0 total, or sample with not ok target)
-                            try:
-                                count_sample[guide_no_bulge][s]['refposition'][2] -= 1
-                            except:
-                                count_sample[guide_no_bulge][s]['refposition'] = [0,0,-1]
-                            count_sample[guide_no_bulge][s]['refposition'][0] += 1      #Visited +1
-                         
                     add_to_general_table[guide_no_bulge][int(x[mm_pos]) +  int(x[bulge_pos])] += 1
                     #Do annotation to keep numbers consistent between images and general table
                     #conto i target generali per mm threshold
@@ -483,103 +435,15 @@ for line in inResult:
                                 targets_for_doench[x[1]] = []
                             doenchForIupac(sequence_doench, x[1])  #Get all possible targets with iupac itertools for doench
                     save_total_general_table = False
-            #Save target (with or without IUPAC in cluster file)
-            #Put top1 scomposed nucleotide in target in cluster that have IUPAC characters
-            line = line.strip().split('\t')
-            for c in line[2]:
-                if c in iupac_code:
-                    break
-            else:   #No break triggered: target doesn't have iupac
-                line = '\t'.join(line)
-                cluster_update.write(line.strip() + '\tn\t' + guide_no_bulge + '\t' + last_annotation + '\n') 
-                continue
-            #From now, all the target have at least one IUPAC
-            tmp_gap_position = []
-            if line[0] == 'X':  
-                target_to_modify = list(blank_add_begin * max_dna_bulges + line[2] + blank_add_end * max_dna_bulges)        #Eg if max bulge dna is 1: pam end -> [' ', 'A','C','G',...,'A','G','G']; pam begin -> ['T','G','T','C','A','G',...,'A','T',' '] 
-            elif line[0] == 'DNA':
-                target_to_modify = list(blank_add_begin * (max_dna_bulges - int(line[bulge_pos])) + line[2] + blank_add_end * (max_dna_bulges - int(line[bulge_pos])))
-            else:
-                tmp_gap_position = [g.start() for g in re.finditer('-', line[2])]
-                target_to_modify = list(blank_add_begin * (max_dna_bulges + int(line[bulge_pos])) + line[2].replace('-','') + blank_add_end * (max_dna_bulges + int(line[bulge_pos])))   
-            
-            for elem in  pos_char_for_cluster:      #elem is tuple (position in target, character that was substituted in top1scomposed)
-                if target_to_modify[elem[0]] == ' ':       #if target to modify is ' '
-                    continue
-                if target_to_modify[elem[0]] not in iupac_code:                 #Non IUPAC char should not be targeted
-                    print('Error: Substituting into a NON IUPAC character:', line, str(elem[0]) , pos_char_for_cluster) 
-                target_to_modify[elem[0]] = elem[1]
-                
-            #Fix the removed '-' in RNA targets
-            for tmp_g_p in tmp_gap_position:
-                target_to_modify.insert(tmp_g_p + (max_dna_bulges * pam_multiplier) + int(line[bulge_pos]) * pam_multiplier, '-')
-            
-            #DNA and X cases can have more characters at beginning #TODO fix for pam at beginning
-            remove_target = False
-            if line[0] != 'RNA':
-                iupac_pos = 0
-                no_char = 0
-                tmp_intersection = set()
-                for i in range (start_sample_for_cluster, end_sample_for_cluster):    #Check only on some characters, not all target
-                    if target_to_modify[i] == ' ':
-                        no_char += 1
-                    if target_to_modify[i] in iupac_code:
-                        if line[6] == '-':
-                            iupac_pos = str(int(line[4]) + (len(target_to_modify) - i - 1) + 1 - (no_char * pam_multiplier_negative)  )
-                        else:
-                            iupac_pos = str(int(line[4]) + i + 1 - no_char)
-                        try:
-                            a = (datastore[chr_name + ',' + iupac_pos])   #NOTE se non ha samples, ritorna ;ref,var
-                        except Exception as e:
-                            print(e)
-                            print('Error at', target_to_modify, ' pos line', line[4], ', iupac pos', str(iupac_pos), ', i:', str(i))
-                            continue
-                        ref_char = a.split(';')[-1].split(',')[0]
-                        var_char = a.split(';')[-1].split(',')[1]
-                        if line[6] == '-':
-                            ref_char = rev_comp(ref_char)
-                            var_char = rev_comp(var_char)
-
-                        if 'n' in last_samples:
-                            target_to_modify[i] = a.split(';')[-1].split(',')[0]   #RefChar
-                        else:       #Some samples were already calculated for the target
-                            sample_set = set(a.split(';')[0].split(','))   #set of sample associated with the current IUPAC
-                            tmp_intersection = sample_set & last_samples        #Intersection
-                            if tmp_intersection:
-                                if len(last_samples) == len(tmp_intersection):      #Put car char only if all sample of the top1 are in this new iupac
-                                    target_to_modify[i] = a.split(';')[-1].split(',')[1]   #VarChar
-                                else:
-                                    remove_target = True
-                            else:   #No intersection, put ref char
-                                target_to_modify[i] = a.split(';')[-1].split(',')[0]   #RefChar
-
-            if remove_target:
-                continue
-            else:       #Do also a check for new mm value and if mm value > threshold, do not save target
-                line[2] = ''.join(target_to_modify).strip()
-                mm_new_t = 0
-                guide_no_pam = line[1][pos_beg:pos_end]    
-                for position_t, char_t in enumerate(line[2][pos_beg:pos_end]): 
-                    if char_t.upper() != guide_no_pam[position_t]:
-                        mm_new_t += 1
                     
-                if allowed_mms < (mm_new_t - int(line[bulge_pos])):        
-                    continue                #Remove target since id does not respect mms constrains
-        
-                line[mm_pos] = str(mm_new_t - int(line[bulge_pos]))
-                line[bulge_pos + 1] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
-
-            line = '\t'.join(line) 
-            cluster_update.write(line.strip() + '\t' + ','.join(last_samples) + '\t' + guide_no_bulge + '\t' + last_annotation + '\n') 
+            cluster_update.write(line.strip() + '\t.\t' + guide_no_bulge + '\t.\n')  #add Sample (.) GuideNoBulge and Annotation(.). Use (.) to save space
         lines_processed +=1
         if lines_processed % (mod_tot_line) == 0:
             print('Annotation: Total progress ' + str(round(lines_processed /total_line *100, 2)) + '%')
         continue
     save_cluster_targets = True
     remove_iupac = False
-    decrease_ref_count = []     #Samples that does not have REF or VAR part of semicommon
-    pos_char_for_cluster = []       #contains (pos, char) where to change nucleotides for writing the cluster targets --> see conversione_caratteri_cluster.txt
-    current_guide_chr_pos = guide_no_bulge + x[3] + x[5] + x[6]
+    current_guide_chr_pos = guide_no_bulge + x[3] + x[5]
     if x[3] != current_chr:
         if not os.path.exists(os.path.realpath(sys.argv[4]) + '/my_dict_' + x[3] + '.json'):
             pass
@@ -646,20 +510,7 @@ for line in inResult:
     
     target_scomposti_salvare = []
     samples_already_assigned = set()
-    false_targets = 0
-
-    #Get PAM of reference
-    if x[6] == '-':
-        tmp_t = target_combination[-1][::-1]
-        reference_pam = tmp_t[pam_begin:pam_end]
-    else:
-        reference_pam = target_combination[-1][pam_begin:pam_end]
-    
-    found_creation = False
-    for pos_pam_ref, pam_char_ref in enumerate(reference_pam):
-        if not iupac_code_set[pam[pos_pam_ref]] & iupac_code_set[pam_char_ref]:     #ref char not in set of general pam char
-            found_creation = True
-
+    false_targets = 0 
     for t in target_combination:
         set_list2 = []
         final_result = x.copy()
@@ -714,26 +565,42 @@ for line in inResult:
             if not pam_ok or allowed_mms < (mm_new_t - int(final_result[8])):                     
                 false_targets += 1
                 x[-2] = ','.join(set(x[-2].split(',')) - set(common_samples))
-                decrease_ref_count.append(','.join(common_samples))   #This samples does not have the VAR version nor the REF version
                 continue                #Remove target since id does not respect PAM or mms constrains
 
             final_result[7] = str(mm_new_t - int(final_result[8]))
             final_result[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
-            if found_creation:
-                final_result[12] = t[pam_begin:pam_end]
-            
             target_scomposti_salvare.append(final_result)
     if false_targets >= len(target_combination):        #If all the scomposed targets have no sample or do not respect PAM/mm threasold, the iupac target does not really exist
-        #Do not do annotation because target does not exists, and do not save his cluster
+        line = line.strip().split('\t')
+                 #Do not do annotation because target does not exists, and do not save his cluster
         save_cluster_targets = False
         continue    #DO NOT save this target because no ref homologous and no sample combination exists
-                    # Anchor REMOVEDFORONLYVAR
+        #target does not exists in enriched, but exists in reference (semi_common), so keep only the reference targets (from his cluster)
+        # if line[6] == '-':
+        #     reference_semicommon = list(x[2][::-1])
+        # else:
+        #     reference_semicommon = list(x[2])
+        # for tuple_var_ref_pos, tuple_var_ref_chars in enumerate(tuple_var_ref):
+        #     reference_semicommon[pos_snp[tuple_var_ref_pos]] = tuple_var_ref_chars[1]
+        # new_ref_target = ''.join(reference_semicommon)
+        # if line[6] == '-':
+        #     new_ref_target = new_ref_target[::-1]
+        # line[2] = new_ref_target  #TODO fixare perchè il carattere ref potrebbe non essere corretto (non esiste il ref che ha lo stesso gap che nel top1)
+        # x[2] = new_ref_target  
+        # guide_no_pam = line[1][pos_beg:pos_end]    
+        # for position_t, char_t in enumerate(new_ref_target[pos_beg:pos_end]):
+        #     if char_t.upper() != guide_no_pam[position_t]:          #TODO mettere lettere minuscole
+        #         mm_new_t += 1     
         x[-2] = 'n'     #Since iupac target has no scomposition, it means it has no sample associated
+        # x[7] = str(mm_new_t - int(x[8]))
+        # x[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
+        # line[7] = str(mm_new_t - int(line[8]))
+        # line[9] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
         line = '\t'.join(line)
-        save_cluster_targets = True        #salvare il cluster ma togliendo gli iupac
+        save_cluster_targets = True        #TODO salvare il cluster ma togliendo gli iupac
         remove_iupac = True
         x = next(inResult).strip().split('\t')   #get next target of the cluster
-        while (x[1].replace('-','') + x[3] + x[5] + x[6]) == current_guide_chr_pos:   #while still in same cluster
+        while (x[1].replace('-','') + x[3] + x[5]) == current_guide_chr_pos:   #while still in same cluster
             for c in x[2]:
                 if c in iupac_code:
                     break
@@ -744,43 +611,12 @@ for line in inResult:
         x.append('n')                       #Fist target in the cluster that is REF
         x.append(x[1].replace('-',''))      #Fist target in the cluster that is REF
         tuple_var_ref = []      #Since this is now a REF target, it has no iupac --> needed to save to sample.annotation file
-    
-    
     if target_scomposti_salvare:        #Keep the target with lowest total and mms as representative of the IUPAC target
-                                        #Anchor REMOVEDFORONLYVAR
         target_scomposti_salvare.sort(key = lambda x : (int(x[mm_pos + 2]), int(x[mm_pos]))) #Order scomposition by total and mms values
         x[2] = target_scomposti_salvare[0][2]       #Adjust Target sequence, from IUPAC to first of scomposition
         x[mm_pos] = target_scomposti_salvare[0][mm_pos]
         x[mm_pos + 2] = target_scomposti_salvare[0][mm_pos + 2]     #Adjust IUPAC with min total and mms of his scomposition
-        original_targ_len = len(target_scomposti_salvare[0][2])
-        if target_scomposti_salvare[0][0] == 'RNA':
-            gap_position = [g.start() for g in re.finditer('-', target_scomposti_salvare[0][2])]    #list of indices where '-' is located
-        for elem in pos_snp:
-            add_to_count = 0
-            add_blank = int(target_scomposti_salvare[0][bulge_pos])
-            if target_scomposti_salvare[0][0] == 'RNA':
-                add_blank = 0
-                for i in gap_position:
-                    if not pam_at_beginning:        #TODO try to remove the pam_at_beginning check to improve performances (it's done only on top1 so maybe it's ok)
-                        if target_scomposti_salvare[0][6]=='-':
-                            if (original_targ_len - elem - 1) < i:
-                                add_to_count += 1
-                        else:
-                            if elem < i:
-                                add_to_count += 1
-                    else:
-                        if target_scomposti_salvare[0][6]=='-':
-                            if (original_targ_len - elem - 1) > i:
-                                add_to_count -= 1
-                        else:
-                            if elem > i:
-                                add_to_count -= 1
-
-            if target_scomposti_salvare[0][6]=='-':
-                pos_char_for_cluster.append(((len(target_scomposti_salvare[0][2]) - elem - 1) + add_to_count + (max_dna_bulges - int(add_blank) ) * pam_multiplier, target_scomposti_salvare[0][2][(len(target_scomposti_salvare[0][2]) - elem - 1)]))
-            else:
-                pos_char_for_cluster.append((elem + add_to_count + (max_dna_bulges - int(add_blank) ) * pam_multiplier, target_scomposti_salvare[0][2][elem]))   #save (position, character) of best scomposition
-    
+        
     #Annotate target
     visited_pop = []
     visited_superpop = []
@@ -799,7 +635,7 @@ for line in inResult:
         count_sample[guide_no_bulge] = dict()
         count_pop[guide_no_bulge] = dict()
         count_superpop[guide_no_bulge] = dict()
-        ontarget_reference_count[guide_no_bulge] = 0 #List of chr,clusterpos of on target of reference, needed for classify samples
+
         for item in annotationsSet:
             guideDict[guide_no_bulge][item]= {}
             guideDict[guide_no_bulge][item] = [0]*10
@@ -824,7 +660,6 @@ for line in inResult:
                 count_sample[guide_no_bulge][sample] = {'targets': [0]*10}
                 for item in annotationsSet:
                     count_sample[guide_no_bulge][sample][item] = [0]*10
-                count_sample[guide_no_bulge][sample]['refposition'] = [0, 0, 0]        #[Visited count, new ontargetVAR, noOntargetVAR/REF]Needed for classify samples
                 if dict_sample_to_pop[sample] not in count_pop[guide_no_bulge]:
                     count_pop[guide_no_bulge][dict_sample_to_pop[sample]] = {'targets': [0]*10}
                     for item in annotationsSet:
@@ -833,7 +668,6 @@ for line in inResult:
                     count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]] = {'targets': [0]*10}
                     for item in annotationsSet:
                         count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]][item] = [0]*10
-                    count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]]['distributions'] = [[0] * (max_bulges + 1) for x in range(10)]
             #Add +1 to targets
             count_sample[guide_no_bulge][sample]['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
             if dict_sample_to_pop[sample] not in visited_pop:
@@ -842,7 +676,6 @@ for line in inResult:
             if dict_pop_to_sup[dict_sample_to_pop[sample]] not in visited_superpop:
                 visited_superpop.append(dict_pop_to_sup[dict_sample_to_pop[sample]])
                 count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]]['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
-                count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]]['distributions'][int(x[mm_pos]) + int(x[bulge_pos])][int(x[bulge_pos])] +=1 #add +1 to array in pos TOTAL, in cell corrresponding to bulge size
         visited_pop = []
         visited_superpop = []
     
@@ -887,16 +720,16 @@ for line in inResult:
         x.append(','.join(string_annotation))
         #outFileTargets.write(line.rstrip() + '\t' + ','.join(string_annotation) + '\n')
     last_annotation = x[-1]
-    last_samples = set(x[-3].split(','))
     #Save union samples + annotation
     # outFileSampleAll.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')  
 
     #Save cluster
+    # cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')
     if target_scomposti_salvare:
         cluster_update.write('\t'.join(x[:-3]) + '\t' + target_scomposti_salvare[0][-2] + '\t' + '\t'.join(x[-2:]) + '\n')  ##This line does not contain IUPAC, needed for summary by position; Adjust sample list for target scomposed
     else:
         cluster_update.write('\t'.join(x) + '\n')       #This line does not contain IUPAC, needed for summary by position
-    # cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')   #Write line with iupac (if present)
+    cluster_update.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n')   #Write line with iupac (if present)
     #Save scomposed targets
     if do_scores:
         for t in target_scomposti_salvare:
@@ -912,11 +745,7 @@ for line in inResult:
                     guides_dict[t[1]] = cfd_score
 
                 if t[mm_pos] == '0':    #DOENCH
-                    #Total = 0 -> do Classification
-                    for samp in t[-2].split(','):
-                        count_sample[guide_no_bulge][samp]['refposition'][1] += 1  #Add +1 at specific VAR onTarget
-                        count_sample[guide_no_bulge][samp]['refposition'][0] += 1   #Visited +1
-                    #DOENCH: estraggo sequenza
+                    #estraggo sequenza
                     with open('bedfile_tmp.bed', 'w+') as bedfile:
                         if t[6] == '+':
                             bedfile.write(t[3] + '\t' + str(int(t[4]) - 4 ) + '\t' + str(int(t[4]) + 23 + 3 ))
@@ -937,10 +766,7 @@ for line in inResult:
                     if t[1] not in targets_for_doench:
                         targets_for_doench[t[1]] = []
                     doenchForIupac(sequence_doench, t[1])  #Get all possible targets with iupac itertools for doench
-                else:
-                    decrease_ref_count.append(t[-2]) #Save X and total not 0
-            else:
-                decrease_ref_count.append(t[-2]) # Save DNA, RNA -> they surely have total not 0
+        
         if not tuple_var_ref and x[0] == 'X':       #Calculate scores for reference targets
             cfd_score = calc_cfd(x[1], x[2].upper()[:-3], x[2].upper()[-2:], mm_scores, pam_scores)
             sum_cfd = sum_cfd + cfd_score
@@ -960,7 +786,7 @@ for line in inResult:
                 extr = subprocess.Popen(['bedtools getfasta -fi ' + refgenomedir + '/' + x[3] +'.enriched.fa' ' -bed bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
                 extr.wait()
                 out, err = extr.communicate()
-                out = out.decode('UTF-8') 
+                out = out.decode('UTF-8')
                 if x[6] == '+':
                     sequence_doench = out.strip().split('\n')[-1].upper()
                     # sequence_doench = sequence_doench[:4] + x[2] + sequence_doench[-3:]
@@ -974,20 +800,10 @@ for line in inResult:
 
     else:
         for t in target_scomposti_salvare:
-            if t[bulge_pos + 1] == '0':
-                for samp in t[-2].split(','):
-                    count_sample[guide_no_bulge][samp]['refposition'][1] += 1  #Add +1 at specific VAR onTarget
-                    count_sample[guide_no_bulge][samp]['refposition'][0] += 1   #Visited +1
-            else:
-                decrease_ref_count.append(t[-2])        #Save samples that have not 0 on Total column --> if in next iteration i need to save 
-                                # the REF, i decrease this samples because they do not have REF of VAR On target
             outFileSample.write('\t'.join(t) + '\t' + x[-1] + '\n')
-    
+
     if not tuple_var_ref:
-        if x[bulge_pos + 1] == '0':     #If total column is 0  -> On-target REF
-            ontarget_reference_count[guide_no_bulge] +=1      #Add +1 to count ontarget for all samples (all samples have this on target)
         outFileSample.write(line.rstrip() + '\t' + '\t'.join(x[-3:]) + '\n') #Save REF target in samples.annotation, needed for sum by guide
-    decrease_ref_count = ','.join(decrease_ref_count)
     lines_processed +=1
     if lines_processed % (mod_tot_line) == 0:
         print('Annotation: Total progress ' + str(round(lines_processed /total_line *100, 2)) + '%')
@@ -1069,16 +885,8 @@ if summary_samples:
                         result.write(item + '\t' + '\t'.join(str(i) for i in count_superpop[guide][superpop][item]) + '\n')
                     except:
                         result.write(item + '\t' + '\t'.join(str(i) for i in [0]*10) + '\n')
-    with open(outputFile + '.PopulationDistribution.txt', 'w+') as pop_distribution:
-        for g in guideDict:
-            pop_distribution.write('-Summary_' + g + '\n')
-            for superpop in superpopulation:
-                try:
-                    pop_distribution.write(superpop + '\t' + '\t'.join([ ','.join(str(v) for v in t) for t in count_superpop[g][superpop]['distributions']]) + '\n')
-                except:
-                    pop_distribution.write(superpop + '\t' + '\t'.join([ ','.join(str(v) for v in t) for t in [[0] * (max_bulges + 1) for x in range(10)]]) + '\n')
 
-                #[[0 0 0] [0 0 0] [0 0 0] [0 0 0] [0 0 0]] ->   0,0,0   0,0,0   0,0,0   0,0,0   0,0,0 
+
 #Write sumref for barplot for targets in top1 form of var/ref search
 if summary_barplot_from_total:
     with open(outputFile + '.sumref.Annotation.summary.txt', 'w+') as result:
@@ -1130,48 +938,8 @@ with open(outputFile + '.addToGeneralTable.txt', 'w+') as add_file:
     for guide in add_to_general_table:
         add_file.write(guide + '\t' + '\t'.join([str(x) for x in add_to_general_table[guide]]) + '\n')
 
-#Calculate and save classes for each sample
-total_class = dict()    #For each guide, Save total of class [0, 1 , 1+]
-with open(outputFile + '.SampleClasses.txt', 'w+') as sample_class:
-    #Header
-    sample_class.write('Sample')
-    for g in count_sample.keys():
-        total_class[g] = [0, 0, 0, 0]   #0 0+ 1 1+
-        sample_class.write('\t' + g)
-    sample_class.write('\n')
-    #Write classes
-    for s in all_samples:
-        sample_class.write(s)
-        for g in count_sample.keys():
-            # count_on_target = (count_sample[g][s]['refposition'][1] + count_sample[g][s]['refposition'][2] + ontarget_reference_count[g]) #Sum created new ontarget + destroyed ontarget + ontarget on all samples
-            if s not in count_sample[g]:
-                if ontarget_reference_count[g] > 0:
-                    sample_class.write('\t1')
-                    total_class[g][2] += 1
-                else:
-                    sample_class.write('\t0')   #If there are no REF, the samples has 0 on targets
-                    total_class[g][0] += 1
-                continue
-            if count_sample[g][s]['refposition'][1] > 0: #CLASS 1+ : sample have at least 1 new on target w.r.t the reference 
-                sample_class.write('\t1+')
-                total_class[g][3] += 1
-            elif count_sample[g][s]['refposition'][0] == 0 : #CLASS 1: sample have the same ontarget as ref
-                if ontarget_reference_count[g] > 0:
-                    sample_class.write('\t1')
-                    total_class[g][2] += 1
-                else:
-                    sample_class.write('\t0')   #If there are no REF, the samples has 0 on targets
-                    total_class[g][0] += 1
-            elif ontarget_reference_count[g] + count_sample[g][s]['refposition'][2] == 0: #Class 0: all the reference targets were destroyed
-                sample_class.write('\t0')       #NOTE samples that have at least one new OnTarget, but ontarget_ref + ['refpos'][2] == 0 are counted as 1+
-                total_class[g][0] +=1
-            else:
-                sample_class.write('\t0+')      #Class 0+: only some REF were destroyed, sample is still targetable
-                total_class[g][1] +=1
-        sample_class.write('\n')
-    sample_class.write('Total for Class 0 - 0+ - 1 - 1+')
-    for g in count_sample.keys():
-        sample_class.write('\t' + '-'.join([str(x) for x in total_class[g]]))
+
+
 if total_error > 0:
     print('Skipped SNP:', total_error)
 print('Annotation: Total progress 100%')

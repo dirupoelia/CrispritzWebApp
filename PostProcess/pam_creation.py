@@ -121,6 +121,36 @@ def rev_comp(a):
         return 'G'
     return 'C'
 start_time = time.time()
+
+#NOTE metto solo i '-' in min max mismatch e la y in var uniq
+    
+with open(sys.argv[1]) as uniq, open(name_output + '.pamcreation.txt', 'w+') as res:
+    for line in uniq:
+        if '#' in line:
+            continue
+        line = line.strip().split('\t')
+        
+        #Min
+        line.append('-')
+        #max
+        line.append('-')
+        #PAM dis    #06/03 REMOVED
+        # line.append('n')
+        #Pam create
+        
+        line.append('n')
+        #Var uniq
+        line.append('y')
+        
+        res.write('\t'.join(line) + '\n') 
+
+exit()
+
+
+
+
+#NOTE inserito pam creation in annotator
+
 #Bedtools estrae da start(compreso) a end(non compreso)
 if not pam_at_beginning:
     with open (sys.argv[1]) as uniq, open('bedfile.bed', 'w+') as bedfile:

@@ -101,7 +101,23 @@ for i in range(number_bars):     #For 0 bulge, 1 bulge, 2 bulge ...
 
 # p2 = plt.bar(ind, barplot_values.values() , width, color=[adjust_lightness(x, 1.3) for x in population_color], align='edge', bottom = list(barplot_values.values()))
 
-plt.legend([(x[:]) for x in all_bar], [str(total - x ) + ' MM + ' + str(x) + ' B' if x > 0 else str(total) + ' MM' for x in range(number_bars)], fontsize=15, handlelength = 10,handler_map={tuple: HandlerTuple(ndivide=None)})
+legend_labels = []
+handles_color = []
+for x in range(min(number_bars, total+1)):
+    if x == 0:
+        legend_labels.append(str(total) + ' MM')            #got Total mms and 0 bulges
+        handles_color.append((all_bar[0][:]))
+    else:
+        if (total - x) < 0:                                 #To avoid negative numbers on MM values
+            legend_labels.append('0 MM + ' + str(x) + ' B')
+            handles_color.append((all_bar[x][:]))
+        else:
+            legend_labels.append(str(total - x ) + ' MM + ' + str(x) + ' B')
+            handles_color.append((all_bar[x][:]))
+legend_labels.reverse()
+# handles_color = [(x[:]) for x in all_bar]
+handles_color.reverse()
+plt.legend(handles_color, legend_labels, fontsize=15, handlelength = 10,handler_map={tuple: HandlerTuple(ndivide=None)})
 # first param is for the colored rectangles of legens, second parameter for labels, handlelength is size of rectangles, handlermap is for grouping different colors in single label
 #[(first bar color, second bar color, ...), (first bar light color, second bar light color,...)]
 plt.title('Targets found in each Superpopulation - ' + str(total) + ' Mismatches(MM) + Bulges(B)', size=23)

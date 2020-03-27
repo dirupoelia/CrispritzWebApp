@@ -98,7 +98,7 @@ with open(sys.argv[1]) as targets:
                 continue
             line = line.strip().split('\t')
             #Summary by position
-            if current_cluster == line[1].replace('-','') + line[3] + ' ' + line[5]:
+            if current_cluster == line[1].replace('-','') + line[3] + line[5] + line[6]:
                 if line[14] == 'n':     #The target has no sample -> do not count in the summary table
                     continue
                 mms_current_line = int(line[7])
@@ -109,7 +109,7 @@ with open(sys.argv[1]) as targets:
                 sub_cluster_visited = []
                 #For the summary page save info from target without iupac (first line of cluster)
                 guide_d_cluster[line[1].replace('-','')].append(Cluster(line[3] + '\t' + line[5] + '\t' + line[2] + '\t' + line[7] + '\t' + line[8], [[0 for i in range (mms + 1)] for i in range (bulge + 1)] ))  #Save info of target with no iupac for summary page  
-                current_cluster = line[1].replace('-','') +line[3] + ' ' + line[5]
+                current_cluster = line[1].replace('-','') +line[3] + line[5] + line[6]
                 # #The skip to next line (top1 with iupac) and start counting   #NOTE removed the additional iupac line, 
                 # line = next(targets).strip().split('\t') 
                 mms_current_line = int(line[7])
@@ -163,7 +163,7 @@ with open(sys.argv[1]) as targets:
                 continue
             line = line.strip().split('\t')
             #Summary by position
-            if current_cluster == line[1].replace('-','') + line[3] + ' ' + line[5]:
+            if current_cluster == line[1].replace('-','') + line[3] + line[5] + line[6]:
                 mms_current_line = int(line[7])
                 bulge_current_line = int(line[8])
                 guide_d_cluster[line[1].replace('-','')][-1].count[bulge_current_line][mms_current_line] += 1 
@@ -171,7 +171,7 @@ with open(sys.argv[1]) as targets:
                 sub_cluster_visited = []
                 #Save info for summary by position page
                 guide_d_cluster[line[1].replace('-','')].append(Cluster(line[3] + '\t' + line[5] + '\t' + line[2] + '\t' + line[7] + '\t' + line[8], [[0 for i in range (mms + 1)] for i in range (bulge + 1)] ))  
-                current_cluster = line[1].replace('-','') +line[3] + ' ' + line[5]
+                current_cluster = line[1].replace('-','') +line[3] + line[5] + line[6]
                 mms_current_line = int(line[7])
                 bulge_current_line = int(line[8])
                 guide_d_cluster[line[1].replace('-','')][-1].count[bulge_current_line][mms_current_line] += 1 

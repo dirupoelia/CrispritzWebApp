@@ -105,7 +105,7 @@ onlyfile = [f for f in listdir('pam') if isfile(join('pam', f))]
 onlyfile = [x.replace('.txt', '') for x in onlyfile]            #removed .txt for better visualization
 pam_file = []
 for pam_name in onlyfile:
-    if 'NGG' in pam_name or 'NGA' in pam_name or 'NGK' in pam_name or 'NAA' in pam_name or 'NGTN' in pam_name:               #TODO modificare per selezionare solo le PAM disponibili
+    if 'NGG' in pam_name or 'NGA' in pam_name or 'NGK' in pam_name or 'NAA' in pam_name or 'NGTN' in pam_name or 'NRG' in pam_name:               #TODO modificare per selezionare solo le PAM disponibili
         pam_file.append({'label':pam_name, 'value':pam_name})
     else:
         #pam_file.append({'label': pam_name, 'value' : pam_name, 'disabled':False})
@@ -1408,7 +1408,10 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
     if value == 'tab-summary-by-guide': #BUG se cambio guida selezionata due volte mi cambia il mms mettendo a 0, provare con un div nascosto
         #Show Summary by Guide table
         fl.append(
-            html.P('Summary table counting the number of targets found in the Enriched Genome for each combination of Bulge Type, Bulge Size and Mismatch. Select \'Show Targets\' to view the corresponding list of targets.')
+            html.P(
+                ['Summary table counting the number of targets found in the Enriched Genome for each combination of Bulge Type, Bulge Size and Mismatch. Select \'Show Targets\' to view the corresponding list of targets. ', 
+                html.A('Click here', href = URL + '/data/' + job_id + '/' + job_id + '.targets.' + guide + '.zip' ,target = '_blank', id = 'download-full-list' ), ' to download the full list of targets.']
+                )
         )
         fl.append(html.Br())
         df = pd.read_pickle(job_directory + job_id + '.summary_by_guide.' + guide + '.txt')
@@ -1447,10 +1450,11 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
             df = df.sort_values('Targets in Enriched', ascending = False)
             df.drop(['Targets in Reference'], axis = 1, inplace = True)
         else:
-            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Targets in Population', 'Targets in Super Population', 'PAM Creation']
+            col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Targets in Population', 'Targets in Super Population', 'PAM Creation', 'Class']
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
             df = df.sort_values('Targets in Enriched', ascending = False)
             df.drop(['Targets in Reference'], axis = 1, inplace = True)
+            df.drop(['Class'], axis = 1, inplace = True)
         more_info_col = []
         for i in range(df.shape[0]):
             more_info_col.append('Show Targets')
@@ -2092,7 +2096,7 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
     if genome_type == 'both':
         col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation', 'Class']
     else:
-        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation']
+        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation', 'Class']       
     if max(btn_sample_section) == n:              #Last button pressed is filtering, return the first page of the filtered table
         if genome_type == 'both':
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
@@ -2101,6 +2105,7 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
         else:
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
             df = df.sort_values('Targets in Reference', ascending = False)
+            df.drop(['Class'], axis = 1, inplace = True) 
         more_info_col = []
         for i in range(df.shape[0]):
             more_info_col.append('Show Targets')
@@ -2129,6 +2134,7 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
             else:
                 df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
                 df = df.sort_values('Targets in Reference', ascending = False)
+                df.drop(['Class'], axis = 1, inplace = True) 
             more_info_col = []
             for i in range(df.shape[0]):
                 more_info_col.append('Show Targets')
@@ -2162,6 +2168,7 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
             else:
                 df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
                 df = df.sort_values('Targets in Reference', ascending = False)
+                df.drop(['Class'], axis = 1, inplace = True) 
             more_info_col = []
             for i in range(df.shape[0]):
                 more_info_col.append('Show Targets')
@@ -2433,14 +2440,14 @@ def resultPage(job_id):
         if genome_type == 'ref':
             columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets Reference', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}]
         elif genome_type == 'both':
-            columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'Samples in Class 0 - 0+ - 1 - 1+', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
+            columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets Reference', 'id' : 'Total On-Targets in Reference', 'type':'text'},{'name':'Samples in Class 0 - 0+ - 1 - 1+', 'id' : 'Sample Class', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
         else:
             columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets Enriched', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
     else:
         if genome_type == 'ref':
             columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'On-Targets Reference', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}]
         elif genome_type == 'both':
-            columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'Samples in Class 0 - 0+ - 1 - 1+', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
+            columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'On-Targets Reference', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Samples in Class 0 - 0+ - 1 - 1+', 'id' : 'Sample Class', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
         else:
             columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'On-Targets Enriched', 'id' : 'Total On-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
 
@@ -2539,17 +2546,16 @@ def resultPage(job_id):
             dcc.Tab(label='Graphical Summary', value='tab-summary-graphical'),
         ])
     )
-        
     else:
         #Barplot for population distributions
         final_list.append(
             html.Div(
                 [
-                    html.Button(
-                        "Show/Hide Target Distribution in Populations",
-                        id="btn-collapse-populations",
-                        # className="mb-3",
-                        # color="primary",
+                    dbc.Row(
+                        [
+                            dbc.Col(html.Button("Show/Hide Target Distribution in Populations", id="btn-collapse-populations")),
+                            # dbc.Col(html.A('Download full list of targets', target = '_blank', id = 'download-full-list' ))
+                        ]
                     ),
                     dbc.Collapse(
                         dbc.Card(dbc.CardBody(
@@ -2574,6 +2580,21 @@ def resultPage(job_id):
     final_list.append(html.Div(genome_type, style = {'display':'none'}, id = 'div-genome-type'))
     result_page = html.Div(final_list, style = {'margin':'1%'})
     return result_page
+
+# #Change href of download full list of target per guide link
+# @app.callback(
+#     Output('download-full-list', 'href'),
+#     [Input('general-profile-table', 'selected_cells')],
+#     [State('general-profile-table', 'data'),
+#     State('url', 'search')]
+# )
+# def updateDownloadLinkFullList(sel_cel, all_guides, search):
+#     if sel_cel is None or all_guides is None or not sel_cel or not all_guides:
+#         raise PreventUpdate
+#     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
+#     job_id = search.split('=')[-1]
+#     return URL + '/data/' + job_id + '/' + job_id + '.targets.' + guide + '.zip'
+
 
 
 #Update color on selected row
@@ -2656,6 +2677,7 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     column_off_target_enriched = []
     column_sep_by_mm_value = []
     column_sep_by_mm_value_enriched = []
+    column_sample_class = []
     if genome_type == 'ref' or genome_type == 'var':
         for g in guides:
             one_to_n_mms = []
@@ -2679,6 +2701,7 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
             column_sep_by_mm_value_enriched.append(' - '.join(str(int(x)) for x in one_to_n_mms_onlySNP))
             column_off_target_enriched.append(str(int(sum(one_to_n_mms_onlySNP[1:]))) + ' (' + column_sep_by_mm_value_enriched[-1] + ')')
             column_off_target_ref.append(str(int(sum(one_to_n_mms[1:]))) + ' (' + column_sep_by_mm_value[-1] + ')')
+        column_sample_class = column_on_target
     else:
     # #NOTE  USO IL CONTEGGIO PRESO DA jobid.general_target_count.txt
         with open('Results/' + job_id + '/' + job_id + '.general_target_count.txt') as general_count:
@@ -2702,18 +2725,23 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
             header_classes = next(samp_classes).strip().split('\t')[1:]     #List of Guides
             for line in samp_classes:
                 if 'Total for Class' in line:
-                    value_classes = line.strip().split('\t')[1:]            #List of values of classes for each guide
+                    value_classes = line.strip().split('\t')[1:]           #List of values of classes for each guide
+        #NOTE just for changing '-' to ' - '
+        for pos_vc, vc in enumerate(value_classes):
+            value_classes[pos_vc] = ' - '.join(vc.split('-'))
+        
         dict_classes = dict(zip(header_classes, value_classes))
         column_on_target = []
         for g in guides:
-            column_on_target.append(dict_classes[g] + ' (On-Targets Reference: ' + column_on_target_tmp_test[g].split('(')[-1].split('-')[0] + ' )')
+            column_sample_class.append(dict_classes[g]) 
+            column_on_target.append(column_on_target_tmp_test[g].split('(')[-1].split('-')[0])
 
     # #NOTE FINE 
 
     if 'NO SCORES' not in all_scores:
-        data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On-Targets in Reference':column_on_target, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched}
+        data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'Total On-Targets in Reference':column_on_target, 'Sample Class': column_sample_class,'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched}
     else:
-        data_guides = {'Guide': guides, 'Total On-Targets in Reference':column_on_target, 'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched}
+        data_guides = {'Guide': guides, 'Total On-Targets in Reference':column_on_target, 'Sample Class': column_sample_class,'Total Off-Targets in Reference':column_off_target_ref, 'Total Off-Targets in Enriched':column_off_target_enriched}
 
     dff = pd.DataFrame(data_guides)
     
@@ -2957,16 +2985,16 @@ def guidePagev3(job_id, hash):
                 ],
                 css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
                 style_data_conditional = [
-                    {
-                        'if': {
-                                'filter_query': '{Variant Unique} eq y',
-                                #'filter_query': '{Direction} eq +', 
-                                #'column_id' :'Bulge Type'
-                            },
-                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                    # {
+                    #     'if': {
+                    #             'filter_query': '{Variant Unique} eq y',
+                    #             #'filter_query': '{Direction} eq +', 
+                    #             #'column_id' :'Bulge Type'
+                    #         },
+                    #         #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                    #         'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
-                        },
+                    #     },
                     {
                         'if': {
                                 'filter_query': '{Variant Unique} eq F',
@@ -3213,14 +3241,15 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
                     }
                 ],
                 css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
-                style_data_conditional = [{
-                        'if': {
-                                'filter_query': '{Variant Unique} eq y',
-                            },
-                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                style_data_conditional = [
+                        # {
+                        # 'if': {
+                        #         'filter_query': '{Variant Unique} eq y',
+                        #     },
+                        #     #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                        #     'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
-                        },
+                        # },
                         {
                         'if': {
                                 'filter_query': '{Variant Unique} eq F',
@@ -3365,16 +3394,16 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
    
 
     cells_style = [
-                        {
-                        'if': {
-                                'filter_query': '{Variant Unique} eq y',
-                                #'filter_query': '{Direction} eq +', 
-                                #'column_id' :'Bulge Type'
-                            },
-                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                        # {
+                        # 'if': {
+                        #         'filter_query': '{Variant Unique} eq y',
+                        #         #'filter_query': '{Direction} eq +', 
+                        #         #'column_id' :'Bulge Type'
+                        #     },
+                        #     #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                        #     'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
-                        },
+                        # },
                         {
                         'if': {
                                 'filter_query': '{Variant Unique} eq F',
@@ -3519,16 +3548,16 @@ def samplePage(job_id, hash):
                     #'overflowY': 'scroll',
                 },
                 style_data_conditional=[
-                    {
-                        'if': {
-                                'filter_query': '{Variant Unique} eq y', 
-                                #'column_id' :'{#Bulge type}',
-                                #'column_id' :'{Total}'
-                            },
-                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                    # {
+                    #     'if': {
+                    #             'filter_query': '{Variant Unique} eq y', 
+                    #             #'column_id' :'{#Bulge type}',
+                    #             #'column_id' :'{Total}'
+                    #         },
+                    #         #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                    #         'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
-                        },
+                    #     },
                     {
                         'if': {
                                 'filter_query': '{Variant Unique} eq F',
@@ -3743,16 +3772,16 @@ def clusterPage(job_id, hash):
                     #'overflowY': 'scroll',
                 },
                 style_data_conditional=[
-                    {
-                        'if': {
-                                'filter_query': '{Variant Unique} eq y', 
-                                #'column_id' :'{#Bulge type}',
-                                #'column_id' :'{Total}'
-                            },
-                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                    # {
+                    #     'if': {
+                    #             'filter_query': '{Variant Unique} eq y', 
+                    #             #'column_id' :'{#Bulge type}',
+                    #             #'column_id' :'{Total}'
+                    #         },
+                    #         #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                    #         'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
-                        },
+                    #     },
                     {
                         'if': {
                                 'filter_query': '{Variant Unique} eq F',
@@ -3800,16 +3829,16 @@ def clusterPage(job_id, hash):
                     #'overflowY': 'scroll',
                 },
                 style_data_conditional=[
-                    {
-                        'if': {
-                                'filter_query': '{Variant Unique} eq y', 
-                                #'column_id' :'{#Bulge type}',
-                                #'column_id' :'{Total}'
-                            },
-                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
+                    # {
+                    #     'if': {
+                    #             'filter_query': '{Variant Unique} eq y', 
+                    #             #'column_id' :'{#Bulge type}',
+                    #             #'column_id' :'{Total}'
+                    #         },
+                    #         #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
+                    #         'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
                             
-                        },
+                    #     },
                     {
                         'if': {
                                 'filter_query': '{Variant Unique} eq F',
