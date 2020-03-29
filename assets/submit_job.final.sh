@@ -143,12 +143,15 @@ elif [ ${19} = 'var' ]; then
  
     echo 'Start pam analysis'
     echo 'PAM Analysis... Step [1/4]' >>  output.txt
-    python3 ../../PostProcess/pam_analysis.py $jobid.targets.txt pam.txt 'both'     # 'both' to add PAM creation and Var Unique column -> set to n
+    #Add pam creation, variant unique, samples, annotation, real guide columns
+    awk '{real_guide=$2; gsub("-","",real_guide); print $0"\tn\tn\tn\tn\t"real_guide}' $jobid.targets.txt > $jobid.targets.minmaxdisr.txt
+    # python3 ../../PostProcess/pam_analysis.py $jobid.targets.txt pam.txt 'both'     # 'both' to add PAM creation and Var Unique column -> set to n
                 # > $jobid.targets.minmaxdisr.txt
     echo 'End pam analysis'
 
     echo 'Clustering... Step [2/4]' >>  output.txt
-    python3 ../../PostProcess/cluster.dict.py $jobid.targets.minmaxdisr.txt 'no' 'True' 'False' guides.txt 'total' 'orderChr' # > $jobid.targets.minmaxdisr.cluster.txt 
+    #Clustering: order is by chr, cluster are not ordered among each other
+    python3 ../../PostProcess/cluster.dict.py $jobid.targets.minmaxdisr.txt 'no' 'True' 'False' guides.txt 'total' 'orderChr' # > $jobid.targets.minmaxdisr.cluster.txt
     echo 'End cluster var'
     
     echo 'Extracting Samples and Annotation... (This operation has a long execution time, Please Wait) Step [3/4]' >>  output.txt
@@ -251,10 +254,14 @@ else    #Type search = both
     #Pam analysis
     echo 'Start pam analysis'
     echo 'PAM Analysis... Step [2/5]' >>  output.txt
-    python3 ../../PostProcess/pam_analysis.py $jobid.semi_common_targets.txt pam.txt ${19}  # > $jobid.semi_common_targets.minmaxdisr.txt
+    #Add pam creation, variant unique, samples, annotation, real guide columns
+    awk '{real_guide=$2; gsub("-","",real_guide); print $0"\tn\tn\tn\tn\t"real_guide}' $jobid.semi_common_targets.txt > $jobid.semi_common_targets.minmaxdisr.txt 
+    # python3 ../../PostProcess/pam_analysis.py $jobid.semi_common_targets.txt pam.txt ${19}  # > $jobid.semi_common_targets.minmaxdisr.txt
     echo 'End pam analysis'
     echo 'Start pam creation'
-    python3 ../../PostProcess/pam_creation.py $jobid.unique_targets.txt pam.txt ../../$3 # > $jobid.unique_targets.pamcreation.txt
+    #Add pam creation, variant unique, samples, annotation, real guide columns
+    awk '{real_guide=$2; gsub("-","",real_guide); print $0"\tn\ty\tn\tn\t"real_guide}' $jobid.unique_targets.txt > $jobid.unique_targets.pamcreation.txt #Add pam creation, variant unique, real guide column
+    # python3 ../../PostProcess/pam_creation.py $jobid.unique_targets.txt pam.txt ../../$3 # > $jobid.unique_targets.pamcreation.txt
     echo 'End pam creation'
     cat $jobid.unique_targets.pamcreation.txt $jobid.semi_common_targets.minmaxdisr.txt > $jobid.total.txt
 

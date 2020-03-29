@@ -25,6 +25,10 @@
 #if sys contains 'orderChr', clusters will be ordered by chr
 #Output column (not written): Bulge_type, Guide, Target, chr, pos, pos_cluster (optional), direction, mms, bulge, total(optional), real guide(optional)
 
+#If sys contains orderChr, first call subprocess to sort by chr, cluster pos, real guide
+#Poi metto in una lista i target che hanno lo stesso chr clusterpos direction real guide, faccio sort per total e mms, poi lo salvo e passo al prossimo
+#Ottengo così i cluster ordinati per chr, ma non ordinati tra di loro (eg un cluster con total 5 può apparire prima di uno con tot
+
 #NOTE with new search, cluster position is already present, so code for that column is commented
 #NOTE 06/03 PAM  -> removed PAM Disruption calculation
 #NOTE 11/03 Removed TOTAL column (already present in search phase)
@@ -63,9 +67,7 @@ if sys.argv[3] == 'True':
 else:
     keep_columns = False
 
-add_for_final = '\n'        #To extend teh header for last clustering for each guide to provide downloads
-if 'addForFinal' in sys.argv[:]:
-    add_for_final = '\tSamples\tReal Guide\tAnnotation Type\n'
+add_for_final = '\tSamples\tAnnotation Type\tReal Guide\n'
 
 result_name = sys.argv[1][:sys.argv[1].rfind('.')] + '.cluster.txt'
 cluster_only = False
@@ -75,6 +77,58 @@ if sys.argv[4] == 'True':
 process = subprocess.Popen(['wc', '-l', sys.argv[1]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 out, err = process.communicate()
 total_line = int(out.decode('UTF-8').split(' ')[0])
+
+#Do cluster by orderChr NEW VERSION
+if 'orderChr' in sys.argv[:]:
+    start_time = time.time()
+    subprocess.run(['sort -k4,4 -k6,6 -k15,15 -k7,7 ' + sys.argv[1] + ' > ' + result_name + '.tmp_sort.txt'], shell = True)      #sort input file by chr, clusterpos, real guide, direction
+    print('END Sorting', time.time() - start_time)
+    start_time = time.time()
+    with open (result_name + '.tmp_sort.txt') as targets, open(result_name, 'w+') as result:
+        #Write Header    
+        if 'total' not in sys.argv[:]:    
+            if addGuide:
+                if keep_columns:
+                    result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tReal Guide\n')
+                else:
+                    result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\tReal Guide\n')
+            else:
+                if keep_columns:
+                    result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\n')
+                else:
+                    result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\n')
+        else:
+            result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tPAM_gen\tVar_uniq' + add_for_final)
+        current_chr_pos_dir_g = ''
+        current_cluster = []
+        for line in targets:
+            if '#' in line:     #Skip header
+                continue
+            line = line.strip().split('\t')
+            if line[3] + line[5] + line[6] + line[14] != current_chr_pos_dir_g:      #NEW CLUSTER FOUND
+                #Sort previous cluster
+                current_cluster.sort(key = lambda x: (x[9], x[7], [alphabet.index(c) for c in x[2]]))    #Sort by total, mismatches, and prioritize IUPAC characters
+                
+                #Save previous cluster
+                for t in current_cluster:
+                    result.write('\t'.join(t) + '\n')
+
+                #Initialize new cluster
+                current_cluster = []
+                current_cluster.append(line)
+                current_chr_pos_dir_g = line[3] + line[5] + line[6] + line[14]
+            else:                                                       #IN THE SAME CLUSTER
+                current_cluster.append(line)
+        #Sort and save last cluster
+        current_cluster.sort(key = lambda x: (x[9], x[7], [alphabet.index(c) for c in x[2]]))
+        for t in current_cluster:
+            result.write('\t'.join(t) + '\n')
+        
+        #Remove tmp sort
+        os.remove(result_name + '.tmp_sort.txt')
+        print('END Clustering (Local)', time.time() - start_time)
+        exit()
+
 if total_line > MAX_LIMIT:
     print('Max limit file reached, using clustering by single guide')
     ok_guides = []
@@ -138,7 +192,7 @@ if total_line > MAX_LIMIT:
                             else:
                                 result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\n')
                     else:
-                        result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPAM_gen\tVar_uniq' + add_for_final)
+                        result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tPAM_gen\tVar_uniq' + add_for_final)
                     write_header = False
                 total_targets = []
                 for k in guides_dict.keys():
@@ -237,7 +291,7 @@ else:
                 else:
                     result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\n')
         else:
-            result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tMin_mismatches\tMax_mismatches\tPAM_gen\tVar_uniq' + add_for_final)
+            result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tPAM_gen\tVar_uniq' + add_for_final)
 
         total_targets = []
         for k in guides_dict.keys():

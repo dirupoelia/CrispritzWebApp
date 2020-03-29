@@ -99,7 +99,7 @@ with open(sys.argv[1]) as targets:
             line = line.strip().split('\t')
             #Summary by position
             if current_cluster == line[1].replace('-','') + line[3] + line[5] + line[6]:
-                if line[14] == 'n':     #The target has no sample -> do not count in the summary table
+                if line[12] == 'n':     #The target has no sample -> do not count in the summary table
                     continue
                 mms_current_line = int(line[7])
                 bulge_current_line = int(line[8])
@@ -117,26 +117,26 @@ with open(sys.argv[1]) as targets:
                 guide_d_cluster[line[1].replace('-','')][-1].count[bulge_current_line][mms_current_line] += 1 
             
                 #Summary by guide
-                if line[0]+line[7]+line[8] not in sub_cluster_visited:
+                if line[0]+line[7]+line[8] not in sub_cluster_visited:  #NOTE result of this if are not saved
                     sub_cluster_visited.append(line[0]+line[7]+line[8])
 
                     if line[0] == 'X':
-                        if line[14] != 'n':     #If there are samples, add to enriched count, else add to reference count
+                        if line[12] != 'n':     #If there are samples, add to enriched count, else add to reference count
                             guide_dict[line[1].replace('-','')][3][int(line[7])][int(line[8])] += 1
                         else:
                             guide_dict[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
                     elif line[0] == 'DNA':
-                        if line[14] != 'n':
+                        if line[12] != 'n':
                             guide_dict[line[1].replace('-','')][4][int(line[7])][int(line[8])] += 1
                         else:
                             guide_dict[line[1].replace('-','')][1][int(line[7])][int(line[8])] += 1
                     else:
-                        if line[14] != 'n':
+                        if line[12] != 'n':
                             guide_dict[line[1].replace('-','')][5][int(line[7])][int(line[8])] += 1
                         else:
                             guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
                 #Count pam creation:
-                if line[12] != 'n':
+                if line[10] != 'n':
                     if line[0] == 'X':
                         count_creation[line[1].replace('-','')][0][int(line[7])][int(line[8])] += 1 
                     elif line[0] == 'DNA':

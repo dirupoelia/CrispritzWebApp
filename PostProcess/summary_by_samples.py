@@ -64,13 +64,13 @@ with open(sys.argv[1]) as sample_file: #, open(sys.argv[3] + '.summary_by_sample
                 if word not in count_creation[guide]:
                     count_creation[guide][word] = [0,0]
                 
-                if line[12] != 'n':
+                if line[10] != 'n':
                     count_creation[guide][word][0] +=1
 
                 if sys.argv[3] == 'both':
                     guides_dict[guide][word][1] += 1    #No more distinction for unique, add +1 to the [1] position meaning that the target was found in enriched
                     
-                    if line[12] != 'n':
+                    if line[10] != 'n':
                         count_creation[guide][word][1] +=1
 
                 #NOTE se voglio contare solo gli y il codice sotto lo idento una volta
