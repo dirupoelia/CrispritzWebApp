@@ -2105,9 +2105,9 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
 
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     if genome_type == 'both':
-        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation', 'Class']
+        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Targets in Population', 'Targets in Super Population', 'PAM Creation', 'Class']
     else:
-        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Total Targets in Population', 'Total Targets in Super Population', 'PAM Creation', 'Class']       
+        col_names_sample = ['Sample', 'Gender', 'Population', 'Super Population',  'Targets in Reference', 'Targets in Enriched', 'Targets in Population', 'Targets in Super Population', 'PAM Creation', 'Class']       
     if max(btn_sample_section) == n:              #Last button pressed is filtering, return the first page of the filtered table
         if genome_type == 'both':
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
@@ -2116,6 +2116,7 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
         else:
             df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
             df = df.sort_values('Targets in Reference', ascending = False)
+            df.drop(['Targets in Reference'], axis = 1, inplace = True)
             df.drop(['Class'], axis = 1, inplace = True) 
         more_info_col = []
         for i in range(df.shape[0]):
@@ -2145,6 +2146,7 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
             else:
                 df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
                 df = df.sort_values('Targets in Reference', ascending = False)
+                df.drop(['Targets in Reference'], axis = 1, inplace = True)
                 df.drop(['Class'], axis = 1, inplace = True) 
             more_info_col = []
             for i in range(df.shape[0]):
@@ -2179,6 +2181,7 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
             else:
                 df = pd.read_csv(job_directory + job_id + '.summary_by_samples.' + guide + '.txt', sep = '\t', names = col_names_sample, skiprows = 1)
                 df = df.sort_values('Targets in Reference', ascending = False)
+                df.drop(['Targets in Reference'], axis = 1, inplace = True)
                 df.drop(['Class'], axis = 1, inplace = True) 
             more_info_col = []
             for i in range(df.shape[0]):
