@@ -2894,8 +2894,8 @@ def global_store_subset(value, bulge_t, bulge_s, mms, guide):
     '''
     if value is None:
         return ''
-    df = pd.read_csv( 'Results/' + value + '/' + value + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide +'.txt', sep = '\t', header = None)
-    #df.rename(columns = {"#Bulge type":'Bulge Type', "#Bulge_type":'Bulge Type', 'Bulge_Size':'Bulge Size'}, inplace = True)
+    #Skiprows = 1 to skip header of file
+    df = pd.read_csv( 'Results/' + value + '/' + value + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide +'.txt', sep = '\t', header = None, skiprows = 1)
     return df
 
 
@@ -2939,7 +2939,7 @@ def guidePagev3(job_id, hash):
                         html.Div(
                             [   
                                 html.P('Generating download link, Please wait...', id = 'download-link-sumbyguide'), 
-                                dcc.Interval(interval = 5*100, id = 'interval-sumbyguide')
+                                dcc.Interval(interval = 5*1000, id = 'interval-sumbyguide')
                             ]
                         )
             ]
@@ -2953,13 +2953,13 @@ def guidePagev3(job_id, hash):
         file_to_grep = '.samples.annotation.txt'
     
     job_directory = 'Results/' + job_id + '/'
-    
     guide_grep_result = job_directory + job_id + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide + '.txt'
+    put_header = 'head -1 ' + job_directory + job_id + file_to_grep + ' > ' + guide_grep_result + ' ; '
     final_list.append(
         html.Div(job_id + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide,style = {'display':'none'}, id = 'div-info-sumbyguide-targets')
     )
     if not os.path.exists(guide_grep_result):    #Example    job_id.X.0.4.guide.txt
-        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + job_directory + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + bulge_t + ' | awk \'$8==' + mms + ' && $9==' + bulge_s + '\'> ' + guide_grep_result], shell = True)
+        subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + job_directory + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + bulge_t + ' | awk \'$8==' + mms + ' && $9==' + bulge_s + '\'>> ' + guide_grep_result], shell = True)
         subprocess.Popen(['zip ' + guide_grep_result.replace('.txt','.zip') + ' ' + guide_grep_result], shell = True)
     global_store_subset(job_id, bulge_t, bulge_s, mms,guide)
     
@@ -3458,10 +3458,14 @@ def global_store_general(path_file_to_load):
     '''
     Caching dei file targets per una miglior performance di visualizzazione
     '''
+    if 'scomposition' in path_file_to_load:
+        rows_to_skip = 0
+    else:
+        rows_to_skip = 1        #Skip header
     if path_file_to_load is None:
         return ''
     if os.path.getsize(path_file_to_load) > 0: 
-        df = pd.read_csv( path_file_to_load , sep = '\t', header = None)
+        df = pd.read_csv( path_file_to_load , sep = '\t', header = None, skiprows = rows_to_skip)
     else:
         df = None
     #df.rename(columns = {"#Bulge type":'Bulge Type', "#Bulge_type":'Bulge Type', 'Bulge_Size':'Bulge Size'}, inplace = True)
@@ -3497,7 +3501,7 @@ def samplePage(job_id, hash):
                 html.Div(
                     [   
                         html.P('Generating download link, Please wait...', id = 'download-link-sumbysample'), 
-                        dcc.Interval(interval = 5*100, id = 'interval-sumbysample')
+                        dcc.Interval(interval = 5*1000, id = 'interval-sumbysample')
                     ]
 
                 )
@@ -3507,11 +3511,12 @@ def samplePage(job_id, hash):
         
     file_to_grep = '.samples.annotation.txt'
     sample_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt'
+    put_header = 'head -1 ' + 'Results/' + job_id + '/' + job_id + file_to_grep + ' > ' + sample_grep_result + ' ; '
     final_list.append(
         html.Div(job_id + '.' + sample + '.' + guide,style = {'display':'none'}, id = 'div-info-sumbysample-targets')
     )
     if not os.path.exists(sample_grep_result):    #Example    job_id.HG001.guide.txt
-        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + sample + ' > ' + sample_grep_result], shell = True)
+        subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + sample + ' >> ' + sample_grep_result], shell = True)
         subprocess.Popen(['zip ' + sample_grep_result.replace('.txt','.zip') + ' ' + sample_grep_result],shell = True)
     
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(COL_BOTH, COL_BOTH_TYPE)]
@@ -3682,15 +3687,16 @@ def clusterPage(job_id, hash):
         file_to_grep = '.total.cluster.txt'
        
     cluster_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.txt'
+    put_header = 'head -1 ' + 'Results/' + job_id + '/' + job_id + file_to_grep + ' > ' + cluster_grep_result + ' ; '
     if not os.path.exists(cluster_grep_result):    #Example    job_id.chr3_100.guide.txt
         #Grep annotation for ref
         if genome_type == 'ref':
             get_annotation = subprocess.Popen(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + '.Annotation.targets.txt' + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\''], shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = get_annotation.communicate()
             annotation_type = out.decode('UTF-8').strip().split('\t')[-1]
-            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\" {print $0\"\\t' + annotation_type + '\"}\' > ' + cluster_grep_result], shell = True)
+            subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\" {print $0\"\\t' + annotation_type + '\"}\' >> ' + cluster_grep_result], shell = True)
         else:               
-            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + cluster_grep_result], shell = True)  #NOTE top1 will have sample and annotation, other targets will have '.'-> 18/03 all samples and annotation are already writter for all targets
+            subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' >> ' + cluster_grep_result], shell = True)  #NOTE top1 will have sample and annotation, other targets will have '.'-> 18/03 all samples and annotation are already writter for all targets
         subprocess.Popen(['zip ' + cluster_grep_result.replace('.txt','.zip') + ' ' + cluster_grep_result], shell = True)
     final_list.append(
         html.Div(job_id + '.' + chromosome + '_' + position + '.' + guide ,style = {'display':'none'}, id = 'div-info-sumbyposition-targets')
@@ -3715,7 +3721,7 @@ def clusterPage(job_id, hash):
             html.Div(
                 [   
                     html.P('Generating download link, Please wait...', id = 'download-link-sumbyposition'), 
-                    dcc.Interval(interval = 5*100, id = 'interval-sumbyposition')
+                    dcc.Interval(interval = 5*1000, id = 'interval-sumbyposition')
                 ]
 
             )
@@ -4105,7 +4111,7 @@ def downloadLinkSample(n, file_to_load, search): #file to load = job_id.HG001.gu
     [State('div-info-sumbyposition-targets','children'),
     State('url', 'search')]
 )
-def downloadLinkSample(n, file_to_load, search): #file to load = 
+def downloadLinkPosition(n, file_to_load, search): #file to load = 
     if n is None:
         raise PreventUpdate
     job_id = search.split('=')[-1]

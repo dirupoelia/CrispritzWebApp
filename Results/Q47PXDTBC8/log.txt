@@ -1,0 +1,12 @@
+Job	Start	dom 29 mar 2020, 19.04.21, CEST
+Search-index	Start	dom 29 mar 2020, 19.04.21, CEST
+Search-index	Done	dom 29 mar 2020, 19.14.15, CEST
+Search	Start	dom 29 mar 2020, 19.14.15, CEST
+Search	Done	dom 29 mar 2020, 19.14.15, CEST
+Report	Start	dom 29 mar 2020, 19.14.15, CEST
+Annotation	Start	dom 29 mar 2020, 19.14.16, CEST
+Annotation	Done	dom 29 mar 2020, 19.31.10, CEST
+PostProcess	Done	dom 29 mar 2020, 19.31.14, CEST
+Report	Start	dom 29 mar 2020, 19.31.14, CEST
+Report	Done	dom 29 mar 2020, 19.31.25, CEST
+Job	Done	mar 31 mar 2020, 15.32.28, CEST

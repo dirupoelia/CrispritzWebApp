@@ -442,6 +442,11 @@ X-Sostituire colonna on-target della tabella generale con 'Samples per Categoria
 X-Summary by population:
 	-Suddividere le barre per mm, bulge, mettendo lo stesso colore più chiaro
 	-Eg se ho 4 Total -> 4 mm e 3 + 1 bulge o 2+2 bulge (RNA o DNA), suddivido tra chi ha mm e chi ha almeno un bulge ( o senno fare altre colonne stacked)
-	
+
+-Sistemare nomenclatura header
+-Fixare filtering
+-Sistemare guides_error:
+	-Ora clustering non dovrebbe dare problemi, solo quando preparo il file per il download
+	-Rimuovere generazione errori con guides_error, mettere il file non ordinato come download
 -profile extended non supporta total
 -Parte grafica: al momento solo per genoma umano, ma con vcf personali

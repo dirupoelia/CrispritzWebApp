@@ -215,7 +215,8 @@ elif [ ${19} = 'var' ]; then
             
             #Create a zip file, for each guide, containing the targets from jobid.samples.annotation.txt
             #Grep all the targets with the selected guide
-            LC_ALL=C grep $line $jobid.samples.annotation.txt > $jobid.targets.$line.txt
+            head -1 $jobid.samples.annotation.txt > $jobid.targets.$line.txt        #Put header
+            LC_ALL=C grep $line $jobid.samples.annotation.txt >> $jobid.targets.$line.txt
 
             #Clusterize results
             python3 ../../PostProcess/cluster.dict.py $jobid.targets.$line.txt 'no' 'True' 'True' guides.txt 'total' 'addForFinal'    #> $jobid.targets.$line.cluster.txt
@@ -355,7 +356,8 @@ else    #Type search = both
             
             #Create a zip file, for each guide, containing the targets from jobid.samples.annotation.txt
             #Grep all the targets with the selected guide
-            LC_ALL=C grep $line $jobid.samples.annotation.txt > $jobid.targets.$line.txt
+            head -1 $jobid.samples.annotation.txt > $jobid.targets.$line.txt        #Put header
+            LC_ALL=C grep $line $jobid.samples.annotation.txt >> $jobid.targets.$line.txt
 
             #Clusterize results
             python3 ../../PostProcess/cluster.dict.py $jobid.targets.$line.txt 'no' 'True' 'True' guides.txt 'total' 'addForFinal'    #> $jobid.targets.$line.cluster.txt

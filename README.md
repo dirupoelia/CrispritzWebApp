@@ -35,11 +35,11 @@ Usando un browser, la pagina principale si trova su:
 ```
 127.0.0.1:8080
 ```
-Esempio di pagina wait job:
+Esempio di pagina wait job (31/03/2020):
 ```
-127.0.0.1:8080/load?job=APHN01LAC8
+127.0.0.1:8080/load?job=Q47PXDTBC8
 ```
 Esempio di result summary:
 ```
-127.0.0.1:8080/result?job=APHN01LAC8
+127.0.0.1:8080/result?job=Q47PXDTBC8
 ```
