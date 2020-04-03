@@ -128,7 +128,12 @@ if no_result:
 
 
 plt.xticks(ind+0.25, barplot_values.keys(), size=25)
-plt.yticks(y_range, size=22)
+
+size_y_ticks = 22
+digits = int(math.log10(max_value))+1
+if digits > 5:  #Reduce dimension of y label because it can exceed plot size
+    size_y_ticks = max(16, size_y_ticks - (2*(digits-5)))
+plt.yticks(y_range, size=size_y_ticks)
 
 plt.tight_layout()
 plt.subplots_adjust(top=0.95, bottom=0.06, left=0.1, right=0.99)

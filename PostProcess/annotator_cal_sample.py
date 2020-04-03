@@ -21,6 +21,12 @@ in samples.txt, poi calcola l'annotazione corrispondente e crea il file Annotati
 # NOTE 06/03  -> removed PAM Disruption calculation
 #NOTE 29/03 -> le colonne min max sono rimosse, dal file total.cluster sono già presenti colonne sample, annotation, real guide
 # 29/03 colonne in input #Bulge_type     crRNA   DNA     Chromosome      Position        Cluster Position        Direction       Mismatches      Bulge_Size      Total   PAM_gen Var_uniq        Samples Annotation Type Real Guide
+#NOTE1 can happend that a iupac falls under the N char of NGG, meaning that a target can have the same number of mms both in his REF and VAR part:
+#CACTGCAACCTCTGTCTCCCKGG
+#CACTGCAACCTCTGTCTCCCGGG        REF
+#CACTGCAACCTCTGTCTCCCTGG        VAR
+#So check if decrease_ref_count is not empty to avoid this (in this case +1 will be added to samples for VAR part of target and +1 for all the
+# other samples for REF part)
 import sys
 import json
 import time
@@ -426,12 +432,13 @@ for line in inResult:
                 else: #Found first REF target in cluster of semicommon
                     if x[bulge_pos + 1] == '0':     #If total column is 0  -> On-target
                         ontarget_reference_count[guide_no_bulge] +=1        #Add +1 to Ref count
-                        for s in decrease_ref_count.split(','):                        #But Decrease count for samples that do not have the REF (ie sample with ok target but not 0 total, or sample with not ok target)
-                            try:
-                                count_sample[guide_no_bulge][s]['refposition'][2] -= 1
-                            except:
-                                count_sample[guide_no_bulge][s]['refposition'] = [0,0,-1]
-                            count_sample[guide_no_bulge][s]['refposition'][0] += 1      #Visited +1
+                        if decrease_ref_count:  #VIEW NOTE1
+                            for s in decrease_ref_count.split(','):                        #But Decrease count for samples that do not have the REF (ie sample with ok target but not 0 total, or sample with not ok target)
+                                try:
+                                    count_sample[guide_no_bulge][s]['refposition'][2] -= 1
+                                except:
+                                    count_sample[guide_no_bulge][s]['refposition'] = [0,0,-1]
+                                count_sample[guide_no_bulge][s]['refposition'][0] += 1      #Visited +1
                          
                     add_to_general_table[guide_no_bulge][int(x[mm_pos]) +  int(x[bulge_pos])] += 1
                     #Do annotation to keep numbers consistent between images and general table
@@ -1094,37 +1101,38 @@ if summary_barplot_from_total:
                 result.write(annotation + '\t' + '\t'.join(str(i - count_unique_for_guide[guide][annotation][pos]) for pos, i in enumerate(guideDict[guide][annotation])) + '\n')
 
 #SAVE SCORES#
-with open( 'acfd.txt', 'w+') as res, open(sys.argv[8], 'r') as guides:
-    man = multiprocessing.Manager()
-    shared_doench = man.list() #list containing max doech for each thread
-    guides = guides.read().strip().split('\n')
-    for g in guides:
-        guides_dict_doench[g] = 0
-        if g not in guides_dict:
-            guides_dict[g] = 0    
-        if g not in targets_for_doench:
+if do_scores:
+    with open( 'acfd.txt', 'w+') as res, open(sys.argv[8], 'r') as guides:
+        man = multiprocessing.Manager()
+        shared_doench = man.list() #list containing max doech for each thread
+        guides = guides.read().strip().split('\n')
+        for g in guides:
             guides_dict_doench[g] = 0
-        else:
-            if len (targets_for_doench[g]) > SIZE_DOENCH:
-                jobs = []
-                remaining_splits = (len(targets_for_doench[g])//SIZE_DOENCH) + 1
-                for i in range ((len(targets_for_doench[g])//SIZE_DOENCH) + 1):
-                    for thr in range (min(N_THR, remaining_splits)):
-                        p = multiprocessing.Process(target = doenchParallel, args=(np.asarray(targets_for_doench[g][i*N_THR*SIZE_DOENCH + thr*SIZE_DOENCH : min( i*N_THR*SIZE_DOENCH + (thr+1)*SIZE_DOENCH,len(targets_for_doench[g]))]), model, shared_doench,) )
-                        remaining_splits -= 1
-                        p.start()
-                        jobs.append(p)
-                    for i in jobs:
-                        i.join()
-                
-                guides_dict_doench[g] = max(shared_doench)
-                shared_doench =  man.list()
+            if g not in guides_dict:
+                guides_dict[g] = 0    
+            if g not in targets_for_doench:
+                guides_dict_doench[g] = 0
             else:
-                start_time = time.time()
-                doench_score =  azimuth.model_comparison.predict(np.asarray(targets_for_doench[g]), None, None, model= model, pam_audit=False)
-                doench_score = [np.around(i * 100) for i in doench_score]
-                guides_dict_doench[g] =  int(max(doench_score))
-        res.write(g + '\t' + str(guides_dict[g]) + '\t' + str(guides_dict_doench[g]) + '\n')
+                if len (targets_for_doench[g]) > SIZE_DOENCH:
+                    jobs = []
+                    remaining_splits = (len(targets_for_doench[g])//SIZE_DOENCH) + 1
+                    for i in range ((len(targets_for_doench[g])//SIZE_DOENCH) + 1):
+                        for thr in range (min(N_THR, remaining_splits)):
+                            p = multiprocessing.Process(target = doenchParallel, args=(np.asarray(targets_for_doench[g][i*N_THR*SIZE_DOENCH + thr*SIZE_DOENCH : min( i*N_THR*SIZE_DOENCH + (thr+1)*SIZE_DOENCH,len(targets_for_doench[g]))]), model, shared_doench,) )
+                            remaining_splits -= 1
+                            p.start()
+                            jobs.append(p)
+                        for i in jobs:
+                            i.join()
+                    
+                    guides_dict_doench[g] = max(shared_doench)
+                    shared_doench =  man.list()
+                else:
+                    start_time = time.time()
+                    doench_score =  azimuth.model_comparison.predict(np.asarray(targets_for_doench[g]), None, None, model= model, pam_audit=False)
+                    doench_score = [np.around(i * 100) for i in doench_score]
+                    guides_dict_doench[g] =  int(max(doench_score))
+            res.write(g + '\t' + str(guides_dict[g]) + '\t' + str(guides_dict_doench[g]) + '\n')
 
 #Save additional values from semicommon for general guide table
 with open(outputFile + '.addToGeneralTable.txt', 'w+') as add_file:

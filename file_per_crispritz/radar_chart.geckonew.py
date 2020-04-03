@@ -29,15 +29,11 @@ from operator import itemgetter
 # argv 4 is extended profile (can be 'no' for web server)
 # argv 5 is second summary for barplot (optional, 'no' if not given in input)
 # argv 6 is gecko Summary file
-# # argv 6 is gecko profile (optional, 'no' if not given)
-# # argv 7 is gecko exons (optional, 'no' if not given)
-# # argv 8 is gecko introns (optional, 'no' if not given)
-# # argv 9 is gecko promoter (optional, 'no' if not given)
-# # argv 10 is gecko dnase (optional, 'no' if not given)
-# # argv 11 is geckoctcf (optional, 'no' if not given)
-# argv 12 is for web server: create png instead of pdf (-ws)
-# argv 13 is for sample/pop/superpop report (-sample HG001/EUR/TSI) with this option, the annotation file is .sample_annotation.GUIDE.sample.txt
-
+# argv 7 is for web server: create png instead of pdf (-ws) (optional)
+# argv 8 is for sample/pop/superpop report (-sample HG001/EUR/TSI) with this option, the annotation file is .sample_annotation.GUIDE.sample.txt 
+# TODO if argv8 is selected, from argv6 get the directory containing the summary of the specific sample for gecko -> line 618
+# NOTE al momento lo script funziona con gecko.annotation.summary; la comparison con i sample la fa su annotation.summary. Quando l'analisi per sample sarà fatta, la comparison
+# con i sampla dovrà essere fatta sul file specifico
 plt.style.use('seaborn-poster')
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype'] = 42
@@ -214,11 +210,17 @@ if summary_one  and summary_two :           #DO BARPLOT
 
 
 check_annotation_name = []
+common_annotations = dict()     #Save annotation shared between gecko and user annotations
+sorted_common_annotations = []
 for i in summary_two:
     check_annotation_name.append(i.split('\t')[0].lower())
+    if i.split('\t')[0].lower() in ['targets', 'ctcf', 'dnasei', 'exon', 'intron', 'promoter']:
+        common_annotations[i.split('\t')[0].lower()] = [int(x) for x in i.split('\t')[1:]] ##{'targets': [3, 7, 25, 474, 6872, 0, 0, 0, 0, 0], 'ctcf_binding_site': [0, 0, 3, 61, 659, 0, 0, 0, 0, 0],...}
+        sorted_common_annotations.append(i.split('\t')[0].lower())  # NOTE targets always first
 if set(check_annotation_name) != set(['targets', 'ctcf', 'dnasei', 'exon', 'intron', 'promoter']) and gecko_summary != "no":     #NOTE if gecko annotations are updated, update the list adding the new annotations 
-    print('Warning! Option \'-gecko\' can be used on files annotated with \'ctcf\', \'dnasei\', \'exon\', \'intron\', \'promoter\'\nRemoving \'-gecko\' option')
-    gecko_summary = 'no'
+    print('Warning! Option \'-gecko\' can be used on files annotated with \'ctcf\', \'dnasei\', \'exon\', \'intron\', \'promoter\'')
+    print('Using -gecko only on common annotations')
+    # gecko_summary = 'no'
 
 complete_matrix = []  
 table_dict = dict()    
@@ -234,32 +236,30 @@ if guide != 'no':       #DO RADAR CHART
                     complete_matrix.append([line[0].split('_')[1]])
                     current_guide = line[0]
                     continue
-                complete_matrix[-1].append(line[mm + 1])
+                if line[0].lower() in common_annotations:       #Add to complete matrix only common annotations
+                    complete_matrix[-1].append(line[mm + 1])
+    
         num_guides = len(complete_matrix) - 1   #NOTE -1 to eliminate the 'Summary_ Total' row that is always the last one when the matrix will be sorted
         min_diff = sys.maxsize
         pos_in_gecko = SIZE_GECKO
         cluster_pos = SIZE_GECKO
-        
         #Order the 1, 2 , 3 ... col and get input guide position
-        annotations = ['targets','CTCF', 'DNAseI', 'Exons', 'Introns', 'Promoters']    #NOTE lexicograph order (same as summary_two)
+        annotations = sorted_common_annotations #['targets','CTCF', 'DNAseI', 'Exons', 'Introns', 'Promoters']    #NOTE lexicograph order (same as summary_two)
         min_diff = sys.maxsize
         pos_in_gecko = SIZE_GECKO
         cluster_pos = SIZE_GECKO
-
+        
         for pos, annotation in enumerate(annotations):
-            target_value = int(summary_two[pos].split('\t')[mm + 1])
+            target_value = common_annotations[annotation][mm] #int(summary_two[pos].split('\t')[mm + 1])
             complete_matrix.sort(key=lambda x: int(x[pos + 1 ]))     #+1 pechè 0 è nome guida
             for pos_best, row in enumerate(complete_matrix):
-                
                 current_diff = abs(int(row[pos+1]) - target_value)
                 if current_diff > min_diff:
                     pos_in_gecko = cluster_pos #pos - 1
                     break
                 elif current_diff < min_diff:
                     cluster_pos = pos_best
-
                 min_diff = current_diff
-            
             table_dict[annotation] = [round(pos_in_gecko / SIZE_GECKO, 2), target_value]
             min_diff = sys.maxsize
             pos_in_gecko = SIZE_GECKO
@@ -373,19 +373,16 @@ if guide != 'no':       #DO RADAR CHART
             current_guide = ''
             for line in ann_var:
                 line = line.strip().split('\t')
-                if line[0] != current_guide and '_' in line[0]:
-                    print(line)
+                if line[0] != current_guide and '-Summary_' in line[0]:
                     complete_matrix.append([line[0].split('_')[1]])
                     current_guide = line[0]
                     continue
                 complete_matrix[-1].append(line[mm + 1])
-            print(complete_matrix)
         num_guides = len(complete_matrix) - 1   #NOTE -1 to eliminate the 'Summary_Total' row that is always the last one
 
         #Order the 1, 2 , 3 ... col and get input guide position
         for pos, annotation in enumerate(check_annotation_name):
             complete_matrix.sort(key=lambda x: int(x[pos +1 ]))
-            print(complete_matrix)
             for pos_best, row in enumerate(complete_matrix):
                 if guide == row[0]:
                     table_dict[annotation] = [round(pos_best / num_guides, 2), row[pos + 1]]
@@ -556,7 +553,7 @@ if guide != 'no':       #DO RADAR CHART
                 "_"+str(mm) + "mm" + "." + file_extension, format=file_extension)
 
 elif radarchart_sample:   #Radarchart for sample
-    if gecko_summary != 'no':
+    if gecko_summary != 'no':       #NOTE sta usando il summary gecko totale, non quello diviso per sample
         summary_two = []
         with open(annotation_var, 'r') as ann_var:
             for line in ann_var:
@@ -568,6 +565,11 @@ elif radarchart_sample:   #Radarchart for sample
                         break
                     summary_two.append(line.strip())
         
+        common_annotations = dict()     #Save annotation shared between gecko and user annotations
+        for i in summary_two:
+            if i.split('\t')[0].lower() in ['targets', 'ctcf', 'dnasei', 'exon', 'intron', 'promoter']:
+                common_annotations[i.split('\t')[0].lower()] = [int(x) for x in i.split('\t')[1:]] ##{'targets': [3, 7, 25, 474, 6872, 0, 0, 0, 0, 0], 'ctcf_binding_site': [0, 0, 3, 61, 659, 0, 0, 0, 0, 0],...}
+
         ################ NEW GECKO COMPARISON #########################
         with open(gecko_summary, 'r') as ann_var:
             #Create the complete matrix (row = guide, col = annotation, cell = number of targets with that guide in that annotation with mm mismatches)
@@ -578,20 +580,21 @@ elif radarchart_sample:   #Radarchart for sample
                     complete_matrix.append([line[0].split('_')[1]])
                     current_guide = line[0]
                     continue
-                complete_matrix[-1].append(line[mm + 1])
+                if line[0].lower() in common_annotations:       #Add to complete matrix only common annotations
+                    complete_matrix[-1].append(line[mm + 1])
         num_guides = len(complete_matrix) - 1   #NOTE -1 to eliminate the 'Summary_ Total' row that is always the last one when the matrix will be sorted
         min_diff = sys.maxsize
         pos_in_gecko = SIZE_GECKO
         cluster_pos = SIZE_GECKO
         
         #Order the 1, 2 , 3 ... col and get input guide position
-        annotations = ['targets','CTCF', 'DNAseI', 'Exons', 'Introns', 'Promoters']    #NOTE lexicograph order (same as summary_two)
+        annotations = sorted_common_annotations#['targets','CTCF', 'DNAseI', 'Exons', 'Introns', 'Promoters']    #NOTE lexicograph order (same as summary_two)
         min_diff = sys.maxsize
         pos_in_gecko = SIZE_GECKO
         cluster_pos = SIZE_GECKO
 
         for pos, annotation in enumerate(annotations):
-            target_value = int(summary_two[pos].split('\t')[mm + 1])
+            target_value = common_annotations[annotation][mm] #int(summary_two[pos].split('\t')[mm + 1])
             complete_matrix.sort(key=lambda x: int(x[pos + 1 ]))     #+1 pechè 0 è nome guida
             for pos_best, row in enumerate(complete_matrix):
                 
@@ -613,17 +616,23 @@ elif radarchart_sample:   #Radarchart for sample
 
 
 
-        ########### OLD GECKO COMPARISON WITH SUMMARY DIVIDED IN FILES #################à
+        ########### OLD GECKO COMPARISON WITH SUMMARY DIVIDED IN FILES ################# #NOTE posso riusare questo codice per calc sample 
+                                                                                        # con gecko, basta cambiare line[0] in 'qualsiasi cosa'
+                                                                                        # e mm+1 con mm, quando aggiungo a_l
+        
+        gecko_summary = gecko_summary[:gecko_summary.rfind('/')] + '/Summary_Gecko/' + sample_name
         # annotations = ['CTCF', 'DNAseI', 'Exons', 'Introns', 'Promoters']    #NOTE lexicograph order (same as summary_two)
+        annotations = ['CTCF', 'dnasei', 'exon', 'intron', 'promoter']
         # for ann_pos, annotation in enumerate(annotations):
         #     target_value = int(summary_two[ann_pos + 1].split('\t')[mm + 1])     #first +1 due to targets elelment , second +1 due to name of annotation in splitted list
         #     #Load file
-        #     with open(gecko_summary + '/gecko.' + annotation + '.Count.txt', 'r') as ge:
+        #     with open(gecko_summary + '/gecko.' + annotation + '.Count.txt', 'r') as ge: <- no
+            #with open (gecko_summary + '/Summary_Gecko/' + sample_name + '/' + annotation + '.count_gecko.txt') as ge: <- this
         #         a_l = []
         #         for line in ge:
         #             line = line.strip().split('\t')
-        #             a_l.append([line[0], int(line[mm + 1])])        #+1 due to name of annotation in line.split
-            
+        #             a_l.append([line[0], int(line[mm + 1])]) <- no       #+1 due to name of annotation in line.split
+                        #a_l.append(['0', int(line[mm])]) <- this       # '0' is just placeholder
         #     a_l.sort(key=lambda x: int(x[1]))
         #     #Calculate min difference
         #     min_diff = sys.maxsize

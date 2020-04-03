@@ -1091,37 +1091,38 @@ if summary_barplot_from_total:
                 result.write(annotation + '\t' + '\t'.join(str(i - count_unique_for_guide[guide][annotation][pos]) for pos, i in enumerate(guideDict[guide][annotation])) + '\n')
 
 #SAVE SCORES#
-with open( 'acfd.txt', 'w+') as res, open(sys.argv[8], 'r') as guides:
-    man = multiprocessing.Manager()
-    shared_doench = man.list() #list containing max doech for each thread
-    guides = guides.read().strip().split('\n')
-    for g in guides:
-        guides_dict_doench[g] = 0
-        if g not in guides_dict:
-            guides_dict[g] = 0    
-        if g not in targets_for_doench:
+if do_scores:
+    with open( 'acfd.txt', 'w+') as res, open(sys.argv[8], 'r') as guides:
+        man = multiprocessing.Manager()
+        shared_doench = man.list() #list containing max doech for each thread
+        guides = guides.read().strip().split('\n')
+        for g in guides:
             guides_dict_doench[g] = 0
-        else:
-            if len (targets_for_doench[g]) > SIZE_DOENCH:
-                jobs = []
-                remaining_splits = (len(targets_for_doench[g])//SIZE_DOENCH) + 1
-                for i in range ((len(targets_for_doench[g])//SIZE_DOENCH) + 1):
-                    for thr in range (min(N_THR, remaining_splits)):
-                        p = multiprocessing.Process(target = doenchParallel, args=(np.asarray(targets_for_doench[g][i*N_THR*SIZE_DOENCH + thr*SIZE_DOENCH : min( i*N_THR*SIZE_DOENCH + (thr+1)*SIZE_DOENCH,len(targets_for_doench[g]))]), model, shared_doench,) )
-                        remaining_splits -= 1
-                        p.start()
-                        jobs.append(p)
-                    for i in jobs:
-                        i.join()
-                
-                guides_dict_doench[g] = max(shared_doench)
-                shared_doench =  man.list()
+            if g not in guides_dict:
+                guides_dict[g] = 0    
+            if g not in targets_for_doench:
+                guides_dict_doench[g] = 0
             else:
-                start_time = time.time()
-                doench_score =  azimuth.model_comparison.predict(np.asarray(targets_for_doench[g]), None, None, model= model, pam_audit=False)
-                doench_score = [np.around(i * 100) for i in doench_score]
-                guides_dict_doench[g] =  int(max(doench_score))
-        res.write(g + '\t' + str(guides_dict[g]) + '\t' + str(guides_dict_doench[g]) + '\n')
+                if len (targets_for_doench[g]) > SIZE_DOENCH:
+                    jobs = []
+                    remaining_splits = (len(targets_for_doench[g])//SIZE_DOENCH) + 1
+                    for i in range ((len(targets_for_doench[g])//SIZE_DOENCH) + 1):
+                        for thr in range (min(N_THR, remaining_splits)):
+                            p = multiprocessing.Process(target = doenchParallel, args=(np.asarray(targets_for_doench[g][i*N_THR*SIZE_DOENCH + thr*SIZE_DOENCH : min( i*N_THR*SIZE_DOENCH + (thr+1)*SIZE_DOENCH,len(targets_for_doench[g]))]), model, shared_doench,) )
+                            remaining_splits -= 1
+                            p.start()
+                            jobs.append(p)
+                        for i in jobs:
+                            i.join()
+                    
+                    guides_dict_doench[g] = max(shared_doench)
+                    shared_doench =  man.list()
+                else:
+                    start_time = time.time()
+                    doench_score =  azimuth.model_comparison.predict(np.asarray(targets_for_doench[g]), None, None, model= model, pam_audit=False)
+                    doench_score = [np.around(i * 100) for i in doench_score]
+                    guides_dict_doench[g] =  int(max(doench_score))
+            res.write(g + '\t' + str(guides_dict[g]) + '\t' + str(guides_dict_doench[g]) + '\n')
 
 #Save additional values from semicommon for general guide table
 with open(outputFile + '.addToGeneralTable.txt', 'w+') as add_file:
