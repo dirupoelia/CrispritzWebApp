@@ -1,2 +1,0 @@
-#Bulge_type	crRNA	DNA	Chromosome	Position	Cluster Position	Direction	Mismatches	Bulge_Size	Total	PAM_gen	Var_uniq	Samples	Annotation Type	Real Guide
-DNA	CCATCGGTGGCCGTTTG-CCCNNN	CCATCaGTGGCaGTTTGTCCCGGG	chr19	54046722	54046722	-	2	1	3	n	n	NA20905,HG03616	intron,intron	CCATCGGTGGCCGTTTGCCCNNN

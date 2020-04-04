@@ -1084,8 +1084,9 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     [Output('page-content', 'children'),
     Output('job-link', 'children')],
     [Input('url', 'href'), Input('url','pathname'), Input('url','search')],[State('url','hash')]
+    # [Input('url', 'href')],
     # [State('url','pathname'), 
-    # State('url','search')]
+    # State('url','search'),State('url','hash')]
 )
 def changePage( href, path, search, hash_guide):
     '''
@@ -2895,7 +2896,7 @@ def global_store_subset(value, bulge_t, bulge_s, mms, guide):
     if value is None:
         return ''
     #Skiprows = 1 to skip header of file
-    df = pd.read_csv( 'Results/' + value + '/' + value + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide +'.txt', sep = '\t', header = None, skiprows = 1)
+    df = pd.read_csv( 'Results/' + value + '/' + value + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide +'.txt', sep = '\t', header = None) #, skiprows = 1)
     return df
 
 
@@ -2958,8 +2959,10 @@ def guidePagev3(job_id, hash):
     final_list.append(
         html.Div(job_id + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide,style = {'display':'none'}, id = 'div-info-sumbyguide-targets')
     )
-    if not os.path.exists(guide_grep_result):    #Example    job_id.X.0.4.guide.txt
-        subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + job_directory + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + bulge_t + ' | awk \'$8==' + mms + ' && $9==' + bulge_s + '\'>> ' + guide_grep_result], shell = True)
+    # print('qui guide before grep')
+    # print('esiste guide?', str(os.path.exists(guide_grep_result)))
+    if not os.path.exists(guide_grep_result):    #Example    job_id.X.0.4.guide.txt #NOTE HEADER NON SALVATO
+        subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + job_directory + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + bulge_t + ' | awk \'$8==' + mms + ' && $9==' + bulge_s + '\'> ' + guide_grep_result], shell = True)
         subprocess.Popen(['zip ' + guide_grep_result.replace('.txt','.zip') + ' ' + guide_grep_result], shell = True)
     global_store_subset(job_id, bulge_t, bulge_s, mms,guide)
     
@@ -3461,7 +3464,7 @@ def global_store_general(path_file_to_load):
     if 'scomposition' in path_file_to_load:
         rows_to_skip = 0
     else:
-        rows_to_skip = 1        #Skip header
+        rows_to_skip = 0        #Skip header
     if path_file_to_load is None:
         return ''
     if os.path.getsize(path_file_to_load) > 0: 
@@ -3515,8 +3518,11 @@ def samplePage(job_id, hash):
     final_list.append(
         html.Div(job_id + '.' + sample + '.' + guide,style = {'display':'none'}, id = 'div-info-sumbysample-targets')
     )
-    if not os.path.exists(sample_grep_result):    #Example    job_id.HG001.guide.txt
-        subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + sample + ' >> ' + sample_grep_result], shell = True)
+    # print('qui sample before grep')
+    # print('esiste sample?', str(os.path.exists(sample_grep_result)))
+
+    if not os.path.exists(sample_grep_result):    #Example    job_id.HG001.guide.txt #NOTE HEADER NON SALVATO
+        subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + sample + ' > ' + sample_grep_result], shell = True)
         subprocess.Popen(['zip ' + sample_grep_result.replace('.txt','.zip') + ' ' + sample_grep_result],shell = True)
     
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(COL_BOTH, COL_BOTH_TYPE)]
@@ -3685,18 +3691,21 @@ def clusterPage(job_id, hash):
     else:
         cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(COL_BOTH, COL_BOTH_TYPE)]
         file_to_grep = '.total.cluster.txt'
-       
+    # print('qui cluster before grep')
+    
     cluster_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.txt'
     put_header = 'head -1 ' + 'Results/' + job_id + '/' + job_id + file_to_grep + ' > ' + cluster_grep_result + ' ; '
+    # print('esiste cluster?' , str(os.path.exists(cluster_grep_result)) )
     if not os.path.exists(cluster_grep_result):    #Example    job_id.chr3_100.guide.txt
         #Grep annotation for ref
-        if genome_type == 'ref':
+        if genome_type == 'ref':#NOTE HEADER NON SALVATO
             get_annotation = subprocess.Popen(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + '.Annotation.targets.txt' + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\''], shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = get_annotation.communicate()
             annotation_type = out.decode('UTF-8').strip().split('\t')[-1]
-            subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\" {print $0\"\\t' + annotation_type + '\"}\' >> ' + cluster_grep_result], shell = True)
-        else:               
-            subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' >> ' + cluster_grep_result], shell = True)  #NOTE top1 will have sample and annotation, other targets will have '.'-> 18/03 all samples and annotation are already writter for all targets
+            subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\" {print $0\"\\t' + annotation_type + '\"}\' > ' + cluster_grep_result], shell = True)
+        else:  
+            # print('qui cluster in grep')     #NOTE HEADER NON SALVATO       
+            subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + cluster_grep_result], shell = True)  #NOTE top1 will have sample and annotation, other targets will have '.'-> 18/03 all samples and annotation are already writter for all targets
         subprocess.Popen(['zip ' + cluster_grep_result.replace('.txt','.zip') + ' ' + cluster_grep_result], shell = True)
     final_list.append(
         html.Div(job_id + '.' + chromosome + '_' + position + '.' + guide ,style = {'display':'none'}, id = 'div-info-sumbyposition-targets')
@@ -4129,3 +4138,4 @@ if __name__ == '__main__':
 
     #BUG nel filtering se ho, in min mismatch etc, la stringa '-', che non è considerata numero
     #NOTE: l'ordinamento su Samples Summary o su Samples è fatto su stringhe, e non su numero di samples (potrebbe essere più utile)
+    #BUG see https://github.com/plotly/dash/issues/1049; Location component is called twice, meaning that two grep can occure at once.

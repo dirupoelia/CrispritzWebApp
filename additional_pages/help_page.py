@@ -19,7 +19,7 @@ def helpPage():
         'CRISPRme  performs  predictive analysis and result assessment on population and individual specific CRISPR/Cas experiments.' +  
         ' CRISPRme enumerates on- and off-target accounting simultaneously for  substitutions, DNA/RNA bulges and common genetic variants from the 1000 genomes project.'
         ]),
-        html.P(['Open this ', html.A('example',href = 'http://crispritz.di.univr.it/result?job=QVFHZMMBRA', target = '_blank') ,' to navigate the results we show in this page'])
+        html.P(['Open this ', html.A('example',href = 'http://crispritz.di.univr.it/result?job=Q47PXDTBC8', target = '_blank') ,' to navigate the results we show in this page'])
     
     ])
         
@@ -121,49 +121,58 @@ def helpPage():
         html.P(
             [
                 'At the top of the page, you find a table with the list of sgRNAs used during the search phase. This table summarizes the results obtained for each input guide.',
-                html.P(html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/resultPage/resultsSummary.PNG', 'rb').read()).decode()), width='100%' )),
+                html.P(html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/resultPage/resultsSummary.png', 'rb').read()).decode()), width='100%' )),
                 html.Ul(
                     [
                         html.Li('CFD: Off-Target Cutting Frequency Determination Score, calculates how much is the affinity of the guides with the off-targets, basically tells you the likelihood of the guide to perform cut in off-target regions.'),
                         html.Li('Doench 2016: On-Target Efficacy Scoring (Azimuth 2.0), it’s a trained machine learning model that gives you the likelihood of on-target activity for the selected guide.'),
-                        html.Li('Total On-Targets: shows how many possible On-Targets the guide can have.'),
-                        html.Li('Total Off-Targets: shows how many possible Off-Targets the guide can have.'),
-                        html.Li('Targets for 0-n mismatches: shows how many possible Off-Targets the guide can have, but grouped by mismatch count.'),
+                        html.Li('On-Targets Reference: shows how many possible On-Targets the guide can have in the Reference Genome.'),
+                        html.Li(['Samples in Class 0 - 0+ - 1 - 1+: shows the number of samples grouped by Sample Class:',
+                            html.Ul([
+                                html.Li('Class 0: Samples that does not have any On-Targets'),
+                                html.Li('Class 0+: Samples that have a subset of the Reference Genome On-Targets'),
+                                html.Li('Class 1: Samples that have the same On-Targets as the Reference Genome'),
+                                html.Li('Class 1+: Samples that creates at least a new On-Target, that is not present in the Reference Genome')
+                            ])
+                        ]),
+                        html.Li('Off-Targets Reference (0 - n Mismatches + Bulges): shows how many possible Off-Targets the guide can have in the Reference Genome. Targets are also grouped by Mismatch + Bulge value.'),
+                        html.Li('Off-Targets Enriched (0 - n Mismatches + Bulges): shows how many possible Off-Targets the guide can have in the Enriched Genome. Targets are also grouped by Mismatch + Bulge value.')
                     ], style = {'padding': '15px'}
                 ),
-                'In the middle of the page there are four tabs:',
+                html.P(html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/resultPage/populationDistribution.png', 'rb').read()).decode()), width='100%' )),
+                'The Show Target Distribution in Populations button opens a section where informations about the number of targets found in each Superpopulation (EAS, EUR, AFR, AMR, SAS) are provided by means of a barplot for each Mismatch + Bulge value. ',
+                html.P('In the middle of the page there are four tabs:'),
                 html.Ul(
                     [
                         html.Li([html.Span('Summary by Guide: ', style = {'color':'red'}) ,'This table collects all the possible On-/Off- Targets grouped by mismatch/bulge couples.']),
-                        html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/resultPage/summaryByGuide.PNG', 'rb').read()).decode()), width='100%' ),
+                        html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/resultPage/summaryByGuide.png', 'rb').read()).decode()), width='100%' ),
                         html.Ul(
                             [
                                 html.Li('Bulge Type: type of bulge of the targets, can be X (no bulge), DNA or RNA'),
                                 html.Li('Bulge Size: size of the bulge present in the targets'),
                                 html.Li('Mismatches: number of mismatches present in the targets'),
-                                html.Li('Number of Targets: number of non-unique (also found in reference genome) targets found in that combination mismatch/bulge'),
-                                html.Li('Target Created by SNPs: number of unique targets (found only in variant genome) found in that combination mismatch/bulge'),
-                                html.Li('PAM Disruption: number of possible disrupted PAMs due to variants addition'),
+                                html.Li('Targets in Reference: number of targets found in the Reference Genome for that combination of mismatch/bulge'),
+                                html.Li('Targets in Enriched: number of targets found in the Enriched Genome for that combination of mismatch/bulge. Each of these targets is associated with at least one sample'),
                                 html.Li('PAM Creation: number of possible created PAMs due to variants addition'),
                                 html.Li('Show Targets: open a new page to display all the targets of the row of interest')
                             ]
                         ),
                         html.Li([html.Span('Summary by Sample: ', style = {'color':'red'}),'This table collects all the possible On-/Off- Targets grouped by sample name.']),
-                        html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/resultPage/summaryBySamples.PNG', 'rb').read()).decode()), width='100%' ),
+                        html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/resultPage/summaryBySamples.png', 'rb').read()).decode()), width='100%' ),
                         html.Ul(
                             [
                                 html.Li('Population: population which the sample belong to'),
                                 html.Li('Super Population: continent which the sample belong to'),
-                                html.Li('Targets in Sample: number of unique targets (found only in variant genome) generated by that sample'),
-                                html.Li('Total Targets in Population: number of unique targets (found only in variant genome) generated by all the sample of the population'),
-                                html.Li('Total Targets in Super Population: number of unique targets (found only in variant genome) generated by all the populations'),
-                                html.Li('PAM Disruption: number of possible disrupted PAMs due to variants addition'),
+                                html.Li('Targets in Enriched: number of targets found in the Enriched Genome that are generated by that sample'),
+                                html.Li('Targets in Population: number of targets found in the Enriched Genome that are generated by all the sample of the population'),
+                                html.Li('Targets in Super Population: number of targets found in the Enriched Genome that are generated by all the populations'),
                                 html.Li('PAM Creation: number of possible created PAMs due to variants addition'),
+                                html.Li('Class: Sample Class (0 - 0+ - 1 - 1+) associated with the sample'),
                                 html.Li('Show Targets: open a new page to display all the targets of the row of interest')
                             ]
                         ),
                         html.Li([html.Span('Summary by Position: ', style = {'color':'red'}),'This table collects all the possible On-/Off- Targets grouped by position in the genome (composed by chromosome and relative position)']),
-                        html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/resultPage/summaryByPosition.PNG', 'rb').read()).decode()), width='100%' ),
+                        html.Img(src = 'data:image/png;base64,{}'.format(base64.b64encode(open('assets/resultPage/summaryByPosition.png', 'rb').read()).decode()), width='100%' ),
                         html.Ul(
                             [
                                 html.Li('Position: chromosome relative position of the first letter of the guide'),
