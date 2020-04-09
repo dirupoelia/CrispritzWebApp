@@ -81,7 +81,7 @@ with open(sys.argv[1]) as summary:
                 if value > max_value:
                     max_value = value
 
-ind = np.arange(0, len(barplot_values.keys()), 1)       #[0 1 2 3 4]
+ind = np.arange(0, len(barplot_values.keys()), 1)       #[0 1 2 3 4 5] #NOTE 0 is REFERENCE
 no_result = False
 try:
     y_range = np.arange(0, max_value + math.ceil(max_value/10), math.ceil(max_value/5))
@@ -91,6 +91,8 @@ except:
 width = 0.5
 
 population_color = ['purple', 'orange', 'green', 'blue', 'red']
+if 'REFERENCE' in barplot_values.keys():
+    population_color.insert(0, 'grey') 
 all_bar = []
 for i in range(number_bars):     #For 0 bulge, 1 bulge, 2 bulge ...
     current_bar = [x[i] for x in barplot_values.values()] 

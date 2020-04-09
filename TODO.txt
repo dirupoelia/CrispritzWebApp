@@ -430,7 +430,7 @@ X-Tabella del cluster far vedere per default solo il top1 con la sequenza top1sc
 	X-Mettere checbox per far vedere tutto il cluster
 X-Spostare la tabella scomposizioni in cima, mettere sotto quella del cluster
 	X-Aggiornare descrizioni delle tabelle
--Eseguire ricerca Dan e fare mail con file txt essenziali + screenshot per far vedere la pagina
+X-Eseguire ricerca Dan e fare mail con file txt essenziali + screenshot per far vedere la pagina
 
 
 19/03

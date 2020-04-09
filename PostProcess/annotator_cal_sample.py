@@ -3,7 +3,7 @@
 '''
 Merge of annotator, calc_samples_faster.py and scores
 Prende in input il file dei top1, ordinati per chr, e estrae i samples corrispondenti. Per ogni target, salva l'insieme dei sample in samples.all.txt, crea le combinazioni tenendo i target reali
-in samples.txt, poi calcola l'annotazione corrispondente e crea il file Annotation.targets e  i vari summaries.
+in samples.txt, poi calcola l'annotazione corrispondente e crea il file Annotation.targets e  i vari summaries. Salva in samples.annotation I REF, i VAR degli Uniq, i VAR e i REF dei Semicommon
 '''
 
 
@@ -407,7 +407,8 @@ cluster_update.write(header + '\n')        #Write header
 save_cluster_targets = True
 remove_iupac = False
 save_total_general_table = False
-add_to_general_table = dict()   #target semicommon da aggiungere alla tab generale delle guide, metto i valori di total presi dal primo target REF nel cluster di un semicommon che esiste
+add_to_general_table = dict()   #chiave ['add'] = target semicommon da aggiungere alla tab generale delle guide, metto i valori di total presi dal primo target REF nel cluster di un semicommon che esiste
+                                #chiave ['distribution'] = array len total, ogni cella divisa per mm,1B,2B..., per populationDistribution
 last_annotation = ''    #needed when counting the ref part of a semicommon in order to not redo the annotation
 last_samples = ''       #needed for save cluster part
 next(inResult)      #Skip header
@@ -439,12 +440,15 @@ for line in inResult:
                                 except:
                                     count_sample[guide_no_bulge][s]['refposition'] = [0,0,-1]
                                 count_sample[guide_no_bulge][s]['refposition'][0] += 1      #Visited +1
-                         
-                    add_to_general_table[guide_no_bulge][int(x[mm_pos]) +  int(x[bulge_pos])] += 1
+                    x[13] = last_annotation
+                    outFileSample.write('\t'.join(x) + '\n')      
+                    add_to_general_table[guide_no_bulge]['add'][int(x[mm_pos]) +  int(x[bulge_pos])] += 1
                     #Do annotation to keep numbers consistent between images and general table
                     #conto i target generali per mm threshold
                     totalDict['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
                     guideDict[guide_no_bulge]['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
+                    #REF target, add +1 to PopulationDistributionREF
+                    add_to_general_table[guide_no_bulge]['distributions'][int(x[mm_pos]) + int(x[bulge_pos])][int(x[bulge_pos])] +=1   #add +1 to array in cell TOTAL, in comma position corresponding to bulge size
 
                     #Conto per annotazione
                     for ann in last_annotation.split(','):
@@ -797,7 +801,9 @@ for line in inResult:
         guideDict[guide_no_bulge]['targets'] = {}
         guideDict[guide_no_bulge]['targets'] = [0]*10
 
-        add_to_general_table[guide_no_bulge] = [0] * 10    # GUIDE -> [ 0 0 0 0 0 ...] valori per total (mms + bulge)
+        add_to_general_table[guide_no_bulge] = dict()
+        add_to_general_table[guide_no_bulge]['add'] = [0] * 10    # GUIDE -> ['add'] -> [ 0 0 0 0 0 ...] valori per total (mms + bulge)
+        add_to_general_table[guide_no_bulge]['distributions'] = [[0] * (max_bulges + 1) for x in range(10)] # GUIDE -> ['distributions'] -> [ 0,0,0 0,0,0 0,0,0 ...] len array = 10, ogni cella ha tanti 0 quanti numero di max_bulge +1
 
         count_unique_for_guide[guide_no_bulge] = dict()                 #NOTE count_unique means that the target have at least 1 sample
         count_unique_for_guide[guide_no_bulge]['targets'] = [0]*10
@@ -824,6 +830,8 @@ for line in inResult:
     if summary_samples:
         for sample in x[12].split(','):
             if sample == 'n':
+                #REF target, add +1 to PopulationDistributionREF
+                add_to_general_table[guide_no_bulge]['distributions'][int(x[mm_pos]) + int(x[bulge_pos])][int(x[bulge_pos])] +=1   #add +1 to array in cell TOTAL, in comma position corresponding to bulge size
                 continue
             #Initialization if sample, pop or superpop not in dict
             if sample not in count_sample[guide_no_bulge]:
@@ -848,7 +856,7 @@ for line in inResult:
             if dict_pop_to_sup[dict_sample_to_pop[sample]] not in visited_superpop:
                 visited_superpop.append(dict_pop_to_sup[dict_sample_to_pop[sample]])
                 count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]]['targets'][int(x[mm_pos]) + int(x[bulge_pos])] += 1
-                count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]]['distributions'][int(x[mm_pos]) + int(x[bulge_pos])][int(x[bulge_pos])] +=1 #add +1 to array in pos TOTAL, in cell corrresponding to bulge size
+                count_superpop[guide_no_bulge][dict_pop_to_sup[dict_sample_to_pop[sample]]]['distributions'][int(x[mm_pos]) + int(x[bulge_pos])][int(x[bulge_pos])] +=1 #add +1 to array in cell TOTAL, in comma position corresponding to bulge size
         visited_pop = []
         visited_superpop = []
     
@@ -1080,6 +1088,7 @@ if summary_samples:
     with open(outputFile + '.PopulationDistribution.txt', 'w+') as pop_distribution:
         for g in guideDict:
             pop_distribution.write('-Summary_' + g + '\n')
+            pop_distribution.write('REFERENCE' + '\t' + '\t'.join([ ','.join(str(v) for v in t) for t in add_to_general_table[g]['distributions']]) + '\n')
             for superpop in superpopulation:
                 try:
                     pop_distribution.write(superpop + '\t' + '\t'.join([ ','.join(str(v) for v in t) for t in count_superpop[g][superpop]['distributions']]) + '\n')
@@ -1137,7 +1146,7 @@ if do_scores:
 #Save additional values from semicommon for general guide table
 with open(outputFile + '.addToGeneralTable.txt', 'w+') as add_file:
     for guide in add_to_general_table:
-        add_file.write(guide + '\t' + '\t'.join([str(x) for x in add_to_general_table[guide]]) + '\n')
+        add_file.write(guide + '\t' + '\t'.join([str(x) for x in add_to_general_table[guide]['add']]) + '\n')
 
 #Calculate and save classes for each sample
 total_class = dict()    #For each guide, Save total of class [0, 1 , 1+]

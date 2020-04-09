@@ -510,10 +510,8 @@ final_list.append(dcc.Interval(id = 'load-page-check', interval=3*1000))
 load_page = html.Div(final_list, style = {'margin':'1%'})
 
 
-#Test bootstrap page, go to /test-page to see 
+#Test page, go to /test-page to see 
 final_list = []
-
-final_list.append(html.A('Download file', href = URL + '/data/Test/ALL.chr5.shapeit2_integrated_v1a.GRCh38.20181129.phased.vcf.gz', target = '_blank'))
 final_list.append(html.Div(id='test-div-for-button'))
 test_page = html.Div(final_list, style = {'margin':'1%'})
 
@@ -1446,6 +1444,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         else:
             df = df.sort_values('Total', ascending = True)
         del df['Total']
+        del df['Guide']
         fl.append(html.Div(
                 generate_table(df, 'table-summary-by-guide', guide, job_id ), style = {'text-align': 'center'}
             )
@@ -2426,9 +2425,7 @@ def resultPage(job_id):
         genome_name = genome_name.split('_')[0] + ' Reference'
     if 'True' in ref_comp:
         genome_type = 'both'
-    mms = int(mms[0])
-    mms_values = [{'label':i, 'value':i} for i in range(mms + 1) ]      
-    
+    mms = int(mms[0])    
     
     #load acfd for each guide 
     with open('Results/' + value + '/acfd.txt') as a:
@@ -2484,19 +2481,12 @@ def resultPage(job_id):
                     'Warning: Some guides have too many targets! ',
                     html.A("Click here", href= URL + "/data/" + job_id + '/guides_error.txt', className="alert-link"),
                     ' to view them'
-                ], color='warning')   #TODO aggiungere link guide errate
+                ], color='warning')
         )
     final_list.append(
         html.H3('Result Summary - ' + genome_name + ' - Mismatches ' + str(mms) + ' - DNA ' + bulge_dna + ' - RNA ' + bulge_rna)
     )
    
-
-    
-    # profile = profile.sort_values('Guide')
-    #profile['CFD'] = acfd
-    #profile['Doench 2016'] = doench
-    # if len(DataFrame.index) > 
-    #profile = profile.sort_values(['CFD', 'Doench 2016'], ascending = [False, False])
     add_to_description = html.P(
         'General summary for the given guides. For each guide, the number of Off-Targets found for each Mismatch + Bulge value is shown.'
     )
@@ -2523,6 +2513,7 @@ def resultPage(job_id):
             ]
         )
     final_list.append(add_to_description)
+    final_list.append(dcc.Checklist( options = [{'label': 'Change Table', 'value': 'ok'}],id = 'test-main-table'))
     final_list.append(
         html.Div(
             dash_table.DataTable(
@@ -2546,7 +2537,11 @@ def resultPage(job_id):
                 style_table={
                     'max-height': '200px',
                     'overflowY': 'scroll',
-                }
+                },
+                style_data={
+                    'whiteSpace': 'pre',
+                    'height': 'auto'
+                },
             )
             ,id = 'div-general-profile-table')
     )
@@ -2568,7 +2563,7 @@ def resultPage(job_id):
                 [
                     dbc.Row(
                         [
-                            dbc.Col(html.Button("Show/Hide Target Distribution in Populations", id="btn-collapse-populations")),
+                            dbc.Col(html.Button("Show/Hide Target Distribution in SuperPopulations", id="btn-collapse-populations")),
                             # dbc.Col(html.A('Download full list of targets', target = '_blank', id = 'download-full-list' ))
                         ]
                     ),
@@ -2596,20 +2591,183 @@ def resultPage(job_id):
     result_page = html.Div(final_list, style = {'margin':'1%'})
     return result_page
 
-# #Change href of download full list of target per guide link
-# @app.callback(
-#     Output('download-full-list', 'href'),
-#     [Input('general-profile-table', 'selected_cells')],
-#     [State('general-profile-table', 'data'),
-#     State('url', 'search')]
-# )
-# def updateDownloadLinkFullList(sel_cel, all_guides, search):
-#     if sel_cel is None or all_guides is None or not sel_cel or not all_guides:
-#         raise PreventUpdate
-#     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
-#     job_id = search.split('=')[-1]
-#     return URL + '/data/' + job_id + '/' + job_id + '.targets.' + guide + '.zip'
+#START TEST
+#Test, change children of div of table when checkbox is selected
+@app.callback(
+    Output('div-general-profile-table', 'children'),
+    [Input('test-main-table', 'value')],
+    [State('url', 'search')]
+)
+def testChangetable(value, search):
+    if value is None:
+        raise PreventUpdate
+    job_id = search.split('=')[-1]
+    
+    with open('Results/' + job_id + '/Params.txt') as p:
+        all_params = p.read()
+        genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+        ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+        mms = int((next(s for s in all_params.split('\n') if 'Mismatches' in s)).split('\t')[-1])
+        max_bulges = int((next(s for s in all_params.split('\n') if 'Max_bulges' in s)).split('\t')[-1])
+    col_targetfor = '('
+    for i in range(1, mms + int(max_bulges)):
+        col_targetfor = col_targetfor + str(i) + '-'
+    col_targetfor = col_targetfor + str(mms + int(max_bulges))
+    col_targetfor = col_targetfor + ' Mismatches + Bulges)'
+    #NEW TABLE
+    if 'ok' in value:   #Test table 3 rows
+        #Get guide from guide.txt
+        with open('Results/' + job_id + '/guides.txt') as g:
+            guides = g.read().strip().split('\n')
+            guides.sort()
 
+        #load acfd for each guide 
+        with open('Results/' + job_id + '/acfd.txt') as a:
+            all_scores = a.read().strip().split('\n')
+        
+        #Load scores
+        list_error_guides = []
+        if 'NO SCORES' not in all_scores:
+            all_scores.sort()
+            acfd = [float(a.split('\t')[1]) for a in all_scores if a.split('\t')[0] not in list_error_guides]
+            doench = [int(a.split('\t')[2]) for a in all_scores if a.split('\t')[0] not in list_error_guides]
+            acfd  = [int(round((100/(100 + x))*100)) for x in acfd] 
+
+        #Get target counting from summary by guide
+        column_on_target = []
+        column_off_target_ref = []
+        column_off_target_enriched = []
+        column_sep_by_mm_value = []
+        column_sep_by_mm_value_enriched = []
+        column_sample_class = []
+        
+        # #NOTE  USO IL CONTEGGIO PRESO DA jobid.general_target_count.txt
+        with open('Results/' + job_id + '/' + job_id + '.general_target_count.txt') as general_count:
+            header_general = next(general_count) #skip header
+            general_count_content = general_count.read().strip().split('\n')
+            general_count_content.sort(key = lambda x : x[0])
+        column_on_target = []
+        column_off_target_ref = []
+        column_off_target_enriched = []
+        guides = []
+        column_on_target_tmp_test = dict()      #For adding count on REF on target on Sample class column
+        for tmp in general_count_content:
+            tmp = tmp.split('\t')
+            guides.append(tmp[0])
+            column_on_target_tmp_test[tmp[0]] = tmp[1]      #tmp[1] =  3(1 - 2)
+            column_on_target.append(tmp[1])
+            a = tmp[2].replace('(','').replace(')','').replace('-','').replace('  ',' ').strip().split(' ') # ottengo in a[0] il total, da a[1:] il numero di targets per 1 2 3 ... Total
+            b = tmp[3].replace('(','').replace(')','').replace('-','').replace('  ',' ').strip().split(' ')
+            for pos_sum, eel in enumerate(a):
+                b[pos_sum] = str(int(b[pos_sum]) + int(eel))        #array of sum, where b[0] is total
+            b = b[0] + ' (' + ' - '.join(b[1:]) + ')'
+            column_off_target_ref.append(tmp[2] + '\n' + tmp[3] + '\n' + b)
+            column_off_target_enriched.append(tmp[3])
+        #23/03 On target column is now Samples for Class 0 - 0+ - 1 - 1+
+        with open('Results/' + job_id + '/' + job_id + '.SampleClasses.txt') as samp_classes:
+            header_classes = next(samp_classes).strip().split('\t')[1:]     #List of Guides
+            for line in samp_classes:
+                if 'Total for Class' in line:
+                    value_classes = line.strip().split('\t')[1:]           #List of values of classes for each guide
+        #NOTE just for changing '-' to ' - '
+        for pos_vc, vc in enumerate(value_classes):
+            value_classes[pos_vc] = ' - '.join(vc.split('-'))
+        
+        dict_classes = dict(zip(header_classes, value_classes))
+        column_on_target = []
+        for g in guides:
+            column_sample_class.append(dict_classes[g]) 
+            column_on_target.append(column_on_target_tmp_test[g].split('(')[-1].split('-')[0])
+
+        # #NOTE FINE 
+        if 'NO SCORES' not in all_scores:
+            data_guides = {'Guide': guides, 'CFD':acfd, 'Doench 2016':doench, 'On-Targets Reference':column_on_target, 'Samples in Class 0 - 0+ - 1 - 1+': column_sample_class,'Origin' : ['REFERENCE\nENRICHED\nCOMBINED']* len(column_off_target_ref),'Off-Targets ' + col_targetfor:column_off_target_ref}
+        else:
+            data_guides = {'Guide': guides, 'On-Targets Reference':column_on_target, 'Samples in Class 0 - 0+ - 1 - 1+': column_sample_class,'Origin' : ['REFERENCE\nENRICHED\nCOMBINED']* len(column_off_target_ref),'Off-Targets ' + col_targetfor:column_off_target_ref}
+        
+        dff = pd.DataFrame(data_guides)
+        
+        if 'NO SCORES' not in all_scores:
+            dff = dff.sort_values(['CFD', 'Doench 2016'], ascending = [False, False])
+        else:
+            dff = dff.sort_values('Total On-Targets in Reference', ascending = True)
+
+
+
+        return dash_table.DataTable(
+                #page_size=PAGE_SIZE,
+                columns = [{'name':c, 'id' : c, 'type':'text'} for c in data_guides.keys()],
+                #fixed_rows={ 'headers': True, 'data': 0 },
+                data = dff.to_dict('records'),
+                selected_cells = [{'row':0, 'column':0}],
+                css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
+                page_current= 0,
+                page_size= 10,
+                page_action='custom',
+                #virtualization = True,
+                filter_action='custom',
+                filter_query='',
+
+                sort_action='custom',
+                sort_mode='multi',
+                sort_by=[],
+                style_table={
+                    'max-height': '200px',
+                    'overflowY': 'scroll',
+                },
+                style_data={
+                    'whiteSpace': 'pre',
+                    'height': 'auto',
+                    'font-size':'1.50rem'
+                },
+                style_data_conditional = [
+                    {
+                        'if': {
+                                'column_id' :'Origin'
+                            },
+                            'font-weight':'bold',
+                            'textAlign': 'center'
+                            
+                    }
+                ]
+            )
+    #RESTORE TABLE
+
+    with open('Results/' + job_id + '/acfd.txt') as a:
+        all_scores = a.read().strip().split('\n')
+    #Load scores
+    if 'NO SCORES' not in all_scores:
+        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets Reference', 'id' : 'Total On-Targets in Reference', 'type':'text'},{'name':'Samples in Class 0 - 0+ - 1 - 1+', 'id' : 'Sample Class', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
+    else:
+        columns_profile_table = [{'name':'Guide', 'id' : 'Guide', 'type':'text'}, {'name':'CFD', 'id': 'CFD', 'type':'numeric'}, {'name':'Doench 2016', 'id': 'Doench 2016', 'type':'numeric'} ,{'name':'On-Targets Reference', 'id' : 'Total On-Targets in Reference', 'type':'text'},{'name':'Samples in Class 0 - 0+ - 1 - 1+', 'id' : 'Sample Class', 'type':'text'}, {'name':'Off-Targets Reference ' + col_targetfor, 'id' : 'Total Off-Targets in Reference', 'type':'text'}, {'name':'Off-Targets Enriched ' + col_targetfor, 'id' : 'Total Off-Targets in Enriched', 'type':'text'}]
+    return dash_table.DataTable(
+                id = 'general-profile-table',
+                #page_size=PAGE_SIZE,
+                columns = columns_profile_table,
+                #fixed_rows={ 'headers': True, 'data': 0 },
+                #data = profile.to_dict('records'),
+                selected_cells = [{'row':0, 'column':0}],
+                css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
+                page_current= 0,
+                page_size= 10,
+                page_action='custom',
+                #virtualization = True,
+                filter_action='custom',
+                filter_query='',
+
+                sort_action='custom',
+                sort_mode='multi',
+                sort_by=[],
+                style_table={
+                    'max-height': '200px',
+                    'overflowY': 'scroll',
+                },
+                style_data={
+                    'whiteSpace': 'pre',
+                    'height': 'auto'
+                },
+            )
+#END TEST
 
 
 #Update color on selected row
@@ -2862,30 +3020,15 @@ def loadDistributionPopulations(sel_cel, all_guides, job_id):
                 all_images.append(dbc.Col(html.P('')))
         
         distributions.append(
-            dbc.Row(
-                all_images
+            html.Div(
+                [
+                    dbc.Row(html.P('On- and Off-Targets distributions in the Reference and Enriched Genome. For the Enriched Genome, the targets are divided into 5 SuperPopulations (EAS, EUR, AFR, AMR, SAS).', style = {'margin-left':'0.75rem'})),
+                    dbc.Row(
+                        all_images
+                    )
+                ]
             )
         )
-
-        # all_images = [dbc.Col(  [   
-        #     html.A(
-        #         html.Img(
-        #             src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/populations_distribution_' + guide + '_' + str(mm) + 'total.png', 'rb').read()).decode()),
-        #             id = 'distribution-population' + str(mm), width="100%", height="auto"
-        #         ),
-        #         target="_blank",
-        #         href = 'assets/Img/' + job_id + '/' + 'populations_distribution_' + guide + '_' + str(mm) + 'total.png'
-        #     ),
-        #     html.Div(html.P('Distribution ' + str(mm) + ' Mismatches + Bulges ', style = {'display':'inline-block'} ),style = {'text-align':'center'})
-        #     ]
-        # ) if mm < (mms + max_bulges + 1) else dbc.Col(html.P('')) for mm in range (i * BARPLOT_LEN, (i + 1) * BARPLOT_LEN )]   #fill other columns with html.P to keep size consistent
-
-
-        # distributions.append(
-        #     dbc.Row(
-        #         all_images
-        #     )
-        # )
     return distributions
 
 @cache.memoize()

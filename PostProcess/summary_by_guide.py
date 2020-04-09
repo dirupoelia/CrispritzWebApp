@@ -77,9 +77,9 @@ with open(sys.argv[1]) as targets:
                 guide_dict[line[1].replace('-','')][5][int(line[7])][int(line[8])] += 1
             else:
                 guide_dict[line[1].replace('-','')][2][int(line[7])][int(line[8])] += 1
-        if line[1].replace('-','') + line[3] + line[5] != current_scomposition:
+        if line[1].replace('-','') + line[3] + line[5] + line[6] != current_scomposition: #On the general table i wanna count the IUPAC scomposed targets only once, but on sum by guide table i wanna count each one of them
             #New scomposition
-            current_scomposition = line[1].replace('-','') + line[3] + line[5]   
+            current_scomposition = line[1].replace('-','') + line[3] + line[5] + line[6]   
             if line[12] != 'n':         #sample associated, meaning it's an enriched target (GENERAL TABLE)
                 general_table[line[1].replace('-','')]['var'][int(line[7]) + int(line[8])] += 1
             else:
