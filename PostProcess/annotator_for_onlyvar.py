@@ -270,6 +270,7 @@ blank_add_end = ''
 pam_multiplier = 1
 pam_multiplier_negative = 0
 start_sample_for_cluster = 0
+sum_for_mms = 0 #when updatig lowercase for nem_mm, this value represents the offset for the pam position (mainly needed only if pam at beginning)
 end_sample_for_cluster = max_dna_bulges + max_rna_bulges  #Values to check new iupac when working on cluster targets
 if pam_at_beginning:
     blank_add_begin = ''
@@ -278,6 +279,7 @@ if pam_at_beginning:
     pam_multiplier_negative = 1
     start_sample_for_cluster = len_pam + guide_len - max_rna_bulges
     end_sample_for_cluster = len_pam + guide_len + max_dna_bulges
+    sum_for_mms = len_pam
 
 outFileSample.write(header + '\n')
 # outFileSampleAll.write(header + '\n')
@@ -561,13 +563,16 @@ for line in inResult:
                 line[2] = ''.join(target_to_modify).strip()
                 mm_new_t = 0
                 guide_no_pam = line[1][pos_beg:pos_end]    
+                list_t = list(line[2]) 
                 for position_t, char_t in enumerate(line[2][pos_beg:pos_end]): 
                     if char_t.upper() != guide_no_pam[position_t]:
                         mm_new_t += 1
+                        if guide_no_pam[position_t] != '-':
+                            list_t[sum_for_mms + position_t] = char_t.lower()
                     
                 if allowed_mms < (mm_new_t - int(line[bulge_pos])):        
                     continue                #Remove target since id does not respect mms constrains
-        
+                line[2] = ''.join(list_t)
                 line[mm_pos] = str(mm_new_t - int(line[bulge_pos]))
                 line[bulge_pos + 1] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
             
@@ -703,11 +708,14 @@ for line in inResult:
         mm_new_t = 0
         
         if final_result:
-            guide_no_pam = final_result[1][pos_beg:pos_end]    
+            guide_no_pam = final_result[1][pos_beg:pos_end]   
+            list_t = list(t) 
             for position_t, char_t in enumerate(t[pos_beg:pos_end]):
                 if char_t.upper() != guide_no_pam[position_t]:
                     mm_new_t += 1
-            final_result[2] = t
+                    if guide_no_pam[position_t] != '-':
+                        list_t[sum_for_mms + position_t] = char_t.lower()
+            final_result[2] = ''.join(list_t)#t
         
             #Check for pam status
             pam_ok = True

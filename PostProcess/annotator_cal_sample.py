@@ -270,6 +270,7 @@ blank_add_end = ''
 pam_multiplier = 1
 pam_multiplier_negative = 0
 start_sample_for_cluster = 0
+sum_for_mms = 0 #when updatig lowercase for nem_mm, this value represents the offset for the pam position (mainly needed only if pam at beginning)
 end_sample_for_cluster = max_dna_bulges + max_rna_bulges  #Values to check new iupac when working on cluster targets
 if pam_at_beginning:
     blank_add_begin = ''
@@ -278,7 +279,7 @@ if pam_at_beginning:
     pam_multiplier_negative = 1
     start_sample_for_cluster = len_pam + guide_len - max_rna_bulges
     end_sample_for_cluster = len_pam + guide_len + max_dna_bulges
-
+    sum_for_mms = len_pam
 outFileSample.write(header + '\n')
 # outFileSampleAll.write(header + '\n')
 summary_samples = True
@@ -564,14 +565,17 @@ for line in inResult:
             else:       #Do also a check for new mm value and if mm value > threshold, do not save target
                 line[2] = ''.join(target_to_modify).strip()
                 mm_new_t = 0
-                guide_no_pam = line[1][pos_beg:pos_end]    
+                guide_no_pam = line[1][pos_beg:pos_end]  
+                list_t = list(line[2])  
                 for position_t, char_t in enumerate(line[2][pos_beg:pos_end]): 
                     if char_t.upper() != guide_no_pam[position_t]:
                         mm_new_t += 1
+                        if guide_no_pam[position_t] != '-':
+                            list_t[sum_for_mms + position_t] = char_t.lower()
                     
                 if allowed_mms < (mm_new_t - int(line[bulge_pos])):        
                     continue                #Remove target since id does not respect mms constrains
-        
+                line[2] = ''.join(list_t)
                 line[mm_pos] = str(mm_new_t - int(line[bulge_pos]))
                 line[bulge_pos + 1] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
             
@@ -707,11 +711,14 @@ for line in inResult:
         mm_new_t = 0
         
         if final_result:
-            guide_no_pam = final_result[1][pos_beg:pos_end]    
+            guide_no_pam = final_result[1][pos_beg:pos_end]  
+            list_t = list(t)  
             for position_t, char_t in enumerate(t[pos_beg:pos_end]):
                 if char_t.upper() != guide_no_pam[position_t]:
                     mm_new_t += 1
-            final_result[2] = t
+                    if guide_no_pam[position_t] != '-':
+                        list_t[sum_for_mms + position_t] = char_t.lower()
+            final_result[2] = ''.join(list_t)#t
         
             #Check for pam status
             pam_ok = True
@@ -733,6 +740,7 @@ for line in inResult:
             target_scomposti_salvare.append(final_result)
     if false_targets >= len(target_combination):        #If all the scomposed targets have no sample or do not respect PAM/mm threasold, the iupac target does not really exist
         line = line.strip().split('\t')
+        # print('line', line)
         if line[vu_pos] == 'y':         #Do not do annotation because target does not exists, and do not save his cluster
             save_cluster_targets = False
             continue    #DO NOT save this target because no ref homologous and no sample combination exists
@@ -742,13 +750,19 @@ for line in inResult:
         save_cluster_targets = True        #salvare il cluster ma togliendo gli iupac
         remove_iupac = True
         x = next(inResult).strip().split('\t')   #get next target of the cluster
+        # print('x next', x)
+        entered = False
         while (x[1].replace('-','') + x[3] + x[5] + x[6]) == current_guide_chr_pos:   #while still in same cluster
+            entered = True
+            # print('x in while', x)
             for c in x[2]:
                 if c in iupac_code:
                     break
             else:   #no break triggered in previous for --> x[2] has no iupac char
                 break
             x = next(inResult).strip().split('\t')
+        if not entered:
+            continue
         line = '\t'.join(x)                     #Fist target in the cluster that is REF
         # x.append('n')                       #Fist target in the cluster that is REF -> add 'n' as sample
         # x.append(x[1].replace('-',''))      #Fist target in the cluster that is REF -> add real guide
@@ -957,6 +971,8 @@ for line in inResult:
             else:
                 decrease_ref_count.append(t[12]) # Save DNA, RNA -> they surely have total not 0
         if not tuple_var_ref and x[0] == 'X':       #Calculate scores for reference targets
+            # print(x)
+            # print(target_scomposti_salvare)
             cfd_score = calc_cfd(x[1], x[2].upper()[:-3], x[2].upper()[-2:], mm_scores, pam_scores)
             sum_cfd = sum_cfd + cfd_score
             try:

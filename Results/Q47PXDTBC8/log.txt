@@ -9,4 +9,4 @@ Annotation	Done	dom 29 mar 2020, 19.31.10, CEST
 PostProcess	Done	dom 29 mar 2020, 19.31.14, CEST
 Report	Start	dom 29 mar 2020, 19.31.14, CEST
 Report	Done	dom 29 mar 2020, 19.31.25, CEST
-Job	Done	mer 8 apr 2020, 16.25.08, CEST
+Job	Done	ven 10 apr 2020, 15.38.21, CEST
