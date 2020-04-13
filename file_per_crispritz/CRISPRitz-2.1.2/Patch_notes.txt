@@ -1,0 +1,77 @@
+Cartelle:
+	-Annotations:
+		-hg19_ref.annotations.bed: Annotazioni hg19
+		-hg38Annotation.sort.bed: Annotazioni NUOVE hg38, contiene annotazioni del tipo promoter_flanking_region etc
+		-hg38_ref.annotations.bed: Annotazioni hg38
+	-opt:
+		-crispritz: cartella che contiene gli esecutibili e gli script Python, è uguale, come tipologia, alla cartella che viene creata quando installo crispritz con conda
+	-sourceCode: contiene il codice c++ e script python
+Files:
+	-dockerfile: creazione immagine docker USANDO IL CRISPRITZ SCARICATO DA CONDA, quindi per poterlo usare bisogna prima aggiornare il conda. Utilizza
+	environment_droplet.yml per aggiornare i pacchetti necessari per crispritz e crisprme
+	-environment_droplet.yml: pacchetti per compatibilità crispritz e crisprme conda
+	-Makefile_conda = ???
+
+
+
+-FIXED: Bug quando costruivo alberi con bMax diverso da 2 sul valore della posizione del target:
+	-Se bMAX > 2, la posizione del target era <; (eg Bmax = 5, pos -3)
+	-Se bMax < 2, la posizione del target era >; (eg Bmax = 1, pos +1)
+	-File: main.cpp (18/02/2020)
+	-File: buildTST (18/02/2020 - NO gnu parallel)
+-FIXED: Bug quando cercavo guide con lunghezza < di quella usata per cercare sull'albero sul valore della posizione del target:
+	-IMPORTANTE: per correggere l'errore, è stato inserito nel file .bin un parametro che indica la lunghezza delle guide usate per creare l'albero (preso dal file pam.txt);
+	Quindi TUTTI i database dei genomi costruiti prima del 25/10/2019 NON SONO COMPATIBILI con questa versione del searchTST.
+	-File: searchOnTST.cpp (18/02/2020)
+	-File: searchTST (18/02/2020)
+-MODIFIED: Aggiunta colonna Cluster Position sui risultati della ricerca
+	-File: searchTST, searchBruteForce (18/02/2020)
+-FIXED: Errore nel generate-report quando generavo i barplot (-sumref, -sumenr) con 0 risultati
+	-Aggiunta nel generate-plot di conda la creazione di file .png
+-MODIFIED: Sostituzione del file python enricher.py con script add_variants.sh e index_vcf.sh
+	-L'aggiunta varianti è ora fatta con bcftools.
+	-Il nome del vcf file deve contenere .chrN. dove N è il nome del cromosoma. Il nome deve corrispondere ad un file nella cartella in input dei chr del genoma
+	-ATTENZIONE: i vcf file scaricati dallo script automatico non vanno bene (hg19) (i chr hanno >chrN come header, nei vcf i chr sono chiamati solo N)
+	-ATTENZIONE: errore: -> RISOLTO tenendo solo SNP
+		-Symbolic alleles other than <DEL> are currently not supported: <CN0> at 18:10083
+		-The site 19:93762 overlaps with another variant, skipping...
+		-The fasta sequence does not match the REF allele at 19:245736:
+	-CREATI NUOVI VCF contenenti solo SNP per hg19, nella cartella test_enrich_hg19/vcf_onlySNP
+	-File: cartella Enrichment, funzione genomeEnrichment() di crispritz.py (FILE PRESENTI in crispr2.1.2) (18/02/2020)
+	-MODIFIED: ora questa funzione in CRISPRitz si chiama genomeEnrichmentWithBedtools(), la funzione genomeEnrichment() è ora fixata per indels, e non usa bedtools
+-MODIFIED: Sostituzione del file annotator.py con annotator.py (nuovo)
+	-Ora richiede profile, file targets, file .bed annotazioni (NON cartella con il bedfile), nome output file
+	-Vengono creati due file di output: uno con in targets e un con le Annotazioni e Summary
+	-MODIFIED: il nuovo file annotator è stato migliorato
+		-Input: file .bed con annotazioni, file .targets, nome file output
+		-Output: .Annotation.targets, .Annotation.summary
+		-FILE PRESENTI in crispr2.1.2 (18/02/2020)
+-MODIFIED: Creazione file new_radar_chart.py per permettere di avere un numero dinamico di annotazioni.
+	-L'utente ora può avere le immagini con un numero libero di annotazioni
+	-Se seleziona la guida, l'eventuale barplot sarà su quella guida
+	-Se non seleziona la guida, il barplot sarà su tutto il Summary
+	-Inserito warning per -gecko se le annotazioni usate non sono quelle fornite con in software (l'opzione viene tolta e il generate-report continua)
+	-MODIFIED: creato nuovo radar_chart, per il calcolo dei samples
+-ADDED: file sample_info.xls, da inserire nella cartella Python_Script/Annotator
+	-note: aggiungere a conda il pacchetto xlrd (18/02/2020)
+-ADDED: file environment.yml per i pacchetti per conda. Preso da margarita (18/02/2020)
+-ADDED: cartella annotations con le annotazioni più recenti, il file hg38Annotation.sort.bed contiene anche annotazioni diverse dalle 5 classiche, va testato con la comparison di -gecko
+	-File: cartella annotations (18/02/2020)
+-MODIFIED: Calcolo scores:
+	-CFD calcolato solo su target con X
+	-Doench calcolato solo su on-target
+	-MODIFIED: L'output ora è un file 'nome_ricerca.scores.txt' che contiene l'elenco delle guide con i valori di accumulated CFD e Doench
+	-File: scores.py e crispritz.py	(18/02/2020)
+-FIXED: PAM all'inizio (index e ricerca):
+	-File: searchTST, buildTST, cartella CRISProfiler e CRISPR-Cas-Tree (18/02/2020)
+-ADDED: Colonna 'Total' nell'output della ricerca
+	-File: searchTST, searchBruteForce (11/03/2020)
+-ADDED: file radarchart.geckonew.py per i plot usando gecko.summary.total.Annotation.summary.txt. MANCA L'IMPLEMENTAZIONE DELLA COMPARISON TRA GECKO E I SAMPLE perchè manca l'analisi dei sample fatta su gecko
+	-Al momento il confronto gecko-sample è fatta sul gecko.summary.total.Annotation.summary.txt
+	-Opzione -gecko attiva -> faccio plot solo su annotazioni in comune
+	-File: gecko.summary.total.Annotation.summary.txt, radar_chart.geckonew.py (19/02/2020)
+
+
+-MODIFIED (24/02/2020): Aggiunta della funzione ProcessData().
+	-Completato REF, VAR, VAR/REF
+		-File: crispritz.py, PostProcess (30/03/2020)
