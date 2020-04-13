@@ -167,7 +167,7 @@ with open (sys.argv[5]) as pam:
         pam_end = None
 
 do_scores = True
-if guide_len != 20 or 'NGG' != pam:
+if guide_len != 20:
     with open('acfd.txt', 'w+') as result:
         result.write('NO SCORES')
         do_scores = False
@@ -456,7 +456,7 @@ for line in inResult:
                         totalDict[ann][int(x[mm_pos]) + int(x[bulge_pos])] += 1
                     
                     #Calculate scores
-                    if do_scores and  x[0] == 'X':       #Calculate scores for reference targets
+                    if do_scores and  x[0] == 'X' and x[2][-2:] == 'GG':       #Calculate scores for reference targets
                         cfd_score = calc_cfd(x[1], x[2].upper()[:-3], x[2].upper()[-2:], mm_scores, pam_scores)
                         sum_cfd = sum_cfd + cfd_score
                         try:
@@ -915,7 +915,7 @@ for line in inResult:
             outFileSample.write('\t'.join(t) +'\n')
             
             #Calc scores for scomposed targets
-            if t[0] == 'X':
+            if t[0] == 'X' and t[2][-2:] == 'GG':
                 cfd_score = calc_cfd(t[1], t[2].upper()[:-3], t[2].upper()[-2:], mm_scores, pam_scores)
                 sum_cfd = sum_cfd + cfd_score
                 try:
@@ -953,7 +953,7 @@ for line in inResult:
                     decrease_ref_count.append(t[12]) #Save X and total not 0
             else:
                 decrease_ref_count.append(t[12]) # Save DNA, RNA -> they surely have total not 0
-        if not tuple_var_ref and x[0] == 'X':       #Calculate scores for reference targets
+        if not tuple_var_ref and x[0] == 'X' and x[2][-2:] == 'GG':       #Calculate scores for reference targets
             cfd_score = calc_cfd(x[1], x[2].upper()[:-3], x[2].upper()[-2:], mm_scores, pam_scores)
             sum_cfd = sum_cfd + cfd_score
             try:

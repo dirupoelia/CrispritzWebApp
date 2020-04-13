@@ -2464,28 +2464,40 @@ def resultPage(job_id):
     col_targetfor = col_targetfor + str(mms + int(max_bulges))
     col_targetfor = col_targetfor + ' Mismatches + Bulges)'
     
-    col_header_name = ['Guide', 'CFD', 'Doench 2016', 'On-Targets Reference', 'On-Targets Enriched' ,'Samples in Class 0 - 0+ - 1 - 1+', 'Genome', 'Total']    #Column of header names. Remove the entries accordingly when checking type of genome
+    columns_profile_table = [ 
+        {'name':['', 'Guide'], 'id':'Guide', 'type':'text'},
+        {'name':['', 'CFD'], 'id':'CFD', 'type':'text'},
+        {'name':['', 'Doench 2016'], 'id':'Doench 2016', 'type':'text'},    #Doench, only for REF or VAR
+        {'name':['Doench 2016', 'Reference'], 'id':'Reference', 'type':'text'},        #REF Doench, only for Both
+        {'name':['Doench 2016', 'Enriched'], 'id':'Enriched', 'type':'text'},          #VAR Doench, only for Both
+        {'name':['', 'On-Targets Reference'], 'id':'On-Targets Reference', 'type':'text'},
+        {'name':['', 'On-Targets Enriched'], 'id':'On-Targets Enriched', 'type':'text'},
+        {'name':['', 'Samples in Class 0 - 0+ - 1 - 1+'], 'id':'Samples in Class 0 - 0+ - 1 - 1+', 'type':'text'},
+        {'name':['', 'Genome'], 'id':'Genome', 'type':'text'},
+        {'name':['Off-targets for Mismatch (MM) + Bulge (B) Value', 'Total'], 'id':'Total', 'type':'text'}
+        ]    #Column of headers . Remove the entries accordingly when checking type of genome
+    
     for i in range (1, mms + int(max_bulges) + 1):
-        col_header_name.append(str(i) + ' MM + B')
+        columns_profile_table.append({'name':['Off-targets for Mismatch (MM) + Bulge (B) Value', str(i) + ' MM + B'], 'id': str(i) + ' MM + B', 'type':'text'})
     remove_indices = set()
     
-    if 'NO SCORES' not in all_scores:
-        all_scores.sort()
-        acfd = [float(a.split('\t')[1]) for a in all_scores if a not in list_error_guides]
-        doench = [int(a.split('\t')[2]) for a in all_scores if a not in list_error_guides]
-        acfd  = [int(round((100/(100 + x))*100)) for x in acfd]
-    else:
-        remove_indices.update([1,2])    #Remove CFD and Doench header
+    if 'NO SCORES' in all_scores:
+        # remove_indices.update([1,2,3,4])    #Remove CFD and Doench header
+        remove_indices.update('CFD', 'Doench 2016', 'Reference', 'Enriched')
+    
     if genome_type == 'ref':
-        remove_indices.update([4,5])
+        # remove_indices.update([3,4,6,7])
+        remove_indices.update(['Reference', 'Enriched', 'On-Targets Enriched', 'Samples in Class 0 - 0+ - 1 - 1+' ])
     elif genome_type == 'both':
-        remove_indices.update([4])
+        # remove_indices.update([6])
+        remove_indices.update(['Doench 2016','On-Targets Enriched'])
     else:
-        remove_indices.update([3,5])
+        # remove_indices.update([3,4,5,7])
+        remove_indices.update(['Reference', 'Enriched', 'On-Targets Reference', 'Samples in Class 0 - 0+ - 1 - 1+'])
+    
     #Remove headers not used in selected search result
-    col_header_name = [i for j, i in enumerate(col_header_name) if j not in remove_indices]      
-    columns_profile_table = [{'name':['', c], 'id':c, 'type':'text'} if 'Total' not in c and 'MM + B' not in c else {'name':['Off-targets for Mismatch (MM) + Bulge (B) Value', c], 'id':c, 'type':'text'} for c in col_header_name]
-    # print('col final', columns_profile_table)
+    columns_profile_table = [i for j, i in enumerate(columns_profile_table) if columns_profile_table[j]['id'] not in remove_indices]      
+    
     final_list = []    
     if list_error_guides:
         final_list.append(
@@ -2695,6 +2707,8 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
         all_scores.sort()
         acfd = [float(a.split('\t')[1]) for a in all_scores if a.split('\t')[0] not in list_error_guides]
         doench = [int(a.split('\t')[2]) for a in all_scores if a.split('\t')[0] not in list_error_guides]
+        if genome_type == 'both':
+            doench_enr = [int(a.split('\t')[3]) for a in all_scores if a.split('\t')[0] not in list_error_guides]
         acfd  = [int(round((100/(100 + x))*100)) for x in acfd] 
 
     #Get target counting from summary by guide
@@ -2714,11 +2728,10 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
                 column_on_target.append(str(on_t_ref))
             
             for i in range (1, mms + 1 + int(max_bulges)):         #For column Targets for 1-2 Total (Mismatches + Bulges), sum values for row with same total
-                one_to_n_mms.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Targets in Reference'].to_list()))
                 try:    #For VAR
                     one_to_n_mms.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Targets in Enriched'].to_list()))
                 except: #For REF
-                    pass
+                    one_to_n_mms.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Targets in Reference'].to_list()))
             column_total.append(int(sum(one_to_n_mms)))
             column_off_target_ref.append([int(x) for x in one_to_n_mms])  #[[1, 5, 10], [3, 7, 20]]       each internal list is the number of off-target for a guide, divided by value (from 1 to mm+max_bulge)
     else:
@@ -2759,7 +2772,11 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     data_guides['Guide'] = guides
     if 'NO SCORES' not in all_scores:
         data_guides['CFD'] = acfd
-        data_guides['Doench 2016'] = doench
+        if genome_type == 'both':
+            data_guides['Reference'] = doench
+            data_guides['Enriched'] = doench_enr
+        else:
+            data_guides['Doench 2016'] = doench
 
     if genome_type == 'ref' or genome_type == 'both':
         data_guides['On-Targets Reference'] = column_on_target
@@ -2778,7 +2795,10 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     dff = pd.DataFrame(data_guides)
     
     if 'NO SCORES' not in all_scores:
-        dff = dff.sort_values(['CFD', 'Doench 2016'], ascending = [False, False])
+        try:
+            dff = dff.sort_values(['CFD', 'Doench 2016'], ascending = [False, False])
+        except: #for BOTH
+            dff = dff.sort_values(['CFD', 'Enriched'], ascending = [False, False])
     else:
         try:
             dff = dff.sort_values('On-Targets Reference', ascending = True)

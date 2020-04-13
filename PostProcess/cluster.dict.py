@@ -81,7 +81,7 @@ total_line = int(out.decode('UTF-8').split(' ')[0])
 #Do cluster by orderChr NEW VERSION
 if 'orderChr' in sys.argv[:]:
     start_time = time.time()
-    subprocess.run(['sort -k4,4 -k6,6 -k15,15 -k7,7 ' + sys.argv[1] + ' > ' + result_name + '.tmp_sort.txt'], shell = True)      #sort input file by chr, clusterpos, real guide, direction
+    subprocess.run(['sort -T ./ -k4,4 -k6,6 -k15,15 -k7,7 ' + sys.argv[1] + ' > ' + result_name + '.tmp_sort.txt'], shell = True)      #sort input file by chr, clusterpos, real guide, direction
     print('END Sorting', time.time() - start_time)
     start_time = time.time()
     with open (result_name + '.tmp_sort.txt') as targets, open(result_name, 'w+') as result:

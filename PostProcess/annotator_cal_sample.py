@@ -53,7 +53,7 @@ def doenchParallel(targets, model, result):
     max_doench = int(max(doench_score))
     result.append(max_doench)
 
-def doenchForIupac(sequence_doench, guide_seq): 
+def doenchForIupac(sequence_doench, guide_seq, genome_type): 
     pos_iupac = []
     var = []
     for pos, c in enumerate(sequence_doench):
@@ -66,9 +66,9 @@ def doenchForIupac(sequence_doench, guide_seq):
             t = list(sequence_doench)
             for p, el in enumerate(pos_iupac):
                 t[el] = i[p]
-            targets_for_doench[guide_seq].append(''.join(t))
+            targets_for_doench[guide_seq][genome_type].append(''.join(t))
     else:
-        targets_for_doench[guide_seq].append(sequence_doench)
+        targets_for_doench[guide_seq][genome_type].append(sequence_doench)
 
 def get_mm_pam_scores():
     try:
@@ -167,7 +167,7 @@ with open (sys.argv[5]) as pam:
         pam_end = None
 
 do_scores = True
-if guide_len != 20 or 'NGG' != pam:
+if guide_len != 20:
     with open('acfd.txt', 'w+') as result:
         result.write('NO SCORES')
         do_scores = False
@@ -385,7 +385,7 @@ def reverse_complement_table(seq):
     return seq.translate(tab)[::-1]
 
 mm_scores, pam_scores = get_mm_pam_scores()
-guides_dict = dict()
+guides_dict = dict()    #For CFD score
 guides_dict_doench = dict()
 targets_for_doench = dict()
 
@@ -459,7 +459,7 @@ for line in inResult:
                         totalDict[ann][int(x[mm_pos]) + int(x[bulge_pos])] += 1
                     
                     #Calculate scores
-                    if do_scores and  x[0] == 'X':       #Calculate scores for reference targets
+                    if do_scores and  x[0] == 'X' and x[2][-2:] == 'GG':       #Calculate scores for reference targets, for PAM NGG
                         cfd_score = calc_cfd(x[1], x[2].upper()[:-3], x[2].upper()[-2:], mm_scores, pam_scores)
                         sum_cfd = sum_cfd + cfd_score
                         try:
@@ -487,8 +487,9 @@ for line in inResult:
                                 # sequence_doench = sequence_doench[:4] + x[2] + sequence_doench[-3:]
                             
                             if x[1] not in targets_for_doench:
-                                targets_for_doench[x[1]] = []
-                            doenchForIupac(sequence_doench, x[1])  #Get all possible targets with iupac itertools for doench
+                                targets_for_doench[x[1]] = {'ref': [], 'enr': []}
+
+                            doenchForIupac(sequence_doench, x[1], 'ref')  #Get all possible targets with iupac itertools for doench
                     save_total_general_table = False
             #Save target (with or without IUPAC in cluster file)
             #Put top1 scomposed nucleotide in target in cluster that have IUPAC characters
@@ -932,7 +933,7 @@ for line in inResult:
             outFileSample.write('\t'.join(t) +'\n')
             
             #Calc scores for scomposed targets
-            if t[0] == 'X':
+            if t[0] == 'X' and t[2][-2:] == 'GG':
                 cfd_score = calc_cfd(t[1], t[2].upper()[:-3], t[2].upper()[-2:], mm_scores, pam_scores)
                 sum_cfd = sum_cfd + cfd_score
                 try:
@@ -964,13 +965,13 @@ for line in inResult:
                         # sequence_doench = sequence_doench[:4] + t[2] + sequence_doench[-3:]   #Uncomment to use sequence specific for sample
                     
                     if t[1] not in targets_for_doench:
-                        targets_for_doench[t[1]] = []
-                    doenchForIupac(sequence_doench, t[1])  #Get all possible targets with iupac itertools for doench
+                        targets_for_doench[t[1]] = {'ref': [], 'enr': []}
+                    doenchForIupac(sequence_doench, t[1], 'enr')  #Get all possible targets with iupac itertools for doench
                 else:
                     decrease_ref_count.append(t[12]) #Save X and total not 0
             else:
                 decrease_ref_count.append(t[12]) # Save DNA, RNA -> they surely have total not 0
-        if not tuple_var_ref and x[0] == 'X':       #Calculate scores for reference targets
+        if not tuple_var_ref and x[0] == 'X' and x[2][-2:] == 'GG':       #Calculate scores for reference targets
             # print(x)
             # print(target_scomposti_salvare)
             cfd_score = calc_cfd(x[1], x[2].upper()[:-3], x[2].upper()[-2:], mm_scores, pam_scores)
@@ -1000,8 +1001,8 @@ for line in inResult:
                     # sequence_doench = sequence_doench[:4] + x[2] + sequence_doench[-3:]
                 
                 if x[1] not in targets_for_doench:
-                    targets_for_doench[x[1]] = []
-                doenchForIupac(sequence_doench, x[1])  #Get all possible targets with iupac itertools for doench
+                    targets_for_doench[x[1]] = {'ref': [], 'enr': []}
+                doenchForIupac(sequence_doench, x[1], 'ref')  #Get all possible targets with iupac itertools for doench
 
     else:
         for t in target_scomposti_salvare:
@@ -1132,32 +1133,36 @@ if do_scores:
         shared_doench = man.list() #list containing max doech for each thread
         guides = guides.read().strip().split('\n')
         for g in guides:
-            guides_dict_doench[g] = 0
+            guides_dict_doench[g] = {'ref': 0, 'enr': 0}
             if g not in guides_dict:
                 guides_dict[g] = 0    
             if g not in targets_for_doench:
-                guides_dict_doench[g] = 0
+                guides_dict_doench[g] = {'ref': 0, 'enr': 0}
             else:
-                if len (targets_for_doench[g]) > SIZE_DOENCH:
-                    jobs = []
-                    remaining_splits = (len(targets_for_doench[g])//SIZE_DOENCH) + 1
-                    for i in range ((len(targets_for_doench[g])//SIZE_DOENCH) + 1):
-                        for thr in range (min(N_THR, remaining_splits)):
-                            p = multiprocessing.Process(target = doenchParallel, args=(np.asarray(targets_for_doench[g][i*N_THR*SIZE_DOENCH + thr*SIZE_DOENCH : min( i*N_THR*SIZE_DOENCH + (thr+1)*SIZE_DOENCH,len(targets_for_doench[g]))]), model, shared_doench,) )
-                            remaining_splits -= 1
-                            p.start()
-                            jobs.append(p)
-                        for i in jobs:
-                            i.join()
-                    
-                    guides_dict_doench[g] = max(shared_doench)
-                    shared_doench =  man.list()
-                else:
-                    start_time = time.time()
-                    doench_score =  azimuth.model_comparison.predict(np.asarray(targets_for_doench[g]), None, None, model= model, pam_audit=False)
-                    doench_score = [np.around(i * 100) for i in doench_score]
-                    guides_dict_doench[g] =  int(max(doench_score))
-            res.write(g + '\t' + str(guides_dict[g]) + '\t' + str(guides_dict_doench[g]) + '\n')
+                for gentype in ['ref', 'enr']:
+                    if len(targets_for_doench[g][gentype]) == 0:
+                        guides_dict_doench[g][gentype] = 0
+                        continue
+                    if len (targets_for_doench[g][gentype]) > SIZE_DOENCH:
+                        jobs = []
+                        remaining_splits = (len(targets_for_doench[g][gentype])//SIZE_DOENCH) + 1
+                        for i in range ((len(targets_for_doench[g][gentype])//SIZE_DOENCH) + 1):
+                            for thr in range (min(N_THR, remaining_splits)):
+                                p = multiprocessing.Process(target = doenchParallel, args=(np.asarray(targets_for_doench[g][gentype][i*N_THR*SIZE_DOENCH + thr*SIZE_DOENCH : min( i*N_THR*SIZE_DOENCH + (thr+1)*SIZE_DOENCH,len(targets_for_doench[g][gentype]))]), model, shared_doench,) )
+                                remaining_splits -= 1
+                                p.start()
+                                jobs.append(p)
+                            for i in jobs:
+                                i.join()
+                        
+                        guides_dict_doench[g][gentype] = max(shared_doench)
+                        shared_doench =  man.list()
+                    else:
+                        start_time = time.time()
+                        doench_score =  azimuth.model_comparison.predict(np.asarray(targets_for_doench[g][gentype]), None, None, model= model, pam_audit=False)
+                        doench_score = [np.around(i * 100) for i in doench_score]
+                        guides_dict_doench[g][gentype] =  int(max(doench_score))
+            res.write(g + '\t' + str(guides_dict[g]) + '\t' + str(guides_dict_doench[g]['ref']) + '\t' + str(max(guides_dict_doench[g]['ref'], guides_dict_doench[g]['enr'] )) + '\n')
 
 #Save additional values from semicommon for general guide table
 with open(outputFile + '.addToGeneralTable.txt', 'w+') as add_file:
