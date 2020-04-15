@@ -397,7 +397,7 @@ targets_for_doench = dict()
 N_THR = multiprocessing.cpu_count() // 2
 refgenomedir = sys.argv[7]
 add_enr = ''
-list_chr = [f for f in listdir(refgenomedir) if isfile(join(refgenomedir, f))]
+list_chr = [f for f in listdir(refgenomedir) if isfile(join(refgenomedir, f)) and not f.endswith('.fai')] 
 if '.enriched.' in list_chr[0]:
     add_enr = '.enriched'
 elif '.indels.' in list_chr[0]:

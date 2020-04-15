@@ -1,4 +1,4 @@
-#Convert pam ang get guides from sequence
+#Convert pam and get guides from sequence
 import sys
 import os
 import itertools

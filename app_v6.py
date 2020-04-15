@@ -35,6 +35,9 @@ import concurrent.futures                           #For workers and queue
 import math
 
 #Warning symbol \u26A0
+app_location = os.path.realpath(__file__)
+app_main_directory = os.path.dirname(app_location) + '/'
+current_working_directory = os.getcwd() + '/'
 
 exeggutor = concurrent.futures.ProcessPoolExecutor(max_workers=2)
 
@@ -51,6 +54,28 @@ COL_BOTH_TYPE = ['text','text','text','text','numeric','numeric', 'text','numeri
 COL_BOTH_RENAME = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'PAM Creation', 11 : 'Variant Unique', 12:'Samples', 13:'Annotation Type', 14:'Correct Guide'}
 
+VALID_CHARS = {'a', 'A', 't', 'T', 'c', 'C','g', 'G',
+            "R",
+            "Y",
+            "S",
+            "W",
+            "K",
+            "M",
+            "B" ,
+            "D" ,
+            "H" ,
+            "V" ,
+            "r",
+            "y",
+            "s",
+            "w",
+            "k",
+            "m",
+            "b" ,
+            "d" ,
+            "h" ,
+            "v"
+            }
 URL = 'http://crispritz.di.univr.it'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -105,14 +130,14 @@ for  pos, i in enumerate(all_pop):
     dict_sample_to_pop[all_samples[pos]] = i
 dropdown_all_samples = [{'label': sam, 'value' : sam} for sam in all_samples]
 #Dropdown available genomes
-onlydir = [f for f in listdir('Genomes') if isdir(join('Genomes', f))]
+onlydir = [f for f in listdir(current_working_directory + 'Genomes') if isdir(join(current_working_directory + 'Genomes', f))]
 onlydir = [x.replace('_', ' ') for x in onlydir]
 gen_dir = []
 for dir in onlydir:
     gen_dir.append({'label': dir, 'value' : dir})
 
 #Dropdown available PAM
-onlyfile = [f for f in listdir('pam') if isfile(join('pam', f))]
+onlyfile = [f for f in listdir(current_working_directory + 'pam') if isfile(join(current_working_directory + 'pam', f))]
 onlyfile = [x.replace('.txt', '') for x in onlyfile]            #removed .txt for better visualization
 pam_file = []
 for pam_name in onlyfile:
@@ -835,8 +860,6 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         text_guides = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC'
     else:
         text_guides = text_guides.strip()
-        if len(text_guides.split('\n')) > 1000:
-            text_guides = '\n'.join(text_guides.split('\n')[:1000]).strip()
         if ( not all(len(elem) == len(text_guides.split('\n')[0]) for elem in text_guides.split('\n'))):
             text_guides = selectSameLenGuides(text_guides)
     if (len_guide_sequence is None or str(len_guide_sequence) is '') and ('sequence-tab' in active_tab):
@@ -846,7 +869,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     n_it = 10
     len_id = 10
     for i in range(n_it):
-        assigned_ids = [o for o in os.listdir('Results/') if os.path.isdir(os.path.join('Results/',o))]
+        assigned_ids = [o for o in os.listdir(current_working_directory + 'Results/') if os.path.isdir(os.path.join(current_working_directory + 'Results/',o))]
         job_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k = len_id))
         if job_id not in assigned_ids:
             break
@@ -855,10 +878,10 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
             len_id += 1 
             if len_id > 20:
                 break
-    result_dir = 'Results/' + job_id
+    result_dir = current_working_directory + 'Results/' + job_id
     subprocess.run(['mkdir ' + result_dir], shell = True)
     #NOTE test command per queue
-    subprocess.run(['touch Results/' + job_id + '/queue.txt'], shell = True)
+    subprocess.run(['touch ' + current_working_directory + 'Results/' + job_id + '/queue.txt'], shell = True)
 
     search_index = True
     search = True
@@ -893,7 +916,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     pam_len = 0
     custom_pam = None
 
-    with open('pam/' + pam + '.txt') as pam_file:
+    with open(current_working_directory + 'pam/' + pam + '.txt') as pam_file:
         pam_char = pam_file.readline()
         index_pam_value = pam_char.split(' ')[-1]
         if int(pam_char.split(' ')[-1]) < 0:
@@ -922,10 +945,17 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
                 extracted_seq = extract_seq.extractSequence(name, seq, genome_ref.replace(' ', '_'))
             else:
                 extracted_seq = seq.strip()
+            
             guides.extend(convert_pam.getGuides(extracted_seq, pam_char, len_guide_sequence, pam_begin))
             text_guides = '\n'.join(guides).strip()
     
-
+    text_guides = text_guides.upper()
+    for g in text_guides.split('\n'):
+        for c in g:
+            if c not in VALID_CHARS:
+                text_guides = text_guides.replace(c,'')
+    if len(text_guides.split('\n')) > 1000:
+        text_guides = '\n'.join(text_guides.split('\n')[:1000]).strip()
     len_guides = len(text_guides.split('\n')[0])
     if (pam_begin):
         pam_to_file = pam_char + ('N' * len_guides) + ' ' + index_pam_value
@@ -979,21 +1009,21 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         p.close()
 
     #Check if input parameters (mms, bulges, pam, guides, genome) are the same as a previous search
-    all_result_dirs = [f for f in listdir('Results') if isdir(join('Results', f))]
+    all_result_dirs = [f for f in listdir(current_working_directory + 'Results') if isdir(join(current_working_directory + 'Results', f))]
     all_result_dirs.remove(job_id)
     #all_result_dirs.remove('test')
     for check_param_dir in all_result_dirs:
-        if os.path.exists('Results/' + check_param_dir + '/Params.txt'):
-            #if os.path.exists('Results/' + check_param_dir + '/log.txt'):
-                #with open('Results/' + check_param_dir + '/log.txt') as log:
+        if os.path.exists(current_working_directory + 'Results/' + check_param_dir + '/Params.txt'):
+            #if os.path.exists(current_working_directory + 'Results/' + check_param_dir + '/log.txt'):
+                #with open(current_working_directory + 'Results/' + check_param_dir + '/log.txt') as log:
                     #if ('Job\tDone' in log.read()):
-            if (filecmp.cmp('Results/' + check_param_dir + '/Params.txt', result_dir + '/Params.txt' )):
-                    guides1 = open('Results/' + check_param_dir + '/guides.txt').read().split('\n')
-                    guides2 = open('Results/' + job_id + '/guides.txt').read().split('\n')
+            if (filecmp.cmp(current_working_directory + 'Results/' + check_param_dir + '/Params.txt', result_dir + '/Params.txt' )):
+                    guides1 = open(current_working_directory + 'Results/' + check_param_dir + '/guides.txt').read().split('\n')
+                    guides2 = open(current_working_directory + 'Results/' + job_id + '/guides.txt').read().split('\n')
                     if (collections.Counter(guides1) == collections.Counter(guides2)):
-                        if os.path.exists('Results/' + check_param_dir + '/log.txt'):
+                        if os.path.exists(current_working_directory + 'Results/' + check_param_dir + '/log.txt'):
                             adj_date = False
-                            with open('Results/' + check_param_dir + '/log.txt') as log:
+                            with open(current_working_directory + 'Results/' + check_param_dir + '/log.txt') as log:
                                 log_content = log.read().strip()
                                 if ('Job\tDone' in log_content):
                                     adj_date = True
@@ -1002,46 +1032,46 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
                                     out, err = new_date.communicate()
                                     rewrite = '\n'.join(log_content[:-1]) + '\nJob\tDone\t' + out.decode('UTF-8').strip()
                             if adj_date:
-                                with open('Results/' + check_param_dir + '/log.txt' ,'w+') as log:
+                                with open(current_working_directory + 'Results/' + check_param_dir + '/log.txt' ,'w+') as log:
                                     log.write(rewrite)
                                     #Send mail
                                 if send_email:
-                                    with open('Results/' + job_id + '/email.txt' ,'w+') as e:
+                                    with open(current_working_directory + 'Results/' + job_id + '/email.txt' ,'w+') as e:
                                         e.write(dest_email + '\n')
                                         e.write(URL + '/load?job=' + check_param_dir + '\n')
                                         e.write(datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S") + '\n')
                                     #Send mail with file in job_id dir with link to job already done, note that job_id directory will be deleted
-                                    subprocess.call(['python3 send_mail.py Results/' + job_id ], shell = True)
+                                    subprocess.call(['python3 ' + app_main_directory + 'send_mail.py ' + current_working_directory + 'Results/' + job_id ], shell = True)
 
                             elif send_email:
                                 #Job is not finished, add this user email to email.txt and when job is done send to both
-                                if os.path.exists('Results/' + check_param_dir + '/email.txt'):
-                                    with open('Results/' + check_param_dir + '/email.txt' ,'a+') as e:
+                                if os.path.exists(current_working_directory + 'Results/' + check_param_dir + '/email.txt'):
+                                    with open(current_working_directory + 'Results/' + check_param_dir + '/email.txt' ,'a+') as e:
                                         e.write('--OTHEREMAIL--')
                                         e.write(dest_email + '\n')
                                         e.write(URL + '/load?job=' + check_param_dir + '\n')
                                         e.write(datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S") + '\n')
                                 else:
-                                    with open('Results/' + check_param_dir + '/email.txt' ,'w+') as e:
+                                    with open(current_working_directory + 'Results/' + check_param_dir + '/email.txt' ,'w+') as e:
                                         e.write(dest_email + '\n')
                                         e.write(URL + '/load?job=' + check_param_dir + '\n')
                                         e.write(datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S") + '\n')
                                     
 
-                            subprocess.call(['rm -r ' + 'Results/' + job_id], shell = True)
+                            subprocess.call(['rm -r ' + current_working_directory + 'Results/' + job_id], shell = True)
                             return '/load','?job=' + check_param_dir
                         else:
                             #We may have entered a jobdir that was in queue
-                            if os.path.exists('Results/' + check_param_dir + '/queue.txt'):
+                            if os.path.exists(current_working_directory + 'Results/' + check_param_dir + '/queue.txt'):
                                 if send_email:
-                                    if os.path.exists('Results/' + check_param_dir + '/email.txt'):
-                                        with open('Results/' + check_param_dir + '/email.txt' ,'a+') as e:
+                                    if os.path.exists(current_working_directory + 'Results/' + check_param_dir + '/email.txt'):
+                                        with open(current_working_directory + 'Results/' + check_param_dir + '/email.txt' ,'a+') as e:
                                             e.write('--OTHEREMAIL--')
                                             e.write(dest_email + '\n')
                                             e.write(URL + '/load?job=' + check_param_dir + '\n')
                                             e.write(datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S") + '\n')
                                     else:
-                                        with open('Results/' + check_param_dir + '/email.txt' ,'w+') as e:
+                                        with open(current_working_directory + 'Results/' + check_param_dir + '/email.txt' ,'w+') as e:
                                             e.write(dest_email + '\n')
                                             e.write(URL + '/load?job=' + check_param_dir + '\n')
                                             e.write(datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S") + '\n')
@@ -1056,7 +1086,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         report = False         
     
     #TODO aggiungere annotazioni per ogni genoma
-    annotation_file = [f for f in listdir('annotations/') if isfile(join('annotations/', f)) and f.startswith(genome_ref)]
+    annotation_file = [f for f in listdir(current_working_directory + 'annotations/') if isfile(join(current_working_directory + 'annotations/', f)) and f.startswith(genome_ref)]
 
     genome_type = 'ref'     #Indicates if search is 'ref', 'var' or 'both'
     if '+' in genome_selected:
@@ -1064,16 +1094,13 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if ref_comparison:
         genome_type = 'both'    #NOTE change submit job script name. al momento ok .test.
 
-    command = 'assets/./submit_job.final.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
+    #TODO aggiornare cartella dizionari perchè sia dinamica
+    dictionary_directory = current_working_directory + 'dictionaries/dictionary_hg38'
+    command = app_main_directory + 'PostProcess/./submit_job.final.sh ' + current_working_directory + 'Results/' + job_id + ' ' + current_working_directory +  'Genomes/' + genome_selected + ' ' + current_working_directory + 'Genomes/' + genome_ref + ' ' + current_working_directory + 'genome_library/' + genome_idx + (
         ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
-            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + 'annotations/' + annotation_file[0] + 
-            ' ' + genome_type))
-    # subprocess.Popen(['assets/./submit_job.test.sh ' + 'Results/' + job_id + ' ' + 'Genomes/' + genome_selected + ' ' + 'Genomes/' + genome_ref + ' ' + 'genome_library/' + genome_idx + (
-    #     ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
-    #         ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + 'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + 'annotations/' + annotation_file[0] + 
-    #         ' ' + genome_type
-    #     )
-    # )], shell = True)
+            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + current_working_directory +  'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + current_working_directory +  'annotations/' + annotation_file[0] + 
+            ' ' + genome_type + ' ' + app_main_directory + ' ' + dictionary_directory))
+
     exeggutor.submit(subprocess.run, command, shell=True)
     return '/load','?job=' + job_id
 
@@ -1143,8 +1170,8 @@ def refreshSearch(n, dir_name):
     if n is None:
         raise PreventUpdate    
     
-    onlydir = [f for f in listdir('Results') if isdir(join('Results', f))]
-    current_job_dir = 'Results/' +  dir_name.split('=')[-1] + '/'
+    onlydir = [f for f in listdir(current_working_directory + 'Results') if isdir(join(current_working_directory + 'Results', f))]
+    current_job_dir = current_working_directory + 'Results/' +  dir_name.split('=')[-1] + '/'
     if dir_name.split('=')[-1] in onlydir:
         onlyfile = [f for f in listdir(current_job_dir) if isfile(join(current_job_dir, f))]
         if os.path.exists(current_job_dir + 'guides.txt'):
@@ -1240,11 +1267,11 @@ def global_store(value):
     '''
     if value is None:
         return ''
-    target = [f for f in listdir('Results/' + value) if isfile(join('Results/'+value, f)) and f.endswith('scores.txt') ]
+    target = [f for f in listdir(current_working_directory + 'Results/' + value) if isfile(join(current_working_directory + 'Results/'+value, f)) and f.endswith('scores.txt') ]
     if not target:
-        target = [f for f in listdir('Results/' + value) if isfile(join('Results/'+value, f)) and f.endswith('targets.txt') ]
+        target = [f for f in listdir(current_working_directory + 'Results/' + value) if isfile(join(current_working_directory + 'Results/'+value, f)) and f.endswith('targets.txt') ]
     
-    df = pd.read_csv('Results/' +value + '/' + target[0], sep = '\t')
+    df = pd.read_csv(current_working_directory + 'Results/' +value + '/' + target[0], sep = '\t')
     df.rename(columns = {"#Bulge type":'BulgeType', '#Bulge_type':'BulgeType','Bulge Size': 'BulgeSize', 'Bulge_Size': 'BulgeSize', 'Doench 2016':'Doench2016','Doench_2016':'Doench2016'}, inplace = True)
     return df
 
@@ -1263,7 +1290,7 @@ def global_store(value):
 #         raise PreventUpdate
 
 #     job_id = search.split('=')[-1]
-#     job_directory = 'Results/' + job_id + '/'
+#     job_directory = current_working_directory + 'Results/' + job_id + '/'
 #     print('job dir', job_directory)
 #     if(not isdir(job_directory)):
 #         return 'not_exists', 0, [], ''
@@ -1290,7 +1317,7 @@ def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
     Se non ci sono targets ritorna un avviso di errore
     '''
     job_id = search.split('=')[-1]
-    job_directory = 'Results/' + job_id + '/'
+    job_directory = current_working_directory + 'Results/' + job_id + '/'
     guide = hash_guide.split('#')[1]
     value = job_id
     if search is None:
@@ -1403,9 +1430,9 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
     
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     job_id = search.split('=')[-1]
-    job_directory = 'Results/' + job_id + '/'
+    job_directory = current_working_directory + 'Results/' + job_id + '/'
 
-    with open('Results/' + job_id + '/Params.txt') as p:
+    with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         mms = (next(s for s in all_params.split('\n') if 'Mismatches' in s)).split('\t')[-1]
         genome_selected = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
@@ -1420,9 +1447,11 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         fl.append(
             html.P(
                 ['Summary table counting the number of targets found in the Enriched Genome for each combination of Bulge Type, Bulge Size and Mismatch. Select \'Show Targets\' to view the corresponding list of targets. ', 
-                html.A('Click here', href = URL + '/data/' + job_id + '/' + job_id + '.targets.' + guide + '.zip' ,target = '_blank', id = 'download-full-list' ), ' to download the full list of targets.']
+                # html.A('Click here', href = URL + '/data/' + job_id + '/' + job_id + '.targets.' + guide + '.zip' ,target = '_blank', id = 'download-full-list' ), ' to download the full list of targets.'
+                ]
                 )
         )
+        fl.append(html.Button(html.A('Download Full list of targets', href = URL + '/data/' + job_id + '/' + job_id + '.targets.' + guide + '.zip' ,target = '_blank', style = {'text-decoration':'none', 'color':'black'} )))
         fl.append(html.Br())
         df = pd.read_pickle(job_directory + job_id + '.summary_by_guide.' + guide + '.txt')
         if genome_type == 'both':
@@ -1530,7 +1559,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         )
         #Dropdown chromosomes
         try:
-            onlyfile = [f for f in listdir('Genomes/' + genome_selected) if (isfile(join('Genomes/' + genome_selected, f)) and (f.endswith('.fa') or f.endswith('.fasta')))]
+            onlyfile = [f for f in listdir(current_working_directory + 'Genomes/' + genome_selected) if (isfile(join(current_working_directory + 'Genomes/' + genome_selected, f)) and (f.endswith('.fa') or f.endswith('.fasta')))]
         except:
             onlyfile = ['chr' + str(i) + '.fa' for i in range(1,23)]
             onlyfile.append('chrX.fa')
@@ -1622,7 +1651,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
 
         barplot_img = 'summary_histogram_' + guide + '_' + str(0) + 'mm.png'
         try:            #NOTE serve per non generare errori se il barplot non è stato fatto
-            barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
+            barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open(current_working_directory + 'Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
         except:
             barplot_src = ''
         try:
@@ -1631,7 +1660,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
             barplot_href = ''
 
         try:
-            radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
+            radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open(current_working_directory + 'Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
         except:
             radar_src = ''
         try:
@@ -1764,14 +1793,14 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
     if sel_cel is None :
         raise PreventUpdate
     job_id = search.split('=')[-1]
-    job_directory = 'Results/' + job_id + '/'
+    job_directory = current_working_directory + 'Results/' + job_id + '/'
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     
     #search for getting job id
     # get guide with sel_cel and all_data
     guide_images = []
     sample_images = []
-    with open('Results/' + job_id + '/Params.txt') as p:
+    with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         gecko_comp = (next(s for s in all_params.split('\n') if 'Gecko' in s)).split('\t')[-1]
 
@@ -1836,7 +1865,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
 
     barplot_img = 'summary_histogram_' + guide + '_' + str(mm_show) + 'mm.png'
     try:            #NOTE serve per non generare errori se il barplot non è stato fatto
-        barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
+        barplot_src = 'data:image/png;base64,{}'.format(base64.b64encode(open(current_working_directory + 'Results/' + job_id + '/' + barplot_img, 'rb').read()).decode())
     except:
         barplot_src = ''
     try:
@@ -1845,7 +1874,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
         barplot_href = ''
 
     try:
-        radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
+        radar_src = 'data:image/png;base64,{}'.format(base64.b64encode(open(current_working_directory + 'Results/' + job_id + '/' + radar_img, 'rb').read()).decode())
     except:
         radar_src = ''
     try:
@@ -2112,8 +2141,8 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
     btn_sample_section.append(nPrev)
     btn_sample_section.append(nNext)
     job_id = search.split('=')[-1]
-    job_directory = 'Results/' + job_id + '/'
-    with open('Results/' + job_id + '/Params.txt') as p:
+    job_directory = current_working_directory + 'Results/' + job_id + '/'
+    with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
@@ -2287,7 +2316,7 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
     btn_position_section.append(nPrev)
     btn_position_section.append(nNext)
     job_id = search.split('=')[-1]
-    job_directory = 'Results/' + job_id + '/'
+    job_directory = current_working_directory + 'Results/' + job_id + '/'
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     if max(btn_position_section) == n:              #Last button pressed is filtering, return the first page of the filtered table
         if pos_begin is None or pos_begin is '':
@@ -2378,26 +2407,6 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
             max_page = math.floor(max_page / 10) + 1
             return generate_table_position(df, 'table-position', current_page, mms, max_bulges,guide, job_id ), str(current_page) + '/' + str(max_page)
 
-#FOR BUTTON IN TABLE
-# element.style {
-#     background: none;
-#     border: none;
-#     margin: 0;
-#     padding: 0;
-#     cursor: pointer;
-#     font-family: monospace;
-#     font-size: large;
-#     font-weight: normal;
-# }
-
-#TEST download file
-# @app.server.route('/Results/59IPPT3KLP/guides_error.txt') 
-# def download_csv():
-#     return send_file('Results/59IPPT3KLP/guides_error.txt',
-#                      mimetype='text/csv',
-#                      attachment_filename='downloadFile.csv',
-#                      as_attachment=True)
-
 
 #If the input guides are different len, select the ones with same length as the first
 def selectSameLenGuides(list_guides):
@@ -2422,13 +2431,13 @@ def resultPage(job_id):
     ai mms).
     '''
     value = job_id
-    job_directory = 'Results/' + job_id + '/'
+    job_directory = current_working_directory + 'Results/' + job_id + '/'
     warning_message = []
     if (not isdir(job_directory)):
         return html.Div(dbc.Alert("The selected result does not exist", color = "danger"))
 
     #Load mismatches
-    with open('Results/' + value + '/Params.txt') as p:
+    with open(current_working_directory + 'Results/' + value + '/Params.txt') as p:
         all_params = p.read()
         mms = (next(s for s in all_params.split('\n') if 'Mismatches' in s)).split('\t')[-1]
         bulge_dna = (next(s for s in all_params.split('\n') if 'DNA' in s)).split('\t')[-1]
@@ -2449,12 +2458,12 @@ def resultPage(job_id):
     mms = int(mms[0])    
     
     #load acfd for each guide 
-    with open('Results/' + value + '/acfd.txt') as a:
+    with open(current_working_directory + 'Results/' + value + '/acfd.txt') as a:
         all_scores = a.read().strip().split('\n')
     
     list_error_guides = []
-    if os.path.exists('Results/' + value + '/guides_error.txt'):
-        with open('Results/' + value + '/guides_error.txt') as error_g:
+    if os.path.exists(current_working_directory + 'Results/' + value + '/guides_error.txt'):
+        with open(current_working_directory + 'Results/' + value + '/guides_error.txt') as error_g:
             for e_g in error_g:
                 list_error_guides.append(e_g.strip())
 
@@ -2671,7 +2680,7 @@ def colorSelectedRow(sel_cel, all_guides):
 def update_table_general_profile(page_current, page_size, sort_by, filter, search):
     job_id = search.split('=')[-1]
     
-    with open('Results/' + job_id + '/Params.txt') as p:
+    with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
@@ -2688,18 +2697,18 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     
     #Get error guides
     list_error_guides = []
-    if os.path.exists('Results/' + job_id + '/guides_error.txt'):
-        with open('Results/' + job_id + '/guides_error.txt') as error_g:
+    if os.path.exists(current_working_directory + 'Results/' + job_id + '/guides_error.txt'):
+        with open(current_working_directory + 'Results/' + job_id + '/guides_error.txt') as error_g:
             for e_g in error_g:
                 list_error_guides.append(e_g.strip())
     
     #Get guide from guide.txt
-    with open('Results/' + job_id + '/guides.txt') as g:
+    with open(current_working_directory + 'Results/' + job_id + '/guides.txt') as g:
         guides = g.read().strip().split('\n')
         guides.sort()
 
     #load acfd for each guide 
-    with open('Results/' + job_id + '/acfd.txt') as a:
+    with open(current_working_directory + 'Results/' + job_id + '/acfd.txt') as a:
         all_scores = a.read().strip().split('\n')
     
     #Load scores
@@ -2719,7 +2728,7 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     if genome_type == 'ref' or genome_type == 'var':
         for g in guides:
             one_to_n_mms = []
-            df_profile = pd.read_pickle('Results/' + job_id + '/' + job_id + '.summary_by_guide.' + g + '.txt')
+            df_profile = pd.read_pickle(current_working_directory + 'Results/' + job_id + '/' + job_id + '.summary_by_guide.' + g + '.txt')
             on_t_ref = int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Reference'])
             try: #For VAR, read enriched values
                 on_t_enr = int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Enriched']) 
@@ -2736,7 +2745,7 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
             column_off_target_ref.append([int(x) for x in one_to_n_mms])  #[[1, 5, 10], [3, 7, 20]]       each internal list is the number of off-target for a guide, divided by value (from 1 to mm+max_bulge)
     else:
         #NOTE  USO IL CONTEGGIO PRESO DA jobid.general_target_count.txt
-        with open('Results/' + job_id + '/' + job_id + '.general_target_count.txt') as general_count:
+        with open(current_working_directory + 'Results/' + job_id + '/' + job_id + '.general_target_count.txt') as general_count:
             header_general = next(general_count) #skip header
             general_count_content = general_count.read().strip().split('\n')
             general_count_content.sort(key = lambda x : x[0])
@@ -2753,7 +2762,7 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
                 [a[x] + '\n' + b[x] + '\n' + str(int(a[x]) + int(b[x])) for x in range(len(a))][1:]     #[1:] to skip total value
             )   # in the end i obtain [ ['1\n3\n5', '12\n21\n54'] , ['0\n3\n4', '12\n25\n34']], one list per guide, inside each list string for each total value
             
-        with open('Results/' + job_id + '/' + job_id + '.SampleClasses.txt') as samp_classes:
+        with open(current_working_directory + 'Results/' + job_id + '/' + job_id + '.SampleClasses.txt') as samp_classes:
             header_classes = next(samp_classes).strip().split('\t')[1:]     #List of Guides
             for line in samp_classes:
                 if 'Total for Class' in line:       #Last line
@@ -2860,7 +2869,7 @@ def loadDistributionPopulations(sel_cel, all_guides, job_id):
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     job_id = job_id.split('=')[-1]
 
-    with open('Results/' + job_id + '/Params.txt') as p:
+    with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         mms = int((next(s for s in all_params.split('\n') if 'Mismatches' in s)).split('\t')[-1])
         max_bulges = int((next(s for s in all_params.split('\n') if 'Max_bulges' in s)).split('\t')[-1])
@@ -2877,7 +2886,7 @@ def loadDistributionPopulations(sel_cel, all_guides, job_id):
                             [   
                                 html.A(
                                     html.Img(
-                                        src = 'data:image/png;base64,{}'.format(base64.b64encode(open('Results/' + job_id + '/populations_distribution_' + guide + '_' + str(mm) + 'total.png', 'rb').read()).decode()),
+                                        src = 'data:image/png;base64,{}'.format(base64.b64encode(open(current_working_directory + 'Results/' + job_id + '/populations_distribution_' + guide + '_' + str(mm) + 'total.png', 'rb').read()).decode()),
                                         id = 'distribution-population' + str(mm), width="100%", height="auto"
                                     ),
                                     target="_blank",
@@ -2919,7 +2928,7 @@ def global_store_subset(value, bulge_t, bulge_s, mms, guide):
     if value is None:
         return ''
     #Skiprows = 1 to skip header of file
-    df = pd.read_csv( 'Results/' + value + '/' + value + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide +'.txt', sep = '\t', header = None) #, skiprows = 1)
+    df = pd.read_csv( current_working_directory + 'Results/' + value + '/' + value + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide +'.txt', sep = '\t', header = None) #, skiprows = 1)
     return df
 
 
@@ -2937,9 +2946,9 @@ def guidePagev3(job_id, hash):
     if bulge_t != 'X':
         add_header += ' - ' + str(bulge_t) + ' ' + str(bulge_s) 
     value = job_id
-    if (not isdir('Results/' + job_id)):
+    if (not isdir(current_working_directory + 'Results/' + job_id)):
         return html.Div(dbc.Alert("The selected result does not exist", color = "danger"))
-    with open('Results/' + value + '/Params.txt') as p:
+    with open(current_working_directory + 'Results/' + value + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
@@ -2976,7 +2985,7 @@ def guidePagev3(job_id, hash):
         cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(COL_BOTH, COL_BOTH_TYPE)]
         file_to_grep = '.samples.annotation.txt'
     
-    job_directory = 'Results/' + job_id + '/'
+    job_directory = current_working_directory + 'Results/' + job_id + '/'
     guide_grep_result = job_directory + job_id + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide + '.txt'
     put_header = 'head -1 ' + job_directory + job_id + file_to_grep + ' > ' + guide_grep_result + ' ; '
     final_list.append(
@@ -3074,8 +3083,8 @@ def update_table_subset(page_current, page_size, sort_by, filter, hide_reference
     Se non ci sono targets ritorna un avviso di errore
     '''
     job_id = search.split('=')[-1]
-    job_directory = 'Results/' + job_id + '/'
-    with open('Results/' + job_id + '/Params.txt') as p:
+    job_directory = current_working_directory + 'Results/' + job_id + '/'
+    with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
@@ -3222,7 +3231,7 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
         raise PreventUpdate
     fl = []
     job_id = search.split('=')[-1]
-    with open('Results/' + job_id + '/Params.txt') as p:
+    with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
@@ -3351,8 +3360,8 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
     if active_cel is None:
         raise PreventUpdate
     job_id = search.split('=')[-1]
-    job_directory = 'Results/' + job_id + '/'
-    with open('Results/' + job_id + '/Params.txt') as p:
+    job_directory = current_working_directory + 'Results/' + job_id + '/'
+    with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
@@ -3380,8 +3389,8 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
     file_to_grep = '.samples.annotation.txt'
 
     if not os.path.exists(scomposition_file):    #Example    job_id.X.0.4.GUIDE.chrom.position.scomposition.txt
-        # subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $8==' + mms + ' && $9==' + bulge_s +'\' > ' + scomposition_file], shell = True)
-        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $9==' + bulge_s +'\' > ' + scomposition_file], shell = True)
+        # subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $8==' + mms + ' && $9==' + bulge_s +'\' > ' + scomposition_file], shell = True)
+        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $9==' + bulge_s +'\' > ' + scomposition_file], shell = True)
     
     if os.path.getsize(scomposition_file) > 0:          #Check if result grep has at least 1 result
         df = pd.read_csv(scomposition_file, header = None, sep = '\t')
@@ -3501,10 +3510,10 @@ def global_store_general(path_file_to_load):
 def samplePage(job_id, hash):
     guide = hash[:hash.find('-Sample-')]
     sample = hash[hash.rfind('-') + 1:]
-    if (not isdir('Results/' + job_id)):
+    if (not isdir(current_working_directory + 'Results/' + job_id)):
         return html.Div(dbc.Alert("The selected result does not exist", color = "danger"))
 
-    with open('Results/' + job_id + '/Params.txt') as p:
+    with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
@@ -3536,8 +3545,8 @@ def samplePage(job_id, hash):
     )
         
     file_to_grep = '.samples.annotation.txt'
-    sample_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt'
-    put_header = 'head -1 ' + 'Results/' + job_id + '/' + job_id + file_to_grep + ' > ' + sample_grep_result + ' ; '
+    sample_grep_result = current_working_directory + 'Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt'
+    put_header = 'head -1 ' + current_working_directory + 'Results/' + job_id + '/' + job_id + file_to_grep + ' > ' + sample_grep_result + ' ; '
     final_list.append(
         html.Div(job_id + '.' + sample + '.' + guide,style = {'display':'none'}, id = 'div-info-sumbysample-targets')
     )
@@ -3545,7 +3554,7 @@ def samplePage(job_id, hash):
     # print('esiste sample?', str(os.path.exists(sample_grep_result)))
 
     if not os.path.exists(sample_grep_result):    #Example    job_id.HG001.guide.txt #NOTE HEADER NON SALVATO
-        subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + sample + ' > ' + sample_grep_result], shell = True)
+        subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + sample + ' > ' + sample_grep_result], shell = True)
         subprocess.Popen(['zip ' + sample_grep_result.replace('.txt','.zip') + ' ' + sample_grep_result],shell = True)
     
     cols = [{"name": i, "id": i, 'type':t, 'hideable':True} for i,t in zip(COL_BOTH, COL_BOTH_TYPE)]
@@ -3618,7 +3627,7 @@ def update_table_sample(page_current, page_size, sort_by, filter, search, hash):
     hash = hash.split('#')[1]
     guide = hash[:hash.find('-Sample-')]
     sample = hash[hash.rfind('-') + 1:]
-    with open('Results/' + job_id + '/Params.txt') as p:
+    with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
@@ -3630,7 +3639,7 @@ def update_table_sample(page_current, page_size, sort_by, filter, search, hash):
         genome_type = 'both'
     
     filtering_expressions = filter.split(' && ')
-    dff = global_store_general('Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt')
+    dff = global_store_general(current_working_directory + 'Results/'+ job_id + '/' + job_id + '.' + sample + '.' + guide + '.txt')
     if dff is None:
         raise PreventUpdate
     
@@ -3686,9 +3695,9 @@ def clusterPage(job_id, hash):
     chr_pos = hash[hash.find('-Pos-') + 5:]
     chromosome = chr_pos.split('-')[0]
     position = chr_pos.split('-')[1]
-    if (not isdir('Results/' + job_id)):
+    if (not isdir(current_working_directory + 'Results/' + job_id)):
         return html.Div(dbc.Alert("The selected result does not exist", color = "danger"))
-    with open('Results/' + job_id + '/Params.txt') as p:
+    with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
@@ -3716,32 +3725,32 @@ def clusterPage(job_id, hash):
         file_to_grep = '.total.cluster.txt'
     # print('qui cluster before grep')
     
-    cluster_grep_result = 'Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.txt'
-    put_header = 'head -1 ' + 'Results/' + job_id + '/' + job_id + file_to_grep + ' > ' + cluster_grep_result + ' ; '
+    cluster_grep_result = current_working_directory + 'Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.txt'
+    put_header = 'head -1 ' + current_working_directory + 'Results/' + job_id + '/' + job_id + file_to_grep + ' > ' + cluster_grep_result + ' ; '
     # print('esiste cluster?' , str(os.path.exists(cluster_grep_result)) )
     if not os.path.exists(cluster_grep_result):    #Example    job_id.chr3_100.guide.txt
         #Grep annotation for ref
         if genome_type == 'ref':#NOTE HEADER NON SALVATO
-            get_annotation = subprocess.Popen(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + '.Annotation.targets.txt' + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\''], shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            get_annotation = subprocess.Popen(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + '.Annotation.targets.txt' + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\''], shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = get_annotation.communicate()
             annotation_type = out.decode('UTF-8').strip().split('\t')[-1]
-            subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\" {print $0\"\\t' + annotation_type + '\"}\' > ' + cluster_grep_result], shell = True)
+            subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\" {print $0\"\\t' + annotation_type + '\"}\' > ' + cluster_grep_result], shell = True)
         else:  
             # print('qui cluster in grep')     #NOTE HEADER NON SALVATO       
-            subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + cluster_grep_result], shell = True)  #NOTE top1 will have sample and annotation, other targets will have '.'-> 18/03 all samples and annotation are already writter for all targets
+            subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' | awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + cluster_grep_result], shell = True)  #NOTE top1 will have sample and annotation, other targets will have '.'-> 18/03 all samples and annotation are already writter for all targets
         subprocess.Popen(['zip ' + cluster_grep_result.replace('.txt','.zip') + ' ' + cluster_grep_result], shell = True)
     final_list.append(
         html.Div(job_id + '.' + chromosome + '_' + position + '.' + guide ,style = {'display':'none'}, id = 'div-info-sumbyposition-targets')
     ) 
 
-    scomposition_file = 'Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.scomposition.txt'
+    scomposition_file = current_working_directory + 'Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.scomposition.txt'
     file_to_grep = '.samples.annotation.txt'
 
     iupac_scomposition_visibility = {'display':'none'}
     if genome_type != 'ref':                   
         iupac_scomposition_visibility = {}
         if not os.path.exists(scomposition_file):    #Example    job_id.chr_pos.guide.scomposition.txt
-            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + scomposition_file], shell = True)
+            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + scomposition_file], shell = True)
 
     final_list.append(html.P(
         [
@@ -3916,7 +3925,7 @@ def update_table_cluster(page_current, page_size, sort_by, filter, hide_referenc
     chromosome = chr_pos.split('-')[0]
     position = chr_pos.split('-')[1]
     
-    with open('Results/' + job_id + '/Params.txt') as p:
+    with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
@@ -3928,7 +3937,7 @@ def update_table_cluster(page_current, page_size, sort_by, filter, hide_referenc
         genome_type = 'both'
     
     filtering_expressions = filter.split(' && ')
-    dff = global_store_general('Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +  '.txt')
+    dff = global_store_general(current_working_directory + 'Results/' + job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +  '.txt')
     if dff is None:
         raise PreventUpdate
 
@@ -4021,7 +4030,7 @@ def update_iupac_scomposition_table_cluster(page_current, page_size, sort_by, fi
     chromosome = chr_pos.split('-')[0]
     position = chr_pos.split('-')[1]
     
-    with open('Results/' + job_id + '/Params.txt') as p:
+    with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
@@ -4036,13 +4045,13 @@ def update_iupac_scomposition_table_cluster(page_current, page_size, sort_by, fi
         raise PreventUpdate
     
     filtering_expressions = filter.split(' && ')
-    dff = global_store_general('Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.scomposition.txt')
+    dff = global_store_general(current_working_directory + 'Results/'+ job_id + '/' + job_id + '.' + chromosome + '_' + position + '.' + guide +'.scomposition.txt')
     if dff is None:
         raise PreventUpdate
     
     # #Grep annotation
     # file_to_grep = '.Annotation.targets.txt'
-    # get_annotation = subprocess.Popen(['LC_ALL=C fgrep ' + guide + ' ' + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\''], shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # get_annotation = subprocess.Popen(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\''], shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     # out, err = get_annotation.communicate()
     # annotation_type = out.decode('UTF-8').strip().split('\t')[-1]
     
@@ -4112,7 +4121,7 @@ def downloadLinkGuide(n, file_to_load, search): #file to load = job_id.RNA.1.0.g
         raise PreventUpdate
     job_id = search.split('=')[-1]
     file_to_load = file_to_load + '.zip'
-    if os.path.exists('Results/' + job_id + '/' + file_to_load):
+    if os.path.exists(current_working_directory + 'Results/' + job_id + '/' + file_to_load):
         return html.A('Download zip', href=URL+'/data/' + job_id + '/' + file_to_load, target = '_blank' ), True
     
     return 'Generating download link, Please wait...', False
@@ -4130,7 +4139,7 @@ def downloadLinkSample(n, file_to_load, search): #file to load = job_id.HG001.gu
         raise PreventUpdate
     job_id = search.split('=')[-1]
     file_to_load = file_to_load + '.zip'
-    if os.path.exists('Results/' + job_id + '/' + file_to_load):
+    if os.path.exists(current_working_directory + 'Results/' + job_id + '/' + file_to_load):
         return html.A('Download zip', href=URL+'/data/' + job_id + '/' + file_to_load, target = '_blank' ), True
     
     return 'Generating download link, Please wait...', False
@@ -4148,7 +4157,7 @@ def downloadLinkPosition(n, file_to_load, search): #file to load =
         raise PreventUpdate
     job_id = search.split('=')[-1]
     file_to_load = file_to_load + '.zip'
-    if os.path.exists('Results/' + job_id + '/' + file_to_load):
+    if os.path.exists(current_working_directory + 'Results/' + job_id + '/' + file_to_load):
         return html.A('Download zip', href=URL+'/data/' + job_id + '/' + file_to_load, target = '_blank' ), True
     
     return 'Generating download link, Please wait...', False

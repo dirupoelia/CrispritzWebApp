@@ -152,8 +152,9 @@ if total_line > MAX_LIMIT:
                     current_count += 1
                     if current_count > MAX_LIMIT:
                         print('The guide ' + guide + ' has more than ' + str(MAX_LIMIT) + ' targets. Skipping...')
-                        with open('./guides_error.txt', 'a+') as guides_error:
-                            guides_error.write(guide + '\n')
+                        # with open('./guides_error.txt', 'a+') as guides_error:
+                        #     guides_error.write(guide + '\n')
+                        subprocess.run(['mv ' + sys.argv[1] + ' ' + sys.argv[1].replace('.txt','.cluster.txt')], shell = True)
                         cluster_ok = False
                         del guides_dict[guide]
                         break
@@ -192,7 +193,10 @@ if total_line > MAX_LIMIT:
                             else:
                                 result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\n')
                     else:
-                        result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tPAM_gen\tVar_uniq' + add_for_final)
+                        if 'addForFinal' in sys.argv[:]:
+                            result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\tTotal\tPAM_gen\tGenome' + add_for_final)
+                        else:
+                            result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tPAM_gen\tVar_uniq' + add_for_final)
                     write_header = False
                 total_targets = []
                 for k in guides_dict.keys():
@@ -233,9 +237,21 @@ if total_line > MAX_LIMIT:
 
                 else:
                     if keep_columns:
-                        for cluster in total_list:
-                            for target in cluster:
-                                result.write('\t'.join([str(x) for x in target]).strip() + '\n')
+                        if 'addForFinal' in sys.argv[:]:
+                            #Remove CLuster column and change Var uniq into genome, writinf REF if sample = 'n', ENR if exists at least one sample
+                            for cluster in total_list:
+                                for target in cluster:
+                                    last_info = target[-1].split('\t')  #Contains from PAM creation to RealGuide
+                                    if last_info[2] != 'n':     #target has at least one sample
+                                        last_info[1] = 'ENR'
+                                    else:
+                                        last_info[1] = 'REF' 
+                                    remove_indices = {4,9}  #Remove cluster column and last column, but this one will get written through last_info
+                                    result.write('\t'.join([str(x) for pos, x in enumerate(target) if pos not in remove_indices ]).strip() + '\t' + '\t'.join(last_info).strip() + '\n')
+                        else:
+                            for cluster in total_list:
+                                for target in cluster:
+                                    result.write('\t'.join([str(x) for x in target]).strip() + '\n')
                     else:
                         for cluster in total_list:
                             for target in cluster:
@@ -291,7 +307,10 @@ else:
                 else:
                     result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\n')
         else:
-            result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tPAM_gen\tVar_uniq' + add_for_final)
+            if 'addForFinal' in sys.argv[:]:
+                result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tDirection\tMismatches\tBulge_Size\tTotal\tPAM_gen\tGenome' + add_for_final)
+            else:
+                result.write('#Bulge_type\tcrRNA\tDNA\tChromosome\tPosition\tCluster Position\tDirection\tMismatches\tBulge_Size\tTotal\tPAM_gen\tVar_uniq' + add_for_final)
 
         total_targets = []
         for k in guides_dict.keys():
@@ -334,9 +353,21 @@ else:
 
         else:
             if keep_columns:
-                for cluster in total_list:
-                    for target in cluster:
-                        result.write('\t'.join([str(x) for x in target]).strip() + '\n')
+                if 'addForFinal' in sys.argv[:]:
+                    #Remove CLuster column and change Var uniq into genome, writinf REF if sample = 'n', ENR if exists at least one sample
+                    for cluster in total_list:
+                        for target in cluster:
+                            last_info = target[-1].split('\t')  #Contains from PAM creation to RealGuide
+                            if last_info[2] != 'n':     #target has at least one sample
+                                last_info[1] = 'ENR'
+                            else:
+                                last_info[1] = 'REF' 
+                            remove_indices = {4,9}  #Remove cluster column and last column, but this one will get written through last_info
+                            result.write('\t'.join([str(x) for pos, x in enumerate(target) if pos not in remove_indices ]).strip() + '\t' + '\t'.join(last_info).strip() + '\n')
+                else:
+                    for cluster in total_list:
+                        for target in cluster:
+                            result.write('\t'.join([str(x) for x in target]).strip() + '\n')
             else:
                 for cluster in total_list:
                     for target in cluster:
