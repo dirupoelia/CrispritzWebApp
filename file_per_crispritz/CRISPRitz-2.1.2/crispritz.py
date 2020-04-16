@@ -373,7 +373,7 @@ def genomeEnrichment():
 	'''
 	Enrich the genome by parsing the vcf files and then replacing the nucleotides in the reference genome sequence. Compatible with indels
 	'''
-	if (len(sys.argv) < 4):
+	if (len(sys.argv) < 4 or 'help' in sys.argv[1:]):
 		print("WARNING: Too few arguments to function add-variants. Please provide:",
 		"\n\n<vcfFilesDirectory> : Directory containing VCF files, need to be separated into single chromosome files (multi-sample files will be collapsed into one fake individual)",
 		"\n\n<genomeDirectory> : Directory containing a genome in .fa or .fasta format, need to be separated into single chromosome files.")
@@ -442,7 +442,7 @@ def genomeEnrichment():
 	shutil.rmtree(dirParsedFiles)
 
 def generateReport():
-	if (len(sys.argv) < 9 ):	#was 10
+	if (len(sys.argv) < 9 or 'help' in sys.argv[1:]):	#was 10
 		print("WARNING: Too few arguments to function generate-report. Please provide:\n",
 		"\nEXAMPLE CALL: crispritz.py GAGTCCGAGCAGAAGAAGAANNN -mm 4 -annotation annotationSummaryFile.txt -extprofile guideExtendedProfile.xls -gecko -sumref referenceAnnotationSummaryFile.txt\n",
 		"\n<guide>: (Optional) A guide present in the analyzed set",
@@ -556,7 +556,7 @@ def processData():
 	Example call:  -> CURRENT
 	crispritz.py process-data -reftarget ... pamfile.txt guidefile.txt output.name
 	'''
-	if (len(sys.argv) < 9):
+	if (len(sys.argv) < 9 or 'help' in sys.argv[1:]):
 		print("WARNING: Too few arguments to function process-data. Please provide:",
 		"\n-reftarget <refTargetsFile> : Targets file, containing all genomic targets found in the reference genome",
 		"\n-vartarget <varTargetsFile> : Targets file, containing all genomic targets found in the variant genome",
@@ -921,7 +921,35 @@ def processData():
 
 def graphicalInterface():
 	#start graphical interface
+	if ('help' in sys.argv[1:]):		#TODO completare
+		print('Open the Graphical Interface for CRISPRitz.',
+		"\nEXAMPLE CALL: crispritz.py graphical-interface <serverDirectory>\n",
+		'\n<serverDirectory>: (Optional) directory where to start the server for the graphical interface. If not provided, the current directory will be used\n',
+		'Please note that the <serverDirectory> must be structured as such:\n',
+		'-annotations\n\t-<annotationsFile>: One or more text files containing the annotations in .bed format\n',
+		'-assets\n',
+		'-dictionaries\n\t-dictionary_name\n',
+		'-genome_library\n',
+		'-Genomes\n',
+		'-pam\n',
+		'-Results')
+		sys.exit()
+	try:
+		launch_dir = os.path.realpath(sys.argv[2])
+	except:
+		launch_dir = os.path.realpath('./')
+	if not os.path.isdir(launch_dir):
+		print('Directory not found. Creating...')
+		os.mkdir(launch_dir)
+	os.chdir(launch_dir)
+	check_directories = ['annotations', 'assets', 'dictionaries', 'genome_library', 'Genomes', 'pam', 'Results']
+	for d in check_directories:
+		if not os.path.isdir(os.path.realpath(d)):
+			print(d + ' directory not found. Creating...')
+			os.mkdir(os.getcwd() + '/' + d)
+		
 	print("LAUNCHING GRAPHICAL SERVER...")
+	subprocess.run([corrected_origin_path + 'Python_Scripts/CrispritzWebApp/app_v6.py'])
 	time.sleep(1)
 	print("COPY THE FOLLOWING LINK INTO ANY BROWSER: http//:localhost")
 

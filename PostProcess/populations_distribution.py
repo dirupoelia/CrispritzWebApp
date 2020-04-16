@@ -21,7 +21,7 @@ SAS     0,0     0,0     0,0     2,1     3,21    0,153   0,0     0,0     0,0     
 # argv 3 is Guide
 import math
 import matplotlib
-matplotlib.use("TkAgg")
+# matplotlib.use("TkAgg")
 matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
