@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 '''
 Generate barplot with population distribution from the PopulationDistribution.txt file. Create a barplot for each total value, dividing
 into 0 bulge, 1 bulge, 2 bulge etc
@@ -24,7 +23,7 @@ SAS     0,0     0,0     0,0     2,1     3,21    0,153   0,0     0,0     0,0     
 # argv 3 is Guide
 import math
 import matplotlib
-matplotlib.use("TkAgg")
+# matplotlib.use("TkAgg")
 matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
@@ -97,6 +96,13 @@ width = 0.5
 population_color = ['purple', 'orange', 'green', 'blue', 'red']
 if 'REFERENCE' in barplot_values.keys():
     population_color.insert(0, 'grey')
+if len(barplot_values.keys()) > len(population_color):  #If i have more than 5 superpopulations + ref
+    for i in mc.TABLEAU_COLORS:
+        population_color.append(i)
+        if len(barplot_values.keys()) == len(population_color):
+            break
+elif len(barplot_values.keys()) < len(population_color):                #If i have less than 5 superpopulations + ref
+    population_color = population_color[:len(barplot_values.keys())]
 all_bar = []
 for i in range(number_bars):     #For 0 bulge, 1 bulge, 2 bulge ...
     current_bar = [x[i] for x in barplot_values.values()] 

@@ -11,6 +11,7 @@ import concurrent.futures
 import subprocess
 import pandas as pd
 import os
+from supportFunctions.loadSample import associateSample
 
 #argv[-1] can be 'Step [3/5] - Annotation', so if 'Step' in argv[-1] do a print for the current operation
 step = sys.argv[-1]
@@ -18,34 +19,34 @@ if 'Step' in step:
     print(step + ': Reading Input Files', end = '\r')
 else:
     print("READING INPUT FILES")
-#Dictionaries for annotating samples
 
-#Dict for populations
-pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/20130606_sample_info.xlsx')
-all_samples = pop_file.Sample.to_list()
-all_pop = pop_file.Population.to_list()
-dict_sample_to_pop = dict()
-for  pos, i in enumerate(all_samples):
-    try:
-        dict_sample_to_pop[i] = all_pop[pos]        #{'S1':'POP1', 'S2':'POP1', ...}
-    except:
-        dict_sample_to_pop[i] = all_pop[pos]
+# #Dict for populations
+# pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/20130606_sample_info.xlsx')
+# all_samples = pop_file.Sample.to_list()
+# all_pop = pop_file.Population.to_list()
+# dict_sample_to_pop = dict()
+# for  pos, i in enumerate(all_samples):
+#     try:
+#         dict_sample_to_pop[i] = all_pop[pos]        #{'S1':'POP1', 'S2':'POP1', ...}
+#     except:
+#         dict_sample_to_pop[i] = all_pop[pos]
 
-#Dict for superpopulation
-dict_pop_to_sup = {'CHB':'EAS', 'JPT':'EAS', 'CHS':'EAS', 'CDX':'EAS', 'KHV':'EAS',
-                    'CEU':'EUR', 'TSI':'EUR', 'FIN':'EUR', 'GBR':'EUR', 'IBS':'EUR',
-                    'YRI':'AFR', 'LWK':'AFR', 'GWD':'AFR', 'MSL':'AFR', 'ESN':'AFR', 'ASW':'AFR', 'ACB':'AFR',
-                    'MXL':'AMR', 'PUR':'AMR', 'CLM':'AMR', 'PEL':'AMR',
-                    'GIH':'SAS', 'PJL':'SAS', 'BEB':'SAS', 'STU':'SAS', 'ITU':'SAS'
-}
-superpopulation = ['EAS', 'EUR', 'AFR', 'AMR','SAS']
-
+# #Dict for superpopulation
+# dict_pop_to_sup = {'CHB':'EAS', 'JPT':'EAS', 'CHS':'EAS', 'CDX':'EAS', 'KHV':'EAS',
+#                     'CEU':'EUR', 'TSI':'EUR', 'FIN':'EUR', 'GBR':'EUR', 'IBS':'EUR',
+#                     'YRI':'AFR', 'LWK':'AFR', 'GWD':'AFR', 'MSL':'AFR', 'ESN':'AFR', 'ASW':'AFR', 'ACB':'AFR',
+#                     'MXL':'AMR', 'PUR':'AMR', 'CLM':'AMR', 'PEL':'AMR',
+#                     'GIH':'SAS', 'PJL':'SAS', 'BEB':'SAS', 'STU':'SAS', 'ITU':'SAS'
+# }
+# superpopulation = ['EAS', 'EUR', 'AFR', 'AMR','SAS']
 
 #READ INPUT FILES
 annotationFile = sys.argv[1] #file with annotation
 resultsFile = sys.argv[2] #file with results from search
 outputFile = sys.argv[3] #file with annotated results
+sampleIDfile = sys.argv[4]
 
+dict_sample_to_pop, dict_pop_to_sup, dict_superpop_to_pop, dict_pop_to_sample, all_samples, all_pop, superpopulation, gender_sample = associateSample.loadSampleAssociation(sampleIDfile)
 
 #OPEN INPUT FILES AND PREPARE OUTPUT FILE
 inResult = open(resultsFile, "r")  # resultfile open

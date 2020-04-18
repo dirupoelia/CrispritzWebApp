@@ -18,6 +18,7 @@ in samples.txt, poi calcola l'annotazione corrispondente e crea il file Annotati
 #argv8 is guide file
 #argv9 is max allowed DNA bulges
 #argv10 is max allowed RNA bulges
+#argv11 is absolute path of sample file to load dictionary sample -> pop
 # NOTE 06/03  -> removed PAM Disruption calculation
 #NOTE 29/03 -> le colonne min max sono rimosse, dal file total.cluster sono già presenti colonne sample, annotation, real guide
 # 29/03 colonne in input #Bulge_type     crRNA   DNA     Chromosome      Position        Cluster Position        Direction       Mismatches      Bulge_Size      Total   PAM_gen Var_uniq        Samples Annotation Type Real Guide
@@ -44,6 +45,8 @@ import azimuth.model_comparison
 import string
 import multiprocessing
 import re
+from supportFunctions.loadSample import associateSample
+
 
 SIZE_DOENCH = 10000
 N_THR = 3
@@ -112,25 +115,27 @@ else:
     print("READING INPUT FILES")
 #Dictionaries for annotating samples
 
-#Dict for populations
-pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/20130606_sample_info.xlsx')
-all_samples = pop_file.Sample.to_list()
-all_pop = pop_file.Population.to_list()
-dict_sample_to_pop = dict()
-for  pos, i in enumerate(all_samples):
-    try:
-        dict_sample_to_pop[i] = all_pop[pos]        #{'S1':'POP1', 'S2':'POP1', ...}
-    except:
-        dict_sample_to_pop[i] = all_pop[pos]
+# #Dict for populations
+# pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/20130606_sample_info.xlsx')
+# all_samples = pop_file.Sample.to_list()
+# all_pop = pop_file.Population.to_list()
+# dict_sample_to_pop = dict()
+# for  pos, i in enumerate(all_samples):
+#     try:
+#         dict_sample_to_pop[i] = all_pop[pos]        #{'S1':'POP1', 'S2':'POP1', ...}
+#     except:
+#         dict_sample_to_pop[i] = all_pop[pos]
 
-#Dict for superpopulation
-dict_pop_to_sup = {'CHB':'EAS', 'JPT':'EAS', 'CHS':'EAS', 'CDX':'EAS', 'KHV':'EAS',
-                    'CEU':'EUR', 'TSI':'EUR', 'FIN':'EUR', 'GBR':'EUR', 'IBS':'EUR',
-                    'YRI':'AFR', 'LWK':'AFR', 'GWD':'AFR', 'MSL':'AFR', 'ESN':'AFR', 'ASW':'AFR', 'ACB':'AFR',
-                    'MXL':'AMR', 'PUR':'AMR', 'CLM':'AMR', 'PEL':'AMR',
-                    'GIH':'SAS', 'PJL':'SAS', 'BEB':'SAS', 'STU':'SAS', 'ITU':'SAS'
-}
-superpopulation = ['EAS', 'EUR', 'AFR', 'AMR','SAS']
+# #Dict for superpopulation
+# dict_pop_to_sup = {'CHB':'EAS', 'JPT':'EAS', 'CHS':'EAS', 'CDX':'EAS', 'KHV':'EAS',
+#                     'CEU':'EUR', 'TSI':'EUR', 'FIN':'EUR', 'GBR':'EUR', 'IBS':'EUR',
+#                     'YRI':'AFR', 'LWK':'AFR', 'GWD':'AFR', 'MSL':'AFR', 'ESN':'AFR', 'ASW':'AFR', 'ACB':'AFR',
+#                     'MXL':'AMR', 'PUR':'AMR', 'CLM':'AMR', 'PEL':'AMR',
+#                     'GIH':'SAS', 'PJL':'SAS', 'BEB':'SAS', 'STU':'SAS', 'ITU':'SAS'
+# }
+# superpopulation = ['EAS', 'EUR', 'AFR', 'AMR','SAS']
+
+dict_sample_to_pop, dict_pop_to_sup, dict_superpop_to_pop, dict_pop_to_sample, all_samples, all_pop, superpopulation, gender_sample = associateSample.loadSampleAssociation(sys.argv[11])
 
 
 #READ INPUT FILES

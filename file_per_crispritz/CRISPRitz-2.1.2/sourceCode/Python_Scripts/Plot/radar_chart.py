@@ -3,7 +3,7 @@
 # Libraries
 import math
 import matplotlib
-matplotlib.use("TkAgg")
+# matplotlib.use("TkAgg")
 matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt

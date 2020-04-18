@@ -21,30 +21,37 @@
 #$19 is genome type, can be 'ref', 'var', 'both'
 #$20 is absolute path of directory containing the dash app
 #$21 is absolute path of dictionary directory NOTE the dictionary is already specified for the selected genome
+#$22 is absolute path of sample file for extracting dictionaries sample -> pop, pop-> superpop etc (using supportFunction associate sample)
+#$23 is generate index ref, True or False
+#$24 is generate index enr, True or False
+#$25 is directory where python was called (directory where all data Genomes, Results etc is located)
 #Note that if genome_selected is not enriched, the python exe will force $15 as false
-
-echo 1 ${1}
-echo 2 ${2}
-echo 3 ${3}
-echo 4 ${4}
-echo 5 ${5}
-echo 6 ${6}
-echo 10 ${10}
-echo 11 ${11}
-echo 16 ${16}
-echo 18 ${18}
-
-
 
 cd $1
 rm queue.txt
 jobid=$(basename $1)
+name_reference=$(basename $3)
+name_enriched=$(basename $2)
 dictionaries=${21}
 echo 'START '$jobid ${18}
 echo 'Job\tStart\t'$(date)> log.txt
 used_genome_dir=$2                 
 max_bulge=$([ $8 -ge $9 ] && echo "$8" || echo "$9")
 total=$(($7+max_bulge))
+
+#Start indexing reference genome
+if [ ${23} = 'True' ]; then
+    cd ${25}
+    crispritz.py index-genome $name_reference $3 $1/pam_indexing.txt -bMax $max_bulge
+    cd $1
+done
+#Start indexing enr genome
+if [ ${24} = 'True' ]; then
+    cd ${25}
+    crispritz.py index-genome $name_enriched $3 $1/pam_indexing.txt -bMax $max_bulge
+    cd $1
+done
+
 #Start search index     #NOTE new version 2.1.2 of crispritz needed
 echo 'Search-index\tStart\t'$(date) >> log.txt
 echo 'Search_output '${19} >  output.txt
@@ -174,7 +181,7 @@ elif [ ${19} = 'var' ]; then
     echo 'Extracting Samples and Annotation... (This operation has a long execution time, Please Wait) Step [3/4]' >>  output.txt
     echo 'Start calc samples and annotation and scores'
     echo 'Annotation\tStart\t'$(date) >> log.txt
-    python3 ${20}PostProcess/annotator_for_onlyvar.py ${18} $jobid.targets.minmaxdisr.cluster.txt $jobid $dictionaries pam.txt $7 $2 guides.txt $8 $9
+    python3 ${20}PostProcess/annotator_for_onlyvar.py ${18} $jobid.targets.minmaxdisr.cluster.txt $jobid $dictionaries pam.txt $7 $2 guides.txt $8 $9 ${22}
         # > $jobid.samples.all.annotation.txt with header AGGIORNAMENTO 11/03 QUESTO FILE NON VIENE CREATO 
         # > $jobid.samples.annotation.txt  with header AGGIORNAMENTO 11/03 Contiene top1 scomposti e top1 reference (usato per sum guide e show target guide, sample)
         # > $jobid.Annotation.summary.txt
@@ -201,7 +208,7 @@ elif [ ${19} = 'var' ]; then
 
     #Summary samples
     echo 'Start summary by samples'
-    python3 ${20}PostProcess/summary_by_samples.py $jobid.samples.annotation.txt $jobid 'both' guides.txt
+    python3 ${20}PostProcess/summary_by_samples.py $jobid.samples.annotation.txt $jobid 'both' guides.txt ${22}
     #python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt 
     echo 'End summary by samples'
 
@@ -310,7 +317,7 @@ else    #Type search = both
     echo 'Start calc samples and annotation and scores'
     echo 'Annotation\tStart\t'$(date) >> log.txt
     #03/03 modificato da top_1 a total.cluster
-    python3 ${20}PostProcess/annotator_cal_sample.py ${18} $jobid.total.cluster.txt $jobid $dictionaries pam.txt $7 $3 guides.txt $8 $9
+    python3 ${20}PostProcess/annotator_cal_sample.py ${18} $jobid.total.cluster.txt $jobid $dictionaries pam.txt $7 $3 guides.txt $8 $9 ${22}
         # > $jobid.samples.all.annotation.txt with header AGGIORNAMENTO 11/03 QUESTO FILE NON VIENE CREATO 
         # > $jobid.samples.annotation.txt  with header AGGIORNAMENTO 11/03 Contiene top1 scomposti e top1 reference (usato per sum guide e show target guide, sample)
         # > $jobid.Annotation.summary.txt
@@ -340,7 +347,7 @@ else    #Type search = both
 
     #Summary samples
     echo 'Start summary by samples'
-    python3 ${20}PostProcess/summary_by_samples.py $jobid.samples.annotation.txt $jobid ${19} guides.txt
+    python3 ${20}PostProcess/summary_by_samples.py $jobid.samples.annotation.txt $jobid ${19} guides.txt ${22}
     #python3 ../../PostProcess/summary_by_samples.py $jobid.top_1.samples.txt $jobid ${19} guides.txt 
     echo 'End summary by samples'
 

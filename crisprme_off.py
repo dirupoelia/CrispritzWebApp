@@ -1,6 +1,4 @@
-#NEW: 
-#Result page with tabs
-#Image result for Samples
+#OFFLINE VERSION OF CRISPRme
 
 import dash
 from dash.dependencies import Input, Output, State
@@ -53,7 +51,7 @@ COL_BOTH = ['Bulge Type', 'crRNA', 'DNA', 'Chromosome', 'Position', 'Cluster Pos
 COL_BOTH_TYPE = ['text','text','text','text','numeric','numeric', 'text','numeric', 'numeric', 'numeric', 'text', 'text', 'text']
 COL_BOTH_RENAME = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'PAM Creation', 11 : 'Variant Unique', 12:'Samples', 13:'Annotation Type', 14:'Correct Guide'}
-
+GENOME_DATABASE = ['Reference', 'Enriched', 'Samples', 'Dictionary', 'Annotation']
 VALID_CHARS = {'a', 'A', 't', 'T', 'c', 'C','g', 'G',
             "R",
             "Y",
@@ -883,6 +881,8 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     #NOTE test command per queue
     subprocess.run(['touch ' + current_working_directory + 'Results/' + job_id + '/queue.txt'], shell = True)
 
+    generate_index_ref = False
+    generate_index_enr = False
     search_index = True
     search = True
     annotation = True
@@ -959,8 +959,10 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     len_guides = len(text_guides.split('\n')[0])
     if (pam_begin):
         pam_to_file = pam_char + ('N' * len_guides) + ' ' + index_pam_value
+        pam_to_indexing = pam_char + ('N' * 25) + ' ' + index_pam_value
     else:
         pam_to_file = ('N' * len_guides) + pam_char + ' ' + index_pam_value
+        pam_to_indexing = ('N' * 25) + pam_char + ' ' + index_pam_value
 
     save_pam_file = open(result_dir + '/pam.txt', 'w')
     save_pam_file.write(pam_to_file)
@@ -986,11 +988,35 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if (search_index):
         search = False
 
-    
-    
-    genome_idx = pam_char + '_' + '2' + '_' + genome_selected   #TODO CUSTOM: modificare per la versione UI offline
-    genome_idx_ref = genome_idx.split('+')[0]
+    #Check if index exists, otherwise set generate_index to true
+    genome_indices_created =  [f for f in listdir(current_working_directory + 'genome_library') if isdir(join(current_working_directory + 'genome_library', f))]
+    genome_idx = ''
+    genome_idx_ref = ''
+    for gidx in genome_indices_created:
+        if pam_char in gidx and genome_selected in gidx:
+            if int(gidx.split('_')[1]) >= int(max_bulges):
+                if '+' in gidx:
+                    genome_idx = gidx
+                genome_idx_ref = gidx.split('+')[0]
+                
+    if genome_idx == '':
+        if int(max_bulges) > 0:
+            generate_index_enr = True
+            with open(result_dir + 'pam_indexing.txt', 'w+') as pam_id_file:
+                pam_id_file.write(pam_to_indexing)
+        genome_idx = pam_char + '_' + str(max_bulges) + '_' + genome_selected
+    if genome_idx_ref == '':
+        if int(max_bulges) > 0:
+            generate_index_ref = True
+            with open(result_dir + 'pam_indexing.txt', 'w+') as pam_id_file:
+                pam_id_file.write(pam_to_indexing)
+        genome_idx_ref = pam_char + '_' + str(max_bulges) + '_' + genome_selected.split('+')[0]
 
+    if genome_ref == genome_selected:
+        generate_index_enr = False
+    # genome_idx = pam_char + '_' + '2' + '_' + genome_selected   
+    # genome_idx_ref = genome_idx.split('+')[0]
+    
     #Create Params.txt file
     with open(result_dir + '/Params.txt', 'w') as p:            #NOTE if modified, chenge also mms value in update_table function
         p.write('Genome_selected\t' + genome_selected + '\n')         
@@ -1085,24 +1111,30 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if (not search and not search_index):
         report = False         
     
-    #TODO aggiungere annotazioni per ogni genoma
-    annotation_file = [f for f in listdir(current_working_directory + 'annotations/') if isfile(join(current_working_directory + 'annotations/', f)) and f.startswith(genome_ref)]
+    #Open genome_database, get specific line and get annotation path
+    genome_db = pd.read_csv(current_working_directory + 'genome_database.txt', sep = '\t', names = GENOME_DATABASE)
+    
+    # annotation_file = [f for f in listdir(current_working_directory + 'annotations/') if isfile(join(current_working_directory + 'annotations/', f)) and f.startswith(genome_ref)]
 
     genome_type = 'ref'     #Indicates if search is 'ref', 'var' or 'both'
     if '+' in genome_selected:
         genome_type = 'var'
     if ref_comparison:
-        genome_type = 'both'    #NOTE change submit job script name. al momento ok .test.
+        genome_type = 'both'    
 
-    #TODO aggiornare cartella dizionari perchè sia dinamica
-    dictionary_directory = current_working_directory + 'dictionaries/dictionary_hg38'
-    sample_list = current_working_directory + 'samplesID/samples_1000genomeproject.txt'
-    generate_index_ref = False
-    generate_index_enr = False
-    command = app_main_directory + 'PostProcess/./submit_job.final.sh ' + current_working_directory + 'Results/' + job_id + ' ' + current_working_directory +  'Genomes/' + genome_selected + ' ' + current_working_directory + 'Genomes/' + genome_ref + ' ' + current_working_directory + 'genome_library/' + genome_idx + (
+    #Get annotation file, already with the absolute path. TODO currently only one annotation per genome
+    #Also get dictionary and sample dictionary files
+    if genome_type == 'ref':
+        annotation_file = genome_db[genome_db.Reference.str.contains(genome_selected) & (genome_db.Enriched == 'None') ].Annotation.values[0]
+    else:
+        annotation_file = genome_db[genome_db.Enriched.str.contains(genome_selected)].Annotation.values[0]
+        sample_list = genome_db[genome_db.Enriched.str.contains(genome_selected)].Samples.values[0]
+        dictionary_directory = genome_db[genome_db.Enriched.str.contains(genome_selected)].Dictionary.values[0]
+
+    command = app_main_directory + 'PostProcess/./submit_job.local.sh ' + current_working_directory + 'Results/' + job_id + ' ' + current_working_directory +  'Genomes/' + genome_selected + ' ' + current_working_directory + 'Genomes/' + genome_ref + ' ' + current_working_directory + 'genome_library/' + genome_idx + (
         ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
-            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + current_working_directory +  'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + current_working_directory +  'annotations/' + annotation_file[0] + 
-            ' ' + genome_type + ' ' + app_main_directory + ' ' + dictionary_directory + ' ' + sample_list + ' ' + str(generate_index_ref) + ' ' + str(generate_index_enr) + ' ' + current_working_directory ))
+            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + current_working_directory +  'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + annotation_file + #current_working_directory +  'annotations/' + annotation_file + 
+            ' ' + genome_type + ' ' + app_main_directory + ' ' + dictionary_directory + ' ' + sample_list + ' ' + str(generate_index_ref) + ' ' + str(generate_index_enr) + ' ' + current_working_directory))
 
     exeggutor.submit(subprocess.run, command, shell=True)
     return '/load','?job=' + job_id
@@ -4167,7 +4199,7 @@ def downloadLinkPosition(n, file_to_load, search): #file to load =
 
 if __name__ == '__main__':
     #app.run_server(debug=True)
-    app.run_server(host='0.0.0.0', debug=True, port=8080)
+    app.run_server(host='0.0.0.0', debug=True, port=8050)
     #app.run_server(host='0.0.0.0',  port=8080) #NOTE to not reload the page when creating new images in graphical report
     cache.clear()       #delete cache when server is closed
 

@@ -7,29 +7,35 @@ import os
 import subprocess
 import sys
 import pandas as pd
+from supportFunctions.loadSample import associateSample
+
 # argv1  is result file, from top1 with expanded samples
 # argv2 is job_id
 # argv3 is type genome 'ref', 'var', 'both'
 # argv4 is guides file
+# argv 5 is absolute path of sampleID file (to create dictionaries samples -> Pop etc)
 #NOTE Function only with vcf of HG38 and population info from the 20130606_sample_info.xlsx file
 
 # NOTE PAM Disruptio  -> removed PAM Disruption calculation
 
-pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/20130606_sample_info.xlsx')
-all_samples = pop_file.Sample.to_list()
-all_pop = pop_file.Population.to_list()
-all_gender = pop_file.Gender.to_list()
-dict_pop = dict()
-gender_sample = dict()
-for  pos, i in enumerate(all_samples):
-    dict_pop[i] = all_pop[pos]
-    gender_sample[i] = all_gender[pos]
-population_1000gp = {'CHB':'EAS', 'JPT':'EAS', 'CHS':'EAS', 'CDX':'EAS', 'KHV':'EAS',
-                    'CEU':'EUR', 'TSI':'EUR', 'FIN':'EUR', 'GBR':'EUR', 'IBS':'EUR',
-                    'YRI':'AFR', 'LWK':'AFR', 'GWD':'AFR', 'MSL':'AFR', 'ESN':'AFR', 'ASW':'AFR', 'ACB':'AFR',
-                    'MXL':'AMR', 'PUR':'AMR', 'CLM':'AMR', 'PEL':'AMR',
-                    'GIH':'SAS', 'PJL':'SAS', 'BEB':'SAS', 'STU':'SAS', 'ITU':'SAS'
-}
+# pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/20130606_sample_info.xlsx')
+# all_samples = pop_file.Sample.to_list()
+# all_pop = pop_file.Population.to_list()
+# all_gender = pop_file.Gender.to_list()
+# dict_pop = dict()
+# gender_sample = dict()
+# for  pos, i in enumerate(all_samples):
+#     dict_pop[i] = all_pop[pos]
+#     gender_sample[i] = all_gender[pos]
+# population_1000gp = {'CHB':'EAS', 'JPT':'EAS', 'CHS':'EAS', 'CDX':'EAS', 'KHV':'EAS',
+#                     'CEU':'EUR', 'TSI':'EUR', 'FIN':'EUR', 'GBR':'EUR', 'IBS':'EUR',
+#                     'YRI':'AFR', 'LWK':'AFR', 'GWD':'AFR', 'MSL':'AFR', 'ESN':'AFR', 'ASW':'AFR', 'ACB':'AFR',
+#                     'MXL':'AMR', 'PUR':'AMR', 'CLM':'AMR', 'PEL':'AMR',
+#                     'GIH':'SAS', 'PJL':'SAS', 'BEB':'SAS', 'STU':'SAS', 'ITU':'SAS'
+# }
+dict_pop, population_1000gp, dict_superpop_to_pop, dict_pop_to_sample, all_samples, all_pop, superpopulation, gender_sample = associateSample.loadSampleAssociation(sys.argv[5])
+
+
 # Each guide has a dictionary, with samples as keys. Each sample (HG0096) has a list -> [Total targets, Var_uniq targets]
 guides_dict = dict()
 guides_dict_total = dict()  #contains total_sample_per_guide, did not merge the dict because didn't have time to do it

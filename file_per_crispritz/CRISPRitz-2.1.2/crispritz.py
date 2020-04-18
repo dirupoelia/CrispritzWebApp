@@ -281,7 +281,9 @@ def annotateResults():
 		#"\n<profileFile>: Profile File containing all information grouped by guide",
 		"\n<resultsFile>: Targets file containing all genomic targets for the guides set",
 		"\n<annotationsFile>: Text file containing the annotations in .bed format", # -> Bed file containing annotation
-		"\n<outputFile>: Name of output file\n")
+		"\n<outputFile>: Name of output file\n",
+		"\n--change-ID <sampleIDfile> : (Optional) Change the samples, population and superpopulation IDs. DEFAULT: the default IDs are taken from the 1000 genome project (used for Human Genome hg19 and hg38)"
+		)
 		sys.exit()
 	
 
@@ -290,13 +292,22 @@ def annotateResults():
 	annotationsFile = os.path.realpath(sys.argv[3])
 	outputFile = os.path.realpath(sys.argv[4])
 
-    #NOTE sys.argv[-1] can be either outputFile or 'Step [x/y] - Annotation', and it's just needed for having an output of the state of the 
+	sampleIDfile = corrected_origin_path + 'Python_Scripts/ProcessData/samples_1000genomeproject.txt'
+	if "--change-ID" in sys.argv[1:]:
+		sampleIDfile = (sys.argv).index("--change-ID") + 1
+		try:
+			sampleIDfile = os.path.realpath(sys.argv[sampleIDfile])
+		except:
+			print('Warning! Missing sampleID file')
+			sys.exit()
+
+    #NOTE sys.argv[-1] can be either sampleIDfile or 'Step [x/y] - Annotation', and it's just needed for having an output of the state of the 
 	#analysis for the user
 	step = sys.argv[-1]
 	if 'Step' not in step:
 		print("Annotation START")
 	start_time = time.time()
-	subprocess.run([corrected_origin_path+'Python_Scripts/Annotator/annotator.py', annotationsFile, resultsFile, outputFile, sys.argv[-1]])
+	subprocess.run([corrected_origin_path+'Python_Scripts/Annotator/annotator.py', annotationsFile, resultsFile, outputFile, sampleIDfile ,sys.argv[-1]])
 	if 'Step' not in step:
 		print("Annotation END")
 		print("Annotation runtime: %s seconds" % (time.time() - start_time))
@@ -536,25 +547,20 @@ def removeFile(to_remove):
 
 def processData():
 	'''
-	Function used to post-process the obtained data. Input files are the targets file obtained from the searches done one the reference and variant genomes. The default execution includes:
-	- Creation of common, semicommon and uniq files
-	- Calculation of min, max mismatches and pam_disr on the semicommon file (+ column Var_uniq, set to n)
-	- Calculation of PAM_creation on the uniq file
-	The option -sample calculates the common samples on the uniq + semicommon file. With this option, the user can provide a directory containing the dictionaries used for the sample extraction. 
+	Function used to post-process the obtained data. Input files are the targets file obtained from the searches done one the reference and variant genomes.
+	For the REF search, the targets are clustered and the top_1 are annotated, producing summaries for guide and positions.
+	For VAR and VAR/REF search, the targets are also associated with events of pam creation, and the corresponding samples are written for each
+	target.
+	The -sample option is needed to indicate the directory containing the dictionaries for the sample extraction 
 	The option --sample-create creates the dictionaries from the vcf directory given in input (heavy task) and then executes the -sample option.
 	Example call:
-	crispritz.py process-data -reftarget ... -vartarget ... pamfile.txt output.name
-	crispritz.py process-data -reftarget ... -vartarget ... pamfile.txt --sample-create vcf_file_directory
-	crispritz.py process-data -reftarget ... -vartarget ... pamfile.txt -sample dict_directory
-	TODO opzione con un solo file (-ref o -var e fare tutte le possibili opzioni con quel file)
-	NEW:
-	Function used to post-process the obtained data. Input files are the targets file obtained from the searches done on the reference, the variant genomes or both.
-	Post process on Reference includes:
-	- Clustering of targets
-	- Extraction of top_1
-	- Creation of Guide and Position summaries
-	Example call:  -> CURRENT
-	crispritz.py process-data -reftarget ... pamfile.txt guidefile.txt output.name
+	-For REF
+	crispritz.py process-data -reftarget REFsearch.targets.txt pamfile.txt guidesfile.txt hg38Annotations.bed output.name -refgenome hg38_ref
+	-For VAR
+	crispritz.py process-data -vartarget VARsearch.targets.txt pamfile.txt guidesfile.txt hg38Annotations.bed output.name -sample dictionary_directory -refgenome hg38_var
+	-For VAR/REF
+	crispritz.py process-data -reftarget REFsearch.targets.txt -vartarget VARsearch.targets.txt pamfile.txt guidesfile.txt hg38Annotations.bed output.name -sample dictionary_directory -refgenome hg38_ref
+	To create dictionary, change -sample dictionary_directory to --sample-create vcf_directory
 	'''
 	if (len(sys.argv) < 9 or 'help' in sys.argv[1:]):
 		print("WARNING: Too few arguments to function process-data. Please provide:",
@@ -566,7 +572,9 @@ def processData():
 		"\n<outputFile> : Name of output file",
 		"\n-sample <dictionariesDirectory> : Add samples information and annotations to the generated file. Must be provided if -vartarget option is selected",
 		"\n--sample-create <vcfFileDirectory> : (Optional) Creates samples dictionaries starting from the variant files (Heavy task), and add samples information to the generated file.",
-	    "\n-refgenome <genomeDirectory> : Directory of reference Genome")
+	    "\n-refgenome <genomeDirectory> : Directory of reference Genome",
+		"\n--change-ID <sampleIDfile> : (Optional) Change the samples, population and superpopulation IDs. DEFAULT: the default IDs are taken from the 1000 genome project (used for Human Genome hg19 and hg38)"
+		)
 		sys.exit()
 
 	last_target_pos = 0 #Since pam is after -ref or -var, get the last one of them to know the pamfile position
@@ -615,7 +623,15 @@ def processData():
 		print('Warning! Missing output filename')
 		sys.exit()
 	
-	
+	sampleIDfile = corrected_origin_path + 'Python_Scripts/ProcessData/samples_1000genomeproject.txt'
+	if "--change-ID" in sys.argv[1:]:
+		sampleIDfile = (sys.argv).index("--change-ID") + 1
+		try:
+			sampleIDfile = os.path.realpath(sys.argv[sampleIDfile])
+		except:
+			print('Warning! Missing sampleID file')
+			sys.exit()
+
 	samples = False
 	create_dict = False
 	vcf_file_directory = 'no'
@@ -822,7 +838,7 @@ def processData():
 		print('Step [' + str(current_step) + '/' + total_steps + '] - Samples Extraction and Annotation', end = '\r')
 		step = 'Step [' + str(current_step) + '/' + total_steps + '] - Samples Extraction and Annotation'
 		start_time = time.time()
-		subprocess.run([corrected_origin_path+'Python_Scripts/ProcessData/' + annotator_script_file, annotationFile, result + '.total.cluster.txt', result, dict_directory, pam, max_values[0], reference_genome_dir, guides, max_values[1], max_values[2], step])
+		subprocess.run([corrected_origin_path+'Python_Scripts/ProcessData/' + annotator_script_file, annotationFile, result + '.total.cluster.txt', result, dict_directory, pam, max_values[0], reference_genome_dir, guides, max_values[1], max_values[2], sampleIDfile, step])
 		subprocess.run(['mv', result + '.cluster.tmp.txt', result + '.total.cluster.txt'])
 		print('\033[KStep [' + str(current_step) + '/' + total_steps + '] - Samples Extraction and Annotation DONE: %.2f seconds' % round(time.time() - start_time,2))
 		current_step += 1
@@ -838,7 +854,7 @@ def processData():
 		
 		#Summary of samples
 		print('\033[KStep [' + str(current_step) + '/' + total_steps + '] - Creating Summaries: Summary by Samples', end = '\r')
-		subprocess.run([corrected_origin_path+'Python_Scripts/ProcessData/summary_by_samples.py', result + '.samples.annotation.txt', result, 'both', guides ])
+		subprocess.run([corrected_origin_path+'Python_Scripts/ProcessData/summary_by_samples.py', result + '.samples.annotation.txt', result, 'both', guides, sampleIDfile])
 		print('\033[KStep [' + str(current_step) + '/' + total_steps + '] - Creating Summaries DONE: %.2f seconds' % round(time.time() - start_time,2))
 		current_step += 1
 
@@ -863,52 +879,6 @@ def processData():
 				subprocess.run([corrected_origin_path + 'Python_Scripts/ProcessData/cluster.dict.py', result + '.targets.' + g + '.txt', 'no', 'True', 'True', guides, result + '.targets.' + g ,'total', 'addForFinal'])
 				subprocess.run(['mv', result + '.targets.' + g + '.cluster.txt', result + '.targets.' + g + '.txt'])
 		
-		# else:	#No sample analysis
-		# 	#Extract Top1
-		# 	print('Start Top1 Extraction')
-		# 	subprocess.run([corrected_origin_path+'Python_Scripts/ProcessData/extract_top.py', result + '.total.cluster.txt', result])
-
-		# 	#Annotation of VAR or VAR/REF file
-		# 	print('Start Annotation')
-		# 	subprocess.run([corrected_origin_path+'Python_Scripts/ProcessData/annotator_nosample.py', annotationFile, result + '.top_1.txt', result])
-		# 	print('End Annotation')
-		# 	#Summary position
-		# 	print('Start Position Summary')
-		# 	subprocess.run([corrected_origin_path + 'Python_Scripts/ProcessData/summary_by_guide_position.py', result + '.total.cluster.txt', max_values[0], max_values[1], max_values[2], guides, result, 'Uniq'])
-		# 	print('End Position Summary')
-		# 	#Summary guide
-		# 	subprocess.run([corrected_origin_path + 'Python_Scripts/ProcessData/summary_by_guide.py', result + '.Annotation.targets.txt', max_values[0], max_values[1], max_values[2], guides, result, sum_guide_type])
-			
-
-		# 	general_table = dict()	#GUIDE -> [target reference, off target reference]
-		# 	with open(guides) as all_guides:
-		# 		for g in all_guides:
-		# 			g = g.strip()
-		# 			#NOTE attenzione che qui viene usato shell = True
-		# 			subprocess.run(['LC_ALL=C grep ' + g + ' ' + result + '.total.cluster.txt > ' + result + '.targets.' + g + '.txt'], shell = True)
-		# 			subprocess.run([corrected_origin_path + 'Python_Scripts/ProcessData/cluster.dict.py', result + '.targets.' + g + '.txt', 'no', 'True', 'True', guides, result + '.targets.' + g ,'total', 'addForFinal'])
-		# 			subprocess.run(['mv', result + '.targets.' + g + '.cluster.txt', result + '.targets.' + g + '.txt'])
-		# 			# Generate file for general table
-		# 			general_table[g] = []
-		# 			df_profile = pd.read_csv(result + '.summary_by_guide.' + g + '.txt', sep = '\t')
-		# 			if ref_result != 'no':		#For VARIANT/REFERENCE
-		# 				general_table[g].append(str(int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Reference'])))
-		# 			general_table[g].append(str(int(df_profile[(df_profile.Mismatches == 0) & (df_profile['Bulge Type'] == 'X')].iloc[0]['Targets in Enriched'])))
-		# 			one_to_n_mms = []
-		# 			one_to_n_mms_ref = []
-		# 			for i in range (1, int(max_values[0]) + 1 + int(max_bulge)):
-		# 				one_to_n_mms.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Targets in Enriched'].to_list()))
-		# 				one_to_n_mms_ref.append(sum(df_profile[((df_profile['Mismatches'] + df_profile['Bulge Size']) == i)]['Targets in Reference'].to_list()))
-		# 			if ref_result != 'no': #For VARIANT/REFERENCE
-		# 				general_table[g].append(str(int(sum(one_to_n_mms_ref[1:]))) + ' (' + ' - '.join(str(int(x)) for x in one_to_n_mms_ref) + ')')
-		# 			general_table[g].append(str(int(sum(one_to_n_mms[1:]))) + ' (' + ' - '.join(str(int(x)) for x in one_to_n_mms) + ')')
-		# 	with open(result + '.general_target_count.txt', 'w+') as res_gen:
-		# 		if ref_result != 'no':
-		# 			res_gen.write('#Guide\tOn-Targets Reference\tOn-Targets Enriched\tOff-Targets Reference (' + ' - '.join([str(x) for x in range(int(max_values[0]) + 1 + int(max_bulge)) ]) + ')\tOff-Targets Enriched (' + ' - '.join([str(x) for x in range(int(max_values[0]) + 1 + int(max_bulge)) ]) + ' Mismatches + Bulges)\n')
-		# 		else:
-		# 			res_gen.write('#Guide\tOn-Targets Enriched\tOff-Targets Enriched (' + ' - '.join([str(x) for x in range(int(max_values[0]) + 1 + int(max_bulge)) ]) + ' Mismatches + Bulges)\n')
-		# 		for g in general_table:
-		# 			res_gen.write(g + '\t' + '\t'.join(general_table[g]) + '\n')
 
 		#Remove intermediate files
 		file_to_remove = ['.total', '.common_targets', '.semi_common_targets','.semi_common_targets.minmaxdisr', '.unique_targets',
