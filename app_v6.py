@@ -4100,7 +4100,7 @@ def update_iupac_scomposition_table_cluster(page_current, page_size, sort_by, fi
             summarized_sample_cell = dict()
             for s in row['Samples'].split(','):
                 if s == 'n':
-                    raise PreventUpdate     #If a target have n, it means it's REF, because either all have samples or the single target is REF
+                    break     #If a target have n, it means it's REF, because either all have samples or the single target is REF
                 try:
                     summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] += 1
                 except:

@@ -31,7 +31,7 @@ from additional_pages import contacts_page
 import re                                   #For sort chr filter values
 import concurrent.futures                           #For workers and queue
 import math
-
+from PostProcess.supportFunctions.loadSample import associateSample
 #Warning symbol \u26A0
 app_location = os.path.realpath(__file__)
 app_main_directory = os.path.dirname(app_location) + '/'
@@ -100,33 +100,33 @@ operators = [['ge ', '>='],
              ['contains ']]     #for filtering
 
 #Populations 1000 gen proj
-population_1000gp = {
-    'EAS':['CHB', 'JPT', 'CHS', 'CDX', 'KHV'],
-    'EUR':['CEU', 'TSI', 'FIN', 'GBR', 'IBS'],
-    'AFR':['YRI', 'LWK', 'GWD', 'MSL', 'ESN', 'ASW', 'ACB'],
-    'AMR':['MXL', 'PUR', 'CLM', 'PEL'],
-    'SAS':['GIH', 'PJL', 'BEB', 'STU', 'ITU']
-}
-dict_pop_to_superpop = {'CHB':'EAS', 'JPT':'EAS', 'CHS':'EAS', 'CDX':'EAS', 'KHV':'EAS',
-                    'CEU':'EUR', 'TSI':'EUR', 'FIN':'EUR', 'GBR':'EUR', 'IBS':'EUR',
-                    'YRI':'AFR', 'LWK':'AFR', 'GWD':'AFR', 'MSL':'AFR', 'ESN':'AFR', 'ASW':'AFR', 'ACB':'AFR',
-                    'MXL':'AMR', 'PUR':'AMR', 'CLM':'AMR', 'PEL':'AMR',
-                    'GIH':'SAS', 'PJL':'SAS', 'BEB':'SAS', 'STU':'SAS', 'ITU':'SAS'
-}
+# population_1000gp = {
+#     'EAS':['CHB', 'JPT', 'CHS', 'CDX', 'KHV'],
+#     'EUR':['CEU', 'TSI', 'FIN', 'GBR', 'IBS'],
+#     'AFR':['YRI', 'LWK', 'GWD', 'MSL', 'ESN', 'ASW', 'ACB'],
+#     'AMR':['MXL', 'PUR', 'CLM', 'PEL'],
+#     'SAS':['GIH', 'PJL', 'BEB', 'STU', 'ITU']
+# }
+# dict_pop_to_superpop = {'CHB':'EAS', 'JPT':'EAS', 'CHS':'EAS', 'CDX':'EAS', 'KHV':'EAS',
+#                     'CEU':'EUR', 'TSI':'EUR', 'FIN':'EUR', 'GBR':'EUR', 'IBS':'EUR',
+#                     'YRI':'AFR', 'LWK':'AFR', 'GWD':'AFR', 'MSL':'AFR', 'ESN':'AFR', 'ASW':'AFR', 'ACB':'AFR',
+#                     'MXL':'AMR', 'PUR':'AMR', 'CLM':'AMR', 'PEL':'AMR',
+#                     'GIH':'SAS', 'PJL':'SAS', 'BEB':'SAS', 'STU':'SAS', 'ITU':'SAS'
+# }
 #List of all samples
-pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/PostProcess/20130606_sample_info.xlsx')
-all_samples = pop_file.Sample.to_list()
-all_pop = pop_file.Population.to_list()
-dict_pop = dict()
-dict_sample_to_pop = dict()
-for  pos, i in enumerate(all_pop):
-    try:
-        dict_pop[i].append(all_samples[pos])
-    except:
-        dict_pop[i] = [all_samples[pos]]
+# pop_file = pd.read_excel(os.path.dirname(os.path.realpath(__file__)) + '/PostProcess/20130606_sample_info.xlsx')
+# all_samples = pop_file.Sample.to_list()
+# all_pop = pop_file.Population.to_list()
+# dict_pop = dict()
+# dict_sample_to_pop = dict()
+# for  pos, i in enumerate(all_pop):
+    # try:
+    #     dict_pop[i].append(all_samples[pos])
+    # except:
+    #     dict_pop[i] = [all_samples[pos]]
     
-    dict_sample_to_pop[all_samples[pos]] = i
-dropdown_all_samples = [{'label': sam, 'value' : sam} for sam in all_samples]
+    # dict_sample_to_pop[all_samples[pos]] = i
+# dropdown_all_samples = [{'label': sam, 'value' : sam} for sam in all_samples]
 #Dropdown available genomes
 onlydir = [f for f in listdir(current_working_directory + 'Genomes') if isdir(join(current_working_directory + 'Genomes', f))]
 onlydir = [x.replace('_', ' ') for x in onlydir]
@@ -1112,7 +1112,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         report = False         
     
     #Open genome_database, get specific line and get annotation path
-    genome_db = pd.read_csv(current_working_directory + 'genome_database.txt', sep = '\t', names = GENOME_DATABASE)
+    genome_db = pd.read_csv(current_working_directory + 'genome_database.txt', sep = '\t', names = GENOME_DATABASE, skiprows = 1)
     
     # annotation_file = [f for f in listdir(current_working_directory + 'annotations/') if isfile(join(current_working_directory + 'annotations/', f)) and f.startswith(genome_ref)]
 
@@ -1125,16 +1125,18 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     #Get annotation file, already with the absolute path. TODO currently only one annotation per genome
     #Also get dictionary and sample dictionary files
     if genome_type == 'ref':
-        annotation_file = genome_db[genome_db.Reference.str.contains(genome_selected) & (genome_db.Enriched == 'None') ].Annotation.values[0]
+        annotation_file = genome_db[genome_db.Reference.str.contains(genome_selected, regex = False) & (genome_db.Enriched == 'None') ].Annotation.values[0]
+        sample_list = None
+        dictionary_directory = None
     else:
-        annotation_file = genome_db[genome_db.Enriched.str.contains(genome_selected)].Annotation.values[0]
-        sample_list = genome_db[genome_db.Enriched.str.contains(genome_selected)].Samples.values[0]
-        dictionary_directory = genome_db[genome_db.Enriched.str.contains(genome_selected)].Dictionary.values[0]
+        annotation_file = genome_db[genome_db.Enriched.str.contains(genome_selected, regex = False)].Annotation.values[0]
+        sample_list = genome_db[genome_db.Enriched.str.contains(genome_selected, regex = False)].Samples.values[0]
+        dictionary_directory = genome_db[genome_db.Enriched.str.contains(genome_selected, regex = False)].Dictionary.values[0]
 
-    command = app_main_directory + 'PostProcess/./submit_job.local.sh ' + current_working_directory + 'Results/' + job_id + ' ' + current_working_directory +  'Genomes/' + genome_selected + ' ' + current_working_directory + 'Genomes/' + genome_ref + ' ' + current_working_directory + 'genome_library/' + genome_idx + (
+    command = app_main_directory + 'PostProcess/./submit_job.final.sh ' + current_working_directory + 'Results/' + job_id + ' ' + current_working_directory +  'Genomes/' + genome_selected + ' ' + current_working_directory + 'Genomes/' + genome_ref + ' ' + current_working_directory + 'genome_library/' + genome_idx + (
         ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
             ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + current_working_directory +  'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + annotation_file + #current_working_directory +  'annotations/' + annotation_file + 
-            ' ' + genome_type + ' ' + app_main_directory + ' ' + dictionary_directory + ' ' + sample_list + ' ' + str(generate_index_ref) + ' ' + str(generate_index_enr) + ' ' + current_working_directory))
+            ' ' + genome_type + ' ' + app_main_directory + ' ' + str(dictionary_directory) + ' ' + str(sample_list) + ' ' + str(generate_index_ref) + ' ' + str(generate_index_enr) + ' ' + current_working_directory))
 
     exeggutor.submit(subprocess.run, command, shell=True)
     return '/load','?job=' + job_id
@@ -1199,8 +1201,6 @@ def refreshSearch(n, dir_name):
     è stata fatta.
     Quando la ricerca è finita, visualizza un link per passare alla pagina dei risultati
     Se il job non esiste, ritorna un avviso di errore
-    TODO sarebbe più comodo che automaticamente la pagina si reindirizzi ai risultati quando il job è fatto
-
     '''
     if n is None:
         raise PreventUpdate    
@@ -1541,7 +1541,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
             more_info_col.append('Show Targets')
         df[''] = more_info_col
         
-        #TODO if genoma selezionato è hg19/38, con varianti, allora aggiungo queste pop (se per esempio seleziono mouse, devo mettere i ceppi)
+        population_1000gp = associateSample.loadSampleAssociation(job_directory + 'sampleID.txt')[2]
         super_populations = [{'label':i, 'value':i} for i in population_1000gp.keys()]
         populations = []
         for k in population_1000gp.keys():
@@ -1702,7 +1702,8 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
             radar_href = 'assets/Img/' + job_id + '/' + radar_img
         except:
             radar_href = ''
-        #TODO if genoma selezionato è hg19/38, con varianti, allora aggiungo queste pop (se per esempio seleziono mouse, devo mettere i ceppi)
+        
+        population_1000gp = associateSample.loadSampleAssociation(job_directory + 'sampleID.txt')[2]
         super_populations = [{'label':i, 'value':i} for i in population_1000gp.keys()]
         populations = []
         for k in population_1000gp.keys():
@@ -2103,22 +2104,30 @@ def generate_table_position(dataframe, id_table, page, mms, bulges, guide = '', 
 @app.callback(
     [Output('dropdown-population-sample', 'options'),
     Output('dropdown-population-sample', 'value')],
-    [Input('dropdown-superpopulation-sample', 'value')]
+    [Input('dropdown-superpopulation-sample', 'value')],
+    [State('url', 'search')]
 )
-def updatePopulationDrop(superpop):
+def updatePopulationDrop(superpop, search):
     if superpop is None or superpop is '':
         raise PreventUpdate
-    return [{'label':i, 'value':i} for i in population_1000gp[superpop]], None   #TODO adjust for other population file (eg mouse)
+    job_id = search.split('=')[-1]
+    job_directory = current_working_directory + 'Results/' + job_id + '/'
+    population_1000gp = associateSample.loadSampleAssociation(job_directory + 'sampleID.txt')[2]
+    return [{'label':i, 'value':i} for i in population_1000gp[superpop]], None 
 
 #Callback to update the sample based on population selected
 @app.callback(
     [Output('dropdown-sample','options'),
     Output('dropdown-sample','value')],
-    [Input('dropdown-population-sample', 'value')]
+    [Input('dropdown-population-sample', 'value')],
+    [State('url', 'search')]
 )
-def updateSampleDrop(pop):
+def updateSampleDrop(pop, search):
     if pop is None or pop is '':
         return [], None
+    job_id = search.split('=')[-1]
+    job_directory = current_working_directory + 'Results/' + job_id + '/'
+    dict_pop = associateSample.loadSampleAssociation(job_directory + 'sampleID.txt')[3]
     return [{'label': sam, 'value' : sam} for sam in dict_pop[pop]], None 
 
 #Callback to update the hidden div filter
@@ -2177,6 +2186,7 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
     btn_sample_section.append(nNext)
     job_id = search.split('=')[-1]
     job_directory = current_working_directory + 'Results/' + job_id + '/'
+    population_1000gp = associateSample.loadSampleAssociation(job_directory + 'sampleID.txt')[2]
     with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
@@ -3123,7 +3133,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, hide_reference
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
-        
+    
     genome_type = 'ref'
     if '+' in genome_type_f:
         genome_type = 'var'
@@ -3205,7 +3215,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, hide_reference
                                 
                         },
                         
-                        # {#TODO colora altro colore quelle con PAM Creation
+                        # {
                         # 'if': {
                         #         'filter_query': '{Chromosome} eq "chr2"',
                         #         #'filter_query': '{Direction} eq +', 
@@ -3232,6 +3242,7 @@ def update_table_subset(page_current, page_size, sort_by, filter, hide_reference
         page_current*page_size:(page_current+ 1)*page_size
     ].to_dict('records')
     if genome_type != 'ref':
+        dict_sample_to_pop, dict_pop_to_superpop = associateSample.loadSampleAssociation(job_directory + 'sampleID.txt')[:2]
         for row in data_to_send:
             summarized_sample_cell = dict()
             for s in row['Samples'].split(','):
@@ -3353,7 +3364,7 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
                                 
                         }
                         
-                        # {#TODO colora altro colore quelle con PAM Creation
+                        # {
                         # 'if': {
                         #         'filter_query': '{Chromosome} eq "chr2"',
                         #         #'filter_query': '{Direction} eq +', 
@@ -3400,6 +3411,7 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
         all_params = p.read()
         genome_type_f = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
         ref_comp = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+
     guide = hash_guide[1:hash_guide.find('new')]
     genome_type = 'ref'
     if '+' in genome_type_f:
@@ -3481,7 +3493,7 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
                             #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
                             'background-color':'rgba(0, 0, 0,0.15)'#'rgb(255, 102, 102)'
                         }
-                        # {#TODO colora altro colore quelle con PAM Creation
+                        # {
                         # 'if': {
                         #         'filter_query': '{Chromosome} eq "chr2"',
                         #         #'filter_query': '{Direction} eq +', 
@@ -3508,6 +3520,7 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
         page_current*page_size:(page_current+ 1)*page_size
     ].to_dict('records')
     if genome_type != 'ref':
+        dict_sample_to_pop, dict_pop_to_superpop = associateSample.loadSampleAssociation(job_directory + 'sampleID.txt')[:2]
         for row in data_to_send:
             summarized_sample_cell = dict()
             for s in row['Samples'].split(','):
@@ -3659,6 +3672,7 @@ def samplePage(job_id, hash):
 )
 def update_table_sample(page_current, page_size, sort_by, filter, search, hash):
     job_id = search.split('=')[-1]
+    job_directory = current_working_directory + 'Results/' + job_id + '/'
     hash = hash.split('#')[1]
     guide = hash[:hash.find('-Sample-')]
     sample = hash[hash.rfind('-') + 1:]
@@ -3705,7 +3719,7 @@ def update_table_sample(page_current, page_size, sort_by, filter, search, hash):
         )
 
     #Calculate sample count
-    
+    dict_sample_to_pop, dict_pop_to_superpop = associateSample.loadSampleAssociation(job_directory + 'sampleID.txt')[:2]
     data_to_send=dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
     ].to_dict('records')
@@ -3954,6 +3968,7 @@ def clusterPage(job_id, hash):
 )
 def update_table_cluster(page_current, page_size, sort_by, filter, hide_reference, search, hash):
     job_id = search.split('=')[-1]
+    job_directory = current_working_directory + 'Results/' + job_id + '/'
     hash = hash.split('#')[1]
     guide = hash[:hash.find('-Pos-')]
     chr_pos = hash[hash.find('-Pos-') + 5:]
@@ -4031,6 +4046,7 @@ def update_table_cluster(page_current, page_size, sort_by, filter, hide_referenc
         page_current*page_size:(page_current+ 1)*page_size
     ].to_dict('records')
     if genome_type != 'ref':
+        dict_sample_to_pop, dict_pop_to_superpop = associateSample.loadSampleAssociation(job_directory + 'sampleID.txt')[:2]
         for row in data_to_send:
             summarized_sample_cell = dict()
             for s in row['Samples'].split(','): 
@@ -4059,6 +4075,7 @@ def update_table_cluster(page_current, page_size, sort_by, filter, hide_referenc
 )
 def update_iupac_scomposition_table_cluster(page_current, page_size, sort_by, filter, search, hash):
     job_id = search.split('=')[-1]
+    job_directory = current_working_directory + 'Results/' + job_id + '/'
     hash = hash.split('#')[1]
     guide = hash[:hash.find('-Pos-')]
     chr_pos = hash[hash.find('-Pos-') + 5:]
@@ -4128,11 +4145,12 @@ def update_iupac_scomposition_table_cluster(page_current, page_size, sort_by, fi
         page_current*page_size:(page_current+ 1)*page_size
     ].to_dict('records')
     if genome_type != 'ref':
+        dict_sample_to_pop, dict_pop_to_superpop = associateSample.loadSampleAssociation(job_directory + 'sampleID.txt')[:2]
         for row in data_to_send:
             summarized_sample_cell = dict()
             for s in row['Samples'].split(','):
                 if s == 'n':
-                    raise PreventUpdate     #If a target have n, it means it's REF, because either all have samples or the single target is REF
+                    break     #If a target have n, it means it's REF, because either all have samples or the single target is REF
                 try:
                     summarized_sample_cell[dict_pop_to_superpop[dict_sample_to_pop[s]]] += 1
                 except:

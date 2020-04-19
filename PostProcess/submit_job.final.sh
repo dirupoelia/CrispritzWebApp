@@ -44,13 +44,13 @@ if [ ${23} = 'True' ]; then
     cd ${25}
     crispritz.py index-genome $name_reference $3 $1/pam_indexing.txt -bMax $max_bulge
     cd $1
-done
+fi
 #Start indexing enr genome
 if [ ${24} = 'True' ]; then
     cd ${25}
     crispritz.py index-genome $name_enriched $3 $1/pam_indexing.txt -bMax $max_bulge
     cd $1
-done
+fi
 
 #Start search index     #NOTE new version 2.1.2 of crispritz needed
 echo 'Search-index\tStart\t'$(date) >> log.txt
@@ -161,6 +161,7 @@ if [ ${19} = 'ref' ]; then
     fi
 
 elif [ ${19} = 'var' ]; then
+    cp ${22} ./sampleID.txt     #Copy sampleId list file to result directory
     echo 'PostProcess\tStart\t'$(date) >> log.txt
     echo 'Start cluster var'
     echo 'PostProcess_output' > output.txt
@@ -258,6 +259,7 @@ elif [ ${19} = 'var' ]; then
     fi
 
 else    #Type search = both
+    cp ${22} ./sampleID.txt     #Copy sampleId list file to result directory
     echo 'Report\tStart\t'$(date) >> log.txt
     #Estract common, semicommon and unique
     echo 'Start creation semicommon, common, unique'
