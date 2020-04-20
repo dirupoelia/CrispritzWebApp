@@ -52,6 +52,7 @@ COL_BOTH_TYPE = ['text','text','text','text','numeric','numeric', 'text','numeri
 COL_BOTH_RENAME = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'PAM Creation', 11 : 'Variant Unique', 12:'Samples', 13:'Annotation Type', 14:'Correct Guide'}
 GENOME_DATABASE = ['Reference', 'Enriched', 'Samples', 'Dictionary', 'Annotation']
+DISPLAY_OFFLINE = 'none'    #NOTE change to '' for online versione
 VALID_CHARS = {'a', 'A', 't', 'T', 'c', 'C','g', 'G',
             "R",
             "Y",
@@ -337,12 +338,17 @@ final_list.append(
                             id = 'div-pam',
                             className = 'flex-div-pam'
                         ),
+                        html.Br(),
+                        html.Button("Add New Genome", id = 'add-genome', style = {'margin-right':'5px'}),
+                        html.Div('', id = 'genome-job', style = {'display':'none'}),
+                        html.Button("Update dictionary", id = 'update-dict', style = {'margin-left':'5px'}),
+                        html.Div('', id = 'dict-job', style = {'display':'none'}),
                         html.Div(
                             [
                                 html.Ul(
                                     [html.Li(
                                         [html.A('Contact us', href = URL + '/contacts', target="_blank"),' to request new genomes availability in the dropdown list'],
-                                        style = {'margin-top':'5%'}
+                                        style = {'margin-top':'5%', 'display': DISPLAY_OFFLINE}
                                     ),
                                     # html.Li(
                                     #     [html.A('Download', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank"), ' the offline version for more custom parameters']
@@ -417,6 +423,7 @@ final_list.append(
                                 {'label':'Notify me by email','value':'email', 'disabled':False}
                             ], 
                             id = 'checklist-advanced',
+                            style = {'display': DISPLAY_OFFLINE}
                         ),
                         dbc.Fade(
                             [
@@ -431,7 +438,7 @@ final_list.append(
                                     ]
                                 )
                             ],
-                            id = 'fade', is_in= False, appear= False
+                            id = 'fade', is_in= False, appear= False, 
                         ),
                         #html.H3('Submit', style = {'margin-top':'0'}),
                         html.Div(
@@ -3437,7 +3444,7 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
 
     if not os.path.exists(scomposition_file):    #Example    job_id.X.0.4.GUIDE.chrom.position.scomposition.txt
         # subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $8==' + mms + ' && $9==' + bulge_s +'\' > ' + scomposition_file], shell = True)
-        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $9==' + bulge_s +'\' > ' + scomposition_file], shell = True)
+        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $9==' + bulge_s + ' && $13!=\"n\"' +'\' > ' + scomposition_file], shell = True)
     
     if os.path.getsize(scomposition_file) > 0:          #Check if result grep has at least 1 result
         df = pd.read_csv(scomposition_file, header = None, sep = '\t')
@@ -3799,11 +3806,11 @@ def clusterPage(job_id, hash):
     if genome_type != 'ref':                   
         iupac_scomposition_visibility = {}
         if not os.path.exists(scomposition_file):    #Example    job_id.chr_pos.guide.scomposition.txt
-            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + scomposition_file], shell = True)
+            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\" && $13!=\"n\"\' > ' + scomposition_file], shell = True)
 
     final_list.append(html.P(
         [
-            html.P('IUPAC scomposition for the target in the selected position', style = iupac_scomposition_visibility),
+            html.P('List of all the configurations for the target in the selected position.', style = iupac_scomposition_visibility),
             dcc.Checklist(
                 options = [{'label': 'Hide Reference Targets', 'value': 'hide-ref'}, {'label': 'Show only TOP1 Target', 'value': 'hide-cluster'}], 
                 id='hide-reference-targets', value = value_hide_reference, style = style_hide_reference
@@ -3876,7 +3883,7 @@ def clusterPage(job_id, hash):
 
     #Cluster Table
     final_list.append(
-        'List of Targets found for the selected position. If a target has one or more IUPAC characters, the table \"IUPAC Scomposition\" lists the possible real sequences along with the corresponding samples list.', # The rows highlighted in red indicates that the target was found only in the genome with variants.',
+        'List of Targets found for the selected position. Other possible configurations of the target are listed in the table above, along with the corresponding samples list.', # The rows highlighted in red indicates that the target was found only in the genome with variants.',
     )
     final_list.append(          
         html.Div( 
@@ -4214,6 +4221,39 @@ def downloadLinkPosition(n, file_to_load, search): #file to load =
         return html.A('Download zip', href=URL+'/data/' + job_id + '/' + file_to_load, target = '_blank' ), True
     
     return 'Generating download link, Please wait...', False
+
+############################ GUI CALLBACKS #########################
+#Add a new genome
+@app.callback(
+    Output("genome-job","value"),        
+    [Input("add-genome","n_clicks")],  
+)
+def add_genome(nAdd):
+    """
+    Bottone per avviare la GUI in Tkinter per l'aggiunta di genomi offline
+    """
+    from GUI import ChooseFiles as cf
+    if nAdd is None:
+        raise PreventUpdate
+    cf.startChooseFiles()
+    return ''
+
+#Update an existing dictionary    
+@app.callback(
+    Output("dict-job","value"),        
+    [Input("update-dict","n_clicks")],  
+)
+def update_dict(nUpd):
+    """
+    Bottone per avviare la GUI in Tkinter per l'aggiornamento di dizionari
+    """
+    from GUI import UpdateDict as ud
+    if nUpd is None:
+        raise PreventUpdate
+    ud.startUpdateDict()
+    return ''
+
+
 
 if __name__ == '__main__':
     #app.run_server(debug=True)

@@ -1094,8 +1094,9 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if ref_comparison:
         genome_type = 'both'    #NOTE change submit job script name. al momento ok .test.
 
-    #TODO aggiornare cartella dizionari perchè sia dinamica
-    dictionary_directory = current_working_directory + 'dictionaries/dictionary_hg38'
+    #TODO aggiornare cartella dizionari perchè sia dinamica (per ora distingue solo hg38/19)
+    select_dict_name = genome_ref.split('_')[0]
+    dictionary_directory = current_working_directory + 'dictionaries/dictionary_' + select_dict_name
     sample_list = current_working_directory + 'samplesID/samples_1000genomeproject.txt'
     generate_index_ref = False
     generate_index_enr = False
@@ -3227,9 +3228,6 @@ def update_table_subset(page_current, page_size, sort_by, filter, hide_reference
     State('table-subset-target', 'selected_cells')]
 )
 def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
-    #NOTE tabella secondaria della scomposizione ora non serve, non cancello il codice ma uso PreventUpdate per non azionare la funzione
-    if False:
-        raise PreventUpdate
     if active_cel is  None:
         raise PreventUpdate
     fl = []
@@ -3357,9 +3355,6 @@ def loadFullSubsetTable(active_cel, data, cols, search, style_data, sel_cell):
     State('table-subset-target', 'data')]
 )
 def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, search, hash_guide, active_cel, data):
-    #NOTE tabella secondaria della scomposizione ora non serve, non cancello il codice ma uso PreventUpdate per non azionare la funzione
-    if False:
-        raise PreventUpdate
     if active_cel is None:
         raise PreventUpdate
     job_id = search.split('=')[-1]
@@ -3393,7 +3388,7 @@ def update_table_subsetSecondTable(page_current, page_size, sort_by, filter, sea
 
     if not os.path.exists(scomposition_file):    #Example    job_id.X.0.4.GUIDE.chrom.position.scomposition.txt
         # subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $8==' + mms + ' && $9==' + bulge_s +'\' > ' + scomposition_file], shell = True)
-        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $9==' + bulge_s +'\' > ' + scomposition_file], shell = True)
+        subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + pos + ' && $4==\"' + chrom + '\" && $9==' + bulge_s + ' && $13!=\"n\"' + '\' > ' + scomposition_file], shell = True)
     
     if os.path.getsize(scomposition_file) > 0:          #Check if result grep has at least 1 result
         df = pd.read_csv(scomposition_file, header = None, sep = '\t')
@@ -3753,11 +3748,11 @@ def clusterPage(job_id, hash):
     if genome_type != 'ref':                   
         iupac_scomposition_visibility = {}
         if not os.path.exists(scomposition_file):    #Example    job_id.chr_pos.guide.scomposition.txt
-            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\"\' > ' + scomposition_file], shell = True)
+            subprocess.call(['LC_ALL=C fgrep ' + guide + ' ' + current_working_directory + 'Results/'+ job_id + '/' + job_id + file_to_grep + ' |  awk \'$6==' + position + ' && $4==\"' + chromosome + '\" && $13!=\"n\"\' > ' + scomposition_file], shell = True)
 
     final_list.append(html.P(
         [
-            html.P('IUPAC scomposition for the target in the selected position', style = iupac_scomposition_visibility),
+            html.P('List of all the configurations for the target in the selected position.', style = iupac_scomposition_visibility),
             dcc.Checklist(
                 options = [{'label': 'Hide Reference Targets', 'value': 'hide-ref'}, {'label': 'Show only TOP1 Target', 'value': 'hide-cluster'}], 
                 id='hide-reference-targets', value = value_hide_reference, style = style_hide_reference
@@ -3830,7 +3825,7 @@ def clusterPage(job_id, hash):
 
     #Cluster Table
     final_list.append(
-        'List of Targets found for the selected position. If a target has one or more IUPAC characters, the table \"IUPAC Scomposition\" lists the possible real sequences along with the corresponding samples list.', # The rows highlighted in red indicates that the target was found only in the genome with variants.',
+        'List of Targets found for the selected position. Other possible configurations of the target are listed in the table above, along with the corresponding samples list.', # The rows highlighted in red indicates that the target was found only in the genome with variants.',
     )
     final_list.append(          
         html.Div( 
