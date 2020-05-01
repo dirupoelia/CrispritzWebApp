@@ -4,8 +4,8 @@
 Merge of annotator, calc_samples_faster.py and scores
 Prende in input il file dei top1, ordinati per chr, e estrae i samples corrispondenti. Per ogni target, salva l'insieme dei sample in samples.all.txt, crea le combinazioni tenendo i target reali
 in samples.txt, poi calcola l'annotazione corrispondente e crea il file Annotation.targets e  i vari summaries. Salva in samples.annotation I REF, i VAR degli Uniq, i VAR e i REF dei Semicommon
+Added compatibility with dictionary chr_pos -> s1,s2;A,C/sNew;A,T
 '''
-
 
 #NOTE serve 20130606_sample_info.xlsx nella stessa cartella di questo script 
 #argv1 è il file .bed con le annotazioni
@@ -83,13 +83,15 @@ def get_mm_pam_scores():
 def revcom(s):
     basecomp = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'U': 'A'}
     letters = list(s[::-1])
-    letters = [basecomp[base] for base in letters]
+    try:
+        letters = [basecomp[base] for base in letters]
+    except:
+        return None     #If some IUPAC were not translated
     return ''.join(letters)
 
 # Calculates CFD score
 def calc_cfd(guide_seq, sg, pam, mm_scores, pam_scores):
     score = 1
-    dna_gp = 0
     sg = sg.replace('T', 'U')
     guide_seq = guide_seq.replace('T', 'U')
     s_list = list(sg)
@@ -98,10 +100,16 @@ def calc_cfd(guide_seq, sg, pam, mm_scores, pam_scores):
         if guide_seq_list[i] == sl:
             score *= 1
         else:
-            key = 'r' + guide_seq_list[i] + ':d' + revcom(sl) + ',' + str(i + 1)
-            score *= mm_scores[key]
-            if '-' in guide_seq_list[i]:
-                dna_gp = dna_gp + 1 
+            try:    #Catch exception if IUPAC character
+                key = 'r' + guide_seq_list[i] + ':d' + revcom(sl) + ',' + str(i + 1)
+            except:
+                score = 0
+                break
+            try:
+                score *= mm_scores[key]
+            except: #If '-' is in first position, i do not have the score for that position
+                pass
+            
     score *= pam_scores[pam]
     return score
 
@@ -217,7 +225,7 @@ outFileSummary = open(outputFile + '.Annotation.summary.txt', 'w')  # outfile op
 process = subprocess.Popen(['wc', '-l', resultsFile], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 out, err = process.communicate()
 total_line = int(out.decode('UTF-8').split(' ')[0])
-if total_line < 2:
+if total_line < 1:
     print('WARNING! Input file has no targets')
     sys.exit()
 if total_line < 10:
@@ -272,6 +280,7 @@ blank_add_end = ''
 pam_multiplier = 1
 pam_multiplier_negative = 0
 start_sample_for_cluster = 0
+cluster_step = 1    #If PAM end, go left to right
 sum_for_mms = 0 #when updatig lowercase for nem_mm, this value represents the offset for the pam position (mainly needed only if pam at beginning)
 end_sample_for_cluster = max_dna_bulges + max_rna_bulges  #Values to check new iupac when working on cluster targets
 if pam_at_beginning:
@@ -279,8 +288,9 @@ if pam_at_beginning:
     blank_add_end = ' '
     pam_multiplier = 0              #Since ' ' are at end, and '-' to reinsert are before the ' ', need to put max_dna_bulges and rna_bulges of target to 0
     pam_multiplier_negative = 1
-    start_sample_for_cluster = len_pam + guide_len - max_rna_bulges
-    end_sample_for_cluster = len_pam + guide_len + max_dna_bulges
+    end_sample_for_cluster = len_pam + guide_len - max_rna_bulges       #For PAM at beginning, start from last nucleotide and go to left
+    start_sample_for_cluster = len_pam + guide_len + max_dna_bulges
+    cluster_step = -1   #If PAM beginning, go right to left
     sum_for_mms = len_pam
 outFileSample.write(header + '\n')
 # outFileSampleAll.write(header + '\n')
@@ -526,42 +536,78 @@ for line in inResult:
             
             #DNA and X cases can have more characters at beginning
             remove_target = False
-            if line[0] != 'RNA':
-                iupac_pos = 0
-                no_char = 0
-                tmp_intersection = set()
-                for i in range (start_sample_for_cluster, end_sample_for_cluster):    #Check only on some characters, not all target
-                    if target_to_modify[i] == ' ':
-                        no_char += 1
-                    if target_to_modify[i] in iupac_code:
-                        if line[6] == '-':
-                            iupac_pos = str(int(line[4]) + (len(target_to_modify) - i - 1) + 1 - (no_char * pam_multiplier_negative)  )
-                        else:
-                            iupac_pos = str(int(line[4]) + i + 1 - no_char)
-                        try:
-                            a = (datastore[chr_name + ',' + iupac_pos])   #NOTE se non ha samples, ritorna ;ref,var
-                        except Exception as e:
-                            print(e)
-                            print('Error at', target_to_modify, ' pos line', line[4], ', iupac pos', str(iupac_pos), ', i:', str(i))
-                            continue
-                        ref_char = a.split(';')[-1].split(',')[0]
-                        var_char = a.split(';')[-1].split(',')[1]
-                        if line[6] == '-':
-                            ref_char = rev_comp(ref_char)
-                            var_char = rev_comp(var_char)
+            iupac_pos = 0
+            # no_char = 0
+            bulge_found = 0
+            target_to_modify = [c for c in target_to_modify if c != ' ' ]
+            total_bulges = 0
+            pam_sum_cluster = 0
+            if line[0] == 'RNA':
+                total_bulges = int(line[bulge_pos])
+                pam_sum_cluster = 1
+            tmp_intersection = set()
+            for i in range (min(start_sample_for_cluster, len(target_to_modify) - 1), end_sample_for_cluster, cluster_step):    #Check only on some characters, not all target
+                if target_to_modify[i] == '-':
+                    bulge_found += 1
+                if target_to_modify[i] in iupac_code:
+                    if line[6] == '-':
+                        # iupac_pos = str(int(line[4]) + (len(target_to_modify) - i - 1) + 1 - (no_char * pam_multiplier_negative)  )
+                        iupac_pos = str(int(line[4]) + (len(target_to_modify) - i) - (total_bulges - bulge_found) + pam_sum_cluster * pam_multiplier_negative)
+                    else:
+                        # iupac_pos = str(int(line[4]) + i + 1 - no_char)
+                        iupac_pos = str(int(line[4]) + i + 1 - (total_bulges - bulge_found) * pam_multiplier_negative)
+                    try:
+                        a = (datastore[chr_name + ',' + iupac_pos])   #NOTE se non ha samples, ritorna ;ref,var
+                    except Exception as e:
+                        print(e)
+                        print('Error at', target_to_modify, ' pos line', line[4], ', iupac pos', str(iupac_pos), ', i:', str(i))
+                        continue
+                    else:
+                        a = a.split('/')
+                        for samples_chars in a:     #samples_char can be 'sample1,sample2;A,T' or ';A,T'
+                            samples_chars = samples_chars.split(';')
+                            ref_char = samples_chars[-1].split(',')[0]
+                            var_char = samples_chars[-1].split(',')[1]
+                
+                            if line[6] == '-':
+                                ref_char = rev_comp(ref_char)
+                                var_char = rev_comp(var_char)
 
-                        if 'n' in last_samples:
-                            target_to_modify[i] = a.split(';')[-1].split(',')[0]   #RefChar
-                        else:       #Some samples were already calculated for the target
-                            sample_set = set(a.split(';')[0].split(','))   #set of sample associated with the current IUPAC
+                            if 'n' in last_samples:
+                                target_to_modify[i] = ref_char  #RefChar
+                                break       #Go to next iupac
+
+                            #Some samples were already calculated for the target
+                            sample_set = set(samples_chars[0].split(','))   #set of sample associated with the current IUPAC
                             tmp_intersection = sample_set & last_samples        #Intersection
                             if tmp_intersection:
                                 if len(last_samples) == len(tmp_intersection):      #Put var char only if all sample of the top1 are in this new iupac
-                                    target_to_modify[i] = a.split(';')[-1].split(',')[1]   #VarChar
+                                    target_to_modify[i] = var_char   #VarChar
+                                    break   #Go to next iupac
                                 else:
                                     remove_target = True
-                            else:   #No intersection, put ref char
-                                target_to_modify[i] = a.split(';')[-1].split(',')[0]   #RefChar
+                                    break   #There's at least one target in common, but in this else not all samples are in common, meaning  that the next sample_chars either has no common sample or <len(lastsamples) since it will not have this common sample
+                        else: #No break encountered #No intersection on all the samples_chars, put ref char
+                            target_to_modify[i] = ref_char   #RefChar
+
+                    # ref_char = a.split(';')[-1].split(',')[0]
+                    # var_char = a.split(';')[-1].split(',')[1]
+                    # if line[6] == '-':
+                    #     ref_char = rev_comp(ref_char)
+                    #     var_char = rev_comp(var_char)
+
+                    # if 'n' in last_samples:
+                    #     target_to_modify[i] = a.split(';')[-1].split(',')[0]   #RefChar
+                    # else:       #Some samples were already calculated for the target
+                    #     sample_set = set(a.split(';')[0].split(','))   #set of sample associated with the current IUPAC
+                    #     tmp_intersection = sample_set & last_samples        #Intersection
+                    #     if tmp_intersection:
+                    #         if len(last_samples) == len(tmp_intersection):      #Put var char only if all sample of the top1 are in this new iupac
+                    #             target_to_modify[i] = a.split(';')[-1].split(',')[1]   #VarChar
+                    #         else:
+                    #             remove_target = True
+                    #     else:   #No intersection, put ref char
+                    #         target_to_modify[i] = a.split(';')[-1].split(',')[0]   #RefChar
 
             if remove_target:
                 continue
@@ -623,25 +669,43 @@ for line in inResult:
             iupac_pos = str(int(x[4]) + pos + 1 - bulge_found)
             try:
                 a = (datastore[chr_name + ',' + iupac_pos])   #NOTE se non ha samples, ritorna ;ref,var
-                
-                ref_char = a.split(';')[-1].split(',')[0]
-                var_char = a.split(';')[-1].split(',')[1]
-
-                if x[6] == '-':
-                    ref_char = rev_comp(ref_char)
-                    var_char = rev_comp(var_char)
-
-                a = a.split(';')[0]
-                pos_snp.append(pos)
-                pos_snp_chr.append(iupac_pos)
-                tuple_var_ref.append((var_char, ref_char))
             except Exception as e:      #NOTE this error can occure if i have an IUPAC in a target that has no vcf file
                 print(e)
                 print('Error at ' + line.rstrip() + ', with char ' + char + ', at pos ', iupac_pos, '. No corresponding SNP position was found in the vcf file')
-                a = []
+                samples_this_position = []
                 total_error = total_error + 1
-            if a:
-                set_list.append(set(a.split(',')))
+            else:   
+                a = a.split('/')
+                samples_this_position = []      #Set of samples in this position (even if they have different var character)
+                character_list =  []          #List of var characters, later add the reference character
+                for samples_chars in a:     #samples_char can be 'sample1,sample2;A,T' or ';A,T'
+                    samples_chars = samples_chars.split(';')
+                    ref_char = samples_chars[-1].split(',')[0]
+                    var_char = samples_chars[-1].split(',')[1]
+                    if x[6] == '-':
+                        ref_char = rev_comp(ref_char)
+                        var_char = rev_comp(var_char)
+                    character_list.append(var_char)
+                    if samples_chars[0]:
+                        samples_this_position.extend(samples_chars[0].split(','))
+                character_list.append(ref_char)    
+                pos_snp.append(pos)
+                pos_snp_chr.append(iupac_pos)
+                tuple_var_ref.append(tuple(character_list))
+            #     ref_char = a.split(';')[-1].split(',')[0]
+            #     var_char = a.split(';')[-1].split(',')[1]
+
+            #     if x[6] == '-':
+            #         ref_char = rev_comp(ref_char)
+            #         var_char = rev_comp(var_char)
+
+            #     a = a.split(';')[0]
+            #     pos_snp.append(pos)
+            #     pos_snp_chr.append(iupac_pos)
+            #     tuple_var_ref.append((var_char, ref_char))
+            
+            if samples_this_position:
+                set_list.append(set(samples_this_position))
             else:
                 set_list.append(set())
     #Get Union of all samples
@@ -679,20 +743,39 @@ for line in inResult:
         set_list2 = []
         final_result = x.copy()
         for ele_pos,p in enumerate(pos_snp_chr):
-            a = (datastore[chr_name + ',' + p])        
-            samples = a.split(';')[0] #a[:-4] 
+            try:
+                a = (datastore[chr_name + ',' + p])        
+            except:
+                set_list2.append(set())
+            else:
+                a = a.split('/')
+                for samples_chars in a:     #samples_char can be 'sample1,sample2;A,T' or ';A,T'
+                    samples_chars = samples_chars.split(';')
+                    # ref_char = samples_chars[-1].split(',')[0]
+                    var_char = samples_chars[-1].split(',')[1]
+                    if x[6] == '-':
+                        # ref_char = rev_comp(ref_char)
+                        var_char = rev_comp(var_char)
+                    
+                    if t[pos_snp[ele_pos]].upper() == var_char:
+                        if samples_chars[0]:
+                            set_list2.append(set(samples_chars[0].split(',')))
+                        else:
+                            set_list2.append(set())
+                        break
+            # samples = a.split(';')[0] #a[:-4] 
             
-            ref = a.split(';')[-1].split(',')[0]
-            var = a.split(';')[-1].split(',')[1]
-            if x[6] == '-':
-                ref = rev_comp(ref)
-                var = rev_comp(var)
+            # ref = a.split(';')[-1].split(',')[0]
+            # var = a.split(';')[-1].split(',')[1]
+            # if x[6] == '-':
+            #     ref = rev_comp(ref)
+            #     var = rev_comp(var)
             
-            if t[pos_snp[ele_pos]].upper() == var:   
-                if samples:
-                    set_list2.append(set(samples.split(',')))
-                else:
-                    set_list2.append(set())
+            # if t[pos_snp[ele_pos]].upper() == var:   
+            #     if samples:
+            #         set_list2.append(set(samples.split(',')))
+            #     else:
+            #         set_list2.append(set())
         
         if set_list2:
             common_samples = set.intersection(*set_list2)
