@@ -170,13 +170,13 @@ def searchTST():
 		pam_guide = len(open(PAM).readline().split(" ")[0])
 
 		if (pam_guide != 23):
-			print("WARNING: The CFD score and the Doench score can be calculated only for guides with 20nt and a 3nt PAM")
+			print("WARNING: The CFD score and the Doench score can be calculated only for guides with 20bp")
 			sys.exit()
 		pam_seq_check_ngg = open(PAM).readline().split(" ")[0].upper()
-		if ("NGG" not in pam_seq_check_ngg):
-			# print("WARNING: The model used for the CFD and Doench scores are based on the NGG PAM, the scores may not be valid for other PAMs")
-			print("WARNING: The model used for the CFD and Doench scores are based on the NGG PAM")
-			sys.exit()
+		# if ("NGG" not in pam_seq_check_ngg):
+		# 	# print("WARNING: The model used for the CFD and Doench scores are based on the NGG PAM, the scores may not be valid for other PAMs")
+		# 	print("WARNING: The model used for the CFD and Doench scores are based on the NGG PAM")
+		# 	sys.exit()
 		target_filename = os.path.realpath(nameResult)
 		subprocess.run([corrected_origin_path+'Python_Scripts/Scores/scores.py', target_filename + '.targets.txt', idx_genome_fasta + "/", str(PAM), str(fileGuide)])
 
@@ -263,13 +263,13 @@ def searchBruteForce():
 		 
 		pam_guide = len(open(filePAM).readline().split(" ")[0])
 		if (pam_guide != 23):
-			print("WARNING: The CFD score and the Doench score can be calculated only for guides with 20nt and a 3nt PAM")
+			print("WARNING: The CFD score and the Doench score can be calculated only for guides with 20bp")
 			sys.exit()
 		pam_seq_check_ngg = open(filePAM).readline().split(" ")[0].upper()
-		if ("NGG" not in pam_seq_check_ngg):
-			# print("WARNING: The model used for the CFD and Doench scores are based on the NGG PAM, the scores may not be valid for other PAMs")
-			print("WARNING: The model used for the CFD and Doench scores are based on the NGG PAM")
-			sys.exit()
+		# if ("NGG" not in pam_seq_check_ngg):
+		# 	# print("WARNING: The model used for the CFD and Doench scores are based on the NGG PAM, the scores may not be valid for other PAMs")
+		# 	print("WARNING: The model used for the CFD and Doench scores are based on the NGG PAM")
+		# 	sys.exit()
 		target_filename = os.path.realpath(result)
 		subprocess.run([corrected_origin_path+'Python_Scripts/Scores/scores.py', target_filename + '.targets.txt', idx_genome_fasta + "/", str(filePAM), str(fileGuide)])
 
@@ -386,6 +386,7 @@ def genomeEnrichment():
 	'''
 	if (len(sys.argv) < 4 or 'help' in sys.argv[1:]):
 		print("WARNING: Too few arguments to function add-variants. Please provide:",
+		"\nEXAMPLE CALL: crispritz.py add-variants vcfFilesDirectory/ genomeDirectory/\n",
 		"\n\n<vcfFilesDirectory> : Directory containing VCF files, need to be separated into single chromosome files (multi-sample files will be collapsed into one fake individual)",
 		"\n\n<genomeDirectory> : Directory containing a genome in .fa or .fasta format, need to be separated into single chromosome files.")
 		sys.exit()
@@ -564,6 +565,7 @@ def processData():
 	'''
 	if (len(sys.argv) < 9 or 'help' in sys.argv[1:]):
 		print("WARNING: Too few arguments to function process-data. Please provide:",
+		"\nEXAMPLE CALL: crispritz.py process-data -reftarget resultsReferenceTargets.txt -vartarget resultsVariantTargets.txt pamFile.txt guidesFile.txt annotationsFile.bed outputFile -sample dictionaryDirectory/ -refgenome genomeReferenceDirectory/\n",
 		"\n-reftarget <refTargetsFile> : Targets file, containing all genomic targets found in the reference genome",
 		"\n-vartarget <varTargetsFile> : Targets file, containing all genomic targets found in the variant genome",
 		"\n<pamFile> : Text file containing the PAM sequence (including a number of Ns equal to the guide length) and a space separated number indicating the length of the PAM sequence",

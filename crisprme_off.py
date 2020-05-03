@@ -1014,13 +1014,13 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if genome_idx == '':
         if int(max_bulges) > 0:
             generate_index_enr = True
-            with open(result_dir + 'pam_indexing.txt', 'w+') as pam_id_file:
+            with open(result_dir + '/pam_indexing.txt', 'w+') as pam_id_file:
                 pam_id_file.write(pam_to_indexing)
         genome_idx = pam_char + '_' + str(max_bulges) + '_' + genome_selected
     if genome_idx_ref == '':
         if int(max_bulges) > 0:
             generate_index_ref = True
-            with open(result_dir + 'pam_indexing.txt', 'w+') as pam_id_file:
+            with open(result_dir + '/pam_indexing.txt', 'w+') as pam_id_file:
                 pam_id_file.write(pam_to_indexing)
         genome_idx_ref = pam_char + '_' + str(max_bulges) + '_' + genome_selected.split('+')[0]
 
@@ -1124,7 +1124,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         report = False         
     
     #Open genome_database, get specific line and get annotation path
-    genome_db = pd.read_csv(current_working_directory + 'genome_database.txt', sep = '\t', names = GENOME_DATABASE, skiprows = 1)
+    # genome_db = pd.read_csv(current_working_directory + 'genome_database.txt', sep = '\t', names = GENOME_DATABASE, skiprows = 1)
     
     # annotation_file = [f for f in listdir(current_working_directory + 'annotations/') if isfile(join(current_working_directory + 'annotations/', f)) and f.startswith(genome_ref)]
 
@@ -1136,14 +1136,14 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
 
     #Get annotation file, already with the absolute path. TODO currently only one annotation per genome
     #Also get dictionary and sample dictionary files
+    annotation_file = [f for f in listdir(current_working_directory + 'annotations/') if isfile(join(current_working_directory + 'annotations/', f)) and f.startswith(genome_selected)][0]
+    
     if genome_type == 'ref':
-        annotation_file = genome_db[genome_db.Reference.str.contains(genome_selected, regex = False) & (genome_db.Enriched == 'None') ].Annotation.values[0]
         sample_list = None
         dictionary_directory = None
     else:
-        annotation_file = genome_db[genome_db.Enriched.str.contains(genome_selected, regex = False)].Annotation.values[0]
-        sample_list = genome_db[genome_db.Enriched.str.contains(genome_selected, regex = False)].Samples.values[0]
-        dictionary_directory = genome_db[genome_db.Enriched.str.contains(genome_selected, regex = False)].Dictionary.values[0]
+        sample_list = current_working_directory + 'samplesID/samples_' + genome_selected + '.txt'
+        dictionary_directory = current_working_directory + 'dictionaries/dictionary_' + genome_selected
 
     command = app_main_directory + 'PostProcess/./submit_job.final.sh ' + current_working_directory + 'Results/' + job_id + ' ' + current_working_directory +  'Genomes/' + genome_selected + ' ' + current_working_directory + 'Genomes/' + genome_ref + ' ' + current_working_directory + 'genome_library/' + genome_idx + (
         ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
@@ -1243,6 +1243,10 @@ def refreshSearch(n, dir_name):
                 elif os.path.exists(current_job_dir + 'output.txt'):                #Extract % of search done 
                     with open(current_job_dir + 'output.txt', 'r') as output_status:
                         line = output_status.read().strip()
+                        if 'Indexing_Reference' in line:
+                            search_status = html.P('Indexing Reference Genome...' + ' ' + 'Step [1/2]', style = {'color':'orange'})
+                        if 'Indexing_Enriched' in line:
+                            search_status = html.P('Indexing Enriched Genome...' + ' ' + 'Step [2/2]', style = {'color':'orange'})
                         if 'Search_output' in line:
                             if 'both' in line:
                                 last_percent = line.rfind('%')
@@ -4236,7 +4240,7 @@ def get_results():
     Get a dataframe of the Results directory
     '''
     results_dirs = [f for f in listdir(current_working_directory + '/Results/') if isdir(join(current_working_directory + '/Results/', f)) and isfile(current_working_directory + '/Results/' + f + '/Params.txt')]
-    col = ['Job Id', 'Genome', 'PAM', 'Mismatches', 'DNA Bulges', 'RNA Bulges', 'Gecko Comparison', 'Reference Comparison', 'Start', 'Load']
+    col = ['Job ID', 'Genome', 'PAM', 'Mismatches', 'DNA Bulges', 'RNA Bulges', 'Gecko Comparison', 'Reference Comparison', 'Start', 'Load']
     a = pd.DataFrame(columns = col)
     for job in results_dirs:
         if os.path.exists(current_working_directory + '/Results/' + job + '/Params.txt'):
@@ -4244,6 +4248,7 @@ def get_results():
                 all_params = p.read()
                 mms = (next(s for s in all_params.split('\n') if 'Mismatches' in s)).split('\t')[-1]
                 genome_selected = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+                genome_selected = genome_selected.replace('_',' ')
                 if os.path.exists(current_working_directory + '/Results/' + job + '/log.txt'):
                     with open(current_working_directory  + '/Results/' + job + '/log.txt') as lo:
                         all_log = lo.read()
@@ -4261,14 +4266,22 @@ def get_results():
                 rna = (next(s for s in all_params.split('\n') if 'RNA' in s)).split('\t')[-1]
                 pam = (next(s for s in all_params.split('\n') if 'Pam' in s)).split('\t')[-1]
                 gecko = (next(s for s in all_params.split('\n') if 'Gecko' in s)).split('\t')[-1]
+                if gecko == 'True':
+                    gecko = 'Yes'
+                else:
+                    gecko = 'No'
                 comparison = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+                if comparison == 'True':
+                    comparison = 'Yes'
+                else:
+                    comparison = 'No'
                 if os.path.exists(current_working_directory + '/Results/' + job + '/guides.txt'):
                     with open(current_working_directory  + '/Results/' + job + '/guides.txt') as g:
                         n_guides = str(len(g.read().strip().split('\n')))
                 else:
                     n_guides ='n/a'
                 
-                a = a.append({'Job Id':job, 'Genome':genome_selected, 'Mismatches':mms, 'DNA Bulges':dna,
+                a = a.append({'Job ID':job, 'Genome':genome_selected, 'Mismatches':mms, 'DNA Bulges':dna,
                 'RNA Bulges':rna, 'PAM':pam,'Gecko Comparison':gecko,'Reference Comparison':comparison, 'Start':job_start, 'Load': link_load}, ignore_index = True)
     a = a.sort_values(['Mismatches','DNA Bulges','RNA Bulges'],ascending = [True, True, True])
     return a

@@ -41,12 +41,14 @@ total=$(($7+max_bulge))
 
 #Start indexing reference genome
 if [ ${23} = 'True' ]; then
+    echo 'Indexing_Reference' >> output.txt 
     cd ${25}
     crispritz.py index-genome $name_reference $3 $1/pam_indexing.txt -bMax $max_bulge
     cd $1
 fi
 #Start indexing enr genome
 if [ ${24} = 'True' ]; then
+    echo 'Indexing_Enriched' >> output.txt
     cd ${25}
     crispritz.py index-genome $name_enriched $3 $1/pam_indexing.txt -bMax $max_bulge
     cd $1
