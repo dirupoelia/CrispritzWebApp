@@ -75,7 +75,7 @@ VALID_CHARS = {'a', 'A', 't', 'T', 'c', 'C','g', 'G',
             "h" ,
             "v"
             }
-URL = 'http://crispritz.di.univr.it'
+URL = 'http://127.0.0.1:8050'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
@@ -165,6 +165,11 @@ search_bar = dbc.Row(
             className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
         dbc.Col(dbc.NavLink(
             html.A('CONTACTS', href = URL + '/contacts', target = '_blank', style = {'text-decoration':'none', 'color':'white'}),
+            active = True, 
+            #href = URL + '/contacts', 
+            className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
+        dbc.Col(dbc.NavLink(
+            html.A('HISTORY', href = URL + '/history', target = '_blank', style = {'text-decoration':'none', 'color':'white'}),
             active = True, 
             #href = URL + '/contacts', 
             className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'}))
@@ -524,7 +529,7 @@ final_list.append(
             ),
             html.Div(
                 [
-                    dcc.Link('View Results', style = {'visibility':'hidden'}, id = 'view-results'),
+                    dcc.Link('View Results', style = {'visibility':'hidden'}, id = 'view-results', href = URL),
                     html.Div(id = 'no-directory-error')
                 ]
             )
@@ -1189,6 +1194,8 @@ def changePage( href, path, search, hash_guide):
         return about_page, URL + '/load' + search
     if path == '/contacts':
         return contacts_page, URL + '/load' + search
+    if path == '/history':
+        return historyPage(), URL + '/load' + search
     return index_page, ''
 
 #Check end job
@@ -4221,6 +4228,96 @@ def downloadLinkPosition(n, file_to_load, search): #file to load =
         return html.A('Download zip', href=URL+'/data/' + job_id + '/' + file_to_load, target = '_blank' ), True
     
     return 'Generating download link, Please wait...', False
+
+############################ History Page ##########################
+
+def get_results():
+    '''
+    Get a dataframe of the Results directory
+    '''
+    results_dirs = [f for f in listdir(current_working_directory + '/Results/') if isdir(join(current_working_directory + '/Results/', f)) and isfile(current_working_directory + '/Results/' + f + '/Params.txt')]
+    col = ['Job Id', 'Genome', 'PAM', 'Mismatches', 'DNA Bulges', 'RNA Bulges', 'Gecko Comparison', 'Reference Comparison', 'Start', 'Load']
+    a = pd.DataFrame(columns = col)
+    for job in results_dirs:
+        if os.path.exists(current_working_directory + '/Results/' + job + '/Params.txt'):
+            with open(current_working_directory  + '/Results/' + job + '/Params.txt') as p:
+                all_params = p.read()
+                mms = (next(s for s in all_params.split('\n') if 'Mismatches' in s)).split('\t')[-1]
+                genome_selected = (next(s for s in all_params.split('\n') if 'Genome_selected' in s)).split('\t')[-1]
+                if os.path.exists(current_working_directory + '/Results/' + job + '/log.txt'):
+                    with open(current_working_directory  + '/Results/' + job + '/log.txt') as lo:
+                        all_log = lo.read()
+                    job_start = (next(s for s in all_log.split('\n') if 'Job\tStart' in s)).split('\t')[-1]
+                    try:
+                        job_end = (next(s for s in all_log.split('\n') if 'Job\tDone' in s)).split('\t')[-1]
+                    except:
+                        link_load = URL + '/load?job=' + job
+                    else:
+                        link_load = URL + '/result?job=' + job
+                else:
+                    job_start = 'n/a'
+                    link_load = URL + '/load?job=' + job
+                dna = (next(s for s in all_params.split('\n') if 'DNA' in s)).split('\t')[-1]
+                rna = (next(s for s in all_params.split('\n') if 'RNA' in s)).split('\t')[-1]
+                pam = (next(s for s in all_params.split('\n') if 'Pam' in s)).split('\t')[-1]
+                gecko = (next(s for s in all_params.split('\n') if 'Gecko' in s)).split('\t')[-1]
+                comparison = (next(s for s in all_params.split('\n') if 'Ref_comp' in s)).split('\t')[-1]
+                if os.path.exists(current_working_directory + '/Results/' + job + '/guides.txt'):
+                    with open(current_working_directory  + '/Results/' + job + '/guides.txt') as g:
+                        n_guides = str(len(g.read().strip().split('\n')))
+                else:
+                    n_guides ='n/a'
+                
+                a = a.append({'Job Id':job, 'Genome':genome_selected, 'Mismatches':mms, 'DNA Bulges':dna,
+                'RNA Bulges':rna, 'PAM':pam,'Gecko Comparison':gecko,'Reference Comparison':comparison, 'Start':job_start, 'Load': link_load}, ignore_index = True)
+    a = a.sort_values(['Mismatches','DNA Bulges','RNA Bulges'],ascending = [True, True, True])
+    return a
+
+def generate_table_results(dataframe):
+    '''
+    Generate table for History page
+    '''
+    return html.Table([
+        html.Thead(
+            html.Tr([html.Th(col,style = {'vertical-align':'middle', 'text-align':'center'}) if col != 'Load' else html.Th('',style = {'vertical-align':'middle', 'text-align':'center'})  for col in dataframe.columns])
+        ),
+        html.Tbody([
+            html.Tr([
+                html.Td(dataframe.iloc[i][col], style = {'vertical-align':'middle', 'text-align':'center'}) if col != 'Load' else html.Td(html.A('Load', target = '_blank', href = dataframe.iloc[i][col]), style = {'vertical-align':'middle', 'text-align':'center'}) for col in dataframe.columns
+            ]) for i in range(len(dataframe))
+        ])
+    ], style = {'display':'inline-block'},)
+
+
+def historyPage():
+    '''
+    Create the History page
+    '''
+    results = get_results()
+    final_list = []
+
+    final_list.append(
+        html.Div(
+            [
+                html.H3('Results History'),
+                html.P('List of available results. Click on the \'Load\' link to open the corresponding result in a new page.')
+            ]
+        )
+    )
+    final_list.append(
+        html.Div(
+            generate_table_results(results),
+            style = {'text-align': 'center'}
+        )
+    )
+    
+    page = html.Div(final_list, style = {'margin':'1%'})
+    return page
+
+
+
+
+
 
 ############################ GUI CALLBACKS #########################
 #Add a new genome
