@@ -32,6 +32,10 @@ import re                                   #For sort chr filter values
 import concurrent.futures                           #For workers and queue
 import math
 from PostProcess.supportFunctions.loadSample import associateSample
+try:
+    from GUI import GUImessage as Gmsg
+except ImportError:
+    pass
 #Warning symbol \u26A0
 app_location = os.path.realpath(__file__)
 app_main_directory = os.path.dirname(app_location) + '/'
@@ -4282,24 +4286,50 @@ def get_results():
                     n_guides ='n/a'
                 
                 a = a.append({'Job ID':job, 'Genome':genome_selected, 'Mismatches':mms, 'DNA Bulges':dna,
-                'RNA Bulges':rna, 'PAM':pam,'Gecko Comparison':gecko,'Reference Comparison':comparison, 'Start':job_start, 'Load': link_load}, ignore_index = True)
+                'RNA Bulges':rna, 'PAM':pam,'Gecko Comparison':gecko,'Reference Comparison':comparison, 'Start':job_start, 'Load': link_load, 'Delete':''}, ignore_index = True)
     a = a.sort_values(['Mismatches','DNA Bulges','RNA Bulges'],ascending = [True, True, True])
     return a
 
-def generate_table_results(dataframe):
+def generate_table_results(dataframe, page, max_rows = 10):
     '''
     Generate table for History page
     '''
-    return html.Table([
-        html.Thead(
-            html.Tr([html.Th(col,style = {'vertical-align':'middle', 'text-align':'center'}) if col != 'Load' else html.Th('',style = {'vertical-align':'middle', 'text-align':'center'})  for col in dataframe.columns])
-        ),
-        html.Tbody([
-            html.Tr([
-                html.Td(dataframe.iloc[i][col], style = {'vertical-align':'middle', 'text-align':'center'}) if col != 'Load' else html.Td(html.A('Load', target = '_blank', href = dataframe.iloc[i][col]), style = {'vertical-align':'middle', 'text-align':'center'}) for col in dataframe.columns
-            ]) for i in range(len(dataframe))
-        ])
-    ], style = {'display':'inline-block'},)
+    fl = []
+    rows_remaining = len(dataframe) - (page - 1) * max_rows
+    header = html.Thead(
+            html.Tr([html.Th(col,style = {'vertical-align':'middle', 'text-align':'center'}) if col != 'Load' and col != 'Delete' else html.Th('',style = {'vertical-align':'middle', 'text-align':'center'})  for col in dataframe.columns])
+        )
+    body_history = []
+    add_button = 0
+    for i in range(min(rows_remaining, max_rows)):
+        add_button += 1
+        row_hist = []
+        for col in dataframe.columns:
+            if col == 'Load':
+                row_hist.append(
+                        html.Td(html.A('Load', target = '_blank', href = dataframe.iloc[i + (page - 1)*max_rows][col]), style = {'vertical-align':'middle', 'text-align':'center'})
+                )
+            elif col == 'Delete':
+                row_hist.append(
+                    html.Td(html.Button('Delete', id = 'button-delete-history-'+str(i), **{'data-jobid':dataframe.iloc[i + (page - 1)*max_rows]['Job ID']}),style = {'vertical-align':'middle', 'text-align':'center'})
+                )
+            else:
+                row_hist.append(
+                        html.Td(dataframe.iloc[i + (page - 1)*max_rows][col], style = {'vertical-align':'middle', 'text-align':'center'})
+                    )
+        body_history.append(html.Tr(row_hist))
+    fl.append(
+        html.Table([
+            header,
+            html.Tbody(body_history)
+        ], style = {'display':'inline-block'},)
+    )
+    
+    for i in range(add_button, 10): #Add hidden buttons for callback removeJobId compatibility
+        fl.append(html.Button(
+            str(i), id = 'button-delete-history-'+str(i),**{'data-jobid':'None'}, style = {'display':'none'}
+            ))
+    return fl
 
 
 def historyPage():
@@ -4319,17 +4349,112 @@ def historyPage():
     )
     final_list.append(
         html.Div(
-            generate_table_results(results),
+            generate_table_results(results,1),
+            id = 'div-history-table',
             style = {'text-align': 'center'}
         )
+    )
+    final_list.append(
+        html.Div(id = 'div-remove-jobid', style = {'display':'none'})
     )
     
     page = html.Div(final_list, style = {'margin':'1%'})
     return page
 
+#TODO inserire pagine e filtering, come nella tabella sample
 
-
-
+#Remove Results
+@app.callback(
+    Output('div-history-table', 'children'),
+    [Input('button-delete-history-0', 'n_clicks_timestamp'),
+    Input('button-delete-history-1', 'n_clicks_timestamp'),
+    Input('button-delete-history-2', 'n_clicks_timestamp'),
+    Input('button-delete-history-3', 'n_clicks_timestamp'),
+    Input('button-delete-history-4', 'n_clicks_timestamp'),
+    Input('button-delete-history-5', 'n_clicks_timestamp'),
+    Input('button-delete-history-6', 'n_clicks_timestamp'),
+    Input('button-delete-history-7', 'n_clicks_timestamp'),
+    Input('button-delete-history-8', 'n_clicks_timestamp'),
+    Input('button-delete-history-9', 'n_clicks_timestamp')],
+    [State('button-delete-history-0', 'data-jobid'),
+    State('button-delete-history-1', 'data-jobid'),
+    State('button-delete-history-2', 'data-jobid'),
+    State('button-delete-history-3', 'data-jobid'),
+    State('button-delete-history-4', 'data-jobid'),
+    State('button-delete-history-5', 'data-jobid'),
+    State('button-delete-history-6', 'data-jobid'),
+    State('button-delete-history-7', 'data-jobid'),
+    State('button-delete-history-8', 'data-jobid'),
+    State('button-delete-history-9', 'data-jobid'),
+    ]
+)
+def removeJobID(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, jID0, jID1, jID2, jID3, jID4, jID5, jID6, jID7, jID8, jID9):
+    #Get last pressed button
+    if not n0:
+        n0 = 0
+    if not n1:
+        n1 = 0
+    if not n2:
+        n2 = 0
+    if not n3:
+        n3 = 0
+    if not n4:
+        n4 = 0
+    if not n5:
+        n5 = 0
+    if not n6:
+        n6 = 0
+    if not n7:
+        n7 = 0
+    if not n8:
+        n8 = 0
+    if not n9:
+        n9 = 0
+    btn_group = []
+    btn_group.append(n0)
+    btn_group.append(n1)
+    btn_group.append(n2)
+    btn_group.append(n3)
+    btn_group.append(n4)
+    btn_group.append(n5)
+    btn_group.append(n6)
+    btn_group.append(n7)
+    btn_group.append(n8)
+    btn_group.append(n9)
+    
+    selectedID = ''
+    if max(btn_group) == 0:
+        selectedID = ''
+    elif max(btn_group) == n0:
+        selectedID = jID0
+    elif max(btn_group) == n1:
+        selectedID = jID1
+    elif max(btn_group) == n2:
+        selectedID = jID2
+    elif max(btn_group) == n3:
+        selectedID = jID3
+    elif max(btn_group) == n4:
+        selectedID = jID4
+    elif max(btn_group) == n5:
+        selectedID = jID5
+    elif max(btn_group) == n6:
+        selectedID = jID6
+    elif max(btn_group) == n7:
+        selectedID = jID7
+    elif max(btn_group) == n8:
+        selectedID = jID8
+    elif max(btn_group) == n9:
+        selectedID = jID9
+    
+    if selectedID == '':
+        raise PreventUpdate
+    result_removed = Gmsg.deleteResultConfirm(selectedID)
+    if result_removed:      #If the result was removed, update the table
+        return generate_table_results(get_results(),1)
+    else:
+        raise PreventUpdate
+    
+    return generate_table_results(get_results(),1)
 
 
 ############################ GUI CALLBACKS #########################
