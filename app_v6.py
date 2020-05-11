@@ -76,7 +76,7 @@ VALID_CHARS = {'a', 'A', 't', 'T', 'c', 'C','g', 'G',
             "h" ,
             "v"
             }
-URL = 'http://crispritz.di.univr.it'
+URL = 'http://crisprme.di.univr.it'
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
