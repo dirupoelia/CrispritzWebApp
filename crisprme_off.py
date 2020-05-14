@@ -87,7 +87,6 @@ app.title = 'CRISPRme'
 app.config['suppress_callback_exceptions'] = True       #necessary if update element in a callback generated in another callback
 app.css.config.serve_locally = True
 app.scripts.config.serve_locally = True
-
 CACHE_CONFIG = {
     # try 'filesystem' if you don't want to setup redis
     'CACHE_TYPE': 'filesystem',
@@ -4243,8 +4242,10 @@ def get_results():
     '''
     Get a dataframe of the Results directory
     '''
-    results_dirs = [f for f in listdir(current_working_directory + '/Results/') if isdir(join(current_working_directory + '/Results/', f)) and isfile(current_working_directory + '/Results/' + f + '/Params.txt')]
-    col = ['Job ID', 'Genome', 'PAM', 'Mismatches', 'DNA Bulges', 'RNA Bulges', 'Gecko Comparison', 'Reference Comparison', 'Start', 'Load']
+    results_dirs = [join(current_working_directory + '/Results/', f) for f in listdir(current_working_directory + '/Results/') if isdir(join(current_working_directory + '/Results/', f)) and isfile(current_working_directory + '/Results/' + f + '/Params.txt')]
+    results_dirs.sort(key = os.path.getctime)   #Sorted older first
+    results_dirs = [os.path.basename(f) for f in results_dirs]
+    col = ['Job ID', 'Genome', 'PAM', 'Mismatches', 'DNA Bulges', 'RNA Bulges', 'Gecko Comparison', 'Reference Comparison', 'Date', 'Load']
     a = pd.DataFrame(columns = col)
     for job in results_dirs:
         if os.path.exists(current_working_directory + '/Results/' + job + '/Params.txt'):
@@ -4286,7 +4287,7 @@ def get_results():
                     n_guides ='n/a'
                 
                 a = a.append({'Job ID':job, 'Genome':genome_selected, 'Mismatches':mms, 'DNA Bulges':dna,
-                'RNA Bulges':rna, 'PAM':pam,'Gecko Comparison':gecko,'Reference Comparison':comparison, 'Start':job_start, 'Load': link_load, 'Delete':''}, ignore_index = True)
+                'RNA Bulges':rna, 'PAM':pam,'Gecko Comparison':gecko,'Reference Comparison':comparison, 'Date':job_start, 'Load': link_load, 'Delete':''}, ignore_index = True)
     a = a.sort_values(['Mismatches','DNA Bulges','RNA Bulges'],ascending = [True, True, True])
     return a
 
@@ -4348,24 +4349,83 @@ def historyPage():
         )
     )
     final_list.append(
-        html.Div(
-            generate_table_results(results,1),
-            id = 'div-history-table',
-            style = {'text-align': 'center'}
+            html.Div
+                (
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(html.Div(dcc.Dropdown(options = gen_dir, id = 'dropdown-genomes-history', placeholder = 'Select a Genome'))),
+                                dbc.Col(html.Div(dcc.Dropdown(options = pam_file, id = 'dropdown-pam-history', placeholder = 'Select a PAM'))),
+                                # dbc.Col(html.Div(dcc.Dropdown(options = av_mismatches, id = 'dropdown-mms-history', placeholder = 'Select a Mismatch value' ))),
+                                # dbc.Col(html.Div(dcc.Dropdown(options = av_bulges, id = 'dropdown-dna-history', placeholder = 'Select a DNA Bulge value' ))),
+                                # dbc.Col(html.Div(dcc.Dropdown(options = av_bulges, id = 'dropdown-rna-history', placeholder = 'Select a RNA Bulge value' ))),
+
+
+                                dbc.Col(html.Div(html.Button('Filter', id = 'button-filter-history')))
+                            ]
+                        ),
+                    ],
+                )
         )
+    final_list.append(html.Div('None,None',id = 'div-history-filter-query', style = {'display':'none'}))
+
+    final_list.append(
+            html.Div(
+                generate_table_results(results,1),
+                id = 'div-history-table',
+                style = {'text-align': 'center'}
+            ),
     )
     final_list.append(
         html.Div(id = 'div-remove-jobid', style = {'display':'none'})
     )
-    
+    final_list.append(
+        html.Div(
+            [
+                html.Br(),
+                html.Button('Prev', id = 'prev-page-history'),
+                html.Button('Next', id = 'next-page-history')
+            ],
+            style = {'text-align': 'center'}
+        )
+    )
+    max_page = len(results.index)
+    max_page = math.floor(max_page / 10) + 1
+    final_list.append(html.Div('1/' + str(max_page), id= 'div-current-page-history'))
     page = html.Div(final_list, style = {'margin':'1%'})
     return page
 
-#TODO inserire pagine e filtering, come nella tabella sample
-
-#Remove Results
+#Callback to update the hidden div filter of history page
 @app.callback(
-    Output('div-history-table', 'children'),
+    Output('div-history-filter-query', 'children'),
+    [Input('button-filter-history', 'n_clicks')],
+    [State('dropdown-genomes-history', 'value'),
+    State('dropdown-pam-history', 'value')]
+)
+def updateHistoryFilter(n, genome, pam):
+    if n is None:
+        raise PreventUpdate
+    return str(genome) + ',' + str(pam)
+
+
+def supportFilterHistory(result_df, genome_f, pam_f):
+    if genome_f is not None:
+        result_df.drop(result_df[(result_df['Genome'] != genome_f)].index, inplace = True)
+    if pam_f is not None:
+        keep_values = []
+        for index, row in result_df.iterrows():
+            if row.PAM not in pam_f:
+                keep_values.append(index)
+        result_df.drop(labels= keep_values, inplace = True)
+
+    max_page = len(result_df.index)
+    max_page = math.floor(max_page / 10) + 1
+    return result_df, max_page
+
+#Remove Results and Apply Filtering
+@app.callback(
+    [Output('div-history-table', 'children'),
+    Output('div-current-page-history', 'children')],
     [Input('button-delete-history-0', 'n_clicks_timestamp'),
     Input('button-delete-history-1', 'n_clicks_timestamp'),
     Input('button-delete-history-2', 'n_clicks_timestamp'),
@@ -4375,7 +4435,10 @@ def historyPage():
     Input('button-delete-history-6', 'n_clicks_timestamp'),
     Input('button-delete-history-7', 'n_clicks_timestamp'),
     Input('button-delete-history-8', 'n_clicks_timestamp'),
-    Input('button-delete-history-9', 'n_clicks_timestamp')],
+    Input('button-delete-history-9', 'n_clicks_timestamp'),
+    Input('prev-page-history', 'n_clicks_timestamp'),
+    Input('next-page-history', 'n_clicks_timestamp'),
+    Input('div-history-filter-query', 'children')],
     [State('button-delete-history-0', 'data-jobid'),
     State('button-delete-history-1', 'data-jobid'),
     State('button-delete-history-2', 'data-jobid'),
@@ -4386,9 +4449,12 @@ def historyPage():
     State('button-delete-history-7', 'data-jobid'),
     State('button-delete-history-8', 'data-jobid'),
     State('button-delete-history-9', 'data-jobid'),
+    State('button-filter-history', 'n_clicks_timestamp'),
+    State('url', 'search'),
+    State('div-current-page-history', 'children')
     ]
 )
-def removeJobID(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, jID0, jID1, jID2, jID3, jID4, jID5, jID6, jID7, jID8, jID9):
+def removeJobIDandFilter(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, nPrev, nNext, filter_q, jID0, jID1, jID2, jID3, jID4, jID5, jID6, jID7, jID8, jID9, n, search, current_page):
     #Get last pressed button
     if not n0:
         n0 = 0
@@ -4410,6 +4476,12 @@ def removeJobID(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, jID0, jID1, jID2, jID3, 
         n8 = 0
     if not n9:
         n9 = 0
+    if not nPrev:
+        nPrev = 0
+    if not nNext:
+        nNext = 0
+    if not n:
+        n = 0
     btn_group = []
     btn_group.append(n0)
     btn_group.append(n1)
@@ -4421,8 +4493,22 @@ def removeJobID(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, jID0, jID1, jID2, jID3, 
     btn_group.append(n7)
     btn_group.append(n8)
     btn_group.append(n9)
+    btn_group.append(nPrev)
+    btn_group.append(nNext)
+    btn_group.append(n)
     
+    genome_filter = filter_q.split(',')[0]
+    pam_filter = filter_q.split(',')[1]
+    if genome_filter == 'None':
+        genome_filter = None
+    if pam_filter == 'None':
+        pam_filter = None
+    no_filter_page = current_page   #To keep page if no filter applied
+    current_page = current_page.split('/')[0]
+    current_page = int(current_page)
+    results = get_results()
     selectedID = ''
+
     if max(btn_group) == 0:
         selectedID = ''
     elif max(btn_group) == n0:
@@ -4445,16 +4531,34 @@ def removeJobID(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, jID0, jID1, jID2, jID3, 
         selectedID = jID8
     elif max(btn_group) == n9:
         selectedID = jID9
-    
+    elif max(btn_group) == n:    #Filter Button selected, return the first page of the filtered table
+        results, max_page = supportFilterHistory(results, genome_filter, pam_filter)
+        return generate_table_results(results,1), '1/' + str(max_page)
+    elif max(btn_group) == nNext:   #Next Button of the table
+        current_page = current_page + 1
+        results, max_page = supportFilterHistory(results, genome_filter, pam_filter)
+        if ((current_page - 1) * 10) > len(results): 
+            current_page = current_page -1
+            if current_page < 1:
+                current_page = 1
+        return generate_table_results(results,current_page), str(current_page) + '/' + str(max_page)
+    elif max(btn_group) == nPrev:   #Go to previous page
+        current_page = current_page - 1
+        if current_page < 1:
+            current_page = 1
+        results, max_page = supportFilterHistory(results, genome_filter, pam_filter)
+        return generate_table_results(results,current_page), str(current_page) + '/' + str(max_page)
+
     if selectedID == '':
         raise PreventUpdate
     result_removed = Gmsg.deleteResultConfirm(selectedID)
     if result_removed:      #If the result was removed, update the table
-        return generate_table_results(get_results(),1)
+        results, max_page = supportFilterHistory(get_results(), genome_filter, pam_filter)
+        return generate_table_results(results,1), '1/' + str(max_page)
     else:
         raise PreventUpdate
-    
-    return generate_table_results(get_results(),1)
+    results, max_page = supportFilterHistory(get_results(), genome_filter, pam_filter)
+    return generate_table_results(results,1), '1/' + str(max_page)
 
 
 ############################ GUI CALLBACKS #########################
