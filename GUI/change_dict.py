@@ -74,79 +74,84 @@ def putIntoEntry(entry, toInsert):
         inserted = True
     return entry, inserted
     
+def updateDictionary(oldDictionaryFile, newVCFFile):
+    '''
+    oldDictionaryFile : dictionary .json that will be updated
+    newVCFFile: .vcf.gz file containing the new entries to be added to the old .json
+    '''
+    isSorted = True
+    verbose = False
+    oldDict = None
+    oldDict = json.load(open(oldDictionaryFile))
 
-isSorted = True
-oldDict = None
-oldDict = json.load(open(sys.argv[1]))
-
-chr_dict = dict()
-start_time = time.time()
-oldEntry = 0
-newEntry = 0
-with gzip.open(sys.argv[2], 'rb') as targets:
-    logFile = open("logUpdateDictionaries/log__"+os.path.basename(sys.argv[1])+"__"+os.path.basename(sys.argv[2])+".log",'w')
-    #Skip vcf header
-    for line in targets:
-        line = line.decode('ascii')
-        if ('#CHROM') in line:
-            column_vcf = line.strip().split('\t')   #Save this header for retrieving sample id
-            break
-    for line in targets:                #Save CHROM [0], POS[1], REF [3], ALT [4], List of Samples [9:]
-        line = line.decode('ascii').strip().split('\t')
-        list_samples = []
-        list_chars = []
-        for pos, i in enumerate(line[9:]):          #if sample has 1|1 0|1 or 1|0, #NOTE may change for different vcf
-            if ('1' in i):
-                list_samples.append(column_vcf[ pos + 9])
-        if "chr" not in line[0]:
-            line[0] = "chr"+str(line[0])
-        chr_pos_string = line[0] + ',' + line[1]
-        #Add in last two position the ref and alt nucleotide, eg: chrX,100 -> sample1,sample5,sample10;A,T
-        #If no sample was found, the dict is chrX,100 -> ;A,T
-        list_chars.append(line[3])
-        list_chars.append(line[4])
-        
-        if chr_pos_string in oldDict: #entry already present
-            oldEntry += 1
-            variations = findVars(oldDict[chr_pos_string])
-            varToFind = list_chars[0]+","+list_chars[1]
-            if varToFind in variations: #variant already present
-                entry, start, end = getSamples(oldDict[chr_pos_string], variations, varToFind)
-                entry = entry.split(",")
-                goodNewSamples = 0
-                for sample in list_samples:
-                    if isSorted:
-                        entry, inserted = putIntoEntrySorted(entry, sample)
-                    else:
-                        entry, inserted = putIntoEntry(entry, sample)
-                    if inserted:
-                        goodNewSamples += 1
-                if goodNewSamples > 0:
-                    print("New Sample(s) in "+chr_pos_string+": #"+str(goodNewSamples)+" new", file=logFile)
-                    oldDict[chr_pos_string] = oldDict[chr_pos_string][:start]+','.join(entry) + oldDict[chr_pos_string][end:]
-            else: #variant not present
-                print("New Variation in "+chr_pos_string+": "+varToFind+" with #"+str(len(list_samples))+" samples", file=logFile)
-                oldDict[chr_pos_string] = oldDict[chr_pos_string] + ";" + ','.join(list_samples) + ';' + ','.join(list_chars)
-        else: #entry not present
-            newEntry += 1
-            print("New Entry "+chr_pos_string+" with "+str(len(list_samples))+" samples", file=logFile)
-            try:
-                oldDict[chr_pos_string] = ','.join(list_samples) + ';' + ','.join(list_chars)
-            except:
-                oldDict[chr_pos_string] = ';' + ','.join(list_chars)
-    logFile.close()
-                
-with open(os.path.dirname(sys.argv[1]) + "/my_dict_" + str(line[0]) + ".json", 'w') as f:
-    json.dump(oldDict, f) 
-print('Updated ' + sys.argv[1] + ' in', time.time() - start_time)
-print("Old entries updated: "+str(oldEntry), "New entries inserted: "+str(newEntry))
-                
-                
-                
-                
-                
-                
-                
+    chr_dict = dict()
+    start_time = time.time()
+    oldEntry = 0
+    newEntry = 0
+    with gzip.open(newVCFFile, 'rb') as targets:
+        if verbose: logFile = open("logUpdateDictionaries/log__"+os.path.basename(oldDictionaryFile)+"__"+os.path.basename(newVCFFile)+".log",'w')
+        #Skip vcf header
+        for line in targets:
+            line = line.decode('ascii')
+            if ('#CHROM') in line:
+                column_vcf = line.strip().split('\t')   #Save this header for retrieving sample id
+                break
+        for line in targets:                #Save CHROM [0], POS[1], REF [3], ALT [4], List of Samples [9:]
+            line = line.decode('ascii').strip().split('\t')
+            list_samples = []
+            list_chars = []
+            for pos, i in enumerate(line[9:]):          #if sample has 1|1 0|1 or 1|0, #NOTE may change for different vcf
+                if ('1' in i):
+                    list_samples.append(column_vcf[ pos + 9])
+            if "chr" not in line[0]:
+                line[0] = "chr"+str(line[0])
+            chr_pos_string = line[0] + ',' + line[1]
+            #Add in last two position the ref and alt nucleotide, eg: chrX,100 -> sample1,sample5,sample10;A,T
+            #If no sample was found, the dict is chrX,100 -> ;A,T
+            list_chars.append(line[3])
+            list_chars.append(line[4])
+            
+            if chr_pos_string in oldDict: #entry already present
+                oldEntry += 1
+                variations = findVars(oldDict[chr_pos_string])
+                varToFind = list_chars[0]+","+list_chars[1]
+                if varToFind in variations: #variant already present
+                    entry, start, end = getSamples(oldDict[chr_pos_string], variations, varToFind)
+                    entry = entry.split(",")
+                    goodNewSamples = 0
+                    for sample in list_samples:
+                        if isSorted:
+                            entry, inserted = putIntoEntrySorted(entry, sample)
+                        else:
+                            entry, inserted = putIntoEntry(entry, sample)
+                        if inserted:
+                            goodNewSamples += 1
+                    if goodNewSamples > 0:
+                        if verbose: print("New Sample(s) in "+chr_pos_string+": #"+str(goodNewSamples)+" new", file=logFile)
+                        oldDict[chr_pos_string] = oldDict[chr_pos_string][:start]+','.join(entry) + oldDict[chr_pos_string][end:]
+                else: #variant not present
+                    if verbose: print("New Variation in "+chr_pos_string+": "+varToFind+" with #"+str(len(list_samples))+" samples", file=logFile)
+                    oldDict[chr_pos_string] = oldDict[chr_pos_string] + "/" + ','.join(list_samples) + ';' + ','.join(list_chars)
+            else: #entry not present
+                newEntry += 1
+                if verbose: print("New Entry "+chr_pos_string+" with "+str(len(list_samples))+" samples", file=logFile)
+                try:
+                    oldDict[chr_pos_string] = ','.join(list_samples) + ';' + ','.join(list_chars)
+                except:
+                    oldDict[chr_pos_string] = ';' + ','.join(list_chars)
+        if verbose: logFile.close()
+                    
+    with open(os.path.dirname(oldDictionaryFile) + "/my_dict_" + str(line[0]) + ".json", 'w') as f:
+        json.dump(oldDict, f) 
+    print('Updated ' + oldDictionaryFile + ' in', time.time() - start_time)
+    print("Old entries updated: "+str(oldEntry), "New entries inserted: "+str(newEntry))
+                    
+                    
+                    
+                    
+                    
+                    
+                    
                 
                 
                 

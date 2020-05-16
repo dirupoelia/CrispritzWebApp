@@ -28,6 +28,7 @@ from datetime import datetime               #For time when job submitted
 from seq_script import extract_seq, convert_pam
 from additional_pages import help_page
 from additional_pages import contacts_page
+from additional_pages import genomes_page as gen_page
 import re                                   #For sort chr filter values
 import concurrent.futures                           #For workers and queue
 import math
@@ -143,11 +144,10 @@ onlyfile = [f for f in listdir(current_working_directory + 'pam') if isfile(join
 onlyfile = [x.replace('.txt', '') for x in onlyfile]            #removed .txt for better visualization
 pam_file = []
 for pam_name in onlyfile:
-    if 'NGG' in pam_name or 'NGA' in pam_name or 'NGK' in pam_name or 'NAA' in pam_name or 'NGTN' in pam_name or 'NRG' in pam_name:               #TODO modificare per selezionare solo le PAM disponibili
-        pam_file.append({'label':pam_name, 'value':pam_name})
-    else:
-        #pam_file.append({'label': pam_name, 'value' : pam_name, 'disabled':False})
+    if 'tempPAM' in pam_name:   #Skip the temp pam used for updating dictionaries
         pass
+    else:
+        pam_file.append({'label':pam_name, 'value':pam_name})
 
 #Available mismatches and bulges
 av_mismatches = [{'label': i, 'value': i} for i in range(0, 7)]
@@ -159,22 +159,22 @@ search_bar = dbc.Row(
         dbc.Col(dbc.NavLink(
             html.A('HOME', href = URL, target = '_blank', style = {'text-decoration':'none', 'color':'white'}), 
             active = True, 
-            #href = URL, 
             className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
         dbc.Col(dbc.NavLink(
             html.A('MANUAL', href = URL + '/user-guide',target = '_blank', style = {'text-decoration':'none', 'color':'white'}), 
             active = True, 
-            #href = URL + '/user-guide', 
             className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
         dbc.Col(dbc.NavLink(
             html.A('CONTACTS', href = URL + '/contacts', target = '_blank', style = {'text-decoration':'none', 'color':'white'}),
             active = True, 
-            #href = URL + '/contacts', 
+            className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
+        dbc.Col(dbc.NavLink(
+            html.A('GENOMES', href = URL + '/genomes', target = '_blank', style = {'text-decoration':'none', 'color':'white'}),
+            active = True, 
             className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
         dbc.Col(dbc.NavLink(
             html.A('HISTORY', href = URL + '/history', target = '_blank', style = {'text-decoration':'none', 'color':'white'}),
             active = True, 
-            #href = URL + '/contacts', 
             className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'}))
     ],
     no_gutters=True,
@@ -1199,6 +1199,9 @@ def changePage( href, path, search, hash_guide):
         return contacts_page, URL + '/load' + search
     if path == '/history':
         return historyPage(), URL + '/load' + search
+    if path == '/genomes':
+        genomes_page = html.Div(gen_page.genomesPage(current_working_directory), style = {'margin':'1%'})
+        return genomes_page, URL + '/load' + search
     return index_page, ''
 
 #Check end job
@@ -4236,6 +4239,11 @@ def downloadLinkPosition(n, file_to_load, search): #file to load =
     
     return 'Generating download link, Please wait...', False
 
+############################ Genome Database Page Callbacks ##########################
+
+
+
+
 ############################ History Page ##########################
 
 def get_results():
@@ -4503,7 +4511,6 @@ def removeJobIDandFilter(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, nPrev, nNext, f
         genome_filter = None
     if pam_filter == 'None':
         pam_filter = None
-    no_filter_page = current_page   #To keep page if no filter applied
     current_page = current_page.split('/')[0]
     current_page = int(current_page)
     results = get_results()
@@ -4574,7 +4581,7 @@ def add_genome(nAdd):
     from GUI import ChooseFiles as cf
     if nAdd is None:
         raise PreventUpdate
-    cf.startChooseFiles()
+    cf.startChooseFiles(current_working_directory,  app_location + 'GUI/' )
     return ''
 
 #Update an existing dictionary    
@@ -4589,10 +4596,29 @@ def update_dict(nUpd):
     from GUI import UpdateDict as ud
     if nUpd is None:
         raise PreventUpdate
-    ud.startUpdateDict()
+    ud.startUpdateDict(current_working_directory)
     return ''
 
-
+#Change annotation of selected Genome row
+@app.callback(
+    Output('ann-job', 'value'),
+    [Input('change-ann','n_clicks')],
+    [ State('genomes-table', 'derived_virtual_data'),
+     State('genomes-table', 'selected_rows')]
+    )
+def change_annotation(nChg, rows, selected_row):
+    if nChg is None:
+        raise PreventUpdate
+    if len(selected_row) == 0:
+        raise PreventUpdate
+    
+    row = pd.DataFrame(rows).iloc[selected_row,:] 
+    annotationFile = row["Annotation File"].iloc[0]
+    from GUI import annotations as ann
+    ann.startChangeAnn(current_working_directory+"/annotations/"+str(annotationFile))
+    # import gc
+    # gc.collect()
+    return ''
 
 if __name__ == '__main__':
     #app.run_server(debug=True)

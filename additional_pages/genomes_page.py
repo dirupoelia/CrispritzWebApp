@@ -17,22 +17,75 @@ import dash_bootstrap_components as dbc
 import base64                               #for decoding upload content
 import io                                   #for decoding upload content
 import sys, os
-sys.path.append(os.path.abspath(os.path.join('..', '../CrispritzWebApp-master/')))
-import get_genomes as gg
+#print(os.path.abspath(os.path.join('..', '../CrispritzWebApp-OFFLINE/GUI')))
+#sys.path.append(os.path.abspath(os.path.join('..', '../CrispritzWebApp-OFFLINE/GUI')))
+
+"""
+html.Div([html.H3("Search bar"),
+                      dcc.Dropdown(id='search-genomes-dropdown',
+                                   options=[{"label":"Reference Genome", "value":"Reference Genome"},
+                                            {"label":"Name Enriched","value":"Name Enriched"}, 
+                                            {"label":"PAM","value":"PAM"}, 
+                                            {"label":"Annotation","value":"Annotation"}, 
+                                            {"label":"Sample List","value":"Sample List"},
+                                            {"label":"# Bulges","value":"# Bulges"}],
+                                   value = "Reference Genome",
+                                   clearable=False
+                                )
+                ], style={'width': '40%', 'display': 'inline-block', 'vertical-align': 'left'}
+                ),
+            html.Div([html.H3(" "),
+                      html.Button("Search",id="search-genomes-button")
+                      ], style={'width': '10%', 'display': 'inline-block', 'vertical-align': 'middle'}
+                 )
+"""
 
 
-def genomesPage():
-    
-    genomes = gg.get_genomes()
+
+def genomesPage(pathDir):
+    from .get_genomes import get_genomes
+    genomes = get_genomes(pathDir)
     final_list = []
+    final_list.append(
+        html.Div([  html.H4("Search bar"),
+                    html.Div([dcc.Dropdown(id='search-genomes-dropdown',
+                                 options=[{"label":"Reference Genome", "value":"Reference Genome"},
+                                          {"label":"Name Enriched","value":"Name Enriched"}, 
+                                          {"label":"PAM","value":"PAM"}, 
+                                          {"label":"Annotation","value":"Annotation"}, 
+                                          {"label":"Sample List","value":"Sample List"},
+                                          {"label":"# Bulges","value":"# Bulges"}],
+                                 value = "Reference Genome",
+                                 clearable=False,
+                                 style={'display':'inline-block', "width":"400px"}
+                                 ),
+                                dcc.Input(id="search-genomes-input"),
+                                html.Button("Search",id="search-genomes-button"),
+                                html.Button("Reset",id="search-genomes-reset")
+                            ], style={"columnCount":4}
+                         )
+            ], style = {'display':'none'}
+        )
+    )
     final_list.append(
         html.Div([
             html.H3('Genomes'),
+            html.P('List of available Reference and Enriched Genomes. For each Genome, the available indexed PAM is shown, along with the maximum searchable number of bulges (PAM and #Bulges columns). The annotation and samples ID files are also shown.'),
+            html.P('Select a row, and click on the \"Change Annotations\" button to update or replace the annotation file for the desired Genome.'),
             dash_table.DataTable(
                 id = "genomes-table",
                 columns = [{"name": i, "id": i} for i in genomes.columns],
-                data=genomes.to_dict('records')
+                data=genomes.to_dict('records'),
+                row_selectable="single",
+                selected_rows=[]
                 )
+            ])
+        )
+    final_list.append(
+        html.Div([
+            html.Br(),
+            html.Button("Change annotations", id = 'change-ann'),
+            html.Div('', id = 'ann-job', style = {'display':'none'})
             ])
         )
     page = html.Div(final_list, style = {'margin':'1%'})
@@ -41,4 +94,5 @@ def genomesPage():
 
 if __name__ == '__main__':
     #app.run_server(debug=True)
+    sys.path.append(os.path.abspath(os.path.join('..', '../CrispritzWebApp-OFFLINE/')))
     print(genomesPage())
