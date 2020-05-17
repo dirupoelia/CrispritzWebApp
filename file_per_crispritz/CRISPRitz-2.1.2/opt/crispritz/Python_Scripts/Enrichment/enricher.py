@@ -98,6 +98,38 @@ iupac_code.setdefault('N', []).append('CTAG')
 iupac_code.setdefault('N', []).append('ATCG')
 iupac_code.setdefault('N', []).append('TACG')
 
+iupac_code_scomposition = {
+          "R":"AG",
+          "Y":"CT",
+          "S":"GC",
+          "W":"AT",
+          "K":"GT",
+          "M":"AC",
+          "B":"CGT",
+          "D":"AGT",
+          "H":"ACT",
+          "V":"ACG",
+          "r":"AG",
+          "y":"CT",
+          "s":"GC",
+          "w":"AT",
+          "k":"GT",
+          "m":"AC",
+          "b":"CGT",
+          "d":"AGT",
+          "h":"ACT",
+          "v":"ACG",
+          "A":"A",
+          "T":"T",
+          "C":"C",
+          "G":"G",
+          "a":"A",
+          "t":"T",
+          "c":"C",
+          "g":"G",
+          'N':'ATGC'
+        }
+
 print('START ENRICHMENT WITH SNVs AND SVs')
 
 for line in inAltFile:
@@ -112,7 +144,7 @@ for line in inAltFile:
             else:
                 original = ''
             snp = k[0]+k[1]
-            iupacvalue = str(original+snp)
+            iupacvalue = str(original+snp)  #TODO if original is a single nucleotide, use iupac_code_scomposition[original]
             for key, value in iupac_code.items():
                 if iupacvalue in value:
                     genomeList[int(x[0])] = str(key)
@@ -124,12 +156,12 @@ for line in inAltFile:
                     original = ''
                 original = genomeList[int(x[0])]
                 snp = k[0]+k[1]+k[2]
-                iupacvalue = str(original+snp)
+                iupacvalue = str(original+snp)  #TODO if original is a single nucleotide, use iupac_code_scomposition[original]
             for key, value in iupac_code.items():
                 if iupacvalue in value:
                     genomeList[int(x[0])] = str(key)
     elif (',' not in x[2]) and (len(x[1]) == 1) and ('>' not in x[2]) and (len(x[2]) == 1):
-        original = genomeList[int(x[0])]
+        original = iupac_code_scomposition[genomeList[int(x[0])]]
         snp = x[2]
         iupacvalue = str(original+snp)
         for key, value in iupac_code.items():

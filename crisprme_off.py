@@ -37,6 +37,8 @@ try:
     from GUI import GUImessage as Gmsg
 except ImportError:
     pass
+import webbrowser as wb     #Open CRISPRme on browser
+
 #Warning symbol \u26A0
 app_location = os.path.realpath(__file__)
 app_main_directory = os.path.dirname(app_location) + '/'
@@ -322,7 +324,7 @@ final_list.append(
                                 #html.Br(),
                                 html.Button(html.P(children="Reset", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline','font-size':'initial'}), id='remove-parameters',
                                             style={'border': 'None', 'text-transform': 'capitalize','height':'12','font-weight': '500', 'padding': '0 0px'})])
-                            ])
+                            ], style = {'display':'none'})
                         ], className = 'flex-div-insert-delete-example'), 
                         
                         html.P(html.P('Select a genome') ),
@@ -789,31 +791,31 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, len
     update_style = False
     miss_input_list = []
     
-    if genome_selected is None or genome_selected is '':
+    if genome_selected is None or genome_selected == '':
         genome_update = classname_red
         update_style = True
         miss_input_list.append('Genome')
-    if pam is None or pam is '':
+    if pam is None or pam == '':
         pam_update = classname_red
         update_style = True
         miss_input_list.append('PAM')
-    # if text_guides is None or text_guides is '':
+    # if text_guides is None or text_guides == '':
         # text_update = {'width':'450px', 'height':'160px','border': '1px solid red'}
         # update_style = True
         # miss_input_list.append('crRNA sequence(s)')
-    if mms is None or str(mms) is '':
+    if mms is None or str(mms) == '':
         mms_update = classname_red
         update_style = True
         miss_input_list.append('Allowed Mismatches')
-    if dna is None or str(dna) is '':
+    if dna is None or str(dna) == '':
         dna_update = classname_red
         update_style = True
         miss_input_list.append('Bulge DNA size')
-    if rna is None or str(rna) is '':
+    if rna is None or str(rna) == '':
         rna_update = classname_red
         update_style = True
         miss_input_list.append('Bulge RNA size')
-    if (len_guide_seq is None or str(len_guide_seq) is '') and ('sequence-tab' in active_tab):
+    if (len_guide_seq is None or str(len_guide_seq) == '') and ('sequence-tab' in active_tab):
         len_guide_update = classname_red
         update_style = True
         miss_input_list.append('crRNA length')
@@ -865,19 +867,19 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         raise PreventUpdate
     
     #Check input, else give simple input
-    if genome_selected is None or genome_selected is '':
+    if genome_selected is None or genome_selected == '':
         genome_selected = 'hg38_ref'
-    if pam is None or pam is '':
+    if pam is None or pam == '':
         pam = '20bp-NGG-SpCas9'
-    if text_guides is None or text_guides is '':
+    if text_guides is None or text_guides == '':
         text_guides = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC'
     else:
         text_guides = text_guides.strip()
         if ( not all(len(elem) == len(text_guides.split('\n')[0]) for elem in text_guides.split('\n'))):
             text_guides = selectSameLenGuides(text_guides)
-    if (len_guide_sequence is None or str(len_guide_sequence) is '') and ('sequence-tab' in active_tab):
+    if (len_guide_sequence is None or str(len_guide_sequence) == '') and ('sequence-tab' in active_tab):
         len_guide_sequence = 20
-    if (text_sequence is None or text_sequence is '') and ('sequence-tab' in active_tab):
+    if (text_sequence is None or text_sequence == '') and ('sequence-tab' in active_tab):
         text_sequence = '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
     n_it = 10
     len_id = 10
@@ -911,7 +913,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         gecko_comp = True
     if genome_ref_opt:
         ref_comparison = True
-    if 'email' in adv_opts and dest_email is not None and len(dest_email.split('@')) > 1 and dest_email.split('@')[-1] is not '':
+    if 'email' in adv_opts and dest_email is not None and len(dest_email.split('@')) > 1 and dest_email.split('@')[-1] != '':
         send_email = True
         with open(result_dir + '/email.txt', 'w') as e:
             e.write(dest_email + '\n')
@@ -985,7 +987,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     pam = result_dir + '/pam.txt'
         
     guides_file = result_dir + '/guides.txt'
-    if text_guides is not None and text_guides is not '':
+    if text_guides is not None and text_guides != '':
         save_guides_file = open(result_dir + '/guides.txt', 'w')
         if (pam_begin):
             text_guides = 'N' * pam_len + text_guides.replace('\n', '\n' + 'N' * pam_len)
@@ -1139,7 +1141,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
 
     #Get annotation file, already with the absolute path. TODO currently only one annotation per genome
     #Also get dictionary and sample dictionary files
-    annotation_file = [f for f in listdir(current_working_directory + 'annotations/') if isfile(join(current_working_directory + 'annotations/', f)) and f.startswith(genome_selected)][0]
+    annotation_file = [f for f in listdir(current_working_directory + 'annotations/') if isfile(join(current_working_directory + 'annotations/', f)) and f.startswith(genome_ref)][0]
     
     if genome_type == 'ref':
         sample_list = None
@@ -1178,7 +1180,7 @@ def changePage( href, path, search, hash_guide):
         return load_page, URL + '/load' + search 
     if path == '/result':
         job_id = search.split('=')[-1]
-        if hash_guide is None or hash_guide is '':
+        if hash_guide is None or hash_guide == '':
             return resultPage(job_id), URL + '/load' + search
         if 'new' in hash_guide:         #TODO cambiare nome alla pagina delle guide
             return guidePagev3(job_id, hash_guide.split('#')[1]), URL + '/load' + search
@@ -1427,7 +1429,7 @@ def update_table(page_current, page_size, sort_by, filter, search, hash_guide):
         no_result = False
         t.readline()
         last_line = t.readline()
-        if (last_line is '' or last_line is '\n'):
+        if (last_line == '' or last_line == '\n'):
             no_result = True
 
     if (no_result):
@@ -1510,7 +1512,9 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                 ]
                 )
         )
-        fl.append(html.Button(html.A('Download Full list of targets', href = URL + '/data/' + job_id + '/' + job_id + '.targets.' + guide + '.zip' ,target = '_blank', style = {'text-decoration':'none', 'color':'black'} )))
+        # fl.append(html.Button(html.A('Download Full list of targets', href = URL + '/data/' + job_id + '/' + job_id + '.targets.' + guide + '.zip' ,target = '_blank', style = {'text-decoration':'none', 'color':'black'} )))
+        fl.append(html.Button('Open Result Directory', id = 'button-open-result-directory'))
+        fl.append(html.Div(guide,id = 'div-open-result-directory', style = {'display':'none'}))
         fl.append(html.Br())
         df = pd.read_pickle(job_directory + job_id + '.summary_by_guide.' + guide + '.txt')
         if genome_type == 'both':
@@ -1826,6 +1830,19 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         # return guide + value
     raise PreventUpdate
 
+#Open in browser the result directory
+@app.callback(
+    Output('div-open-result-directory', 'children'),
+    [Input('button-open-result-directory', 'n_clicks')],
+    [State('url', 'search'),
+    State('div-open-result-directory', 'children')]
+)
+def openResultDirectory(n, search, guide):
+    if n is None:
+        raise PreventUpdate
+    job_id = search.split('=')[-1]  #TODO decidere se aprire tutta la cartella, solo il file, e nel secondo caso creare copia submit job che non rimuova .targets.GUIDE.txt
+    wb.open_new_tab(current_working_directory + 'Results/' + job_id + '/' + job_id + '.targets.' + guide + '.txt')
+    raise PreventUpdate
 
 
 #Select figures on mms value, sample value
@@ -2132,7 +2149,7 @@ def generate_table_position(dataframe, id_table, page, mms, bulges, guide = '', 
     [State('url', 'search')]
 )
 def updatePopulationDrop(superpop, search):
-    if superpop is None or superpop is '':
+    if superpop is None or superpop == '':
         raise PreventUpdate
     job_id = search.split('=')[-1]
     job_directory = current_working_directory + 'Results/' + job_id + '/'
@@ -2147,7 +2164,7 @@ def updatePopulationDrop(superpop, search):
     [State('url', 'search')]
 )
 def updateSampleDrop(pop, search):
-    if pop is None or pop is '':
+    if pop is None or pop == '':
         return [], None
     job_id = search.split('=')[-1]
     job_directory = current_working_directory + 'Results/' + job_id + '/'
@@ -2241,12 +2258,12 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
         for i in range(df.shape[0]):
             more_info_col.append('Show Targets')
         df[''] = more_info_col
-        if (sup_pop is None or sup_pop is '') and (pop is None or pop is '') and (samp is None or samp is ''):   #No filter value selected
+        if (sup_pop is None or sup_pop == '') and (pop is None or pop == '') and (samp is None or samp == ''):   #No filter value selected
             max_page = len(df.index)
             max_page = math.floor(max_page / 10) + 1
             return generate_table_samples(df, 'table-samples', 1, guide, job_id ), '1/' + str(max_page)
-        if samp is None or samp is '':
-            if pop is None or pop is '':
+        if samp is None or samp == '':
+            if pop is None or pop == '':
                 df.drop(df[(~(df['Population'].isin(population_1000gp[sup_pop])))].index , inplace = True)
             else:
                 df.drop(df[(df['Population'] != pop)].index , inplace = True)
@@ -2273,8 +2290,8 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
             df[''] = more_info_col
             #Active filter
             if pop or sup_pop or samp:
-                if samp is None or samp is '':
-                    if pop is None or pop is '':
+                if samp is None or samp == '':
+                    if pop is None or pop == '':
                         df.drop(df[(~(df['Population'].isin(population_1000gp[sup_pop])))].index , inplace = True)
                     else:
                         df.drop(df[(df['Population'] != pop)].index , inplace = True)
@@ -2307,8 +2324,8 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
                 more_info_col.append('Show Targets')
             df[''] = more_info_col
             if pop or sup_pop or samp:
-                if samp is None or samp is '':
-                    if pop is None or pop is '':
+                if samp is None or samp == '':
+                    if pop is None or pop == '':
                         df.drop(df[(~(df['Population'].isin(population_1000gp[sup_pop])))].index , inplace = True)
                     else:
                         df.drop(df[(df['Population'] != pop)].index , inplace = True)
@@ -2331,9 +2348,9 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
 def updatePositionFilter(n, chr, pos_start, pos_end):
     if n is None:
         raise PreventUpdate
-    if pos_start is '':
+    if pos_start == '':
         pos_start = 'None'
-    if pos_end is '':
+    if pos_end == '':
         pos_end = 'None'
     return str(chr) + ',' + str(pos_start) + ',' + str(pos_end)
 
@@ -2388,9 +2405,9 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
     job_directory = current_working_directory + 'Results/' + job_id + '/'
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
     if max(btn_position_section) == n:              #Last button pressed is filtering, return the first page of the filtered table
-        if pos_begin is None or pos_begin is '':
+        if pos_begin is None or pos_begin == '':
             pos_begin = 0
-        if pos_end is '':
+        if pos_end == '':
             pos_end = None
         if pos_end:
             if int(pos_end) < int(pos_begin):
@@ -2402,7 +2419,7 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
         for i in range(df.shape[0]):
             more_info_col.append('Show Targets')
         df[''] = more_info_col
-        if chr is None or chr is '':
+        if chr is None or chr == '':
             max_page = len(df.index)
             max_page = math.floor(max_page / 10) + 1
             return generate_table_position(df, 'table-position', 1, mms, max_bulges,guide, job_id ), '1/' + str(max_page)
@@ -2418,9 +2435,9 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
         if max(btn_position_section) == nNext:
             current_page = current_page + 1
             if chr:
-                if pos_begin is None or pos_begin is '':
+                if pos_begin is None or pos_begin == '':
                     pos_begin = 0
-                if pos_end is '':
+                if pos_end == '':
                     pos_end = None
                 if pos_end:
                     if int(pos_end) < int(pos_begin):
@@ -2451,9 +2468,9 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
                 current_page = 1
 
             if chr:
-                if pos_begin is None or pos_begin is '':
+                if pos_begin is None or pos_begin == '':
                     pos_begin = 0
-                if pos_end is '':
+                if pos_end == '':
                     pos_end = None
                 if pos_end:
                     if int(pos_end) < int(pos_begin):
@@ -3974,7 +3991,7 @@ def clusterPage(job_id, hash):
 #     [Input('target-to-highlight', 'children')]
 # )
 # def highlightSummaryTarget(to_highlight):
-#     if to_highlight is None or to_highlight is '':
+#     if to_highlight is None or to_highlight == '':
 #         raise PreventUpdate
 #     return [{'if': {'filter_query': '{DNA} eq ' + to_highlight}, 'font-weight':'bold'}]
 
