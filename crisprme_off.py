@@ -39,6 +39,20 @@ except ImportError:
     pass
 import webbrowser as wb     #Open CRISPRme on browser
 
+try:
+    import Tkinter as tk
+except ImportError:
+    import tkinter as tk
+
+try:
+    import ttk
+    py3 = False
+except ImportError:
+    import tkinter.ttk as ttk
+    py3 = True
+
+from tkinter import filedialog, END, IntVar, messagebox
+
 #Warning symbol \u26A0
 app_location = os.path.realpath(__file__)
 app_main_directory = os.path.dirname(app_location) + '/'
@@ -553,6 +567,152 @@ load_page = html.Div(final_list, style = {'margin':'1%'})
 #Test page, go to /test-page to see 
 final_list = []
 final_list.append(html.Div(id='test-div-for-button'))
+final_list.append(
+    html.H3('Genomes')
+)
+final_list.append(
+    html.P('Select one of the two available Tabs and fill in the field to add a new Genome or to update and existing dictionary.')
+)
+
+new_genome_content = html.Div(
+    [
+        html.Br(),
+        html.P('1) Select a Reference Genome'),
+        html.Br(),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(html.Button('Select Reference Genome Directory', id = 'button-select-refgenome')),
+                                dbc.Col(html.P('Selected: None', id = 'selected-referencegenome'))
+                            ]
+                        )  
+                    ]
+                ),
+                dbc.Col(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(html.Button('Select PAM File', id = 'button-select-pam')),
+                                dbc.Col(html.P('Selected: None', id = 'selected-pamfile'))
+                            ]
+                        )  
+                    ]
+                ),
+                
+            ]
+        ),
+        html.Br(),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(html.Button('Select Annotation File', id = 'button-select-annotation')), 
+                                dbc.Col(html.P('Selected: None', id = 'selected-annotationfile'))
+                            ]
+                        ),
+                        
+                    ]
+                ),
+                dbc.Col(
+                        dbc.Row(
+                            [
+                                dbc.Col(dcc.Input(placeholder = 'Select number of max Bulges', type = 'number', min = 0, id = 'input-max-bulges'))
+                            ]
+                        )
+                    )
+
+            ]
+        ),
+        html.Hr(),
+        html.P('2) (Optional) Enrich the previously selected Reference Genome with samples informations'),
+        html.Br(),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(html.Button('Select VCFs Directory', id = 'button-select-vcf')),
+                                dbc.Col(html.P('Selected: None', id = 'selected-vcf'))
+                            ]
+                        )  
+                    ]
+                ),
+                dbc.Col(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(html.Button('Select Samples ID File', id = 'button-select-sampleID')), 
+                                dbc.Col(html.P('Selected: None', id = 'selected-sampleIDfile'))
+                            ]
+                        ),
+                        
+                    ]
+                )
+            ]
+        ),
+        html.Br(),
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.Row(
+                        [
+                            dbc.Col(html.P('Enriched Genome Name')),
+                            dbc.Col(dcc.Input(placeholder = 'Example: 1000genomeproject', id = 'input-enriched-name'))
+                        ]
+                    )
+                )
+            ]
+        ),
+        html.Hr(),
+        dbc.Row(
+            [
+                dbc.Col(
+                    html.Button('Start add new genome', id = 'button-add-new-genome')
+                ),
+                dbc.Col(
+                    [
+                        dbc.Row(
+                            dbc.Col(
+                                html.P('Status:', id = 'status-add-new-genome')
+                            )
+                        ),
+                        dbc.Row(
+                            dbc.Col(
+                                html.Div(
+                                    [
+                                        dbc.Progress(value = 0, id = 'progress-add-new-genome'),
+                                        dcc.Interval(interval = 60*1000,id='interval-add-new-genome')
+                                    ]
+                                )
+                            )
+                        )
+                    ]
+                )
+            ]
+        )
+    ]
+)
+
+update_dictionary_content = html.Div() #TODO finire con layout simile a quello per aggiungere nuovo genoma
+
+final_list.append(
+    dbc.Tabs(
+        [
+            dbc.Tab(new_genome_content, label='Add New Genome', tab_id= 'add-genome-tab'),
+            dbc.Tab(update_dictionary_content, label='Update Dictionary', tab_id = 'update-dictionary')
+        ],
+        active_tab='add-genome-tab',
+        id = 'tabs-new-genome-or-dictionary'
+    )
+)
+
+final_list.append(html.Div(id = 'div-targetoutput', style = {'display':'none'}))
 test_page = html.Div(final_list, style = {'margin':'1%'})
 
 #TEST PAGE 2
@@ -577,67 +737,95 @@ contacts_page =  html.Div(contacts_page.contactPage(), style = {'margin':'1%'})
 ##################################################CALLBACKS##################################################
 #Test callbacks
 
-# #Callback for test-page2
-# @app.callback(
-#     [Output('double-table-two', 'data'),
-#     Output('double-table-two', 'columns')],
-#     [Input('double-table-one', 'active_cell')],
-#     [State('double-table-one', 'data')]
-# )
-# def loadSecondTable(active_cell, data):
-#     if active_cell is None:
-#         raise PreventUpdate
-    
-#     id_selected = data[active_cell['row']]['id']
-    
-#     return df_example.loc[df_example['id'] == id_selected].to_dict('records'), [{"name": i, "id": i} for i in list(data[0].keys())[:-2]]
 
+#General function for selecting a Directory or a file
+def openDialog(n, type_ask, start_dir = './'):
+    if n is None:
+        raise PreventUpdate
+    root = tk.Tk()
+    root.withdraw()
+    if type_ask == 'D':
+        selected = filedialog.askdirectory(initialdir = current_working_directory + start_dir)
+    else:
+        selected = filedialog.askopenfilename(initialdir = current_working_directory + start_dir)
+    root.destroy()
+    if selected == '' or selected == '()':
+        selected = 'None'
+    return str(selected)
 
+#Callbacks for generating filebrowser for addition of new genome
+@app.callback(
+    Output('selected-referencegenome', 'children'),
+    [Input('button-select-refgenome','n_clicks')]
+)
+def fileDialogRefGenome(n):
+    return 'Selected: ' + openDialog(n, 'D','Genomes')
 
+@app.callback(
+    Output('selected-pamfile', 'children'),
+    [Input('button-select-pam','n_clicks')]
+)
+def fileDialogPam(n):
+    return 'Selected: ' + openDialog(n, 'F') 
 
-# #IDEA aggiungo colonna che mi indica se è top1 o solo parte del cluster, se l'utente clicca su +, faccio vedere anche quelle corrispondenti a quel cluster
-# @app.callback(
-#     Output('table-expand', 'data'),
-#     #[Input('table-expand', 'active_cell')],
-#     [Input('table-expand','selected_rows')],
-#     [State('table-expand', 'data'),
-#     State('table-expand', 'selected_row_ids')]
-# )
-# def expand(active_cell,  data, sri):    #Callback for test-page
-#     if active_cell is None:
-#         raise PreventUpdate
-    
-#     #df = pd.DataFrame(data)
-#     df = pd.read_csv('esempio_tabella_cluster.txt', sep = '\t')
-#     print('Sel row', active_cell)
-    
-#     print('Sel row id', sri)
-#     print('Data', data)
-#     df.drop( df[(df['top'] == 's') & (~( df['id'].isin(sri)))].index, inplace = True)
-#     # for i in range (df.shape[0]):
-#     #     exp_col.append('+')
-#     #     close_col.append('-')
-#     #     status_col.append('Top1')
-#     # df['Open'] = exp_col
-#     # df['Close'] = close_col
-#     # df['Status'] = status_col
-#     print('df',df)
-#     return df.to_dict('records')
-#     # if active_cell['column_id'] == 'Open': 
-#     #     if df.iat[active_cell['row'], -1] == 'Top1':
-#     #         df.iat[active_cell['row'], -1] = 'Subcluster'    
-#     #         df.loc[-1] = 'n'
-#     #         return df.to_dict('records')
-#     #     else:
-#     #         raise PreventUpdate
-#     # elif active_cell['column_id'] == 'Close':
-#     #     if df.iat[active_cell['row'], -1] == 'Subcluster':
-#     #         df.iat[active_cell['row'], -1] = 'Top1'
-#     #         df.drop(df.tail(1).index,inplace=True)
-#     #         return df.to_dict('records')
-#     # raise PreventUpdate
+@app.callback(
+    Output('selected-annotationfile', 'children'),
+    [Input('button-select-annotation','n_clicks')]
+)
+def fileDialogAnnotation(n):
+    return 'Selected: ' + openDialog(n, 'F','annotations') 
 
-    
+@app.callback(
+    Output('selected-vcf', 'children'),
+    [Input('button-select-vcf','n_clicks')]
+)
+def fileDialogVCF(n):
+    return 'Selected: ' + openDialog(n, 'D')
+
+@app.callback(
+Output('selected-sampleIDfile', 'children'),
+[Input('button-select-sampleID','n_clicks')]
+)
+def fileDialogSamplesID(n):
+    return 'Selected: ' + openDialog(n, 'F','samplesID')  
+
+#Callback creazione nuovo genoma
+@app.callback(
+    Output('div-targetoutput','children'),
+    [Input('button-add-new-genome', 'n_clicks')]
+)
+def startAddNewGenome(n):
+    if n is None:
+        raise PreventUpdate
+    #TODO: prende gli state dei valori selezionati dall'utente e controlla se sono stati tutti selezionati, altrimenti fa comparire un 
+    #avviso che manca qualcosa (cfr. funzione checkInput, ma basta solo avere l'elenco dei campi da compilare)
+    #...
+    #...
+
+    #input corretti
+    #Faccio un subprocess.Popen facendo partire lo script per generare il nuovo genoma
+    #Lo script.sh crea un file nella cartella Genomes chiamato 'status_creation_nomegenoma.txt' dove nomegenoma è ref o enr in base alla
+    #selezione dell'utente
+    #In questo script faccio echo dei vari step in cui sono in questo momento con l'analisi, in modo poi da leggere questo file e con un interval
+    #dire all'utente a che punto siamo
+
+    return ''
+
+#Callback per aggiornare la barra progresso
+@app.callback(
+    [Output('progress-add-new-genome', 'value'),
+    Output('status-add-new-genome','children')],
+    [Input('interval-add-new-genome','n_intervals')],
+    [State('progress-add-new-genome','value')]
+)
+def updateStatusCreateNewGenome(n, v ):
+    if n is None:
+        raise PreventUpdate
+    if v is None:
+        v = 0
+    #TODO questa funzione legge il file creato dalla funzione startAddNewGenome e in base allo step in cui siamo (Copia file, indicizzazione, enrichment etc)
+    #ritorna in output una valore della barra (eg +25 per ogni step fatto) e lo step a cui siamo (eg Status: Enrichment Genome)
+    return str(int(v) + 3), 'Status: ' + str(int(v) + 3)
 #################################################
 #Fade in/out email
 @app.callback(
@@ -1152,7 +1340,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
 
     command = app_main_directory + 'PostProcess/./submit_job.final.sh ' + current_working_directory + 'Results/' + job_id + ' ' + current_working_directory +  'Genomes/' + genome_selected + ' ' + current_working_directory + 'Genomes/' + genome_ref + ' ' + current_working_directory + 'genome_library/' + genome_idx + (
         ' ' + pam + ' ' + guides_file + ' ' + str(mms) + ' ' + str(dna) + ' ' + str(rna) + ' ' + str(search_index) + ' ' + str(search) + ' ' + str(annotation) + (
-            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + current_working_directory +  'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' ' + annotation_file + #current_working_directory +  'annotations/' + annotation_file + 
+            ' ' + str(report) + ' ' + str(gecko_comp) + ' ' + str(ref_comparison) + ' ' + current_working_directory +  'genome_library/' + genome_idx_ref + ' ' + str(send_email) + ' '  + current_working_directory +  'annotations/' + annotation_file + 
             ' ' + genome_type + ' ' + app_main_directory + ' ' + str(dictionary_directory) + ' ' + str(sample_list) + ' ' + str(generate_index_ref) + ' ' + str(generate_index_enr) + ' ' + current_working_directory))
 
     exeggutor.submit(subprocess.run, command, shell=True)
@@ -1731,13 +1919,17 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         except:
             radar_href = ''
         
-        population_1000gp = associateSample.loadSampleAssociation(job_directory + 'sampleID.txt')[2]
-        super_populations = [{'label':i, 'value':i} for i in population_1000gp.keys()]
-        populations = []
-        for k in population_1000gp.keys():
-            for i in population_1000gp[k]:
-                populations.append({'label':i, 'value':i})
+        if genome_type != 'ref':
+            population_1000gp = associateSample.loadSampleAssociation(job_directory + 'sampleID.txt')[2]
         
+            super_populations = [{'label':i, 'value':i} for i in population_1000gp.keys()]
+            populations = []
+            for k in population_1000gp.keys():
+                for i in population_1000gp[k]:
+                    populations.append({'label':i, 'value':i})
+        else:
+            super_populations = []
+            populations = [] 
         # fl.append(html.P('Select Mismatch Value'))
         fl.append(
             html.Div(
@@ -4639,7 +4831,7 @@ def change_annotation(nChg, rows, selected_row):
 
 if __name__ == '__main__':
     #app.run_server(debug=True)
-    app.run_server(host='0.0.0.0', debug=True, port=8050)
+    app.run_server(host='0.0.0.0', debug=True, port=8080)
     #app.run_server(host='0.0.0.0',  port=8080) #NOTE to not reload the page when creating new images in graphical report
     cache.clear()       #delete cache when server is closed
 
