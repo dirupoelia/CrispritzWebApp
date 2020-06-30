@@ -673,13 +673,13 @@ new_genome_content = html.Div(
         dbc.Row(
             [
                 dbc.Col(
-                    html.Button('Start add new genome', id = 'button-add-new-genome')
+                    html.Button('Start add new genome', id = 'button-add-new-genome', disabled = True)
                 ),
                 dbc.Col(
                     [
                         dbc.Row(
                             dbc.Col(
-                                html.P('Status:', id = 'status-add-new-genome')
+                                html.P('Status: No Job Submitted', id = 'status-add-new-genome')
                             )
                         ),
                         dbc.Row(
@@ -687,7 +687,7 @@ new_genome_content = html.Div(
                                 html.Div(
                                     [
                                         dbc.Progress(value = 0, id = 'progress-add-new-genome'),
-                                        dcc.Interval(interval = 60*1000,id='interval-add-new-genome')
+                                        dcc.Interval(interval = 3*1000,id='interval-add-new-genome')
                                     ]
                                 )
                             )
@@ -808,13 +808,15 @@ def startAddNewGenome(n):
     #selezione dell'utente
     #In questo script faccio echo dei vari step in cui sono in questo momento con l'analisi, in modo poi da leggere questo file e con un interval
     #dire all'utente a che punto siamo
-
+    print('Button clicked')
+    subprocess.Popen([app_main_directory + 'PostProcess/aggiunta_genoma_test_script.sh', current_working_directory])
     return ''
 
 #Callback per aggiornare la barra progresso
 @app.callback(
     [Output('progress-add-new-genome', 'value'),
-    Output('status-add-new-genome','children')],
+    Output('status-add-new-genome','children'),
+    Output('button-add-new-genome', 'disabled')],
     [Input('interval-add-new-genome','n_intervals')],
     [State('progress-add-new-genome','value')]
 )
@@ -825,7 +827,13 @@ def updateStatusCreateNewGenome(n, v ):
         v = 0
     #TODO questa funzione legge il file creato dalla funzione startAddNewGenome e in base allo step in cui siamo (Copia file, indicizzazione, enrichment etc)
     #ritorna in output una valore della barra (eg +25 per ogni step fatto) e lo step a cui siamo (eg Status: Enrichment Genome)
-    return str(int(v) + 3), 'Status: ' + str(int(v) + 3)
+    
+    #controlla se esiste il file aggiunta nuovo genoma, e aggiorna la barra e mette il bottone a Disabled = True
+    if isfile(current_working_directory + 'Genomes/aggiunta_nuovo_genoma.txt'):
+        with open(current_working_directory + 'Genomes/aggiunta_nuovo_genoma.txt') as info_status:
+            a = next(info_status).strip().split(' ') #Get current step number [0] and step name [1]
+        return str(int(a[0]) * 25), 'Status: ' + a[1], True
+    return 0 , 'Status: No Job Submitted', False
 #################################################
 #Fade in/out email
 @app.callback(
