@@ -14,12 +14,12 @@ echo '1 Copy_Genome' > $out_file
 sleep 5
 
 echo '2 Indexing' > $out_file
-sleep 5
+sleep 10
 
 echo '3 Enrichment' > $out_file
-sleep 5
+sleep 10
 
 #....
 
 echo '4 Done' > $out_file
-rm $out_file        #indica che l'aggiunta è finita e si può fare l'aggiunta di un nuovo genoma
+

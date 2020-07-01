@@ -565,155 +565,170 @@ load_page = html.Div(final_list, style = {'margin':'1%'})
 
 
 #Test page, go to /test-page to see 
-final_list = []
-final_list.append(html.Div(id='test-div-for-button'))
-final_list.append(
-    html.H3('Genomes')
-)
-final_list.append(
-    html.P('Select one of the two available Tabs and fill in the field to add a new Genome or to update and existing dictionary.')
-)
+def test_page():
+    final_list = []
+    final_list.append(html.Div(id='test-div-for-button'))
+    final_list.append(
+        html.H3('Genomes')
+    )
+    final_list.append(
+        html.P('Select one of the two available Tabs and fill in the field to add a new Genome or to update and existing dictionary.')
+    )
 
-new_genome_content = html.Div(
-    [
-        html.Br(),
-        html.P('1) Select a Reference Genome'),
-        html.Br(),
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Col(html.Button('Select Reference Genome Directory', id = 'button-select-refgenome')),
-                                dbc.Col(html.P('Selected: None', id = 'selected-referencegenome'))
-                            ]
-                        )  
-                    ]
-                ),
-                dbc.Col(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Col(html.Button('Select PAM File', id = 'button-select-pam')),
-                                dbc.Col(html.P('Selected: None', id = 'selected-pamfile'))
-                            ]
-                        )  
-                    ]
-                ),
-                
-            ]
-        ),
-        html.Br(),
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Col(html.Button('Select Annotation File', id = 'button-select-annotation')), 
-                                dbc.Col(html.P('Selected: None', id = 'selected-annotationfile'))
-                            ]
-                        ),
-                        
-                    ]
-                ),
-                dbc.Col(
-                        dbc.Row(
-                            [
-                                dbc.Col(dcc.Input(placeholder = 'Select number of max Bulges', type = 'number', min = 0, id = 'input-max-bulges'))
-                            ]
-                        )
-                    )
+    #Check if an already processing add new genome is currently active. If yes, set the button to be disabled
+    already_processing = False
+    status_label = 'Status: No Job Submitted'
+    status_value = 0
+    style_disabled = {}
+    if isfile(current_working_directory + 'Genomes/' + 'aggiunta_nuovo_genoma.txt' ):
+        already_processing = True
+        style_disabled = {'background-color':'darkgrey'}
+        with open(current_working_directory + 'Genomes/' + 'aggiunta_nuovo_genoma.txt') as info_status:
+            status_general = next(info_status).strip().split(' ') #Get current step number [0] and step name [1] on accessing page for first time
+            status_label = 'Status: ' + status_general[1]
+            status_value = int(status_general[0]) * 25
 
-            ]
-        ),
-        html.Hr(),
-        html.P('2) (Optional) Enrich the previously selected Reference Genome with samples informations'),
-        html.Br(),
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Col(html.Button('Select VCFs Directory', id = 'button-select-vcf')),
-                                dbc.Col(html.P('Selected: None', id = 'selected-vcf'))
-                            ]
-                        )  
-                    ]
-                ),
-                dbc.Col(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Col(html.Button('Select Samples ID File', id = 'button-select-sampleID')), 
-                                dbc.Col(html.P('Selected: None', id = 'selected-sampleIDfile'))
-                            ]
-                        ),
-                        
-                    ]
-                )
-            ]
-        ),
-        html.Br(),
-        dbc.Row(
-            [
-                dbc.Col(
-                    dbc.Row(
+    new_genome_content = html.Div(
+        [
+            html.Br(),
+            html.P('1) Select a Reference Genome'),
+            html.Br(),
+            dbc.Row(
+                [
+                    dbc.Col(
                         [
-                            dbc.Col(html.P('Enriched Genome Name')),
-                            dbc.Col(dcc.Input(placeholder = 'Example: 1000genomeproject', id = 'input-enriched-name'))
+                            dbc.Row(
+                                [
+                                    dbc.Col(html.Button('Select Reference Genome Directory', id = 'button-select-refgenome')),
+                                    dbc.Col(html.P('Selected: None', id = 'selected-referencegenome'))
+                                ]
+                            )  
+                        ]
+                    ),
+                    dbc.Col(
+                        [
+                            dbc.Row(
+                                [
+                                    dbc.Col(html.Button('Select PAM File', id = 'button-select-pam')),
+                                    dbc.Col(html.P('Selected: None', id = 'selected-pamfile'))
+                                ]
+                            )  
+                        ]
+                    ),
+                    
+                ]
+            ),
+            html.Br(),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        [
+                            dbc.Row(
+                                [
+                                    dbc.Col(html.Button('Select Annotation File', id = 'button-select-annotation')), 
+                                    dbc.Col(html.P('Selected: None', id = 'selected-annotationfile'))
+                                ]
+                            ),
+                            
+                        ]
+                    ),
+                    dbc.Col(
+                            dbc.Row(
+                                [
+                                    dbc.Col(dcc.Input(placeholder = 'Select number of max Bulges', type = 'number', min = 0, id = 'input-max-bulges'))
+                                ]
+                            )
+                        )
+
+                ]
+            ),
+            html.Hr(),
+            html.P('2) (Optional) Enrich the previously selected Reference Genome with samples informations'),
+            html.Br(),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        [
+                            dbc.Row(
+                                [
+                                    dbc.Col(html.Button('Select VCFs Directory', id = 'button-select-vcf')),
+                                    dbc.Col(html.P('Selected: None', id = 'selected-vcf'))
+                                ]
+                            )  
+                        ]
+                    ),
+                    dbc.Col(
+                        [
+                            dbc.Row(
+                                [
+                                    dbc.Col(html.Button('Select Samples ID File', id = 'button-select-sampleID')), 
+                                    dbc.Col(html.P('Selected: None', id = 'selected-sampleIDfile'))
+                                ]
+                            ),
+                            
                         ]
                     )
-                )
-            ]
-        ),
-        html.Hr(),
-        dbc.Row(
-            [
-                dbc.Col(
-                    html.Button('Start add new genome', id = 'button-add-new-genome', disabled = True)
-                ),
-                dbc.Col(
-                    [
+                ]
+            ),
+            html.Br(),
+            dbc.Row(
+                [
+                    dbc.Col(
                         dbc.Row(
-                            dbc.Col(
-                                html.P('Status: No Job Submitted', id = 'status-add-new-genome')
-                            )
-                        ),
-                        dbc.Row(
-                            dbc.Col(
-                                html.Div(
-                                    [
-                                        dbc.Progress(value = 0, id = 'progress-add-new-genome'),
-                                        dcc.Interval(interval = 3*1000,id='interval-add-new-genome')
-                                    ]
+                            [
+                                dbc.Col(html.P('Enriched Genome Name')),
+                                dbc.Col(dcc.Input(placeholder = 'Example: 1000genomeproject', id = 'input-enriched-name'))
+                            ]
+                        )
+                    )
+                ]
+            ),
+            html.Hr(),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        html.Button('Start add new genome', id = 'button-add-new-genome', disabled = already_processing, style = style_disabled)
+                    ),
+                    dbc.Col(
+                        [
+                            dbc.Row(
+                                dbc.Col(
+                                    html.P(status_label, id = 'status-add-new-genome')
+                                )
+                            ),
+                            dbc.Row(
+                                dbc.Col(
+                                    html.Div(
+                                        [
+                                            dbc.Progress(value = status_value, id = 'progress-add-new-genome'),
+                                            dcc.Interval(interval = 30*1000,id='interval-add-new-genome')
+                                        ]
+                                    )
                                 )
                             )
-                        )
-                    ]
-                )
-            ]
-        )
-    ]
-)
-
-update_dictionary_content = html.Div() #TODO finire con layout simile a quello per aggiungere nuovo genoma
-
-final_list.append(
-    dbc.Tabs(
-        [
-            dbc.Tab(new_genome_content, label='Add New Genome', tab_id= 'add-genome-tab'),
-            dbc.Tab(update_dictionary_content, label='Update Dictionary', tab_id = 'update-dictionary')
-        ],
-        active_tab='add-genome-tab',
-        id = 'tabs-new-genome-or-dictionary'
+                        ]
+                    )
+                ]
+            )
+        ]
     )
-)
 
-final_list.append(html.Div(id = 'div-targetoutput', style = {'display':'none'}))
-test_page = html.Div(final_list, style = {'margin':'1%'})
+    update_dictionary_content = html.Div() #TODO finire con layout simile a quello per aggiungere nuovo genoma
+
+    final_list.append(
+        dbc.Tabs(
+            [
+                dbc.Tab(new_genome_content, label='Add New Genome', tab_id= 'add-genome-tab'),
+                dbc.Tab(update_dictionary_content, label='Update Dictionary', tab_id = 'update-dictionary')
+            ],
+            active_tab='add-genome-tab',
+            id = 'tabs-new-genome-or-dictionary'
+        )
+    )
+
+    final_list.append(html.Div(id = 'div-targetoutput', style = {'display':'none'}))
+    return html.Div(final_list, style = {'margin':'1%'})
+# test_page = html.Div(final_list, style = {'margin':'1%'})
 
 #TEST PAGE 2
 final_list = []
@@ -816,15 +831,19 @@ def startAddNewGenome(n):
 @app.callback(
     [Output('progress-add-new-genome', 'value'),
     Output('status-add-new-genome','children'),
-    Output('button-add-new-genome', 'disabled')],
-    [Input('interval-add-new-genome','n_intervals')],
-    [State('progress-add-new-genome','value')]
+    Output('button-add-new-genome', 'disabled'),
+    Output('button-add-new-genome', 'style')],
+    [Input('interval-add-new-genome','n_intervals'),
+    Input('button-add-new-genome','n_clicks')]
 )
-def updateStatusCreateNewGenome(n, v ):
-    if n is None:
+def updateStatusCreateNewGenome(n, n_button):   
+    if n is None and n_button is None:
         raise PreventUpdate
-    if v is None:
-        v = 0
+    
+
+    context = dash.callback_context.triggered[0]['prop_id'].split('.')[0] #id of input that triggered callback
+    if context == 'button-add-new-genome':
+        return 0, 'Status: Copy Genome', True,  {'background-color':'darkgrey'}
     #TODO questa funzione legge il file creato dalla funzione startAddNewGenome e in base allo step in cui siamo (Copia file, indicizzazione, enrichment etc)
     #ritorna in output una valore della barra (eg +25 per ogni step fatto) e lo step a cui siamo (eg Status: Enrichment Genome)
     
@@ -832,8 +851,11 @@ def updateStatusCreateNewGenome(n, v ):
     if isfile(current_working_directory + 'Genomes/aggiunta_nuovo_genoma.txt'):
         with open(current_working_directory + 'Genomes/aggiunta_nuovo_genoma.txt') as info_status:
             a = next(info_status).strip().split(' ') #Get current step number [0] and step name [1]
-        return str(int(a[0]) * 25), 'Status: ' + a[1], True
-    return 0 , 'Status: No Job Submitted', False
+            if 'Done' == a[1]:
+                subprocess.run(['rm', current_working_directory + 'Genomes/' + 'aggiunta_nuovo_genoma.txt'])
+                return 100, 'Status: Done', False, {}
+        return str(int(a[0]) * 25), 'Status: ' + a[1], True,  {'background-color':'darkgrey'}
+    return 0 , 'Status: No Job Submitted', False, {}
 #################################################
 #Fade in/out email
 @app.callback(
@@ -1386,7 +1408,7 @@ def changePage( href, path, search, hash_guide):
             return clusterPage(job_id, hash_guide.split('#')[1]), URL + '/load' + search
         return resultPage(job_id), URL + '/load' + search
     if path == '/test-page':
-        return test_page, URL + '/load' + search
+        return test_page(), URL + '/load' + search
     if path == '/test-page2':
         return test_page2, URL + '/load' + search
     if path == '/test-page3':
