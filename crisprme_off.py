@@ -4838,26 +4838,59 @@ def update_dict(nUpd):
     ud.startUpdateDict(current_working_directory)
     return ''
 
+
+#Open filedialog for choosing new annotation file 
+@app.callback(
+    [Output('label-new-annotation-selected', 'children'),
+    Output('tooltip-label-new-annotation-selected', 'children')],
+    [Input('button-choose-new-annotation', 'n_clicks')]
+)
+def fileDialogUpdateAnnotation(n):
+    selected_file = openDialog(n, 'F')
+    return 'Selected: ' + os.path.basename(selected_file), 'Full Path: ' + selected_file
+
+
 #Change annotation of selected Genome row
 @app.callback(
-    Output('ann-job', 'value'),
+    Output('ann-job', 'children'),
     [Input('change-ann','n_clicks')],
     [ State('genomes-table', 'derived_virtual_data'),
-     State('genomes-table', 'selected_rows')]
+     State('genomes-table', 'selected_rows'),
+     State('tooltip-label-new-annotation-selected', 'children'),
+     State('radioitems-new-annotation', 'value')]
     )
-def change_annotation(nChg, rows, selected_row):
+def change_annotation(nChg, rows, selected_row, selected_new_ann, selected_type):
     if nChg is None:
         raise PreventUpdate
     if len(selected_row) == 0:
-        raise PreventUpdate
-    
+        return dbc.Alert("Warning! Please select a Genome!", is_open=True, duration=5000, color = 'warning' )
+    selected_new_ann = selected_new_ann.split('Full Path: ')[-1]
+    if not isfile(selected_new_ann):
+        return dbc.Alert("Error! The selected file does not exist!", is_open=True, duration=7000, color = 'danger' )
+    if selected_type is None:
+        return dbc.Alert("Warning! Please select an option (Overwrite or Extend)!", is_open=True, duration=7000, color = 'warning' )
     row = pd.DataFrame(rows).iloc[selected_row,:] 
     annotationFile = row["Annotation File"].iloc[0]
-    from GUI import annotations as ann
-    ann.startChangeAnn(current_working_directory+"/annotations/"+str(annotationFile))
-    # import gc
-    # gc.collect()
-    return ''
+
+    if selected_type == 'replace':
+        subprocess.run(['cp', selected_new_ann ,current_working_directory + 'annotations/' + annotationFile])
+    else:
+        with open (current_working_directory + 'annotations/' + annotationFile, 'a') as oldAnn:
+            with open (selected_new_ann, 'r') as newAnn:
+                for line in newAnn:
+                    oldAnn.write("\n"+line.strip())
+                    
+    
+    # from GUI import annotations as ann
+    # ann.startChangeAnn(current_working_directory+"/annotations/"+str(annotationFile))
+    
+    #Return an alert if the job is completed
+    return dbc.Alert(
+            "Completed! The annotation file is updated!",
+            id="alert-auto",
+            is_open=True,
+            duration=5000,
+        )
 
 if __name__ == '__main__':
     #app.run_server(debug=True)

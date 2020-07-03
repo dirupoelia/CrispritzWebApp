@@ -71,7 +71,7 @@ def genomesPage(pathDir):
         html.Div([
             html.H3('Genomes'),
             html.P('List of available Reference and Enriched Genomes. For each Genome, the available indexed PAM is shown, along with the maximum searchable number of bulges (PAM and #Bulges columns). The annotation and samples ID files are also shown.'),
-            html.P('Select a row, and click on the \"Change Annotations\" button to update or replace the annotation file for the desired Genome.'),
+            # html.P('Select a row, and click on the \"Change Annotations\" button to update or replace the annotation file for the desired Genome.'),
             dash_table.DataTable(
                 id = "genomes-table",
                 columns = [{"name": i, "id": i} for i in genomes.columns],
@@ -84,10 +84,80 @@ def genomesPage(pathDir):
     final_list.append(
         html.Div([
             html.Br(),
-            html.Button("Change annotations", id = 'change-ann'),
-            html.Div('', id = 'ann-job', style = {'display':'none'})
-            ])
+            html.H4('Change annotations'),
+            html.P('Select a row on the above table, provide a new Annotation file and update or replace the Annotation file for the desired Genome.')
+        ])
         )
+
+    final_list.append(
+        html.Div(
+            html.Div(
+                [
+                    html.Div(
+                        dbc.Row([
+                            dbc.Col(
+                                [
+                                    html.Button('Choose a new Annotation File', id = 'button-choose-new-annotation'),
+                                    
+                                    html.P('Selected: None', id = 'label-new-annotation-selected'),
+                                    dbc.Tooltip('Full Path: None', placement = 'bottom-start', target = 'label-new-annotation-selected',id = 'tooltip-label-new-annotation-selected' )
+                                    
+                                ]
+                            ),
+                            dbc.Col(
+                                # html.P('Selected: None', id = 'label-new-annotation-selected')
+                                dcc.RadioItems(
+                                options=[
+                                    {'label': ' Overwrite previous file', 'value': 'replace'},
+                                    {'label': ' Extend previous file', 'value': 'update'}
+                                ],
+                                id='radioitems-new-annotation'
+                            )  
+                            )
+                        ]),
+                        style = {'width':'50%'}
+                    ),
+                    html.Br(),
+                    dbc.Row([
+                        dbc.Col(
+                            # dcc.RadioItems(
+                            #     options=[
+                            #         {'label': ' Overwrite previous file', 'value': 'replace'},
+                            #         {'label': ' Extend previous file', 'value': 'update'}
+                            #     ],
+                            # )  
+                        )
+                    ]),
+                    # html.Br()
+                ],
+                # style = {'display':'inline-block'}
+            ), 
+            # style = {'text-align':'center'}
+        )
+    )
+    # final_list.append(
+    #     html.Div([
+    #             html.Div([
+    #                 html.Button("Change annotations", id = 'change-ann'), 
+    #                 html.Br(),
+    #                 html.Div( id = 'ann-job')
+    #             ])
+    #         ])
+    #     )
+    final_list.append(
+        html.Div(
+            [
+                dbc.Row(
+                    [
+                        dbc.Col(html.Button("Change annotations", id = 'change-ann')),
+                        dbc.Col(html.Div( id = 'ann-job'))
+                    ]
+                )
+            ],
+            style = {'width':'50%'}
+        )
+    )
+
     page = html.Div(final_list, style = {'margin':'1%'})
     return page
     
@@ -95,4 +165,3 @@ def genomesPage(pathDir):
 if __name__ == '__main__':
     #app.run_server(debug=True)
     sys.path.append(os.path.abspath(os.path.join('..', '../CrispritzWebApp-OFFLINE/')))
-    print(genomesPage())
