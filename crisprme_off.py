@@ -33,6 +33,7 @@ import re                                   #For sort chr filter values
 import concurrent.futures                           #For workers and queue
 import math
 from PostProcess.supportFunctions.loadSample import associateSample
+from PostProcess import CFDGraph
 try:
     from GUI import GUImessage as Gmsg
 except ImportError:
@@ -1855,8 +1856,8 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                 chr_file_unset.append(chr_name)
             else:
                 chr_file.append(chr_name)
-        chr_file.sort(key = lambda s: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', s)])
-        chr_file_unset.sort(key = lambda s: [int(t) if t.isdigit() else t.lower() for t in re.split('(\d+)', s)])
+        chr_file.sort(key = lambda s: [int(t) if t.isdigit() else t.lower() for t in re.split(r'(\d+)', s)])
+        chr_file_unset.sort(key = lambda s: [int(t) if t.isdigit() else t.lower() for t in re.split(r'(\d+)', s)])
         chr_file += chr_file_unset
         chr_file = [{'label': chr_name, 'value' : chr_name} for chr_name in chr_file]
         
@@ -2047,10 +2048,22 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         
         fl.append(html.Br())
         fl.append(html.Br())
+
+        #TODO codice per l'integrazione del CFD graph. When .CFDGraph.txt will be integrated, remove the try/except
+        
+        cfd_path = job_directory + job_id +'.CFDGraph.txt'
+        if not isfile(cfd_path): #No file found
+            return fl
+        
+        fl.extend(
+            CFDGraph.CFDGraph(cfd_path)
+        )
+
         return fl
     # guide = all_guides[int(sel_cel[0]['row'])]['State']
         # return guide + value
     raise PreventUpdate
+
 
 #Open in browser the result directory
 @app.callback(
