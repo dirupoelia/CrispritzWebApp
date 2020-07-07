@@ -1,5 +1,20 @@
-#OFFLINE VERSION OF CRISPRme
+'''
+CRISPRme performs predictive analysis and result assessment on population and individual specific CRISPR/Cas experiments. 
+CRISPRme enumerates on- and off-target accounting simultaneously for substitutions, DNA/RNA bulges and common genetic variants from the 1000 
+genomes project. CRISPRme is based on CRISPRitz (Cancellieri, Samuele, et al. "Crispritz: rapid, high-throughput, and variant-aware in silico off-target site identification for crispr genome editing." Bioinformatics (2019).) 
+a software tool for population target analyses. CRISPRme is devoted to individual specific on- and off-target analyses.
 
+Documentation updated up to 07/07/2020
+
+Launch crisprme:
+
++ python3 crisprme_off.py
++ gunicorn -b :8080 crisprme_off:app.server
+
+Generate docs:
+
++ pdoc crisprme_off.py -o docsCrisprme/ --force --html
+'''
 import dash
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
@@ -34,6 +49,7 @@ import concurrent.futures                           #For workers and queue
 import math
 from PostProcess.supportFunctions.loadSample import associateSample
 from PostProcess import CFDGraph
+from additional_pages import get_genomes
 try:
     from GUI import GUImessage as Gmsg
 except ImportError:
@@ -56,8 +72,8 @@ from tkinter import filedialog, END, IntVar, messagebox
 
 #Warning symbol \u26A0
 app_location = os.path.realpath(__file__)
-app_main_directory = os.path.dirname(app_location) + '/'
-current_working_directory = os.getcwd() + '/'
+app_main_directory = os.path.dirname(app_location) + '/'    #This for scripts
+current_working_directory = os.getcwd() + '/'               #This for files
 
 exeggutor = concurrent.futures.ProcessPoolExecutor(max_workers=2)
 
@@ -74,7 +90,13 @@ COL_BOTH_TYPE = ['text','text','text','text','numeric','numeric', 'text','numeri
 COL_BOTH_RENAME = {0:'Bulge Type', 1:'crRNA', 2:'DNA', 3:'Chromosome', 4:'Position', 5:'Cluster Position', 6:'Direction',
         7:'Mismatches', 8:'Bulge Size', 9:'Total', 10:'PAM Creation', 11 : 'Variant Unique', 12:'Samples', 13:'Annotation Type', 14:'Correct Guide'}
 GENOME_DATABASE = ['Reference', 'Enriched', 'Samples', 'Dictionary', 'Annotation']
-DISPLAY_OFFLINE = 'none'    #NOTE change to '' for online versione
+ONLINE = False              #NOTE change to True for online version, False for offline
+if ONLINE:
+    DISPLAY_OFFLINE = 'none'
+    DISPLAY_ONLINE = ''
+else:
+    DISPLAY_OFFLINE = ''
+    DISPLAY_ONLINE = 'none'
 VALID_CHARS = {'a', 'A', 't', 'T', 'c', 'C','g', 'G',
             "R",
             "Y",
@@ -97,7 +119,7 @@ VALID_CHARS = {'a', 'A', 't', 'T', 'c', 'C','g', 'G',
             "h" ,
             "v"
             }
-URL = 'http://127.0.0.1:8050'
+URL = 'http://127.0.0.1:8050'       #Change for online version
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
@@ -150,25 +172,52 @@ operators = [['ge ', '>='],
     # dict_sample_to_pop[all_samples[pos]] = i
 # dropdown_all_samples = [{'label': sam, 'value' : sam} for sam in all_samples]
 #Dropdown available genomes
-onlydir = [f for f in listdir(current_working_directory + 'Genomes') if isdir(join(current_working_directory + 'Genomes', f))]
-onlydir = [x.replace('_', ' ') for x in onlydir]
-gen_dir = []
-for dir in onlydir:
-    gen_dir.append({'label': dir, 'value' : dir})
+def availableGenomes():
+    '''
+    Returns a list of dictionaries of the available genomes in the 'Genomes' directory.
+
+    ***Returns***
+
+    + **gen_dir** (*list* of {'label': genome, 'value': genome}): list containing a series of dictionaries, one for each directory (genome) found in
+    the 'Genomes' directory. Used as input parameter for the 'options' element of a Dash Droplist 
+    '''
+    onlydir = [f for f in listdir(current_working_directory + 'Genomes') if isdir(join(current_working_directory + 'Genomes', f))]
+    onlydir = [x.replace('_', ' ') for x in onlydir]
+    gen_dir = []
+    for dir in onlydir:
+        gen_dir.append({'label': dir, 'value' : dir})
+    return gen_dir
 
 #Dropdown available PAM
-onlyfile = [f for f in listdir(current_working_directory + 'pam') if isfile(join(current_working_directory + 'pam', f))]
-onlyfile = [x.replace('.txt', '') for x in onlyfile]            #removed .txt for better visualization
-pam_file = []
-for pam_name in onlyfile:
-    if 'tempPAM' in pam_name:   #Skip the temp pam used for updating dictionaries
-        pass
-    else:
-        pam_file.append({'label':pam_name, 'value':pam_name})
+def availablePAM():
+    '''
+    Returns a list of dictionaries of the available PAMs in the 'PAM' directory.
+
+    ***Returns***
+    
+    + **pam_file** (*list* of {'label': pam, 'value': pam}): list containing a series of dictionaries, one for each PAM file found in
+        the 'PAM' directory. Used as input parameter for the 'options' element of a Dash Droplist
+    '''
+    onlyfile = [f for f in listdir(current_working_directory + 'pam') if isfile(join(current_working_directory + 'pam', f))]
+    onlyfile = [x.replace('.txt', '') for x in onlyfile]            #removed .txt for better visualization
+    pam_file = []
+    for pam_name in onlyfile:
+        if 'tempPAM' in pam_name:   #Skip the temp pam used for updating dictionaries
+            pass
+        else:
+            pam_file.append({'label':pam_name, 'value':pam_name})
+    return pam_file
 
 #Available mismatches and bulges
-av_mismatches = [{'label': i, 'value': i} for i in range(0, 7)]
-av_bulges = [{'label': i, 'value': i} for i in range(0, 3)]
+if ONLINE:
+    set_max_mms = 7
+    set_max_bulges = 3
+else:
+    set_max_mms = 7             #NOTE modify value for increasing/decreasing max mms or bulges available on Dropdown selection
+    set_max_bulges = 3
+
+av_mismatches = [{'label': i, 'value': i} for i in range(0, set_max_mms)]
+av_bulges = [{'label': i, 'value': i} for i in range(0, set_max_bulges)]
 av_guide_sequence = [{'label': i, 'value': i} for i in range(15, 26)]
 search_bar = dbc.Row(
     [
@@ -188,11 +237,11 @@ search_bar = dbc.Row(
         dbc.Col(dbc.NavLink(
             html.A('GENOMES', href = URL + '/genomes', target = '_blank', style = {'text-decoration':'none', 'color':'white'}),
             active = True, 
-            className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'})),
+            className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem', 'display':DISPLAY_OFFLINE})),
         dbc.Col(dbc.NavLink(
             html.A('HISTORY', href = URL + '/history', target = '_blank', style = {'text-decoration':'none', 'color':'white'}),
             active = True, 
-            className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem'}))
+            className= 'testHover', style = {'text-decoration':'none', 'color':'white', 'font-size':'1.5rem', 'display':DISPLAY_OFFLINE}))
     ],
     no_gutters=True,
     className="ml-auto flex-nowrap mt-3 mt-md-0",
@@ -233,266 +282,258 @@ app.layout = html.Div([
 
 
 #Main Page
-final_list = []
-final_list.extend([#html.H1('CRISPRitz Web Application'),
-    html.Div([
-        'CRISPRme  performs  predictive analysis and result assessment on population and individual specific CRISPR/Cas experiments.' +  
-        ' CRISPRme enumerates on- and off-target accounting simultaneously for  substitutions, DNA/RNA bulges and common genetic variants from the 1000 genomes project.'+
-        ' CRISPRme is based on CRISPRitz [1] a software tool for population target analyses.'  
-    + ' CRISPRme is devoted to individual specific on- and off-target analyses.'
-    ]),
-    #html.Br()
-    ])
+def indexPage():
+    '''
+    Creates the layout of the main page ('/'). The creation of the main page is put under a function in order to reload the genome and pam dropdown
+    if a new genome is added, simply by reloading the page.
 
-final_list.append(
-    html.Div(
-        [
-            # html.P(['Download the offline version here: ', html.A('InfOmics/CRISPRitz', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank"), ' or ', html.A('Pinellolab/CRISPRitz', href = 'https://github.com/pinellolab/CRISPRitz', target="_blank") ])
-            html.Br()
-        ]
-    )
-)
-checklist_div = html.Div(
-    [
-        dbc.FormGroup(
-            [
-                dbc.Checkbox(
-                    id="checkbox-gecko", className="form-check-input", checked = True
-                ),
-                dbc.Label(
-                    #html.P(['Activate Gecko ', html.Abbr('comparison', title ='The results of your test guides will be compared with results obtained from a previous computed analysis on gecko library')]) ,
-                    html.P('Compare your results with the GeCKO v2 library'),
-                    html_for="checkbox-gecko",
-                    className="form-check-label",
-                ),
-                dbc.Checkbox(
-                    id="checkbox-ref-comp", className="form-check-input"
-                ),
-                dbc.Label(
-                    #html.P(['Activate Reference genome ', html.Abbr('comparison', title ='The results of your test guides will be compared with the results obtained from a computed analysis on the corresponding reference genome. Note: this may increase computational time')]) ,
-                    html.P('Compare your results with the corresponding reference genome'),
-                    html_for="checkbox-ref-comp",
-                    className="form-check-label",
-                )
-                
-            ],
-            check = True
-        )
-    ],
-    id = 'checklist-test-div'
-)
+    ***Returns***
 
-modal = html.Div(
-    [
-        dbc.Modal(
-            [
-                dbc.ModalHeader("WARNING! Missing inputs"),
-                dbc.ModalBody('The following inputs are missing, please select values before submitting the job', id = 'warning-list'),
-                dbc.ModalFooter(
-                    dbc.Button("Close", id="close" , className="modal-button")
-                ),
-            ],
-            id="modal",
-            centered=True
-        ),
-    ]
-)
+    + **index_page** (*list*): list of html, dcc and dbc components for the layout.
+    '''
+    final_list = []
+    final_list.extend([
+        html.Div([
+            'CRISPRme  performs  predictive analysis and result assessment on population and individual specific CRISPR/Cas experiments.' +  
+            ' CRISPRme enumerates on- and off-target accounting simultaneously for  substitutions, DNA/RNA bulges and common genetic variants from the 1000 genomes project.'+
+            ' CRISPRme is based on CRISPRitz [1] a software tool for population target analyses.'  
+        + ' CRISPRme is devoted to individual specific on- and off-target analyses.'
+        ]),
+        ])
 
-tab_guides_content = html.Div(
-    [
-        html.P([
-            'Insert crRNA sequence(s), one per line.', 
-            html.P('Sequences must have the same length and be provided without the PAM sequence', id = 'testP') ,
-        ],
-        style = {'word-wrap': 'break-word'}), 
-
-        dcc.Textarea(id = 'text-guides', placeholder = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', style = {'width':'450px', 'height':'160px', 'font-family':'monospace', 'font-size':'large'}),
-        dbc.FormText('Note: a maximum number of 1000 sequences can be provided', color = 'secondary')
-    ],
-    style = {'width':'450px'} #same as text-area
-)
-tab_sequence_content = html.Div(
-    [
-        html.P(['Search crRNAs by inserting one or more genomic sequences.', html.P('Chromosome ranges can also be supplied')],
-        style = {'word-wrap': 'break-word'}), 
-
-        dcc.Textarea(id = 'text-sequence', placeholder = '>sequence 1\nAAGTCCCAGGACTTCAGAAGagctgtgagaccttggc\n>sequence2\nchr1:11,130,540-11,130,751', style = {'width':'450px', 'height':'160px', 'font-family':'monospace', 'font-size':'large'}),
-        #html.P('Note: a maximum number of 1000 sequences can be provided'),
-        dbc.FormText('Note: a maximum number of 1000 characters can be provided', color = 'secondary')
-    ],
-    style = {'width':'450px'} #same as text-area
-)
-final_list.append(
-    html.Div(
+    final_list.append(
         html.Div(
             [
-                modal,
-                html.Div(
-                    [
-                        
-                        
-                        html.Div([
-                            html.H3('STEP 1', style = {'margin-top':'0'}),
-                            html.Div([
-                                html.P([html.Button(html.P("Load example", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline', 'font-size':'initial'}), id='example-parameters',
-                                            style={ 'border': 'None', 'text-transform': 'capitalize','height':'12','font-weight': '500', 'padding': '0 0px','textcolor':'blu'}), ' - ',
-                                #html.Br(),
-                                html.Button(html.P(children="Reset", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline','font-size':'initial'}), id='remove-parameters',
-                                            style={'border': 'None', 'text-transform': 'capitalize','height':'12','font-weight': '500', 'padding': '0 0px'})])
-                            ], style = {'display':'none'})
-                        ], className = 'flex-div-insert-delete-example'), 
-                        
-                        html.P(html.P('Select a genome') ),
-                        html.Div(
-                            dcc.Dropdown(options = gen_dir, clearable = False, id = "available-genome",) #style = {'width':'75%'})
-                        ),
-                        dbc.FormText('Note: Genomes enriched with variants are indicated with a \'+\' symbol', color='secondary'),
-                        
-                        html.Div(
-                            [
-                                html.Div(
-                                    [
-                                        html.P(html.P('Select PAM')),
-                                        html.Div(
-                                            dcc.Dropdown(options = pam_file, clearable = False, id = 'available-pam')
-                                        )
-                                    ],
-                                    style = {'flex':'0 0 100%', 'margin-top': '10%'}
-                                )
-                            ],
-                            id = 'div-pam',
-                            className = 'flex-div-pam'
-                        ),
-                        html.Br(),
-                        html.Button("Add New Genome", id = 'add-genome', style = {'margin-right':'5px'}),
-                        html.Div('', id = 'genome-job', style = {'display':'none'}),
-                        html.Button("Update dictionary", id = 'update-dict', style = {'margin-left':'5px'}),
-                        html.Div('', id = 'dict-job', style = {'display':'none'}),
-                        html.Div(
-                            [
-                                html.Ul(
-                                    [html.Li(
-                                        [html.A('Contact us', href = URL + '/contacts', target="_blank"),' to request new genomes availability in the dropdown list'],
-                                        style = {'margin-top':'5%', 'display': DISPLAY_OFFLINE}
-                                    ),
-                                    # html.Li(
-                                    #     [html.A('Download', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank"), ' the offline version for more custom parameters']
-                                    # )
-                                    ],
-                                    style = {'list-style':'inside'}
-                                ),
-                                # html.Div(
-                                #     html.Button('Insert example parameters', id = 'example-parameters', style={'display':'inline-block'}),
-                                #     style = {'text-align':'center'}
-                                # )
-                            ],
-                            style = {'height':'50%'}
-                        ),
-                        
-                    ],
-                    id = 'step1',
-                    style = {'flex':'0 0 30%', 'tex-align':'center'}
-                ),
-                html.Div(style = {'border-right':'solid 1px white'}),
-                html.Div(
-                    [
-                        html.H3('STEP 2', style = {'margin-top':'0'}),
-                        html.Div(
-                            [
-                                html.Div(
-                                    [   html.P('Select the input type'),
-                                        dbc.Tabs(
-                                            [
-                                                dbc.Tab(tab_guides_content, label='Guides', tab_id= 'guide-tab'),
-                                                dbc.Tab(tab_sequence_content, label='Sequence', tab_id = 'sequence-tab')
-                                            ],
-                                            active_tab='guide-tab',
-                                            id = 'tabs'
-                                        )
-                                    ],
-                                    id = 'div-guides'
-                                ),
-                                html.Div(
-                                    [
-                                        html.P('Allowed mismatches'),
-                                        dcc.Dropdown(options = av_mismatches, clearable = False, id = 'mms', style = {'width':'60px'}),
-                                        html.P('Bulge DNA size'),
-                                        dcc.Dropdown(options = av_bulges, clearable = False, id = 'dna', style = {'width':'60px'}),
-                                        html.P('Bulge RNA size'),
-                                        dcc.Dropdown(options = av_bulges, clearable = False, id = 'rna', style = {'width':'60px'}),
-                                        dbc.Fade(
-                                            [
-                                                html.P('crRNA length (without PAM)'),
-                                                dcc.Dropdown(options = av_guide_sequence, clearable = False, id = 'len-guide-sequence-ver', style = {'width':'60px'})
-                                            ],
-                                            id = 'fade-len-guide', is_in= False, appear= False
-                                        )
-                                    ]
-                                )
-                            ],
-                            className = 'flex-step2'
-                        )
-
-                    ],
-                    id = 'step2',
-                    style = {'flex':'0 0 40%'}
-                    
-                ),
-                html.Div(style = {'border-right':'solid 1px white'}),
-                html.Div(
-                    [
-                        html.H3('Advanced Options', style = {'margin-top':'0px'}),
-                        checklist_div,
-                        dcc.Checklist(
-                            options = [
-                                {'label':'Notify me by email','value':'email', 'disabled':False}
-                            ], 
-                            id = 'checklist-advanced',
-                            style = {'display': DISPLAY_OFFLINE}
-                        ),
-                        dbc.Fade(
-                            [
-                                dbc.FormGroup(
-                                    [
-                                        dbc.Label("Email", html_for="example-email"),
-                                        dbc.Input(type="email", id="example-email", placeholder="Enter email", className='exampleEmail'),
-                                        # dbc.FormText(
-                                        #     "Are you on email? You simply have to be these days",
-                                        #     color="secondary",
-                                        # ),
-                                    ]
-                                )
-                            ],
-                            id = 'fade', is_in= False, appear= False, 
-                        ),
-                        #html.H3('Submit', style = {'margin-top':'0'}),
-                        html.Div(
-                            [
-                                html.Button('Submit', id = 'check-job', style = {'background-color':'skyblue'}),
-                                html.Button('', id = 'submit-job', style = {'display':'none'})
-                            ],
-                            style = {'display':'inline-block', 'margin':'0 auto'}   #style="height:55px; width:150px"
-                        )
-                    ],
-                    id = 'step3',
-                    style = {'tex-align':'center'},
-                    className = 'flex-step3'
-                )
-            ],
-            id = 'div-steps',
-            style = {'margin':'1%'},
-            className = 'flex-div-steps'
-        ),
-        style = {'background-color':'rgba(154, 208, 150, 0.39)', 'border-radius': '10px', 'border':'1px solid black'},
-        id = 'steps-background'
+                # html.P(['Download the offline version here: ', html.A('InfOmics/CRISPRitz', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank"), ' or ', html.A('Pinellolab/CRISPRitz', href = 'https://github.com/pinellolab/CRISPRitz', target="_blank") ])
+                html.Br()
+            ]
+        )
     )
-)
-final_list.append(html.Br())
-final_list.append(html.P('[1] Cancellieri, Samuele, et al. \"Crispritz: rapid, high-throughput, and variant-aware in silico off-target site identification for crispr genome editing.\" Bioinformatics (2019).'))
-final_list.append(
-    html.P(['Download CRISPRitz here: ', html.A('InfOmics/CRISPRitz', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank"), ' or ', html.A('Pinellolab/CRISPRitz', href = 'https://github.com/pinellolab/CRISPRitz', target="_blank") ])
-)
-index_page = html.Div(final_list, style = {'margin':'1%'})
+    checklist_div = html.Div(
+        [
+            dbc.FormGroup(
+                [
+                    dbc.Checkbox(
+                        id="checkbox-gecko", className="form-check-input", checked = True
+                    ),
+                    dbc.Label(
+                        #html.P(['Activate Gecko ', html.Abbr('comparison', title ='The results of your test guides will be compared with results obtained from a previous computed analysis on gecko library')]) ,
+                        html.P('Compare your results with the GeCKO v2 library'),
+                        html_for="checkbox-gecko",
+                        className="form-check-label",
+                    ),
+                    dbc.Checkbox(
+                        id="checkbox-ref-comp", className="form-check-input"
+                    ),
+                    dbc.Label(
+                        html.P('Compare your results with the corresponding reference genome'),
+                        html_for="checkbox-ref-comp",
+                        className="form-check-label",
+                    )
+                    
+                ],
+                check = True
+            )
+        ],
+        id = 'checklist-test-div'
+    )
+
+    modal = html.Div(
+        [
+            dbc.Modal(
+                [
+                    dbc.ModalHeader("WARNING! Missing inputs"),
+                    dbc.ModalBody('The following inputs are missing, please select values before submitting the job', id = 'warning-list'),
+                    dbc.ModalFooter(
+                        dbc.Button("Close", id="close" , className="modal-button")
+                    ),
+                ],
+                id="modal",
+                centered=True
+            ),
+        ]
+    )
+
+    tab_guides_content = html.Div(
+        [
+            html.P([
+                'Insert crRNA sequence(s), one per line.', 
+                html.P('Sequences must have the same length and be provided without the PAM sequence', id = 'testP') ,
+            ],
+            style = {'word-wrap': 'break-word'}), 
+
+            dcc.Textarea(id = 'text-guides', placeholder = 'GAGTCCGAGCAGAAGAAGAA\nCCATCGGTGGCCGTTTGCCC', style = {'width':'450px', 'height':'160px', 'font-family':'monospace', 'font-size':'large'}),
+            dbc.FormText('Note: a maximum number of 1000 sequences can be provided', color = 'secondary')
+        ],
+        style = {'width':'450px'} #NOTE same as text-area
+    )
+    tab_sequence_content = html.Div(
+        [
+            html.P(['Search crRNAs by inserting one or more genomic sequences.', html.P('Chromosome ranges can also be supplied')],
+            style = {'word-wrap': 'break-word'}), 
+
+            dcc.Textarea(id = 'text-sequence', placeholder = '>sequence 1\nAAGTCCCAGGACTTCAGAAGagctgtgagaccttggc\n>sequence2\nchr1:11,130,540-11,130,751', style = {'width':'450px', 'height':'160px', 'font-family':'monospace', 'font-size':'large'}),
+            dbc.FormText('Note: a maximum number of 1000 characters can be provided', color = 'secondary')
+        ],
+        style = {'width':'450px'} #NOTE same as text-area
+    )
+    final_list.append(
+        html.Div(
+            html.Div(
+                [
+                    modal,
+                    html.Div(
+                        [
+                            html.Div([
+                                html.H3('STEP 1', style = {'margin-top':'0'}),
+                                html.Div([
+                                    html.P([html.Button(html.P("Load example", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline', 'font-size':'initial'}), id='example-parameters',
+                                                style={ 'border': 'None', 'text-transform': 'capitalize','height':'12','font-weight': '500', 'padding': '0 0px','textcolor':'blu'}), ' - ',
+                                    #html.Br(),
+                                    html.Button(html.P(children="Reset", style={'color':'rgb(46,140,187)','text-decoration-line': 'underline','font-size':'initial'}), id='remove-parameters',
+                                                style={'border': 'None', 'text-transform': 'capitalize','height':'12','font-weight': '500', 'padding': '0 0px'})])
+                                ], style = {'display':DISPLAY_ONLINE})
+                            ], className = 'flex-div-insert-delete-example'), 
+                            
+                            html.P(html.P('Select a genome') ),
+                            html.Div(
+                                dcc.Dropdown(options = availableGenomes(), clearable = False, id = "available-genome",) #style = {'width':'75%'})
+                            ),
+                            dbc.FormText('Note: Genomes enriched with variants are indicated with a \'+\' symbol', color='secondary'),
+                            
+                            html.Div(
+                                [
+                                    html.Div(
+                                        [
+                                            html.P(html.P('Select PAM')),
+                                            html.Div(
+                                                dcc.Dropdown(options = availablePAM(), clearable = False, id = 'available-pam')
+                                            )
+                                        ],
+                                        style = {'flex':'0 0 100%', 'margin-top': '10%'}
+                                    )
+                                ],
+                                id = 'div-pam',
+                                className = 'flex-div-pam'
+                            ),
+                            html.Br(),
+                            html.Button("Add New Genome", id = 'add-genome', style = {'margin-right':'5px', 'display':DISPLAY_OFFLINE}),
+                            html.Div('', id = 'genome-job', style = {'display':'none'}),
+                            html.Button("Update dictionary", id = 'update-dict', style = {'margin-left':'5px', 'display':DISPLAY_OFFLINE}),
+                            html.Div('', id = 'dict-job', style = {'display':'none'}),
+                            html.Div(
+                                [
+                                    html.Ul(
+                                        [html.Li(
+                                            [html.A('Contact us', href = URL + '/contacts', target="_blank"),' to request new genomes availability in the dropdown list'],
+                                            style = {'margin-top':'5%', 'display': DISPLAY_ONLINE}
+                                        ),
+                                        ],
+                                        style = {'list-style':'inside'}
+                                    ),
+                                ],
+                                style = {'height':'50%'}
+                            ),
+                        ],
+                        id = 'step1',
+                        style = {'flex':'0 0 30%', 'tex-align':'center'}
+                    ),
+                    html.Div(style = {'border-right':'solid 1px white'}),
+                    html.Div(
+                        [
+                            html.H3('STEP 2', style = {'margin-top':'0'}),
+                            html.Div(
+                                [
+                                    html.Div(
+                                        [   html.P('Select the input type'),
+                                            dbc.Tabs(
+                                                [
+                                                    dbc.Tab(tab_guides_content, label='Guides', tab_id= 'guide-tab'),
+                                                    dbc.Tab(tab_sequence_content, label='Sequence', tab_id = 'sequence-tab')
+                                                ],
+                                                active_tab='guide-tab',
+                                                id = 'tabs'
+                                            )
+                                        ],
+                                        id = 'div-guides'
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.P('Allowed mismatches'),
+                                            dcc.Dropdown(options = av_mismatches, clearable = False, id = 'mms', style = {'width':'60px'}),
+                                            html.P('Bulge DNA size'),
+                                            dcc.Dropdown(options = av_bulges, clearable = False, id = 'dna', style = {'width':'60px'}),
+                                            html.P('Bulge RNA size'),
+                                            dcc.Dropdown(options = av_bulges, clearable = False, id = 'rna', style = {'width':'60px'}),
+                                            dbc.Fade(
+                                                [
+                                                    html.P('crRNA length (without PAM)'),
+                                                    dcc.Dropdown(options = av_guide_sequence, clearable = False, id = 'len-guide-sequence-ver', style = {'width':'60px'})
+                                                ],
+                                                id = 'fade-len-guide', is_in= False, appear= False
+                                            )
+                                        ]
+                                    )
+                                ],
+                                className = 'flex-step2'
+                            )
+
+                        ],
+                        id = 'step2',
+                        style = {'flex':'0 0 40%'}
+                        
+                    ),
+                    html.Div(style = {'border-right':'solid 1px white'}),
+                    html.Div(
+                        [
+                            html.H3('Advanced Options', style = {'margin-top':'0px'}),
+                            checklist_div,
+                            dcc.Checklist(
+                                options = [
+                                    {'label':'Notify me by email','value':'email', 'disabled':False}
+                                ], 
+                                id = 'checklist-advanced',
+                                style = {'display': DISPLAY_ONLINE}
+                            ),
+                            dbc.Fade(
+                                [
+                                    dbc.FormGroup(
+                                        [
+                                            dbc.Label("Email", html_for="example-email"),
+                                            dbc.Input(type="email", id="example-email", placeholder="Enter email", className='exampleEmail')
+                                        ]
+                                    )
+                                ],
+                                id = 'fade', is_in= False, appear= False, 
+                            ),
+                            html.Div(
+                                [
+                                    html.Button('Submit', id = 'check-job', style = {'background-color':'skyblue'}),
+                                    html.Button('', id = 'submit-job', style = {'display':'none'})
+                                ],
+                                style = {'display':'inline-block', 'margin':'0 auto'}   #style="height:55px; width:150px"
+                            )
+                        ],
+                        id = 'step3',
+                        style = {'tex-align':'center'},
+                        className = 'flex-step3'
+                    )
+                ],
+                id = 'div-steps',
+                style = {'margin':'1%'},
+                className = 'flex-div-steps'
+            ),
+            style = {'background-color':'rgba(154, 208, 150, 0.39)', 'border-radius': '10px', 'border':'1px solid black'},
+            id = 'steps-background'
+        )
+    )
+    final_list.append(html.Br())
+    final_list.append(html.P('[1] Cancellieri, Samuele, et al. \"Crispritz: rapid, high-throughput, and variant-aware in silico off-target site identification for crispr genome editing.\" Bioinformatics (2019).'))
+    final_list.append(
+        html.P(['Download CRISPRitz here: ', html.A('InfOmics/CRISPRitz', href = 'https://github.com/InfOmics/CRISPRitz', target="_blank"), ' or ', html.A('Pinellolab/CRISPRitz', href = 'https://github.com/pinellolab/CRISPRitz', target="_blank") ])
+    )
+    index_page = html.Div(final_list, style = {'margin':'1%'})
+    return index_page
 
 #Load Page
 final_list = []
@@ -866,7 +907,16 @@ def updateStatusCreateNewGenome(n, n_button):
 )
 def toggle_fade(selected_options, is_in):
     '''
-    Selezionando l'opzione Notify me by email, compare una box in cui poter inserire l'email
+    Manages the fading of the InputBox for the email when the option 'Notify me by email' is selected/deselected.
+
+    ***Args***
+
+    + [**selected_options**] **checklist-advanced** (*value*): list of IDs of the options checked
+    + [**is_in**] **fade** (*is_in*): True if the Input email element is displayed, False otherwise
+
+    ***Returns***
+
+    + **fade** (*is_in*): True in order to show the Input email element, False to hide it
     '''
     if  selected_options is None:
         return False
@@ -889,11 +939,24 @@ def toggle_fade(selected_options, is_in):
 )
 def inExample(nI, nR):
     '''
-    Bottone per inserire degli input di esempio.
-    Bottone reset esegue il punto a), ma non cancella le spunte delle Advanced Options
-    a) cancellare tutto
-    b) cancellare solo i campi i cui valori sono uguali a quelli di esempio
-    c) se almeno un campo è diverso dal valore di esempio, non cancello nulla)
+    Inserts an example value in all fields to show the user an example result, or reset the input fields. NOT available in OFFLINE version.
+    
+    ***Args***
+
+    + [**nI**] **example-parameters** (*n_clicks_timestamp*): button that inserts the example values
+    + [**nR**] **remove-parameters** (*n_clicks_timestamp*): button that removes the values and resets all the fields
+
+    ***Returns***
+
+    + **available-genome** (*value*): 'hg38 ref+hg38 1000genomeproject' as input example, or '' to reset the value
+    + **available-pam** (*value*): '20bp-NGG-SpCas9' as input example, or '' to reset the value
+    + **text-guides** (*value*): 'GAGTCCGAGCAGAAGAAGAA\\nCCATCGGTGGCCGTTTGCCC' as input example, or '' to reset the value
+    + **mms** (*value*): '4' as input example, or '' to reset the value
+    + **dna** (*value*): '1' as input example, or '' to reset the value
+    + **rna** (*value*): '1' as input example, or '' to reset the value
+    + **len-guide-sequence-ver** (*value*): '20' as input example, or '' to reset the value
+    + **text-sequence** (*value*): '>sequence\\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA' as input example,
+    or '' to reset the value
     '''
 
     if (nI is None) and (nR is None):
@@ -913,17 +976,27 @@ def inExample(nI, nR):
     if nR > 0:
         if nR > nI:
             return '', '', '', '', '', '', '', ''
-
-
-
     
     # return '', '', '', '', '', '', ''
+
 #If selected genome has a '+', update advanced options comparison with reference
 @app.callback(
     Output('checkbox-ref-comp', 'checked'),
     [Input('available-genome', 'value')]
 )
 def suggestComparison(value):
+    '''
+    Update to Checked the Option 'Compare your results with the corresponding reference genome' if an Enriched Genome is selected ('+' is in the
+    name of the genome)
+
+    ***Args***
+
+    + [**value**] **available-genome** (*value*): the name of the genome selected by the user in the Dropdown
+
+    ***Returns***
+
+    + **checkbox-ref-comp** [*checked*]: True if an Enriched genome is selected
+    '''
     if value is None:
         raise PreventUpdate
     if '+' in value:
@@ -937,7 +1010,15 @@ def suggestComparison(value):
 )
 def checkEmailValidity(val):
     '''
-    Controlla se l'email inserita è valida, cambiando il bordo in rosso o verde
+    Checks email validity (i.e. an '@' is present) and changes the border to green or red accordingly.
+
+    ***Args***
+    
+    + [**val**] **example-email** (*value*): string of the email
+
+    ***Returns***
+
+    + **example-email** (*style*): dictionary of the style for the Input email: change border to red (if no '@' in **val**) or to green
     '''
     if val is None:
         raise PreventUpdate
@@ -954,7 +1035,16 @@ def checkEmailValidity(val):
 )
 def resetTab(current_tab, is_in):
     '''
-    Fa comparire/scomparire  il dropdown per la lunghezza delle guide se l'utente seleziona l'opzione Sequence
+    Manages the fading of the Dropdown for the guide length when the tab 'Sequence' is active.
+
+    ***Args***
+
+    + [**current_tab**] **tabs** (*active_tab*): string of the ID of the current active tab
+    + [**is_in**] **fade-len-guide** (*is_in*): True if the Dropdown guide length element is displayed, False otherwise
+
+    ***Returns***
+
+    + **fade-len-guide** (*is_in*): True in order to show the Dropdown guide length element, False to hide it
     '''
     if current_tab is None:
         raise PreventUpdate
@@ -990,9 +1080,50 @@ def resetTab(current_tab, is_in):
 )
 def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, len_guide_seq, active_tab ,is_open):
     '''
-    La funzione prende i valori dei vari campi di input e controlla che siano tutti presenti, tranne la textbox delle guide e della sequenza.
-    Se qualcuno manca, colora il suo bordo di rosso e fa uscire un avviso con l'elenco degli input mancanti. 
-    La callback si aziona anche quando l'utente clicca Close nel modal e in quel caso chiude l'avviso
+    Checks the presence and correctness of the input fields, changing their border to red if it's missing and displaying a Modal element with 
+    a list of the missing inputs. The callback is triggered when the user clicks on the 'Submit' button or when the modal is closed 
+    (by the 'Close' button or by clicking on-screen when the Modal element is open)
+    
+    ***Args***
+
+    + [**n**] **check-job** (*n_clicks*): button that starts the job after checking the correctness of the input
+    + [**n_close**] **close** (*n_clicks*): button that closes the opened modal
+    + [**genome_selected**] **available-genome** (*value*): string of the selected genome from the Dropdown. `None` if not selected, '' if selected
+    and then deleted
+    + [**pam**] **available-pam** (*value*): string of the selected PAM from the Dropdown. `None` if not selected, '' if selected
+    and then deleted
+    + [**text_guides**] **text-guides** (*value*): string of the input guides from the Textarea. `None` if not selected, '' if selected
+    and then deleted
+    + [**mms**] **mms** (*value*): int of the selected mismatch value. `None` if not selected, '' if selected
+    and then deleted
+    + [**dna**] **dna** (*value*): int of the selected DNA bulge value. `None` if not selected, '' if selected
+    and then deleted
+    + [**rna**] **rna** (*value*): int of the selected RNA bulge value. `None` if not selected, '' if selected
+    and then deleted
+    + [**len_guide_seq**] **len-guide-sequence-ver** (*value*): int value of the length of the guides (available when 'Sequence' tab is active). `None` if not selected, '' if selected
+    and then deleted
+    + [**active_tab**] **tabs** (*active_tab*): string of the ID of the active tab ('Guide' or 'Sequence')
+    + [**is_open**] **modal** (*is_open*): True if the modal is displayed, false otherwise
+
+    ***Returns***
+
+    + **submit-job** (*n_clicks*): reset the click counter (`None`) if some inputs are missing, else put to `1` in order to trigger the `changeUrl()`
+    function and proceed with the job
+    + **modal** (*is_open*): `True` if some inputs are missing, `False` otherwise
+    + **available-genome** (*className*): string containing the name of the css class for the red-border ('missing-input'), indicating a missing input. `None` if 
+    input is ok
+    + **available-pam** (*className*): string containing the name of the css class for the red-border ('missing-input'), indicating a missing input. `None` if 
+    input is ok
+    + **text-guides** (*style*): dictionary for the style element (NOTE not updated if input is missing)
+    + **mms** (*className*): string containing the name of the css class for the red-border ('missing-input'), indicating a missing input. `None` if 
+    input is ok
+    + **dna** (*className*): string containing the name of the css class for the red-border ('missing-input'), indicating a missing input. `None` if 
+    input is ok
+    + **rna** (*className*): string containing the name of the css class for the red-border ('missing-input'), indicating a missing input. `None` if 
+    input is ok
+    + **len-guide-sequence-ver** (*className*): string containing the name of the css class for the red-border ('missing-input'), indicating a missing input. `None` if 
+    input is ok
+    + **warning-list** (*children*): html.Div for the Modal component, listing the missing inputs
     '''
     if n is None:
         raise PreventUpdate
@@ -1072,20 +1203,59 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, len
 )
 def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_opt, genome_ref_opt, adv_opts,dest_email, active_tab, text_sequence, len_guide_sequence):      #NOTE startJob
     '''
-    genome_selected can be Human genome (hg19), or Human Genome (hg19) + 1000 Genome Project, the '+' character defines the ref or enr version.
-    Note that pam parameter can be 5'-NGG-3', but the corresponding filename is 5'-NGG-3'.txt
-    Pam file (5'-NGG-3'.txt) is structured as NGG 3, or TTTN -4. The created pam.txt inside the result directory add the corresponding N's
-    Annotations path file is named genome_name_annotationpath.txt, where genome_name is the reference genome name
+    Main function that generates the inputs for the Post/Process/submit_job.final.sh script and launches the search analysis.
 
-    La funzione crea una cartella dal nome random per identificare il job, controlla che opzioni sono state aggiunte e salva il contatto della mail.
-    Estrae i parametri dati in input per poterli utilizzare con crispritz. Salva un file Params.txt con i parametri della ricerca. Controlla poi se 
-    un'altra ricerca è stata fatta con gli stessi parametri e nel caso copia i risultati nella cartella di questo job.
-    Fa partire lo script submit_job per eseguire crispritz.
+    ***Args***
+    
+    + [**n**] **submit-job** (*n_clicks*): this value comes from the output of the `checkInput()` function. If `1`, it means that the inputs are
+    correct, and the function can proceed. If `None` it means that some inputs are missing, so a `raise PreventUpdate` is returned.
+    + [**href**] **url** (*href*): string for the href part of the url. NOTE not used
+    + [**genome_selected**] **available-genome** (*value*): string for the selected genome
+    + [**pam**] **available-pam** (*value*): string for the selected PAM
+    + [**text_guides**] **text-guides** (*value*): string for the input guides
+    + [**mms**] **mms** (*value*): int for the mismatch selected
+    + [**dna**] **dna** (*value*): int for the DNA bulge selected
+    + [**rna**] **rna** (*value*): int for the RNA bbulge selected
+    + [**gecko_opt**] **checkbox-gecko** (*checked*): bool for the GeCKO Checkbox 
+    + [**genoma_ref_opt**] **checkbox-ref-comp** (*checked*): bool for the reference genome comparison
+    + [**adv_opts**] **checklist-advanced** (*value*): list of advanced options selected (NOTE only email)
+    + [**dest_email**] **example-email** (*value*): string of the input email
+    + [**active_tab**] **tabs** (*active_tab*): string of the ID of the active tab ('Guide' or 'Sequence')
+    + [**text_sequence**] **text-sequence** (*value*): string of the input sequence
+    + [**len_guide_sequence**] **len-guide-sequence-ver** (*value*): int of the selected guide len (available only if 'Sequence' tab is active)
+
+    ***Returns***
+
+    + **url** (*pathname*): string '/load' to go to the Load Page
+    + **url** (*search*): string '?job=' + the job ID, to check the status of the specific job 
+
+    ***Details***
+    
+    + 1) (NOTE already done in `checkInput()`) The function checks the validity of the input parameters.
+    + 2) In order to differentiante various analysis submissions, an ID is given to each analysis (Job ID), consisting of a string of 10 alphanumeric
+    characters (A-Z 0-9). If a generated ID is already assigned, retry and compute another one. Every 7 iterations, add +1 to the length of the
+    ID, up to a maximum of 20 chars. Then the JobID directory is created and inside is created a `queue.txt` file in order to implement a job queue
+    + 3) The parameters used as input for the submit_job.final.sh script are created based on user input:
+        + Email: the email address, link for the results and start date are written in `Genomes/JobID/email.txt`
+        + PAM: get PAM len and direction (beginning or end), in order to write the correct files for pam and guides used in Crispritz.
+        + Guides: if the 'Sequence' tab is selected, the input is processed in the `extract_seq` module, that returns a list of guides. Non valid 
+        characters are then eliminated, along with the exceeding guides (only 1000 guides are acceptable). The guides are then modified by adding
+        N characters, following PAM type input (check Crispritz), and saved into file `Genomes/JobID/guides.txt`. The PAM is also saved in the 
+        `Genomes/JobID/pam.txt` file, following the Crispritz standard
+        + Indexing: if the selected Genome-PAM has no index in `genome_library`, set a flag to calculate the index when submitting the job. The PAM
+        used for indexing is `Genomes/JobID/pam_indexing.txt`
+        + Params file: the informations about the job are saved into the `Params.txt` file
+        + Annotation: based on the selected genome reference part, the annotation is chosen from the `annotations` directory
+        + Sample: based on the enriched genome selected, the sampleID file is chosen from the `samplesID` directory 
+        + Dictionary: based on the enriched genome selected, the Dictionary for sample extraction is selected from the `dictionaries` directory
+    + 4) If the input is equal to an already calculated analysis, then the function modify the job id to the one of the already existing analysis
+    (even if it's completed/currently submitted/in queue), update the `email` file and the `log` file (in order to reset the 3 days availability on the server)
+    + Launch the submit_job.final.sh script using `exeggutor`, to a max of 2 concurrent jobs, the others are put into a queue
     '''
     if n is None:
         raise PreventUpdate
     
-    #Check input, else give simple input
+    # 1) Check input, else give simple input
     if genome_selected is None or genome_selected == '':
         genome_selected = 'hg38_ref'
     if pam is None or pam == '':
@@ -1100,6 +1270,8 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         len_guide_sequence = 20
     if (text_sequence is None or text_sequence == '') and ('sequence-tab' in active_tab):
         text_sequence = '>sequence\nTACCCCAAACGCGGAGGCGCCTCGGGAAGGCGAGGTGGGCAAGTTCAATGCCAAGCGTGACGGGGGA'
+    
+    # 2) Get random string for job id
     n_it = 10
     len_id = 10
     for i in range(n_it):
@@ -1117,6 +1289,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     #NOTE test command per queue
     subprocess.run(['touch ' + current_working_directory + 'Results/' + job_id + '/queue.txt'], shell = True)
 
+    # 3) Set parameters
     generate_index_ref = False
     generate_index_enr = False
     search_index = True
@@ -1142,16 +1315,13 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
             e.close()
     
     
-    #Set parameters
     genome_selected = genome_selected.replace(' ', '_')
-    genome_ref = genome_selected.split('+')[0]              #+ char to separate ref and vcf, eg Human_genome+1000_genome_project
+    genome_ref = genome_selected.split('+')[0]              # + char to separate ref and enr, eg Human_Genome_ref+Human_Genome_1000_genome_project
     if genome_ref == genome_selected:
         ref_comparison = False
     #NOTE Indexed genomes names are PAM + _ + bMax + _ + genome_selected
     
     pam_len = 0
-    custom_pam = None
-
     with open(current_working_directory + 'pam/' + pam + '.txt') as pam_file:
         pam_char = pam_file.readline()
         index_pam_value = pam_char.split(' ')[-1]
@@ -1193,6 +1363,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if len(text_guides.split('\n')) > 1000:
         text_guides = '\n'.join(text_guides.split('\n')[:1000]).strip()
     len_guides = len(text_guides.split('\n')[0])
+    #Adjust guides by adding Ns to make compatible with Crispritz
     if (pam_begin):
         pam_to_file = pam_char + ('N' * len_guides) + ' ' + index_pam_value
         pam_to_indexing = pam_char + ('N' * 25) + ' ' + index_pam_value
@@ -1254,7 +1425,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     # genome_idx_ref = genome_idx.split('+')[0]
     
     #Create Params.txt file
-    with open(result_dir + '/Params.txt', 'w') as p:            #NOTE if modified, chenge also mms value in update_table function
+    with open(result_dir + '/Params.txt', 'w') as p:           
         p.write('Genome_selected\t' + genome_selected + '\n')         
         p.write('Genome_ref\t' + genome_ref + '\n')
         if search_index:
@@ -1270,7 +1441,7 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
         p.write('Ref_comp\t' + str(ref_comparison) + '\n')
         p.close()
 
-    #Check if input parameters (mms, bulges, pam, guides, genome) are the same as a previous search
+    # 4) Check if input parameters (mms, bulges, pam, guides, genome) are the same as a previous search
     all_result_dirs = [f for f in listdir(current_working_directory + 'Results') if isdir(join(current_working_directory + 'Results', f))]
     all_result_dirs.remove(job_id)
     #all_result_dirs.remove('test')
@@ -1347,11 +1518,6 @@ def changeUrl(n, href, genome_selected, pam, text_guides, mms, dna, rna, gecko_o
     if (not search and not search_index):
         report = False         
     
-    #Open genome_database, get specific line and get annotation path
-    # genome_db = pd.read_csv(current_working_directory + 'genome_database.txt', sep = '\t', names = GENOME_DATABASE, skiprows = 1)
-    
-    # annotation_file = [f for f in listdir(current_working_directory + 'annotations/') if isfile(join(current_working_directory + 'annotations/', f)) and f.startswith(genome_ref)]
-
     genome_type = 'ref'     #Indicates if search is 'ref', 'var' or 'both'
     if '+' in genome_selected:
         genome_type = 'var'
@@ -1423,7 +1589,7 @@ def changePage( href, path, search, hash_guide):
     if path == '/genomes':
         genomes_page = html.Div(gen_page.genomesPage(current_working_directory), style = {'margin':'1%'})
         return genomes_page, URL + '/load' + search
-    return index_page, ''
+    return indexPage(), ''
 
 #Check end job
 @app.callback(
@@ -4493,7 +4659,41 @@ def downloadLinkPosition(n, file_to_load, search): #file to load =
 
 ############################ Genome Database Page Callbacks ##########################
 
+@app.callback(
+    Output('genomes-table', 'data'),
+    [Input('genomes-table', "page_current"),
+     Input('genomes-table', "page_size"),
+     Input('genomes-table', 'sort_by'),
+     Input('genomes-table', 'filter_query')])
+def updateGenomePageTable(page_current, page_size, sort_by, filter):
+    filtering_expressions = filter.split(' && ')
+    dff = get_genomes.get_genomes(current_working_directory)
+    for filter_part in filtering_expressions:
+        col_name, operator, filter_value = split_filter_part(filter_part)
 
+        if operator in ('eq', 'ne', 'lt', 'le', 'gt', 'ge'):
+            # these operators match pandas series operator method names
+            dff = dff.loc[getattr(dff[col_name], operator)(filter_value)]
+        elif operator == 'contains':
+            dff = dff.loc[dff[col_name].str.contains(filter_value)]
+        elif operator == 'datestartswith':
+            # this is a simplification of the front-end filtering logic,
+            # only works with complete fields in standard format
+            dff = dff.loc[dff[col_name].str.startswith(filter_value)]
+
+    if len(sort_by):
+        dff = dff.sort_values(
+            [col['column_id'] for col in sort_by],
+            ascending=[
+                col['direction'] == 'asc'
+                for col in sort_by
+            ],
+            inplace=False
+        )
+
+    page = page_current
+    size = page_size
+    return dff.iloc[page * size: (page + 1) * size].to_dict('records')
 
 
 ############################ History Page ##########################
@@ -4614,8 +4814,8 @@ def historyPage():
                     [
                         dbc.Row(
                             [
-                                dbc.Col(html.Div(dcc.Dropdown(options = gen_dir, id = 'dropdown-genomes-history', placeholder = 'Select a Genome'))),
-                                dbc.Col(html.Div(dcc.Dropdown(options = pam_file, id = 'dropdown-pam-history', placeholder = 'Select a PAM'))),
+                                dbc.Col(html.Div(dcc.Dropdown(options = availableGenomes(), id = 'dropdown-genomes-history', placeholder = 'Select a Genome'))),
+                                dbc.Col(html.Div(dcc.Dropdown(options = availablePAM(), id = 'dropdown-pam-history', placeholder = 'Select a PAM'))),
                                 # dbc.Col(html.Div(dcc.Dropdown(options = av_mismatches, id = 'dropdown-mms-history', placeholder = 'Select a Mismatch value' ))),
                                 # dbc.Col(html.Div(dcc.Dropdown(options = av_bulges, id = 'dropdown-dna-history', placeholder = 'Select a DNA Bulge value' ))),
                                 # dbc.Col(html.Div(dcc.Dropdown(options = av_bulges, id = 'dropdown-rna-history', placeholder = 'Select a RNA Bulge value' ))),

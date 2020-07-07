@@ -77,7 +77,17 @@ def genomesPage(pathDir):
                 columns = [{"name": i, "id": i} for i in genomes.columns],
                 data=genomes.to_dict('records'),
                 row_selectable="single",
-                selected_rows=[]
+                selected_rows=[],
+                page_current= 0,
+                page_size= 10,
+                page_action='custom',
+
+                filter_action='custom',
+                filter_query='',
+
+                sort_action='custom',
+                sort_mode='multi',
+                sort_by=[]
                 )
             ])
         )
