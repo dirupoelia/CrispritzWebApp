@@ -119,7 +119,7 @@ VALID_CHARS = {'a', 'A', 't', 'T', 'c', 'C','g', 'G',
             "h" ,
             "v"
             }
-URL = 'http://127.0.0.1:8050'       #Change for online version
+URL = 'http://127.0.0.1:8080'       #Change for online version
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
