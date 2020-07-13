@@ -1,16 +1,16 @@
 # CrispritzWebApp
-Versione corrente: app_v6.py
+Versione corrente: crisprme_off.py
 
 
 Seguire le istruzioni del paragrafo INSTALLATION (Phase 1) da [CRISPRitz](https://github.com/InfOmics/CRISPRitz) per installare conda. Seguire i primi 8 punti, fino a quando (base) appare nel terminale.
 
-Modificare il file environment_droplet.yml, sostituendo name: base, con un nome da dare all'environment.
+Modificare il file environment_for_python_3_8.yml, sostituendo name: base, con un nome da dare all'environment.
 
-Modificare il file environment_droplet.yml, sostituendo prefix: /root/miniconda3 con la giusta directory dove conda è installato.
+Modificare il file environment_for_python_3_8.yml, sostituendo prefix: /root/miniconda3 con la giusta directory dove conda è installato.
 
 Eseguire
 ```
-conda env create -f environment_droplet.yml
+conda env create -f environment_for_python_3_8.yml
 ```
 Per creare l'environment di conda dove poter eseguire CRISPRme.
 
@@ -26,7 +26,7 @@ Scaricare CrispritzWebApp tramite questo github. Per poter funzionare, è necess
 
 Da terminale, spostarsi all'interno della cartella CrispritzWebApp, ed eseguire:
 ```
-python3 app_v6.py
+python3 crisprme_off.py
 ```
 Per attivare CRISPRme
 
