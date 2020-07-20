@@ -26,7 +26,7 @@ CRISPRme enumerates on- and off-target accounting simultaneously for substitutio
 genomes project. CRISPRme is based on CRISPRitz (Cancellieri, Samuele, et al. "Crispritz: rapid, high-throughput, and variant-aware in silico off-target site identification for crispr genome editing." Bioinformatics (2019).)
 a software tool for population target analyses. CRISPRme is devoted to individual specific on- and off-target analyses.</p>
 <p>Documentation updated up to 07/07/2020</p>
-<p>Launch crisprme:</p>
+<p>Launch crisprme, NOTE - conda must be active when starting the app:</p>
 <ul>
 <li>python3 crisprme_off.py</li>
 <li>gunicorn -b :8080 crisprme_off:app.server</li>
@@ -47,7 +47,7 @@ a software tool for population target analyses. CRISPRme is devoted to individua
 
 Documentation updated up to 07/07/2020
 
-Launch crisprme:
+Launch crisprme, NOTE - conda must be active when starting the app:
 
 + python3 crisprme_off.py
 + gunicorn -b :8080 crisprme_off:app.server
@@ -1958,7 +1958,8 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         + &#39;tab-summary-by-guide&#39;: show the general table of the targets divided by Bulge and Mismatch values
         + &#39;tab-summary-by-sample&#39;: show the general table of the targets divided by sample
         + &#39;tab-summary-by-position&#39;: show the general table of the targets divided by chromosome and position
-        + &#39;tab-summary-graphical&#39;: show the graphical report
+        + &#39;tab-summary-graphical&#39;: show the graphical report. A total of 10 Buttons, one for each mms value, are created, but only some of them
+        are set to be visible (the number of mms selected by the user)
     &#39;&#39;&#39;
 
     if value is None or sel_cel is None or not sel_cel or not all_guides:
@@ -2188,7 +2189,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                 )
             else:
                 fl_buttons.append(
-                    html.Button(str(i) + &#39; mm&#39;,id = &#39;btn&#39; + str(i), style = {&#39;display&#39;:&#39;none&#39;}),       
+                    html.Button(str(i) + &#39; mm&#39;,id = &#39;btn&#39; + str(i), style = {&#39;display&#39;:&#39;none&#39;}), #Hide buttons for mms non selected
                 )
         
         fl.append(html.Br())
@@ -2379,14 +2380,42 @@ def openResultDirectory(n, search, guide):
     State(&#39;general-profile-table&#39;, &#39;data&#39;)]
 )
 def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, population, sample, sel_cel, search, all_guides):
+    &#39;&#39;&#39;
+    Loads the images on the Graphical Report based on the selected mismatch value and/or sample, population, superpopulation value.
+
+    ***Args***
+
+    + [**n_**] **btn_** (*n_clicks_timestam*): string of the timestamp of the last time the button was pressed.
+    + [**superpopulation**] **dropdown-superpopulation-sample** (*value*): string of the selected superpopulation
+    + [**population**] **dropdown-population-sample** (*value*): string of the selected population
+    + [**sample**] **dropdown-sample** (*value*): string of the selected sample
+    + [**sel_cel**] **general-profile-table** (*selected_cells*): list contaning the selected row of the main guide table
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+    + [**all_guides**] **general-profile-table** (*data*): list of all the rows that are currenty displayed in the main guide table
+
+    ***Returns***
+
+    + **div-guide-image** (*children*): returns barplot and radarchart of the selected guide
+    + **div-sample-image** (*children*): returns radarchart specific for sample/pop/superpop of the selected guide
+
+    ***Details***
+
+    + The function sort all the timestamps of the buttons (can be up to 10 buttons, one for each mms value) and select the one that was clicked last.
+    Since it is not possible in the current Dash version to create callbacks of components that are not available in the app.layout, but the buttons
+    are created dynamically (we do not know how many mms the user selects), we create 10 buttons and show only the ones corresponding to the number
+    of selected mms, the others are hidden using `{&#39;display&#39;:&#39;none&#39;}`. In this way we can create this callback even when we do not know how may mms
+    the user will set.
+    + If the image for a specific sample/pop/superpop is not available, the function calls `crispritz.py generate-report` in order to create the image 
+    + The corresponding image is then loaded from the `assets/Img/jobID` directory, in order to be also available to be opened in a new tab (by
+    clicking on it)
+    &#39;&#39;&#39;
+
     if sel_cel is None :
         raise PreventUpdate
     job_id = search.split(&#39;=&#39;)[-1]
     job_directory = current_working_directory + &#39;Results/&#39; + job_id + &#39;/&#39;
     guide = all_guides[int(sel_cel[0][&#39;row&#39;])][&#39;Guide&#39;]
     
-    #search for getting job id
-    # get guide with sel_cel and all_data
     guide_images = []
     sample_images = []
     with open(current_working_directory + &#39;Results/&#39; + job_id + &#39;/Params.txt&#39;) as p:
@@ -2396,6 +2425,8 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
     gecko_string = &#39;&#39;
     if gecko_comp == &#39;True&#39;:
         gecko_string = &#39;-gecko&#39;
+    
+    #Initialize to 0 Buttons not pressed
     if not n0:
         n0 = 0
     if not n1:
@@ -2428,6 +2459,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
     btn_group.append(n8)
     btn_group.append(n9)
     
+    #Check last pressed button
     if max(btn_group) == n0:
         mm_show = 0
     if max(btn_group) == n1:
@@ -2453,7 +2485,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
     radar_img = &#39;summary_single_guide_&#39; + guide + &#39;_&#39; + str(mm_show) + &#39;mm.png&#39;
 
     barplot_img = &#39;summary_histogram_&#39; + guide + &#39;_&#39; + str(mm_show) + &#39;mm.png&#39;
-    try:            #NOTE serve per non generare errori se il barplot non è stato fatto
+    try:            #NOTE if the image is not available, show nothing
         barplot_src = &#39;data:image/png;base64,{}&#39;.format(base64.b64encode(open(current_working_directory + &#39;Results/&#39; + job_id + &#39;/&#39; + barplot_img, &#39;rb&#39;).read()).decode())
     except:
         barplot_src = &#39;&#39;
@@ -2502,6 +2534,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
     ])
     class_images = [(sample, &#39;Samples&#39;), (population, &#39;Population&#39;), (superpopulation, &#39;Superpopulation&#39;)]
     
+    #If the user selects a sample/pop/superpop not already processed, call crispritz generate-report and create the image
     for c in class_images:
         if c[0]:
             try:
@@ -2541,7 +2574,20 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
 
 def generate_table(dataframe, id_table, genome_type, guide=&#39;&#39;, job_id=&#39;&#39;, max_rows=2600):
     &#39;&#39;&#39;
-    Per generare una html table. NOTE è diversa da una dash dataTable
+    Generates an html.Table for the Summary by Guide section.
+
+    ***Args***
+
+    + **dataframe**: dataframe containing the data to display
+    + **id_table**: string that identifies the ID of the new generated html.Table
+    + **genome_type**: string containing the type of the search (&#39;ref&#39;, &#39;var&#39; or &#39;both&#39;)
+    + **guide**: string of the selected guide
+    + **job_id**: string of the current jobID
+    + **max_rows**: int of the max number of rows of the table
+
+    ***Returns***
+
+    + html.Table() containing data for the Summary by Guide section
     &#39;&#39;&#39;
     if genome_type == &#39;both&#39;:
         header = [html.Tr([
@@ -2574,7 +2620,20 @@ def generate_table(dataframe, id_table, genome_type, guide=&#39;&#39;, job_id=&#
 
 def generate_table_samples(dataframe, id_table, page ,guide=&#39;&#39;, job_id=&#39;&#39;, max_rows=10):
     &#39;&#39;&#39;
-    Per generare una html table. NOTE è diversa da una dash dataTable
+    Generates an html.Table for the Summary by Sample section.
+
+    ***Args***
+
+    + **dataframe**: dataframe containing the data to display
+    + **id_table**: string that identifies the ID of the new generated html.Table
+    + **page**: int containing the current page of the table
+    + **guide**: string of the selected guide
+    + **job_id**: string of the current jobID
+    + **max_rows**: int of the max number of rows of the table
+
+    ***Returns***
+
+    + html.Table() containing data for the Summary by Sample section
     &#39;&#39;&#39;
     rows_remaining = len(dataframe) - (page - 1) * max_rows
     return html.Table(
@@ -2590,24 +2649,25 @@ def generate_table_samples(dataframe, id_table, page ,guide=&#39;&#39;, job_id=&
         id = id_table
     )
 
-# def generate_table_position(dataframe, id_table, page, guide = &#39;&#39;, job_id = &#39;&#39;, max_rows = 10): #NOTE v1 della tabella posizioni
-#     &#39;&#39;&#39;
-#     Per generare una html table. NOTE è diversa da una dash dataTable
-#     &#39;&#39;&#39;
-#     rows_remaining = len(dataframe) - (page - 1) * max_rows
-   
-#     return html.Table(
-#         # Header
-#         [html.Tr([html.Th(col) for col in dataframe.columns]) ] +
-#         # Body
-#         [html.Tr([
-#             html.Td(html.A(dataframe.iloc[i + (page - 1)*max_rows][col],  href = &#39;result?job=&#39; + job_id + &#39;#&#39; + guide +&#39;-Pos-&#39; + str(dataframe.iloc[i + (page - 1)*max_rows][&#39;Chromosome&#39;]) + &#39;-&#39; +  str(dataframe.iloc[i + (page - 1)*max_rows][&#39;Position&#39;]) , target = &#39;_blank&#39; )) if col == &#39;&#39; else  html.Td(dataframe.iloc[i + (page - 1)*max_rows][col]) for col in dataframe.columns
-#         ]) for i in range(min(rows_remaining, max_rows))],
-#         style = {&#39;display&#39;:&#39;inline-block&#39;},
-#         id = id_table
-#     )
-
 def generate_table_position(dataframe, id_table, page, mms, bulges, guide = &#39;&#39;, job_id = &#39;&#39;, max_rows = 10): #NOTE v2 della tabella posizioni       #TODO modifica layout righe per allinearle
+    &#39;&#39;&#39;
+    Generates an html.Table for the Summary by Position section.
+
+    ***Args***
+
+    + **dataframe**: dataframe containing the data to display
+    + **id_table**: string that identifies the ID of the new generated html.Table
+    + **page**: int containing the current page of the table
+    + **mms**: int value of the max allowed mismatched
+    + **bulges**: int value of the max allowed bulges
+    + **guide**: string of the selected guide
+    + **job_id**: string of the current jobID
+    + **max_rows**: int of the max number of rows of the table
+
+    ***Returns***
+
+    + html.Table() containing data for the Summary by Position section
+    &#39;&#39;&#39;
     rows_remaining = len(dataframe) - (page - 1) * max_rows
     header = [html.Tr([
         html.Th(&#39;Chromosome&#39;, rowSpan = &#39;2&#39;, style = {&#39;vertical-align&#39;:&#39;middle&#39;, &#39;text-align&#39;:&#39;center&#39;}),
@@ -2661,6 +2721,19 @@ def generate_table_position(dataframe, id_table, page, mms, bulges, guide = &#39
     [State(&#39;url&#39;, &#39;search&#39;)]
 )
 def updatePopulationDrop(superpop, search):
+    &#39;&#39;&#39;
+    Update the Dropdown containing the Population list based on the selected Superpopulation.
+
+    ***Args***
+
+    + [**superpop**] **dropdown-superpopulation-sample** (*value*): string of the selected Superpopulation
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+
+    ***Returns***
+
+    + **dropdown-population-sample** (*options*): list of dictionaries for the option element of the Population dropdown
+    + **dropdown-population-sample** (*value*): currently selected value (reinitialized to be empty)
+    &#39;&#39;&#39;
     if superpop is None or superpop == &#39;&#39;:
         raise PreventUpdate
     job_id = search.split(&#39;=&#39;)[-1]
@@ -2676,6 +2749,19 @@ def updatePopulationDrop(superpop, search):
     [State(&#39;url&#39;, &#39;search&#39;)]
 )
 def updateSampleDrop(pop, search):
+    &#39;&#39;&#39;
+    Update the Dropdown containing the Sample list based on the selected Population.
+
+    ***Args***
+
+    + [**pop**] **dropdown-population-sample** (*value*): string of the selected Population
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+
+    ***Returns***
+
+    + **dropdown-sample** (*options*): list of dictionaries for the option element of the Sample dropdown
+    + **dropdown-sample** (*value*): currently selected value (reinitialized to be empty)
+    &#39;&#39;&#39;
     if pop is None or pop == &#39;&#39;:
         return [], None
     job_id = search.split(&#39;=&#39;)[-1]
@@ -2692,6 +2778,21 @@ def updateSampleDrop(pop, search):
     State(&#39;input-sample&#39;, &#39;value&#39;)]
 )
 def updateSampleFilter(n, superpopulation, population, sample):
+    &#39;&#39;&#39;
+    Update the filter (superpop,pop,sample) for the filtering of the Summary by Sample table
+
+    ***Args***
+
+    + [**n**] **button-filter-population-sample** (*n_clicks*): int for the number of times the button was clicked
+    + [**superpopulation**] **dropdown-superpopulation-sample** (*value*): string containing the selected Superpopulation
+    + [**population**] **dropdown-population-sample** (*value*): string containing the selected Population
+    + [**sample**] **input-sample** (*value*): string containing the Sample, given in input by the user
+
+    ***Returns***
+
+    + **div-simple-filter-query** (**children**): string in the format of &#39;superpop,pop,sample&#39;, or &#39;None&#39; if a parameter was not provided (eg
+    &#39;EU,TSI,None&#39;)
+    &#39;&#39;&#39;
     if n is None:
         raise PreventUpdate
     return str(superpopulation) + &#39;,&#39; + str(population) + &#39;,&#39; + str(sample).replace(&#39; &#39;,&#39;&#39;).upper()
@@ -2710,6 +2811,24 @@ def updateSampleFilter(n, superpopulation, population, sample):
     State(&#39;div-current-page-table-samples&#39;, &#39;children&#39;)]
 )
 def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, current_page):
+    &#39;&#39;&#39;
+    Filtering/changing page of the table in the Summary by Sample tab.
+
+    ***Args***
+    + [**nPrev**] **prev-page-sample** (*n_clicks_timestamp*): int timestamp of last click on Previous Page button
+    + [**nNext**] **next-page-sample** (*n_clicks_timestamp*): int timestamp of last click on Next Page button
+    + [**filter_q**] **div-sample-filter-query** (*children*): string of the filter query
+    + [**n**] **button-filter-population-sample** (*n_clicks_timestamp*): int timestamp of the Apply Filter button
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+    + [**sel_cel**] **general-profile-table** (*selected_cells*): list contaning the selected row of the main guide table
+    + [**all_guides**] **general-profile-table** (*data*): list of all the rows that are currenty displayed in the main guide table
+    + [**current_page**] **div-current-page-table-samples** (*children*): string containing the current page of the table (eg &#39;1/15&#39;)
+
+    ***Returns***
+
+    + **div-table-samples** (*children*): html.Table with filtering applied and/or next/previous page of data
+    + **div-current-page-table-samples** (*children*): string of the currently displayed page
+    &#39;&#39;&#39;
     if sel_cel is None:
         raise PreventUpdate
     if nPrev is None and nNext is None and n is None:
@@ -2858,6 +2977,21 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
     State(&#39;input-position-end&#39;, &#39;value&#39;)]
 )
 def updatePositionFilter(n, chr, pos_start, pos_end):
+    &#39;&#39;&#39;
+    Update the filter (chr,start,end) for the filtering of the Summary by Position table
+
+    ***Args***
+
+    + [**n**] **button-filter-population-sample** (*n_clicks*): int for the number of times the button was clicked
+    + [**chr**] **dropdown-chr-table-position** (*value*): string containing the selected chromosome
+    + [**pos_start**] **input-position-start** (*value*): string containing the start position
+    + [**pos_end**] **input-position-end** (*value*): string containing the end position
+
+    ***Returns***
+
+    + **div-position-filter-query** (**children**): string in the format of &#39;chr,start,end&#39;, or &#39;None&#39; if a parameter was not provided (eg
+    &#39;chr4,1010,None&#39;)
+    &#39;&#39;&#39;
     if n is None:
         raise PreventUpdate
     if pos_start == &#39;&#39;:
@@ -2865,7 +2999,6 @@ def updatePositionFilter(n, chr, pos_start, pos_end):
     if pos_end == &#39;&#39;:
         pos_end = &#39;None&#39;
     return str(chr) + &#39;,&#39; + str(pos_start) + &#39;,&#39; + str(pos_end)
-
 
 #Callback to filter chr from Summary by Position table, and to show next/prev page
 @app.callback(
@@ -2882,6 +3015,26 @@ def updatePositionFilter(n, chr, pos_start, pos_end):
     State(&#39;div-mms-bulges-position&#39;, &#39;children&#39;)]
 )
 def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, current_page, mms_bulge):
+    &#39;&#39;&#39;
+    Filtering/changing page of the table in the Summary by Position tab.
+
+    ***Args***
+    + [**nPrev**] **prev-page-position** (*n_clicks_timestamp*): int timestamp of last click on Previous Page button
+    + [**nNext**] **next-page-position** (*n_clicks_timestamp*): int timestamp of last click on Next Page button
+    + [**filter_q**] **div-position-filter-query** (*children*): string of the filter query
+    + [**n**] **button-filter-position** (*n_clicks_timestamp*): int timestamp of the Apply Filter button
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+    + [**sel_cel**] **general-profile-table** (*selected_cells*): list contaning the selected row of the main guide table
+    + [**all_guides**] **general-profile-table** (*data*): list of all the rows that are currenty displayed in the main guide table
+    + [**current_page**] **div-current-page-table-samples** (*children*): string containing the current page of the table (eg &#39;1/15&#39;)
+    + [**mms_bulge**] **div-mms-bulge-position** (*children*): string containing the value of the max mismatch and bulge value (eg. &#39;6-2&#39;)
+
+    ***Returns***
+
+    + **div-table-position** (*children*): html.Table with filtering applied and/or next/previous page of data
+    + **div-current-page-table-position** (*children*): string of the currently displayed page    
+    &#39;&#39;&#39;
+
     if sel_cel is None:
         raise PreventUpdate
     if nPrev is None and nNext is None and n is None:
@@ -3009,7 +3162,16 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
 #If the input guides are different len, select the ones with same length as the first
 def selectSameLenGuides(list_guides):
     &#39;&#39;&#39;
-    Se l&#39;utente mette guide di lunghezza diversa, la funzione prende la lunghezza della prima guida e salva solo le guide con quella lunghezza
+    If the user provide guides with different lengths, the function select the first guide, calculate its length, and discards all the guides with
+    different lengths.
+
+    ***Args***:
+
+    + **list_guides**: list of the input guides
+
+    ***Returns***
+
+    + **same_len_guides**: list of guides with the same length
     &#39;&#39;&#39;
     selected_length = len(list_guides.split(&#39;\n&#39;)[0])
     same_len_guides_list = []
@@ -3021,20 +3183,23 @@ def selectSameLenGuides(list_guides):
 
 def resultPage(job_id):
     &#39;&#39;&#39;
-    La funzione ritorna il layout della pagina risultati (tabella delle guide + eventuali immagini). Nella tabella delle guide
-    carico il profile ottenuto dalla ricerca. Carica inoltre l&#39;ACFD, che è il cfd score aggregato per tutti i risultati di una singola guida.
-    Crea poi 10 bottoni: un numero pari a mismatches + 2  che sono visibili, il resto con style = {&#39;display&#39;:&#39;none&#39;}, così ho sempre il numero
-    esatto di bottoni per mismatches in base ai mms dati in input nella ricerca (serve a risolvere problemi con le callback che hanno input
-    da elementi non creati. In questo caso io creo tutti i possibili bottoni ma ne rendo visibili/disponibili solo il numero corretto in base
-    ai mms).
+    The function creates the layout for the Result Page, with the general summary table at the top, the popup Population histogram section, the 
+    Tabs for the three different summaries and report (Guide, Sample, Position, Graphical Sumamary).
+    
+    ***Args***
+
+    + **job_id**: string containing the jobbID of the current job
+
+    ***Returns***
+
+    + **result_page**: list of Dash Components for the layout of the page
     &#39;&#39;&#39;
     value = job_id
     job_directory = current_working_directory + &#39;Results/&#39; + job_id + &#39;/&#39;
-    warning_message = []
     if (not isdir(job_directory)):
         return html.Div(dbc.Alert(&#34;The selected result does not exist&#34;, color = &#34;danger&#34;))
 
-    #Load mismatches
+    #Load informations from the Params file
     with open(current_working_directory + &#39;Results/&#39; + value + &#39;/Params.txt&#39;) as p:
         all_params = p.read()
         mms = (next(s for s in all_params.split(&#39;\n&#39;) if &#39;Mismatches&#39; in s)).split(&#39;\t&#39;)[-1]
@@ -3065,6 +3230,7 @@ def resultPage(job_id):
             for e_g in error_g:
                 list_error_guides.append(e_g.strip())
 
+    #Columns for the main table
     col_targetfor = &#39;(&#39;
     for i in range(1, mms + int(max_bulges)):
         col_targetfor = col_targetfor + str(i) + &#39;-&#39;
@@ -3106,7 +3272,7 @@ def resultPage(job_id):
     columns_profile_table = [i for j, i in enumerate(columns_profile_table) if columns_profile_table[j][&#39;id&#39;] not in remove_indices]      
     
     final_list = []    
-    if list_error_guides:
+    if list_error_guides:   #If some guides were not processed due to too many targets
         final_list.append(
             dbc.Alert(
                 [
@@ -3149,15 +3315,13 @@ def resultPage(job_id):
         html.Div(
             dash_table.DataTable(
                 id = &#39;general-profile-table&#39;,
-                #page_size=PAGE_SIZE,
                 columns = columns_profile_table,
                 merge_duplicate_headers=True,
                 #fixed_rows={ &#39;headers&#39;: True, &#39;data&#39;: 0 },
-                #data = profile.to_dict(&#39;records&#39;),
                 selected_cells = [{&#39;row&#39;:0, &#39;column&#39;:0}],
                 css= [{ &#39;selector&#39;: &#39;td.cell--selected, td.focused&#39;, &#39;rule&#39;: &#39;background-color: rgba(0, 0, 255,0.15) !important;&#39; }, { &#39;selector&#39;: &#39;td.cell--selected *, td.focused *&#39;, &#39;rule&#39;: &#39;background-color: rgba(0, 0, 255,0.15) !important;&#39;}],
                 page_current= 0,
-                page_size= 10,
+                page_size= PAGE_SIZE,
                 page_action=&#39;custom&#39;,
                 #virtualization = True,
                 filter_action=&#39;custom&#39;,
@@ -3207,7 +3371,6 @@ def resultPage(job_id):
                     dbc.Row(
                         [
                             dbc.Col(html.Button(&#34;Show/Hide Target Distribution in SuperPopulations&#34;, id=&#34;btn-collapse-populations&#34;)),
-                            # dbc.Col(html.A(&#39;Download full list of targets&#39;, target = &#39;_blank&#39;, id = &#39;download-full-list&#39; ))
                         ]
                     ),
                     dbc.Collapse(
@@ -3241,31 +3404,40 @@ def resultPage(job_id):
     [State(&#39;general-profile-table&#39;, &#39;data&#39;)]
 )
 def colorSelectedRow(sel_cel, all_guides):
+    &#39;&#39;&#39;
+    Update the background color of the row of the main table when the user clicks on a cell. Also change to bold the &#39;Reference&#39; and &#39;Enriched&#39;
+    labels.
+
+    ***Args***
+
+    + [**sel_cel**] **general-profile-table** (*selected_cells*): list contaning the selected row of the main guide table
+    + [**all_guides**] **general-profile-table** (*data*): list of all the rows that are currenty displayed in the main guide table
+
+    ***Returns***
+
+    + **general-profile-table** (*style_data_conditional*): dictionary of the style for the main table
+    &#39;&#39;&#39;
     if sel_cel is None or not sel_cel or not all_guides:
         raise PreventUpdate
     guide = all_guides[int(sel_cel[0][&#39;row&#39;])][&#39;Guide&#39;]
+    #Change background color of all the rows that have the &#39;Guide&#39; column equal to the selected guide (guides are unique)
     return [
         {
             &#39;if&#39;: {
-                    &#39;filter_query&#39;: &#39;{Guide} eq &#34;&#39; + guide + &#39;&#34;&#39;, 
-                    #&#39;column_id&#39; :&#39;{#Bulge type}&#39;,
-                    #&#39;column_id&#39; :&#39;{Total}&#39;
+                    &#39;filter_query&#39;: &#39;{Guide} eq &#34;&#39; + guide + &#39;&#34;&#39;
                 },
-                #&#39;border-left&#39;: &#39;5px solid rgba(255, 26, 26, 0.9)&#39;, 
-                &#39;background-color&#39;:&#39;rgba(0, 0, 255,0.15)&#39;#&#39;rgb(255, 102, 102)&#39;
-                
+                &#39;background-color&#39;:&#39;rgba(0, 0, 255,0.15)&#39;
             },
             {
-                &#39;if&#39;: {
-                        &#39;column_id&#39; :&#39;Genome&#39;
-                    },
-                    &#39;font-weight&#39;:&#39;bold&#39;,
-                    &#39;textAlign&#39;: &#39;center&#39;
-                    
+            &#39;if&#39;: {
+                    &#39;column_id&#39; :&#39;Genome&#39;
+                },
+                &#39;font-weight&#39;:&#39;bold&#39;,
+                &#39;textAlign&#39;: &#39;center&#39;      
             }
     ]
 
-# Filtering e sorting per la pagina principale delle guide
+# Filtering e sorting e load data per la pagina principale delle guide
 @app.callback(
     [Output(&#39;general-profile-table&#39;, &#39;data&#39;),
     Output(&#39;general-profile-table&#39;, &#39;selected_cells&#39;)],
@@ -3276,6 +3448,22 @@ def colorSelectedRow(sel_cel, all_guides):
     [State(&#39;url&#39;, &#39;search&#39;)]    
 )
 def update_table_general_profile(page_current, page_size, sort_by, filter, search):
+    &#39;&#39;&#39;
+    The function loads the data to be shown into the table. 
+
+    ***Args***
+
+    + [**page_current**] **general-profile-table** (*page_current*): int of the current page to show
+    + [**page_size**] **general-profile-table** (*page_size*): int of the maximum number of row for each page
+    + [**sort_by**] **general-profile-table** (*sort_by*): list dictionaries of column IDs and sorting direction
+    + [**filter**] **general-profile-table** (*filter_query*): list dictionaries for the data filtering
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+
+    ***Returns***
+
+    + **general-profile-table** (*data*): dictionary of the data to be shown
+    + **general-profile-table** (*selected_cells*): dictionary containing the selected cell, default at first row
+    &#39;&#39;&#39;
     job_id = search.split(&#39;=&#39;)[-1]
     
     with open(current_working_directory + &#39;Results/&#39; + job_id + &#39;/Params.txt&#39;) as p:
@@ -3434,8 +3622,6 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
             ],
             inplace=False
         )
-
-    #Calculate sample count
     
     data_to_send=dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
@@ -3450,6 +3636,18 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     [State(&#34;collapse-populations&#34;, &#34;is_open&#34;)],
 )
 def toggleCollapseDistributionPopulations(n, is_open):
+    &#39;&#39;&#39;
+    Open/Close the section containing the Population Distributions barplots.
+
+    ***Args***
+
+    + [**n**] **btn-collapse-populations** (*n_clicks*): int for the number of times the button was clicked
+    + [**is_open**] **collapse-populations** (*is_open*): bool for the status of the component (True: is open, False: is closed)
+
+    ***Returns***
+
+    + **collapse-populations** (*is_open*): True to show, False to hide
+    &#39;&#39;&#39;
     if n:
         return not is_open
     return is_open
@@ -3462,6 +3660,19 @@ def toggleCollapseDistributionPopulations(n, is_open):
     State(&#39;url&#39;,&#39;search&#39;)]
 )
 def loadDistributionPopulations(sel_cel, all_guides, job_id):
+    &#39;&#39;&#39;
+    Load the barplot images from the &#39;assets&#39; directory.
+
+    ***Args***
+
+    + [**sel_cel**] **general-profile-table** (*selected_cells*): list contaning the selected row of the main guide table
+    + [**all_guides**] **general-profile-table** (*data*): list of all the rows that are currenty displayed in the main guide table
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+
+    ***Returns***
+
+    + **content-collapse-population** (*children*): list of Dash Components with the images of the Populations Distribution
+    &#39;&#39;&#39;
     if sel_cel is None or not sel_cel or not all_guides:
         raise PreventUpdate
     guide = all_guides[int(sel_cel[0][&#39;row&#39;])][&#39;Guide&#39;]
@@ -3521,7 +3732,20 @@ def loadDistributionPopulations(sel_cel, all_guides, job_id):
 @cache.memoize()
 def global_store_subset(value, bulge_t, bulge_s, mms, guide):
     &#39;&#39;&#39;
-    Caching dei file targets per una miglior performance di visualizzazione
+    Caching of files for the subset table in the &#39;Show Targets&#39; link of the Summary by Guide tabe, to improve loading speed. NOTE that if two 
+    files have the same name, then the generated cache will be the same, so a regular cleaning of the &#39;Cache&#39; directory is mandatory.
+
+    ***Args***
+
+    + **value**: string of the job ID to load 
+    + **bulge_t**: string of the type of bulge selected
+    + **bulge_s**: string of the number of bulges selected
+    + **mms**: string of the number of mismatches selected
+    + **guide**: string of the selected guide
+
+    ***Returns***
+
+    + **df**: dataframe for the subset table of the &#39;Show Targets&#39; table of the Summary by Guide
     &#39;&#39;&#39;
     if value is None:
         return &#39;&#39;
@@ -3529,8 +3753,20 @@ def global_store_subset(value, bulge_t, bulge_s, mms, guide):
     df = pd.read_csv( current_working_directory + &#39;Results/&#39; + value + &#39;/&#39; + value + &#39;.&#39; + bulge_t + &#39;.&#39; + bulge_s + &#39;.&#39; + mms + &#39;.&#39; + guide +&#39;.txt&#39;, sep = &#39;\t&#39;, header = None) #, skiprows = 1)
     return df
 
-
+#&#39;Show target&#39; page of the Summary by Guide tab
 def guidePagev3(job_id, hash):
+    &#39;&#39;&#39;
+    Creates the layout for the &#39;Show Targets&#39; page of the Summary by Guide tab.
+
+    ***Args***
+
+    + **job_id**: string of the jobID
+    + **hash**: string containing the informations about the selected &#39;Show Targets&#39; row, eg &#39;#CCATCGGTGGCCGTTTGCCCNNNnewDNA10&#39;
+
+    ***Returns***
+
+    + list of Dash Components containing the layout of the page
+    &#39;&#39;&#39;
     guide = hash[:hash.find(&#39;new&#39;)]
     mms = hash[-1:]
     bulge_s = hash[-2:-1]
@@ -3565,14 +3801,14 @@ def guidePagev3(job_id, hash):
     final_list.append(
         html.P(
             [
-                        &#39;List of Targets found for the selected guide. Select a row to view other possible configurations of the target, along with the corresponding samples list.&#39;, # &#39;Select a row to view the target IUPAC character scomposition. The rows highlighted in red indicates that the target was found only in the genome with variants.&#39;,
-                        dcc.Checklist(options = [{&#39;label&#39;: &#39;Hide Reference Targets&#39;, &#39;value&#39;: &#39;hide-ref&#39;}], id=&#39;hide-reference-targets&#39;, value = value_hide_reference, style = style_hide_reference),
-                        html.Div(
-                            [   
-                                html.P(&#39;Generating download link, Please wait...&#39;, id = &#39;download-link-sumbyguide&#39;), 
-                                dcc.Interval(interval = 5*1000, id = &#39;interval-sumbyguide&#39;)
-                            ]
-                        )
+                &#39;List of Targets found for the selected guide. Select a row to view other possible configurations of the target, along with the corresponding samples list.&#39;, # &#39;Select a row to view the target IUPAC character scomposition. The rows highlighted in red indicates that the target was found only in the genome with variants.&#39;,
+                dcc.Checklist(options = [{&#39;label&#39;: &#39;Hide Reference Targets&#39;, &#39;value&#39;: &#39;hide-ref&#39;}], id=&#39;hide-reference-targets&#39;, value = value_hide_reference, style = style_hide_reference),
+                html.Div(
+                    [   
+                        html.P(&#39;Generating download link, Please wait...&#39;, id = &#39;download-link-sumbyguide&#39;), 
+                        dcc.Interval(interval = 5*1000, id = &#39;interval-sumbyguide&#39;)
+                    ]
+                )
             ]
         )
     )
@@ -3589,8 +3825,7 @@ def guidePagev3(job_id, hash):
     final_list.append(
         html.Div(job_id + &#39;.&#39; + bulge_t + &#39;.&#39; + bulge_s + &#39;.&#39; + mms + &#39;.&#39; + guide,style = {&#39;display&#39;:&#39;none&#39;}, id = &#39;div-info-sumbyguide-targets&#39;)
     )
-    # print(&#39;qui guide before grep&#39;)
-    # print(&#39;esiste guide?&#39;, str(os.path.exists(guide_grep_result)))
+    
     if not os.path.exists(guide_grep_result):    #Example    job_id.X.0.4.guide.txt #NOTE HEADER NON SALVATO
         subprocess.call([put_header + &#39;LC_ALL=C fgrep &#39; + guide + &#39; &#39; + job_directory + job_id + file_to_grep + &#39; | LC_ALL=C fgrep &#39; + bulge_t + &#39; | awk \&#39;$8==&#39; + mms + &#39; &amp;&amp; $9==&#39; + bulge_s + &#39;\&#39;&gt; &#39; + guide_grep_result], shell = True)
         subprocess.Popen([&#39;zip &#39; + guide_grep_result.replace(&#39;.txt&#39;,&#39;.zip&#39;) + &#39; &#39; + guide_grep_result], shell = True)
@@ -3601,10 +3836,8 @@ def guidePagev3(job_id, hash):
             dash_table.DataTable(
                 id=&#39;table-subset-target&#39;, 
                 columns=cols, 
-                #data = subset_targets.to_dict(&#39;records&#39;),
                 virtualization = True,
                 fixed_rows={ &#39;headers&#39;: True, &#39;data&#39;: 0 },
-                #fixed_columns = {&#39;headers&#39;: True, &#39;data&#39;:1},
                 style_cell={&#39;width&#39;: &#39;150px&#39;},
                 page_current=0,
                 page_size=PAGE_SIZE,
@@ -3626,27 +3859,12 @@ def guidePagev3(job_id, hash):
                 ],
                 css= [{ &#39;selector&#39;: &#39;td.cell--selected, td.focused&#39;, &#39;rule&#39;: &#39;background-color: rgba(0, 0, 255,0.15) !important;&#39; }, { &#39;selector&#39;: &#39;td.cell--selected *, td.focused *&#39;, &#39;rule&#39;: &#39;background-color: rgba(0, 0, 255,0.15) !important;&#39;}],
                 style_data_conditional = [
-                    # {
-                    #     &#39;if&#39;: {
-                    #             &#39;filter_query&#39;: &#39;{Variant Unique} eq y&#39;,
-                    #             #&#39;filter_query&#39;: &#39;{Direction} eq +&#39;, 
-                    #             #&#39;column_id&#39; :&#39;Bulge Type&#39;
-                    #         },
-                    #         #&#39;border-left&#39;: &#39;5px solid rgba(255, 26, 26, 0.9)&#39;, 
-                    #         &#39;background-color&#39;:&#39;rgba(255, 0, 0,0.15)&#39;#&#39;rgb(255, 102, 102)&#39;
-                            
-                    #     },
                     {
                         &#39;if&#39;: {
                                 &#39;filter_query&#39;: &#39;{Variant Unique} eq F&#39;,
-                                #&#39;filter_query&#39;: &#39;{Direction} eq +&#39;, 
-                                #&#39;column_id&#39; :&#39;Bulge Type&#39;
                             },
-                            #&#39;border-left&#39;: &#39;5px solid rgba(255, 26, 26, 0.9)&#39;, 
-                            &#39;background-color&#39;:&#39;rgba(0, 0, 0,0.15)&#39;#&#39;rgb(255, 102, 102)&#39;
-                            
+                            &#39;background-color&#39;:&#39;rgba(0, 0, 0,0.15)&#39;
                         },
-
                 ]            
             ),
             id = &#39;div-result-table&#39;,
@@ -3674,11 +3892,22 @@ def guidePagev3(job_id, hash):
 )
 def update_table_subset(page_current, page_size, sort_by, filter, hide_reference, search, hash_guide):
     &#39;&#39;&#39;
-    La funzione ritorna uno split dei risultati in base ad un filtering o a un sort da parte dell&#39;utente. Inoltre aggiorna i risultati
-    visualizzati quando il bottone next page / prev page è cliccato. (Codice preso dalla pagina dash datatable sul sorting con python)
-    Inoltre carica i file targets, o scores se presente, e lo trasforma in un dataframe, cambiando il nome delle colonne per farle corrispondere
-    all&#39;id delle colonne della tabella nella pagina.
-    Se non ci sono targets ritorna un avviso di errore
+    Function that returns the data to be shown in the &#39;Show Targets&#39; table of the Summary by Guide. 
+
+    ***Args***
+
+    + [**page_current**] **table-subset-target** (*page_current*): int of the current page to show
+    + [**page_size**] **table-subset-target** (*page_size*): int of the maximum number of row for each page
+    + [**sort_by**] **table-subset-target** (*sort_by*): list dictionaries of column IDs and sorting direction
+    + [**filter**] **table-subset-target** (*filter_query*): list dictionaries for the data filtering
+    + [**hide_reference**] **hide-reference-targets** (*value*): if the value is not None, then the Reference targets are removed from the shown data
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+    + [**hash_guide**] **url** (*hash*): string containing the informations about the selected &#39;Show Targets&#39; row, eg &#39;#CCATCGGTGGCCGTTTGCCCNNNnewDNA10&#39;
+    
+    ***Returns***
+
+    + **table-subset-target** (*data*): dictionary of the data to be shown
+    
     &#39;&#39;&#39;
     job_id = search.split(&#39;=&#39;)[-1]
     job_directory = current_working_directory + &#39;Results/&#39; + job_id + &#39;/&#39;
@@ -6324,7 +6553,17 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, len
 <span>def <span class="ident">colorSelectedRow</span></span>(<span>sel_cel, all_guides)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Update the background color of the row of the main table when the user clicks on a cell. Also change to bold the 'Reference' and 'Enriched'
+labels.</p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li>[<strong>sel_cel</strong>] <strong>general-profile-table</strong> (<em>selected_cells</em>): list contaning the selected row of the main guide table</li>
+<li>[<strong>all_guides</strong>] <strong>general-profile-table</strong> (<em>data</em>): list of all the rows that are currenty displayed in the main guide table</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>general-profile-table</strong> (<em>style_data_conditional</em>): dictionary of the style for the main table</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -6335,27 +6574,36 @@ def checkInput(n, n_close, genome_selected, pam, text_guides, mms, dna, rna, len
     [State(&#39;general-profile-table&#39;, &#39;data&#39;)]
 )
 def colorSelectedRow(sel_cel, all_guides):
+    &#39;&#39;&#39;
+    Update the background color of the row of the main table when the user clicks on a cell. Also change to bold the &#39;Reference&#39; and &#39;Enriched&#39;
+    labels.
+
+    ***Args***
+
+    + [**sel_cel**] **general-profile-table** (*selected_cells*): list contaning the selected row of the main guide table
+    + [**all_guides**] **general-profile-table** (*data*): list of all the rows that are currenty displayed in the main guide table
+
+    ***Returns***
+
+    + **general-profile-table** (*style_data_conditional*): dictionary of the style for the main table
+    &#39;&#39;&#39;
     if sel_cel is None or not sel_cel or not all_guides:
         raise PreventUpdate
     guide = all_guides[int(sel_cel[0][&#39;row&#39;])][&#39;Guide&#39;]
+    #Change background color of all the rows that have the &#39;Guide&#39; column equal to the selected guide (guides are unique)
     return [
         {
             &#39;if&#39;: {
-                    &#39;filter_query&#39;: &#39;{Guide} eq &#34;&#39; + guide + &#39;&#34;&#39;, 
-                    #&#39;column_id&#39; :&#39;{#Bulge type}&#39;,
-                    #&#39;column_id&#39; :&#39;{Total}&#39;
+                    &#39;filter_query&#39;: &#39;{Guide} eq &#34;&#39; + guide + &#39;&#34;&#39;
                 },
-                #&#39;border-left&#39;: &#39;5px solid rgba(255, 26, 26, 0.9)&#39;, 
-                &#39;background-color&#39;:&#39;rgba(0, 0, 255,0.15)&#39;#&#39;rgb(255, 102, 102)&#39;
-                
+                &#39;background-color&#39;:&#39;rgba(0, 0, 255,0.15)&#39;
             },
             {
-                &#39;if&#39;: {
-                        &#39;column_id&#39; :&#39;Genome&#39;
-                    },
-                    &#39;font-weight&#39;:&#39;bold&#39;,
-                    &#39;textAlign&#39;: &#39;center&#39;
-                    
+            &#39;if&#39;: {
+                    &#39;column_id&#39; :&#39;Genome&#39;
+                },
+                &#39;font-weight&#39;:&#39;bold&#39;,
+                &#39;textAlign&#39;: &#39;center&#39;      
             }
     ]</code></pre>
 </details>
@@ -6549,7 +6797,22 @@ def fileDialogVCF(n):
 <span>def <span class="ident">filterPositionTable</span></span>(<span>nPrev, nNext, filter_q, n, search, sel_cel, all_guides, current_page, mms_bulge)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Filtering/changing page of the table in the Summary by Position tab.</p>
+<p><strong><em>Args</em></strong>
++ [<strong>nPrev</strong>] <strong>prev-page-position</strong> (<em>n_clicks_timestamp</em>): int timestamp of last click on Previous Page button
++ [<strong>nNext</strong>] <strong>next-page-position</strong> (<em>n_clicks_timestamp</em>): int timestamp of last click on Next Page button
++ [<strong>filter_q</strong>] <strong>div-position-filter-query</strong> (<em>children</em>): string of the filter query
++ [<strong>n</strong>] <strong>button-filter-position</strong> (<em>n_clicks_timestamp</em>): int timestamp of the Apply Filter button
++ [<strong>search</strong>] <strong>url</strong> (<em>search</em>): string containing the job ID, eg '?job=QV99PN6XDL'
++ [<strong>sel_cel</strong>] <strong>general-profile-table</strong> (<em>selected_cells</em>): list contaning the selected row of the main guide table
++ [<strong>all_guides</strong>] <strong>general-profile-table</strong> (<em>data</em>): list of all the rows that are currenty displayed in the main guide table
++ [<strong>current_page</strong>] <strong>div-current-page-table-samples</strong> (<em>children</em>): string containing the current page of the table (eg '1/15')
++ [<strong>mms_bulge</strong>] <strong>div-mms-bulge-position</strong> (<em>children</em>): string containing the value of the max mismatch and bulge value (eg. '6-2')</p>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>div-table-position</strong> (<em>children</em>): html.Table with filtering applied and/or next/previous page of data</li>
+<li><strong>div-current-page-table-position</strong> (<em>children</em>): string of the currently displayed page</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -6568,6 +6831,26 @@ def fileDialogVCF(n):
     State(&#39;div-mms-bulges-position&#39;, &#39;children&#39;)]
 )
 def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, current_page, mms_bulge):
+    &#39;&#39;&#39;
+    Filtering/changing page of the table in the Summary by Position tab.
+
+    ***Args***
+    + [**nPrev**] **prev-page-position** (*n_clicks_timestamp*): int timestamp of last click on Previous Page button
+    + [**nNext**] **next-page-position** (*n_clicks_timestamp*): int timestamp of last click on Next Page button
+    + [**filter_q**] **div-position-filter-query** (*children*): string of the filter query
+    + [**n**] **button-filter-position** (*n_clicks_timestamp*): int timestamp of the Apply Filter button
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+    + [**sel_cel**] **general-profile-table** (*selected_cells*): list contaning the selected row of the main guide table
+    + [**all_guides**] **general-profile-table** (*data*): list of all the rows that are currenty displayed in the main guide table
+    + [**current_page**] **div-current-page-table-samples** (*children*): string containing the current page of the table (eg &#39;1/15&#39;)
+    + [**mms_bulge**] **div-mms-bulge-position** (*children*): string containing the value of the max mismatch and bulge value (eg. &#39;6-2&#39;)
+
+    ***Returns***
+
+    + **div-table-position** (*children*): html.Table with filtering applied and/or next/previous page of data
+    + **div-current-page-table-position** (*children*): string of the currently displayed page    
+    &#39;&#39;&#39;
+
     if sel_cel is None:
         raise PreventUpdate
     if nPrev is None and nNext is None and n is None:
@@ -6696,7 +6979,21 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
 <span>def <span class="ident">filterSampleTable</span></span>(<span>nPrev, nNext, filter_q, n, search, sel_cel, all_guides, current_page)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Filtering/changing page of the table in the Summary by Sample tab.</p>
+<p><strong><em>Args</em></strong>
++ [<strong>nPrev</strong>] <strong>prev-page-sample</strong> (<em>n_clicks_timestamp</em>): int timestamp of last click on Previous Page button
++ [<strong>nNext</strong>] <strong>next-page-sample</strong> (<em>n_clicks_timestamp</em>): int timestamp of last click on Next Page button
++ [<strong>filter_q</strong>] <strong>div-sample-filter-query</strong> (<em>children</em>): string of the filter query
++ [<strong>n</strong>] <strong>button-filter-population-sample</strong> (<em>n_clicks_timestamp</em>): int timestamp of the Apply Filter button
++ [<strong>search</strong>] <strong>url</strong> (<em>search</em>): string containing the job ID, eg '?job=QV99PN6XDL'
++ [<strong>sel_cel</strong>] <strong>general-profile-table</strong> (<em>selected_cells</em>): list contaning the selected row of the main guide table
++ [<strong>all_guides</strong>] <strong>general-profile-table</strong> (<em>data</em>): list of all the rows that are currenty displayed in the main guide table
++ [<strong>current_page</strong>] <strong>div-current-page-table-samples</strong> (<em>children</em>): string containing the current page of the table (eg '1/15')</p>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>div-table-samples</strong> (<em>children</em>): html.Table with filtering applied and/or next/previous page of data</li>
+<li><strong>div-current-page-table-samples</strong> (<em>children</em>): string of the currently displayed page</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -6714,6 +7011,24 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
     State(&#39;div-current-page-table-samples&#39;, &#39;children&#39;)]
 )
 def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, current_page):
+    &#39;&#39;&#39;
+    Filtering/changing page of the table in the Summary by Sample tab.
+
+    ***Args***
+    + [**nPrev**] **prev-page-sample** (*n_clicks_timestamp*): int timestamp of last click on Previous Page button
+    + [**nNext**] **next-page-sample** (*n_clicks_timestamp*): int timestamp of last click on Next Page button
+    + [**filter_q**] **div-sample-filter-query** (*children*): string of the filter query
+    + [**n**] **button-filter-population-sample** (*n_clicks_timestamp*): int timestamp of the Apply Filter button
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+    + [**sel_cel**] **general-profile-table** (*selected_cells*): list contaning the selected row of the main guide table
+    + [**all_guides**] **general-profile-table** (*data*): list of all the rows that are currenty displayed in the main guide table
+    + [**current_page**] **div-current-page-table-samples** (*children*): string containing the current page of the table (eg &#39;1/15&#39;)
+
+    ***Returns***
+
+    + **div-table-samples** (*children*): html.Table with filtering applied and/or next/previous page of data
+    + **div-current-page-table-samples** (*children*): string of the currently displayed page
+    &#39;&#39;&#39;
     if sel_cel is None:
         raise PreventUpdate
     if nPrev is None and nNext is None and n is None:
@@ -6857,14 +7172,40 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
 <span>def <span class="ident">generate_table</span></span>(<span>dataframe, id_table, genome_type, guide='', job_id='', max_rows=2600)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Per generare una html table. NOTE è diversa da una dash dataTable</p></div>
+<div class="desc"><p>Generates an html.Table for the Summary by Guide section.</p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li><strong>dataframe</strong>: dataframe containing the data to display</li>
+<li><strong>id_table</strong>: string that identifies the ID of the new generated html.Table</li>
+<li><strong>genome_type</strong>: string containing the type of the search ('ref', 'var' or 'both')</li>
+<li><strong>guide</strong>: string of the selected guide</li>
+<li><strong>job_id</strong>: string of the current jobID</li>
+<li><strong>max_rows</strong>: int of the max number of rows of the table</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li>html.Table() containing data for the Summary by Guide section</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def generate_table(dataframe, id_table, genome_type, guide=&#39;&#39;, job_id=&#39;&#39;, max_rows=2600):
     &#39;&#39;&#39;
-    Per generare una html table. NOTE è diversa da una dash dataTable
+    Generates an html.Table for the Summary by Guide section.
+
+    ***Args***
+
+    + **dataframe**: dataframe containing the data to display
+    + **id_table**: string that identifies the ID of the new generated html.Table
+    + **genome_type**: string containing the type of the search (&#39;ref&#39;, &#39;var&#39; or &#39;both&#39;)
+    + **guide**: string of the selected guide
+    + **job_id**: string of the current jobID
+    + **max_rows**: int of the max number of rows of the table
+
+    ***Returns***
+
+    + html.Table() containing data for the Summary by Guide section
     &#39;&#39;&#39;
     if genome_type == &#39;both&#39;:
         header = [html.Tr([
@@ -6900,12 +7241,45 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
 <span>def <span class="ident">generate_table_position</span></span>(<span>dataframe, id_table, page, mms, bulges, guide='', job_id='', max_rows=10)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Generates an html.Table for the Summary by Position section.</p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li><strong>dataframe</strong>: dataframe containing the data to display</li>
+<li><strong>id_table</strong>: string that identifies the ID of the new generated html.Table</li>
+<li><strong>page</strong>: int containing the current page of the table</li>
+<li><strong>mms</strong>: int value of the max allowed mismatched</li>
+<li><strong>bulges</strong>: int value of the max allowed bulges</li>
+<li><strong>guide</strong>: string of the selected guide</li>
+<li><strong>job_id</strong>: string of the current jobID</li>
+<li><strong>max_rows</strong>: int of the max number of rows of the table</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li>html.Table() containing data for the Summary by Position section</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def generate_table_position(dataframe, id_table, page, mms, bulges, guide = &#39;&#39;, job_id = &#39;&#39;, max_rows = 10): #NOTE v2 della tabella posizioni       #TODO modifica layout righe per allinearle
+    &#39;&#39;&#39;
+    Generates an html.Table for the Summary by Position section.
+
+    ***Args***
+
+    + **dataframe**: dataframe containing the data to display
+    + **id_table**: string that identifies the ID of the new generated html.Table
+    + **page**: int containing the current page of the table
+    + **mms**: int value of the max allowed mismatched
+    + **bulges**: int value of the max allowed bulges
+    + **guide**: string of the selected guide
+    + **job_id**: string of the current jobID
+    + **max_rows**: int of the max number of rows of the table
+
+    ***Returns***
+
+    + html.Table() containing data for the Summary by Position section
+    &#39;&#39;&#39;
     rows_remaining = len(dataframe) - (page - 1) * max_rows
     header = [html.Tr([
         html.Th(&#39;Chromosome&#39;, rowSpan = &#39;2&#39;, style = {&#39;vertical-align&#39;:&#39;middle&#39;, &#39;text-align&#39;:&#39;center&#39;}),
@@ -7006,14 +7380,40 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
 <span>def <span class="ident">generate_table_samples</span></span>(<span>dataframe, id_table, page, guide='', job_id='', max_rows=10)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Per generare una html table. NOTE è diversa da una dash dataTable</p></div>
+<div class="desc"><p>Generates an html.Table for the Summary by Sample section.</p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li><strong>dataframe</strong>: dataframe containing the data to display</li>
+<li><strong>id_table</strong>: string that identifies the ID of the new generated html.Table</li>
+<li><strong>page</strong>: int containing the current page of the table</li>
+<li><strong>guide</strong>: string of the selected guide</li>
+<li><strong>job_id</strong>: string of the current jobID</li>
+<li><strong>max_rows</strong>: int of the max number of rows of the table</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li>html.Table() containing data for the Summary by Sample section</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def generate_table_samples(dataframe, id_table, page ,guide=&#39;&#39;, job_id=&#39;&#39;, max_rows=10):
     &#39;&#39;&#39;
-    Per generare una html table. NOTE è diversa da una dash dataTable
+    Generates an html.Table for the Summary by Sample section.
+
+    ***Args***
+
+    + **dataframe**: dataframe containing the data to display
+    + **id_table**: string that identifies the ID of the new generated html.Table
+    + **page**: int containing the current page of the table
+    + **guide**: string of the selected guide
+    + **job_id**: string of the current jobID
+    + **max_rows**: int of the max number of rows of the table
+
+    ***Returns***
+
+    + html.Table() containing data for the Summary by Sample section
     &#39;&#39;&#39;
     rows_remaining = len(dataframe) - (page - 1) * max_rows
     return html.Table(
@@ -7168,7 +7568,20 @@ def global_store_general(path_file_to_load):
 <span>def <span class="ident">global_store_subset</span></span>(<span>value, bulge_t, bulge_s, mms, guide)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Caching dei file targets per una miglior performance di visualizzazione</p></div>
+<div class="desc"><p>Caching of files for the subset table in the 'Show Targets' link of the Summary by Guide tabe, to improve loading speed. NOTE that if two
+files have the same name, then the generated cache will be the same, so a regular cleaning of the 'Cache' directory is mandatory.</p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li><strong>value</strong>: string of the job ID to load </li>
+<li><strong>bulge_t</strong>: string of the type of bulge selected</li>
+<li><strong>bulge_s</strong>: string of the number of bulges selected</li>
+<li><strong>mms</strong>: string of the number of mismatches selected</li>
+<li><strong>guide</strong>: string of the selected guide</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>df</strong>: dataframe for the subset table of the 'Show Targets' table of the Summary by Guide</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -7176,7 +7589,20 @@ def global_store_general(path_file_to_load):
 <pre><code class="python">@cache.memoize()
 def global_store_subset(value, bulge_t, bulge_s, mms, guide):
     &#39;&#39;&#39;
-    Caching dei file targets per una miglior performance di visualizzazione
+    Caching of files for the subset table in the &#39;Show Targets&#39; link of the Summary by Guide tabe, to improve loading speed. NOTE that if two 
+    files have the same name, then the generated cache will be the same, so a regular cleaning of the &#39;Cache&#39; directory is mandatory.
+
+    ***Args***
+
+    + **value**: string of the job ID to load 
+    + **bulge_t**: string of the type of bulge selected
+    + **bulge_s**: string of the number of bulges selected
+    + **mms**: string of the number of mismatches selected
+    + **guide**: string of the selected guide
+
+    ***Returns***
+
+    + **df**: dataframe for the subset table of the &#39;Show Targets&#39; table of the Summary by Guide
     &#39;&#39;&#39;
     if value is None:
         return &#39;&#39;
@@ -7189,12 +7615,33 @@ def global_store_subset(value, bulge_t, bulge_s, mms, guide):
 <span>def <span class="ident">guidePagev3</span></span>(<span>job_id, hash)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Creates the layout for the 'Show Targets' page of the Summary by Guide tab.</p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li><strong>job_id</strong>: string of the jobID</li>
+<li><strong>hash</strong>: string containing the informations about the selected 'Show Targets' row, eg '#CCATCGGTGGCCGTTTGCCCNNNnewDNA10'</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li>list of Dash Components containing the layout of the page</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def guidePagev3(job_id, hash):
+    &#39;&#39;&#39;
+    Creates the layout for the &#39;Show Targets&#39; page of the Summary by Guide tab.
+
+    ***Args***
+
+    + **job_id**: string of the jobID
+    + **hash**: string containing the informations about the selected &#39;Show Targets&#39; row, eg &#39;#CCATCGGTGGCCGTTTGCCCNNNnewDNA10&#39;
+
+    ***Returns***
+
+    + list of Dash Components containing the layout of the page
+    &#39;&#39;&#39;
     guide = hash[:hash.find(&#39;new&#39;)]
     mms = hash[-1:]
     bulge_s = hash[-2:-1]
@@ -7229,14 +7676,14 @@ def global_store_subset(value, bulge_t, bulge_s, mms, guide):
     final_list.append(
         html.P(
             [
-                        &#39;List of Targets found for the selected guide. Select a row to view other possible configurations of the target, along with the corresponding samples list.&#39;, # &#39;Select a row to view the target IUPAC character scomposition. The rows highlighted in red indicates that the target was found only in the genome with variants.&#39;,
-                        dcc.Checklist(options = [{&#39;label&#39;: &#39;Hide Reference Targets&#39;, &#39;value&#39;: &#39;hide-ref&#39;}], id=&#39;hide-reference-targets&#39;, value = value_hide_reference, style = style_hide_reference),
-                        html.Div(
-                            [   
-                                html.P(&#39;Generating download link, Please wait...&#39;, id = &#39;download-link-sumbyguide&#39;), 
-                                dcc.Interval(interval = 5*1000, id = &#39;interval-sumbyguide&#39;)
-                            ]
-                        )
+                &#39;List of Targets found for the selected guide. Select a row to view other possible configurations of the target, along with the corresponding samples list.&#39;, # &#39;Select a row to view the target IUPAC character scomposition. The rows highlighted in red indicates that the target was found only in the genome with variants.&#39;,
+                dcc.Checklist(options = [{&#39;label&#39;: &#39;Hide Reference Targets&#39;, &#39;value&#39;: &#39;hide-ref&#39;}], id=&#39;hide-reference-targets&#39;, value = value_hide_reference, style = style_hide_reference),
+                html.Div(
+                    [   
+                        html.P(&#39;Generating download link, Please wait...&#39;, id = &#39;download-link-sumbyguide&#39;), 
+                        dcc.Interval(interval = 5*1000, id = &#39;interval-sumbyguide&#39;)
+                    ]
+                )
             ]
         )
     )
@@ -7253,8 +7700,7 @@ def global_store_subset(value, bulge_t, bulge_s, mms, guide):
     final_list.append(
         html.Div(job_id + &#39;.&#39; + bulge_t + &#39;.&#39; + bulge_s + &#39;.&#39; + mms + &#39;.&#39; + guide,style = {&#39;display&#39;:&#39;none&#39;}, id = &#39;div-info-sumbyguide-targets&#39;)
     )
-    # print(&#39;qui guide before grep&#39;)
-    # print(&#39;esiste guide?&#39;, str(os.path.exists(guide_grep_result)))
+    
     if not os.path.exists(guide_grep_result):    #Example    job_id.X.0.4.guide.txt #NOTE HEADER NON SALVATO
         subprocess.call([put_header + &#39;LC_ALL=C fgrep &#39; + guide + &#39; &#39; + job_directory + job_id + file_to_grep + &#39; | LC_ALL=C fgrep &#39; + bulge_t + &#39; | awk \&#39;$8==&#39; + mms + &#39; &amp;&amp; $9==&#39; + bulge_s + &#39;\&#39;&gt; &#39; + guide_grep_result], shell = True)
         subprocess.Popen([&#39;zip &#39; + guide_grep_result.replace(&#39;.txt&#39;,&#39;.zip&#39;) + &#39; &#39; + guide_grep_result], shell = True)
@@ -7265,10 +7711,8 @@ def global_store_subset(value, bulge_t, bulge_s, mms, guide):
             dash_table.DataTable(
                 id=&#39;table-subset-target&#39;, 
                 columns=cols, 
-                #data = subset_targets.to_dict(&#39;records&#39;),
                 virtualization = True,
                 fixed_rows={ &#39;headers&#39;: True, &#39;data&#39;: 0 },
-                #fixed_columns = {&#39;headers&#39;: True, &#39;data&#39;:1},
                 style_cell={&#39;width&#39;: &#39;150px&#39;},
                 page_current=0,
                 page_size=PAGE_SIZE,
@@ -7290,27 +7734,12 @@ def global_store_subset(value, bulge_t, bulge_s, mms, guide):
                 ],
                 css= [{ &#39;selector&#39;: &#39;td.cell--selected, td.focused&#39;, &#39;rule&#39;: &#39;background-color: rgba(0, 0, 255,0.15) !important;&#39; }, { &#39;selector&#39;: &#39;td.cell--selected *, td.focused *&#39;, &#39;rule&#39;: &#39;background-color: rgba(0, 0, 255,0.15) !important;&#39;}],
                 style_data_conditional = [
-                    # {
-                    #     &#39;if&#39;: {
-                    #             &#39;filter_query&#39;: &#39;{Variant Unique} eq y&#39;,
-                    #             #&#39;filter_query&#39;: &#39;{Direction} eq +&#39;, 
-                    #             #&#39;column_id&#39; :&#39;Bulge Type&#39;
-                    #         },
-                    #         #&#39;border-left&#39;: &#39;5px solid rgba(255, 26, 26, 0.9)&#39;, 
-                    #         &#39;background-color&#39;:&#39;rgba(255, 0, 0,0.15)&#39;#&#39;rgb(255, 102, 102)&#39;
-                            
-                    #     },
                     {
                         &#39;if&#39;: {
                                 &#39;filter_query&#39;: &#39;{Variant Unique} eq F&#39;,
-                                #&#39;filter_query&#39;: &#39;{Direction} eq +&#39;, 
-                                #&#39;column_id&#39; :&#39;Bulge Type&#39;
                             },
-                            #&#39;border-left&#39;: &#39;5px solid rgba(255, 26, 26, 0.9)&#39;, 
-                            &#39;background-color&#39;:&#39;rgba(0, 0, 0,0.15)&#39;#&#39;rgb(255, 102, 102)&#39;
-                            
+                            &#39;background-color&#39;:&#39;rgba(0, 0, 0,0.15)&#39;
                         },
-
                 ]            
             ),
             id = &#39;div-result-table&#39;,
@@ -7749,7 +8178,17 @@ if a new genome is added, simply by reloading the page.</p>
 <span>def <span class="ident">loadDistributionPopulations</span></span>(<span>sel_cel, all_guides, job_id)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Load the barplot images from the 'assets' directory.</p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li>[<strong>sel_cel</strong>] <strong>general-profile-table</strong> (<em>selected_cells</em>): list contaning the selected row of the main guide table</li>
+<li>[<strong>all_guides</strong>] <strong>general-profile-table</strong> (<em>data</em>): list of all the rows that are currenty displayed in the main guide table</li>
+<li>[<strong>search</strong>] <strong>url</strong> (<em>search</em>): string containing the job ID, eg '?job=QV99PN6XDL'</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>content-collapse-population</strong> (<em>children</em>): list of Dash Components with the images of the Populations Distribution</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -7761,6 +8200,19 @@ if a new genome is added, simply by reloading the page.</p>
     State(&#39;url&#39;,&#39;search&#39;)]
 )
 def loadDistributionPopulations(sel_cel, all_guides, job_id):
+    &#39;&#39;&#39;
+    Load the barplot images from the &#39;assets&#39; directory.
+
+    ***Args***
+
+    + [**sel_cel**] **general-profile-table** (*selected_cells*): list contaning the selected row of the main guide table
+    + [**all_guides**] **general-profile-table** (*data*): list of all the rows that are currenty displayed in the main guide table
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+
+    ***Returns***
+
+    + **content-collapse-population** (*children*): list of Dash Components with the images of the Populations Distribution
+    &#39;&#39;&#39;
     if sel_cel is None or not sel_cel or not all_guides:
         raise PreventUpdate
     guide = all_guides[int(sel_cel[0][&#39;row&#39;])][&#39;Guide&#39;]
@@ -8403,33 +8855,39 @@ def resetTab(current_tab, is_in):
 <span>def <span class="ident">resultPage</span></span>(<span>job_id)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>La funzione ritorna il layout della pagina risultati (tabella delle guide + eventuali immagini). Nella tabella delle guide
-carico il profile ottenuto dalla ricerca. Carica inoltre l'ACFD, che è il cfd score aggregato per tutti i risultati di una singola guida.
-Crea poi 10 bottoni: un numero pari a mismatches + 2
-che sono visibili, il resto con style = {'display':'none'}, così ho sempre il numero
-esatto di bottoni per mismatches in base ai mms dati in input nella ricerca (serve a risolvere problemi con le callback che hanno input
-da elementi non creati. In questo caso io creo tutti i possibili bottoni ma ne rendo visibili/disponibili solo il numero corretto in base
-ai mms).</p></div>
+<div class="desc"><p>The function creates the layout for the Result Page, with the general summary table at the top, the popup Population histogram section, the
+Tabs for the three different summaries and report (Guide, Sample, Position, Graphical Sumamary).</p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li><strong>job_id</strong>: string containing the jobbID of the current job</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>result_page</strong>: list of Dash Components for the layout of the page</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def resultPage(job_id):
     &#39;&#39;&#39;
-    La funzione ritorna il layout della pagina risultati (tabella delle guide + eventuali immagini). Nella tabella delle guide
-    carico il profile ottenuto dalla ricerca. Carica inoltre l&#39;ACFD, che è il cfd score aggregato per tutti i risultati di una singola guida.
-    Crea poi 10 bottoni: un numero pari a mismatches + 2  che sono visibili, il resto con style = {&#39;display&#39;:&#39;none&#39;}, così ho sempre il numero
-    esatto di bottoni per mismatches in base ai mms dati in input nella ricerca (serve a risolvere problemi con le callback che hanno input
-    da elementi non creati. In questo caso io creo tutti i possibili bottoni ma ne rendo visibili/disponibili solo il numero corretto in base
-    ai mms).
+    The function creates the layout for the Result Page, with the general summary table at the top, the popup Population histogram section, the 
+    Tabs for the three different summaries and report (Guide, Sample, Position, Graphical Sumamary).
+    
+    ***Args***
+
+    + **job_id**: string containing the jobbID of the current job
+
+    ***Returns***
+
+    + **result_page**: list of Dash Components for the layout of the page
     &#39;&#39;&#39;
     value = job_id
     job_directory = current_working_directory + &#39;Results/&#39; + job_id + &#39;/&#39;
-    warning_message = []
     if (not isdir(job_directory)):
         return html.Div(dbc.Alert(&#34;The selected result does not exist&#34;, color = &#34;danger&#34;))
 
-    #Load mismatches
+    #Load informations from the Params file
     with open(current_working_directory + &#39;Results/&#39; + value + &#39;/Params.txt&#39;) as p:
         all_params = p.read()
         mms = (next(s for s in all_params.split(&#39;\n&#39;) if &#39;Mismatches&#39; in s)).split(&#39;\t&#39;)[-1]
@@ -8460,6 +8918,7 @@ ai mms).</p></div>
             for e_g in error_g:
                 list_error_guides.append(e_g.strip())
 
+    #Columns for the main table
     col_targetfor = &#39;(&#39;
     for i in range(1, mms + int(max_bulges)):
         col_targetfor = col_targetfor + str(i) + &#39;-&#39;
@@ -8501,7 +8960,7 @@ ai mms).</p></div>
     columns_profile_table = [i for j, i in enumerate(columns_profile_table) if columns_profile_table[j][&#39;id&#39;] not in remove_indices]      
     
     final_list = []    
-    if list_error_guides:
+    if list_error_guides:   #If some guides were not processed due to too many targets
         final_list.append(
             dbc.Alert(
                 [
@@ -8544,15 +9003,13 @@ ai mms).</p></div>
         html.Div(
             dash_table.DataTable(
                 id = &#39;general-profile-table&#39;,
-                #page_size=PAGE_SIZE,
                 columns = columns_profile_table,
                 merge_duplicate_headers=True,
                 #fixed_rows={ &#39;headers&#39;: True, &#39;data&#39;: 0 },
-                #data = profile.to_dict(&#39;records&#39;),
                 selected_cells = [{&#39;row&#39;:0, &#39;column&#39;:0}],
                 css= [{ &#39;selector&#39;: &#39;td.cell--selected, td.focused&#39;, &#39;rule&#39;: &#39;background-color: rgba(0, 0, 255,0.15) !important;&#39; }, { &#39;selector&#39;: &#39;td.cell--selected *, td.focused *&#39;, &#39;rule&#39;: &#39;background-color: rgba(0, 0, 255,0.15) !important;&#39;}],
                 page_current= 0,
-                page_size= 10,
+                page_size= PAGE_SIZE,
                 page_action=&#39;custom&#39;,
                 #virtualization = True,
                 filter_action=&#39;custom&#39;,
@@ -8602,7 +9059,6 @@ ai mms).</p></div>
                     dbc.Row(
                         [
                             dbc.Col(html.Button(&#34;Show/Hide Target Distribution in SuperPopulations&#34;, id=&#34;btn-collapse-populations&#34;)),
-                            # dbc.Col(html.A(&#39;Download full list of targets&#39;, target = &#39;_blank&#39;, id = &#39;download-full-list&#39; ))
                         ]
                     ),
                     dbc.Collapse(
@@ -8749,14 +9205,32 @@ ai mms).</p></div>
 <span>def <span class="ident">selectSameLenGuides</span></span>(<span>list_guides)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Se l'utente mette guide di lunghezza diversa, la funzione prende la lunghezza della prima guida e salva solo le guide con quella lunghezza</p></div>
+<div class="desc"><p>If the user provide guides with different lengths, the function select the first guide, calculate its length, and discards all the guides with
+different lengths.</p>
+<p><strong><em>Args</em></strong>:</p>
+<ul>
+<li><strong>list_guides</strong>: list of the input guides</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>same_len_guides</strong>: list of guides with the same length</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def selectSameLenGuides(list_guides):
     &#39;&#39;&#39;
-    Se l&#39;utente mette guide di lunghezza diversa, la funzione prende la lunghezza della prima guida e salva solo le guide con quella lunghezza
+    If the user provide guides with different lengths, the function select the first guide, calculate its length, and discards all the guides with
+    different lengths.
+
+    ***Args***:
+
+    + **list_guides**: list of the input guides
+
+    ***Returns***
+
+    + **same_len_guides**: list of guides with the same length
     &#39;&#39;&#39;
     selected_length = len(list_guides.split(&#39;\n&#39;)[0])
     same_len_guides_list = []
@@ -9079,7 +9553,16 @@ def suggestComparison(value):
 <span>def <span class="ident">toggleCollapseDistributionPopulations</span></span>(<span>n, is_open)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Open/Close the section containing the Population Distributions barplots.</p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li>[<strong>n</strong>] <strong>btn-collapse-populations</strong> (<em>n_clicks</em>): int for the number of times the button was clicked</li>
+<li>[<strong>is_open</strong>] <strong>collapse-populations</strong> (<em>is_open</em>): bool for the status of the component (True: is open, False: is closed)</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>collapse-populations</strong> (<em>is_open</em>): True to show, False to hide</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -9090,6 +9573,18 @@ def suggestComparison(value):
     [State(&#34;collapse-populations&#34;, &#34;is_open&#34;)],
 )
 def toggleCollapseDistributionPopulations(n, is_open):
+    &#39;&#39;&#39;
+    Open/Close the section containing the Population Distributions barplots.
+
+    ***Args***
+
+    + [**n**] **btn-collapse-populations** (*n_clicks*): int for the number of times the button was clicked
+    + [**is_open**] **collapse-populations** (*is_open*): bool for the status of the component (True: is open, False: is closed)
+
+    ***Returns***
+
+    + **collapse-populations** (*is_open*): True to show, False to hide
+    &#39;&#39;&#39;
     if n:
         return not is_open
     return is_open</code></pre>
@@ -9157,7 +9652,8 @@ def toggle_fade(selected_options, is_in):
 <li>'tab-summary-by-guide': show the general table of the targets divided by Bulge and Mismatch values</li>
 <li>'tab-summary-by-sample': show the general table of the targets divided by sample</li>
 <li>'tab-summary-by-position': show the general table of the targets divided by chromosome and position</li>
-<li>'tab-summary-graphical': show the graphical report</li>
+<li>'tab-summary-graphical': show the graphical report. A total of 10 Buttons, one for each mms value, are created, but only some of them
+are set to be visible (the number of mms selected by the user)</li>
 </ul>
 </li>
 </ul></div>
@@ -9191,7 +9687,8 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
         + &#39;tab-summary-by-guide&#39;: show the general table of the targets divided by Bulge and Mismatch values
         + &#39;tab-summary-by-sample&#39;: show the general table of the targets divided by sample
         + &#39;tab-summary-by-position&#39;: show the general table of the targets divided by chromosome and position
-        + &#39;tab-summary-graphical&#39;: show the graphical report
+        + &#39;tab-summary-graphical&#39;: show the graphical report. A total of 10 Buttons, one for each mms value, are created, but only some of them
+        are set to be visible (the number of mms selected by the user)
     &#39;&#39;&#39;
 
     if value is None or sel_cel is None or not sel_cel or not all_guides:
@@ -9421,7 +9918,7 @@ def updateContentTab(value, sel_cel, all_guides, search, genome_type):
                 )
             else:
                 fl_buttons.append(
-                    html.Button(str(i) + &#39; mm&#39;,id = &#39;btn&#39; + str(i), style = {&#39;display&#39;:&#39;none&#39;}),       
+                    html.Button(str(i) + &#39; mm&#39;,id = &#39;btn&#39; + str(i), style = {&#39;display&#39;:&#39;none&#39;}), #Hide buttons for mms non selected
                 )
         
         fl.append(html.Br())
@@ -9633,7 +10130,33 @@ def updateHistoryFilter(n, genome, pam):
 <span>def <span class="ident">updateImagesTabs</span></span>(<span>n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, population, sample, sel_cel, search, all_guides)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Loads the images on the Graphical Report based on the selected mismatch value and/or sample, population, superpopulation value.</p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li>[<strong>n_</strong>] <strong>btn_</strong> (<em>n_clicks_timestam</em>): string of the timestamp of the last time the button was pressed.</li>
+<li>[<strong>superpopulation</strong>] <strong>dropdown-superpopulation-sample</strong> (<em>value</em>): string of the selected superpopulation</li>
+<li>[<strong>population</strong>] <strong>dropdown-population-sample</strong> (<em>value</em>): string of the selected population</li>
+<li>[<strong>sample</strong>] <strong>dropdown-sample</strong> (<em>value</em>): string of the selected sample</li>
+<li>[<strong>sel_cel</strong>] <strong>general-profile-table</strong> (<em>selected_cells</em>): list contaning the selected row of the main guide table</li>
+<li>[<strong>search</strong>] <strong>url</strong> (<em>search</em>): string containing the job ID, eg '?job=QV99PN6XDL'</li>
+<li>[<strong>all_guides</strong>] <strong>general-profile-table</strong> (<em>data</em>): list of all the rows that are currenty displayed in the main guide table</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>div-guide-image</strong> (<em>children</em>): returns barplot and radarchart of the selected guide</li>
+<li><strong>div-sample-image</strong> (<em>children</em>): returns radarchart specific for sample/pop/superpop of the selected guide</li>
+</ul>
+<p><strong><em>Details</em></strong></p>
+<ul>
+<li>The function sort all the timestamps of the buttons (can be up to 10 buttons, one for each mms value) and select the one that was clicked last.
+Since it is not possible in the current Dash version to create callbacks of components that are not available in the app.layout, but the buttons
+are created dynamically (we do not know how many mms the user selects), we create 10 buttons and show only the ones corresponding to the number
+of selected mms, the others are hidden using <code>{'display':'none'}</code>. In this way we can create this callback even when we do not know how may mms
+the user will set.</li>
+<li>If the image for a specific sample/pop/superpop is not available, the function calls <code>crispritz.py generate-report</code> in order to create the image </li>
+<li>The corresponding image is then loaded from the <code>assets/Img/jobID</code> directory, in order to be also available to be opened in a new tab (by
+clicking on it)</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -9659,14 +10182,42 @@ def updateHistoryFilter(n, genome, pam):
     State(&#39;general-profile-table&#39;, &#39;data&#39;)]
 )
 def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, population, sample, sel_cel, search, all_guides):
+    &#39;&#39;&#39;
+    Loads the images on the Graphical Report based on the selected mismatch value and/or sample, population, superpopulation value.
+
+    ***Args***
+
+    + [**n_**] **btn_** (*n_clicks_timestam*): string of the timestamp of the last time the button was pressed.
+    + [**superpopulation**] **dropdown-superpopulation-sample** (*value*): string of the selected superpopulation
+    + [**population**] **dropdown-population-sample** (*value*): string of the selected population
+    + [**sample**] **dropdown-sample** (*value*): string of the selected sample
+    + [**sel_cel**] **general-profile-table** (*selected_cells*): list contaning the selected row of the main guide table
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+    + [**all_guides**] **general-profile-table** (*data*): list of all the rows that are currenty displayed in the main guide table
+
+    ***Returns***
+
+    + **div-guide-image** (*children*): returns barplot and radarchart of the selected guide
+    + **div-sample-image** (*children*): returns radarchart specific for sample/pop/superpop of the selected guide
+
+    ***Details***
+
+    + The function sort all the timestamps of the buttons (can be up to 10 buttons, one for each mms value) and select the one that was clicked last.
+    Since it is not possible in the current Dash version to create callbacks of components that are not available in the app.layout, but the buttons
+    are created dynamically (we do not know how many mms the user selects), we create 10 buttons and show only the ones corresponding to the number
+    of selected mms, the others are hidden using `{&#39;display&#39;:&#39;none&#39;}`. In this way we can create this callback even when we do not know how may mms
+    the user will set.
+    + If the image for a specific sample/pop/superpop is not available, the function calls `crispritz.py generate-report` in order to create the image 
+    + The corresponding image is then loaded from the `assets/Img/jobID` directory, in order to be also available to be opened in a new tab (by
+    clicking on it)
+    &#39;&#39;&#39;
+
     if sel_cel is None :
         raise PreventUpdate
     job_id = search.split(&#39;=&#39;)[-1]
     job_directory = current_working_directory + &#39;Results/&#39; + job_id + &#39;/&#39;
     guide = all_guides[int(sel_cel[0][&#39;row&#39;])][&#39;Guide&#39;]
     
-    #search for getting job id
-    # get guide with sel_cel and all_data
     guide_images = []
     sample_images = []
     with open(current_working_directory + &#39;Results/&#39; + job_id + &#39;/Params.txt&#39;) as p:
@@ -9676,6 +10227,8 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
     gecko_string = &#39;&#39;
     if gecko_comp == &#39;True&#39;:
         gecko_string = &#39;-gecko&#39;
+    
+    #Initialize to 0 Buttons not pressed
     if not n0:
         n0 = 0
     if not n1:
@@ -9708,6 +10261,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
     btn_group.append(n8)
     btn_group.append(n9)
     
+    #Check last pressed button
     if max(btn_group) == n0:
         mm_show = 0
     if max(btn_group) == n1:
@@ -9733,7 +10287,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
     radar_img = &#39;summary_single_guide_&#39; + guide + &#39;_&#39; + str(mm_show) + &#39;mm.png&#39;
 
     barplot_img = &#39;summary_histogram_&#39; + guide + &#39;_&#39; + str(mm_show) + &#39;mm.png&#39;
-    try:            #NOTE serve per non generare errori se il barplot non è stato fatto
+    try:            #NOTE if the image is not available, show nothing
         barplot_src = &#39;data:image/png;base64,{}&#39;.format(base64.b64encode(open(current_working_directory + &#39;Results/&#39; + job_id + &#39;/&#39; + barplot_img, &#39;rb&#39;).read()).decode())
     except:
         barplot_src = &#39;&#39;
@@ -9782,6 +10336,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
     ])
     class_images = [(sample, &#39;Samples&#39;), (population, &#39;Population&#39;), (superpopulation, &#39;Superpopulation&#39;)]
     
+    #If the user selects a sample/pop/superpop not already processed, call crispritz generate-report and create the image
     for c in class_images:
         if c[0]:
             try:
@@ -9823,7 +10378,17 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
 <span>def <span class="ident">updatePopulationDrop</span></span>(<span>superpop, search)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Update the Dropdown containing the Population list based on the selected Superpopulation.</p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li>[<strong>superpop</strong>] <strong>dropdown-superpopulation-sample</strong> (<em>value</em>): string of the selected Superpopulation</li>
+<li>[<strong>search</strong>] <strong>url</strong> (<em>search</em>): string containing the job ID, eg '?job=QV99PN6XDL'</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>dropdown-population-sample</strong> (<em>options</em>): list of dictionaries for the option element of the Population dropdown</li>
+<li><strong>dropdown-population-sample</strong> (<em>value</em>): currently selected value (reinitialized to be empty)</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -9835,6 +10400,19 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
     [State(&#39;url&#39;, &#39;search&#39;)]
 )
 def updatePopulationDrop(superpop, search):
+    &#39;&#39;&#39;
+    Update the Dropdown containing the Population list based on the selected Superpopulation.
+
+    ***Args***
+
+    + [**superpop**] **dropdown-superpopulation-sample** (*value*): string of the selected Superpopulation
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+
+    ***Returns***
+
+    + **dropdown-population-sample** (*options*): list of dictionaries for the option element of the Population dropdown
+    + **dropdown-population-sample** (*value*): currently selected value (reinitialized to be empty)
+    &#39;&#39;&#39;
     if superpop is None or superpop == &#39;&#39;:
         raise PreventUpdate
     job_id = search.split(&#39;=&#39;)[-1]
@@ -9847,7 +10425,19 @@ def updatePopulationDrop(superpop, search):
 <span>def <span class="ident">updatePositionFilter</span></span>(<span>n, chr, pos_start, pos_end)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Update the filter (chr,start,end) for the filtering of the Summary by Position table</p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li>[<strong>n</strong>] <strong>button-filter-population-sample</strong> (<em>n_clicks</em>): int for the number of times the button was clicked</li>
+<li>[<strong>chr</strong>] <strong>dropdown-chr-table-position</strong> (<em>value</em>): string containing the selected chromosome</li>
+<li>[<strong>pos_start</strong>] <strong>input-position-start</strong> (<em>value</em>): string containing the start position</li>
+<li>[<strong>pos_end</strong>] <strong>input-position-end</strong> (<em>value</em>): string containing the end position</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>div-position-filter-query</strong> (<strong>children</strong>): string in the format of 'chr,start,end', or 'None' if a parameter was not provided (eg
+'chr4,1010,None')</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -9860,6 +10450,21 @@ def updatePopulationDrop(superpop, search):
     State(&#39;input-position-end&#39;, &#39;value&#39;)]
 )
 def updatePositionFilter(n, chr, pos_start, pos_end):
+    &#39;&#39;&#39;
+    Update the filter (chr,start,end) for the filtering of the Summary by Position table
+
+    ***Args***
+
+    + [**n**] **button-filter-population-sample** (*n_clicks*): int for the number of times the button was clicked
+    + [**chr**] **dropdown-chr-table-position** (*value*): string containing the selected chromosome
+    + [**pos_start**] **input-position-start** (*value*): string containing the start position
+    + [**pos_end**] **input-position-end** (*value*): string containing the end position
+
+    ***Returns***
+
+    + **div-position-filter-query** (**children**): string in the format of &#39;chr,start,end&#39;, or &#39;None&#39; if a parameter was not provided (eg
+    &#39;chr4,1010,None&#39;)
+    &#39;&#39;&#39;
     if n is None:
         raise PreventUpdate
     if pos_start == &#39;&#39;:
@@ -9873,7 +10478,17 @@ def updatePositionFilter(n, chr, pos_start, pos_end):
 <span>def <span class="ident">updateSampleDrop</span></span>(<span>pop, search)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Update the Dropdown containing the Sample list based on the selected Population.</p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li>[<strong>pop</strong>] <strong>dropdown-population-sample</strong> (<em>value</em>): string of the selected Population</li>
+<li>[<strong>search</strong>] <strong>url</strong> (<em>search</em>): string containing the job ID, eg '?job=QV99PN6XDL'</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>dropdown-sample</strong> (<em>options</em>): list of dictionaries for the option element of the Sample dropdown</li>
+<li><strong>dropdown-sample</strong> (<em>value</em>): currently selected value (reinitialized to be empty)</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -9885,6 +10500,19 @@ def updatePositionFilter(n, chr, pos_start, pos_end):
     [State(&#39;url&#39;, &#39;search&#39;)]
 )
 def updateSampleDrop(pop, search):
+    &#39;&#39;&#39;
+    Update the Dropdown containing the Sample list based on the selected Population.
+
+    ***Args***
+
+    + [**pop**] **dropdown-population-sample** (*value*): string of the selected Population
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+
+    ***Returns***
+
+    + **dropdown-sample** (*options*): list of dictionaries for the option element of the Sample dropdown
+    + **dropdown-sample** (*value*): currently selected value (reinitialized to be empty)
+    &#39;&#39;&#39;
     if pop is None or pop == &#39;&#39;:
         return [], None
     job_id = search.split(&#39;=&#39;)[-1]
@@ -9897,7 +10525,19 @@ def updateSampleDrop(pop, search):
 <span>def <span class="ident">updateSampleFilter</span></span>(<span>n, superpopulation, population, sample)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Update the filter (superpop,pop,sample) for the filtering of the Summary by Sample table</p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li>[<strong>n</strong>] <strong>button-filter-population-sample</strong> (<em>n_clicks</em>): int for the number of times the button was clicked</li>
+<li>[<strong>superpopulation</strong>] <strong>dropdown-superpopulation-sample</strong> (<em>value</em>): string containing the selected Superpopulation</li>
+<li>[<strong>population</strong>] <strong>dropdown-population-sample</strong> (<em>value</em>): string containing the selected Population</li>
+<li>[<strong>sample</strong>] <strong>input-sample</strong> (<em>value</em>): string containing the Sample, given in input by the user</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>div-simple-filter-query</strong> (<strong>children</strong>): string in the format of 'superpop,pop,sample', or 'None' if a parameter was not provided (eg
+'EU,TSI,None')</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -9910,6 +10550,21 @@ def updateSampleDrop(pop, search):
     State(&#39;input-sample&#39;, &#39;value&#39;)]
 )
 def updateSampleFilter(n, superpopulation, population, sample):
+    &#39;&#39;&#39;
+    Update the filter (superpop,pop,sample) for the filtering of the Summary by Sample table
+
+    ***Args***
+
+    + [**n**] **button-filter-population-sample** (*n_clicks*): int for the number of times the button was clicked
+    + [**superpopulation**] **dropdown-superpopulation-sample** (*value*): string containing the selected Superpopulation
+    + [**population**] **dropdown-population-sample** (*value*): string containing the selected Population
+    + [**sample**] **input-sample** (*value*): string containing the Sample, given in input by the user
+
+    ***Returns***
+
+    + **div-simple-filter-query** (**children**): string in the format of &#39;superpop,pop,sample&#39;, or &#39;None&#39; if a parameter was not provided (eg
+    &#39;EU,TSI,None&#39;)
+    &#39;&#39;&#39;
     if n is None:
         raise PreventUpdate
     return str(superpopulation) + &#39;,&#39; + str(population) + &#39;,&#39; + str(sample).replace(&#39; &#39;,&#39;&#39;).upper()</code></pre>
@@ -10299,7 +10954,20 @@ def update_table_cluster(page_current, page_size, sort_by, filter, hide_referenc
 <span>def <span class="ident">update_table_general_profile</span></span>(<span>page_current, page_size, sort_by, filter, search)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>The function loads the data to be shown into the table. </p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li>[<strong>page_current</strong>] <strong>general-profile-table</strong> (<em>page_current</em>): int of the current page to show</li>
+<li>[<strong>page_size</strong>] <strong>general-profile-table</strong> (<em>page_size</em>): int of the maximum number of row for each page</li>
+<li>[<strong>sort_by</strong>] <strong>general-profile-table</strong> (<em>sort_by</em>): list dictionaries of column IDs and sorting direction</li>
+<li>[<strong>filter</strong>] <strong>general-profile-table</strong> (<em>filter_query</em>): list dictionaries for the data filtering</li>
+<li>[<strong>search</strong>] <strong>url</strong> (<em>search</em>): string containing the job ID, eg '?job=QV99PN6XDL'</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>general-profile-table</strong> (<em>data</em>): dictionary of the data to be shown</li>
+<li><strong>general-profile-table</strong> (<em>selected_cells</em>): dictionary containing the selected cell, default at first row</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -10314,6 +10982,22 @@ def update_table_cluster(page_current, page_size, sort_by, filter, hide_referenc
     [State(&#39;url&#39;, &#39;search&#39;)]    
 )
 def update_table_general_profile(page_current, page_size, sort_by, filter, search):
+    &#39;&#39;&#39;
+    The function loads the data to be shown into the table. 
+
+    ***Args***
+
+    + [**page_current**] **general-profile-table** (*page_current*): int of the current page to show
+    + [**page_size**] **general-profile-table** (*page_size*): int of the maximum number of row for each page
+    + [**sort_by**] **general-profile-table** (*sort_by*): list dictionaries of column IDs and sorting direction
+    + [**filter**] **general-profile-table** (*filter_query*): list dictionaries for the data filtering
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+
+    ***Returns***
+
+    + **general-profile-table** (*data*): dictionary of the data to be shown
+    + **general-profile-table** (*selected_cells*): dictionary containing the selected cell, default at first row
+    &#39;&#39;&#39;
     job_id = search.split(&#39;=&#39;)[-1]
     
     with open(current_working_directory + &#39;Results/&#39; + job_id + &#39;/Params.txt&#39;) as p:
@@ -10472,8 +11156,6 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
             ],
             inplace=False
         )
-
-    #Calculate sample count
     
     data_to_send=dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
@@ -10572,11 +11254,21 @@ def update_table_sample(page_current, page_size, sort_by, filter, search, hash):
 <span>def <span class="ident">update_table_subset</span></span>(<span>page_current, page_size, sort_by, filter, hide_reference, search, hash_guide)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>La funzione ritorna uno split dei risultati in base ad un filtering o a un sort da parte dell'utente. Inoltre aggiorna i risultati
-visualizzati quando il bottone next page / prev page è cliccato. (Codice preso dalla pagina dash datatable sul sorting con python)
-Inoltre carica i file targets, o scores se presente, e lo trasforma in un dataframe, cambiando il nome delle colonne per farle corrispondere
-all'id delle colonne della tabella nella pagina.
-Se non ci sono targets ritorna un avviso di errore</p></div>
+<div class="desc"><p>Function that returns the data to be shown in the 'Show Targets' table of the Summary by Guide. </p>
+<p><strong><em>Args</em></strong></p>
+<ul>
+<li>[<strong>page_current</strong>] <strong>table-subset-target</strong> (<em>page_current</em>): int of the current page to show</li>
+<li>[<strong>page_size</strong>] <strong>table-subset-target</strong> (<em>page_size</em>): int of the maximum number of row for each page</li>
+<li>[<strong>sort_by</strong>] <strong>table-subset-target</strong> (<em>sort_by</em>): list dictionaries of column IDs and sorting direction</li>
+<li>[<strong>filter</strong>] <strong>table-subset-target</strong> (<em>filter_query</em>): list dictionaries for the data filtering</li>
+<li>[<strong>hide_reference</strong>] <strong>hide-reference-targets</strong> (<em>value</em>): if the value is not None, then the Reference targets are removed from the shown data</li>
+<li>[<strong>search</strong>] <strong>url</strong> (<em>search</em>): string containing the job ID, eg '?job=QV99PN6XDL'</li>
+<li>[<strong>hash_guide</strong>] <strong>url</strong> (<em>hash</em>): string containing the informations about the selected 'Show Targets' row, eg '#CCATCGGTGGCCGTTTGCCCNNNnewDNA10'</li>
+</ul>
+<p><strong><em>Returns</em></strong></p>
+<ul>
+<li><strong>table-subset-target</strong> (<em>data</em>): dictionary of the data to be shown</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -10593,11 +11285,22 @@ Se non ci sono targets ritorna un avviso di errore</p></div>
 )
 def update_table_subset(page_current, page_size, sort_by, filter, hide_reference, search, hash_guide):
     &#39;&#39;&#39;
-    La funzione ritorna uno split dei risultati in base ad un filtering o a un sort da parte dell&#39;utente. Inoltre aggiorna i risultati
-    visualizzati quando il bottone next page / prev page è cliccato. (Codice preso dalla pagina dash datatable sul sorting con python)
-    Inoltre carica i file targets, o scores se presente, e lo trasforma in un dataframe, cambiando il nome delle colonne per farle corrispondere
-    all&#39;id delle colonne della tabella nella pagina.
-    Se non ci sono targets ritorna un avviso di errore
+    Function that returns the data to be shown in the &#39;Show Targets&#39; table of the Summary by Guide. 
+
+    ***Args***
+
+    + [**page_current**] **table-subset-target** (*page_current*): int of the current page to show
+    + [**page_size**] **table-subset-target** (*page_size*): int of the maximum number of row for each page
+    + [**sort_by**] **table-subset-target** (*sort_by*): list dictionaries of column IDs and sorting direction
+    + [**filter**] **table-subset-target** (*filter_query*): list dictionaries for the data filtering
+    + [**hide_reference**] **hide-reference-targets** (*value*): if the value is not None, then the Reference targets are removed from the shown data
+    + [**search**] **url** (*search*): string containing the job ID, eg &#39;?job=QV99PN6XDL&#39;
+    + [**hash_guide**] **url** (*hash*): string containing the informations about the selected &#39;Show Targets&#39; row, eg &#39;#CCATCGGTGGCCGTTTGCCCNNNnewDNA10&#39;
+    
+    ***Returns***
+
+    + **table-subset-target** (*data*): dictionary of the data to be shown
+    
     &#39;&#39;&#39;
     job_id = search.split(&#39;=&#39;)[-1]
     job_directory = current_working_directory + &#39;Results/&#39; + job_id + &#39;/&#39;

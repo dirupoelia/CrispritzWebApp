@@ -6,7 +6,7 @@ a software tool for population target analyses. CRISPRme is devoted to individua
 
 Documentation updated up to 07/07/2020
 
-Launch crisprme:
+Launch crisprme, NOTE - conda must be active when starting the app:
 
 + python3 crisprme_off.py
 + gunicorn -b :8080 crisprme_off:app.server
@@ -2936,6 +2936,21 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
     State('input-position-end', 'value')]
 )
 def updatePositionFilter(n, chr, pos_start, pos_end):
+    '''
+    Update the filter (chr,start,end) for the filtering of the Summary by Position table
+
+    ***Args***
+
+    + [**n**] **button-filter-population-sample** (*n_clicks*): int for the number of times the button was clicked
+    + [**chr**] **dropdown-chr-table-position** (*value*): string containing the selected chromosome
+    + [**pos_start**] **input-position-start** (*value*): string containing the start position
+    + [**pos_end**] **input-position-end** (*value*): string containing the end position
+
+    ***Returns***
+
+    + **div-position-filter-query** (**children**): string in the format of 'chr,start,end', or 'None' if a parameter was not provided (eg
+    'chr4,1010,None')
+    '''
     if n is None:
         raise PreventUpdate
     if pos_start == '':
@@ -2943,7 +2958,6 @@ def updatePositionFilter(n, chr, pos_start, pos_end):
     if pos_end == '':
         pos_end = 'None'
     return str(chr) + ',' + str(pos_start) + ',' + str(pos_end)
-
 
 #Callback to filter chr from Summary by Position table, and to show next/prev page
 @app.callback(
@@ -2960,6 +2974,26 @@ def updatePositionFilter(n, chr, pos_start, pos_end):
     State('div-mms-bulges-position', 'children')]
 )
 def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, current_page, mms_bulge):
+    '''
+    Filtering/changing page of the table in the Summary by Position tab.
+
+    ***Args***
+    + [**nPrev**] **prev-page-position** (*n_clicks_timestamp*): int timestamp of last click on Previous Page button
+    + [**nNext**] **next-page-position** (*n_clicks_timestamp*): int timestamp of last click on Next Page button
+    + [**filter_q**] **div-position-filter-query** (*children*): string of the filter query
+    + [**n**] **button-filter-position** (*n_clicks_timestamp*): int timestamp of the Apply Filter button
+    + [**search**] **url** (*search*): string containing the job ID, eg '?job=QV99PN6XDL'
+    + [**sel_cel**] **general-profile-table** (*selected_cells*): list contaning the selected row of the main guide table
+    + [**all_guides**] **general-profile-table** (*data*): list of all the rows that are currenty displayed in the main guide table
+    + [**current_page**] **div-current-page-table-samples** (*children*): string containing the current page of the table (eg '1/15')
+    + [**mms_bulge**] **div-mms-bulge-position** (*children*): string containing the value of the max mismatch and bulge value (eg. '6-2')
+
+    ***Returns***
+
+    + **div-table-position** (*children*): html.Table with filtering applied and/or next/previous page of data
+    + **div-current-page-table-position** (*children*): string of the currently displayed page    
+    '''
+
     if sel_cel is None:
         raise PreventUpdate
     if nPrev is None and nNext is None and n is None:
@@ -3087,7 +3121,16 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
 #If the input guides are different len, select the ones with same length as the first
 def selectSameLenGuides(list_guides):
     '''
-    Se l'utente mette guide di lunghezza diversa, la funzione prende la lunghezza della prima guida e salva solo le guide con quella lunghezza
+    If the user provide guides with different lengths, the function select the first guide, calculate its length, and discards all the guides with
+    different lengths.
+
+    ***Args***:
+
+    + **list_guides**: list of the input guides
+
+    ***Returns***
+
+    + **same_len_guides**: list of guides with the same length
     '''
     selected_length = len(list_guides.split('\n')[0])
     same_len_guides_list = []
@@ -3099,20 +3142,23 @@ def selectSameLenGuides(list_guides):
 
 def resultPage(job_id):
     '''
-    La funzione ritorna il layout della pagina risultati (tabella delle guide + eventuali immagini). Nella tabella delle guide
-    carico il profile ottenuto dalla ricerca. Carica inoltre l'ACFD, che è il cfd score aggregato per tutti i risultati di una singola guida.
-    Crea poi 10 bottoni: un numero pari a mismatches + 2  che sono visibili, il resto con style = {'display':'none'}, così ho sempre il numero
-    esatto di bottoni per mismatches in base ai mms dati in input nella ricerca (serve a risolvere problemi con le callback che hanno input
-    da elementi non creati. In questo caso io creo tutti i possibili bottoni ma ne rendo visibili/disponibili solo il numero corretto in base
-    ai mms).
+    The function creates the layout for the Result Page, with the general summary table at the top, the popup Population histogram section, the 
+    Tabs for the three different summaries and report (Guide, Sample, Position, Graphical Sumamary).
+    
+    ***Args***
+
+    + **job_id**: string containing the jobbID of the current job
+
+    ***Returns***
+
+    + **result_page**: list of Dash Components for the layout of the page
     '''
     value = job_id
     job_directory = current_working_directory + 'Results/' + job_id + '/'
-    warning_message = []
     if (not isdir(job_directory)):
         return html.Div(dbc.Alert("The selected result does not exist", color = "danger"))
 
-    #Load mismatches
+    #Load informations from the Params file
     with open(current_working_directory + 'Results/' + value + '/Params.txt') as p:
         all_params = p.read()
         mms = (next(s for s in all_params.split('\n') if 'Mismatches' in s)).split('\t')[-1]
@@ -3143,6 +3189,7 @@ def resultPage(job_id):
             for e_g in error_g:
                 list_error_guides.append(e_g.strip())
 
+    #Columns for the main table
     col_targetfor = '('
     for i in range(1, mms + int(max_bulges)):
         col_targetfor = col_targetfor + str(i) + '-'
@@ -3184,7 +3231,7 @@ def resultPage(job_id):
     columns_profile_table = [i for j, i in enumerate(columns_profile_table) if columns_profile_table[j]['id'] not in remove_indices]      
     
     final_list = []    
-    if list_error_guides:
+    if list_error_guides:   #If some guides were not processed due to too many targets
         final_list.append(
             dbc.Alert(
                 [
@@ -3227,15 +3274,13 @@ def resultPage(job_id):
         html.Div(
             dash_table.DataTable(
                 id = 'general-profile-table',
-                #page_size=PAGE_SIZE,
                 columns = columns_profile_table,
                 merge_duplicate_headers=True,
                 #fixed_rows={ 'headers': True, 'data': 0 },
-                #data = profile.to_dict('records'),
                 selected_cells = [{'row':0, 'column':0}],
                 css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
                 page_current= 0,
-                page_size= 10,
+                page_size= PAGE_SIZE,
                 page_action='custom',
                 #virtualization = True,
                 filter_action='custom',
@@ -3285,7 +3330,6 @@ def resultPage(job_id):
                     dbc.Row(
                         [
                             dbc.Col(html.Button("Show/Hide Target Distribution in SuperPopulations", id="btn-collapse-populations")),
-                            # dbc.Col(html.A('Download full list of targets', target = '_blank', id = 'download-full-list' ))
                         ]
                     ),
                     dbc.Collapse(
@@ -3319,31 +3363,40 @@ def resultPage(job_id):
     [State('general-profile-table', 'data')]
 )
 def colorSelectedRow(sel_cel, all_guides):
+    '''
+    Update the background color of the row of the main table when the user clicks on a cell. Also change to bold the 'Reference' and 'Enriched'
+    labels.
+
+    ***Args***
+
+    + [**sel_cel**] **general-profile-table** (*selected_cells*): list contaning the selected row of the main guide table
+    + [**all_guides**] **general-profile-table** (*data*): list of all the rows that are currenty displayed in the main guide table
+
+    ***Returns***
+
+    + **general-profile-table** (*style_data_conditional*): dictionary of the style for the main table
+    '''
     if sel_cel is None or not sel_cel or not all_guides:
         raise PreventUpdate
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
+    #Change background color of all the rows that have the 'Guide' column equal to the selected guide (guides are unique)
     return [
         {
             'if': {
-                    'filter_query': '{Guide} eq "' + guide + '"', 
-                    #'column_id' :'{#Bulge type}',
-                    #'column_id' :'{Total}'
+                    'filter_query': '{Guide} eq "' + guide + '"'
                 },
-                #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                'background-color':'rgba(0, 0, 255,0.15)'#'rgb(255, 102, 102)'
-                
+                'background-color':'rgba(0, 0, 255,0.15)'
             },
             {
-                'if': {
-                        'column_id' :'Genome'
-                    },
-                    'font-weight':'bold',
-                    'textAlign': 'center'
-                    
+            'if': {
+                    'column_id' :'Genome'
+                },
+                'font-weight':'bold',
+                'textAlign': 'center'      
             }
     ]
 
-# Filtering e sorting per la pagina principale delle guide
+# Filtering e sorting e load data per la pagina principale delle guide
 @app.callback(
     [Output('general-profile-table', 'data'),
     Output('general-profile-table', 'selected_cells')],
@@ -3354,6 +3407,22 @@ def colorSelectedRow(sel_cel, all_guides):
     [State('url', 'search')]    
 )
 def update_table_general_profile(page_current, page_size, sort_by, filter, search):
+    '''
+    The function loads the data to be shown into the table. 
+
+    ***Args***
+
+    + [**page_current**] **general-profile-table** (*page_current*): int of the current page to show
+    + [**page_size**] **general-profile-table** (*page_size*): int of the maximum number of row for each page
+    + [**sort_by**] **general-profile-table** (*sort_by*): list dictionaries of column IDs and sorting direction
+    + [**filter**] **general-profile-table** (*filter_query*): list dictionaries for the data filtering
+    + [**search**] **url** (*search*): string containing the job ID, eg '?job=QV99PN6XDL'
+
+    ***Returns***
+
+    + **general-profile-table** (*data*): dictionary of the data to be shown
+    + **general-profile-table** (*selected_cells*): dictionary containing the selected cell, default at first row
+    '''
     job_id = search.split('=')[-1]
     
     with open(current_working_directory + 'Results/' + job_id + '/Params.txt') as p:
@@ -3512,8 +3581,6 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
             ],
             inplace=False
         )
-
-    #Calculate sample count
     
     data_to_send=dff.iloc[
         page_current*page_size:(page_current+ 1)*page_size
@@ -3528,6 +3595,18 @@ def update_table_general_profile(page_current, page_size, sort_by, filter, searc
     [State("collapse-populations", "is_open")],
 )
 def toggleCollapseDistributionPopulations(n, is_open):
+    '''
+    Open/Close the section containing the Population Distributions barplots.
+
+    ***Args***
+
+    + [**n**] **btn-collapse-populations** (*n_clicks*): int for the number of times the button was clicked
+    + [**is_open**] **collapse-populations** (*is_open*): bool for the status of the component (True: is open, False: is closed)
+
+    ***Returns***
+
+    + **collapse-populations** (*is_open*): True to show, False to hide
+    '''
     if n:
         return not is_open
     return is_open
@@ -3540,6 +3619,19 @@ def toggleCollapseDistributionPopulations(n, is_open):
     State('url','search')]
 )
 def loadDistributionPopulations(sel_cel, all_guides, job_id):
+    '''
+    Load the barplot images from the 'assets' directory.
+
+    ***Args***
+
+    + [**sel_cel**] **general-profile-table** (*selected_cells*): list contaning the selected row of the main guide table
+    + [**all_guides**] **general-profile-table** (*data*): list of all the rows that are currenty displayed in the main guide table
+    + [**search**] **url** (*search*): string containing the job ID, eg '?job=QV99PN6XDL'
+
+    ***Returns***
+
+    + **content-collapse-population** (*children*): list of Dash Components with the images of the Populations Distribution
+    '''
     if sel_cel is None or not sel_cel or not all_guides:
         raise PreventUpdate
     guide = all_guides[int(sel_cel[0]['row'])]['Guide']
@@ -3599,7 +3691,20 @@ def loadDistributionPopulations(sel_cel, all_guides, job_id):
 @cache.memoize()
 def global_store_subset(value, bulge_t, bulge_s, mms, guide):
     '''
-    Caching dei file targets per una miglior performance di visualizzazione
+    Caching of files for the subset table in the 'Show Targets' link of the Summary by Guide tabe, to improve loading speed. NOTE that if two 
+    files have the same name, then the generated cache will be the same, so a regular cleaning of the 'Cache' directory is mandatory.
+
+    ***Args***
+
+    + **value**: string of the job ID to load 
+    + **bulge_t**: string of the type of bulge selected
+    + **bulge_s**: string of the number of bulges selected
+    + **mms**: string of the number of mismatches selected
+    + **guide**: string of the selected guide
+
+    ***Returns***
+
+    + **df**: dataframe for the subset table of the 'Show Targets' table of the Summary by Guide
     '''
     if value is None:
         return ''
@@ -3607,8 +3712,20 @@ def global_store_subset(value, bulge_t, bulge_s, mms, guide):
     df = pd.read_csv( current_working_directory + 'Results/' + value + '/' + value + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide +'.txt', sep = '\t', header = None) #, skiprows = 1)
     return df
 
-
+#'Show target' page of the Summary by Guide tab
 def guidePagev3(job_id, hash):
+    '''
+    Creates the layout for the 'Show Targets' page of the Summary by Guide tab.
+
+    ***Args***
+
+    + **job_id**: string of the jobID
+    + **hash**: string containing the informations about the selected 'Show Targets' row, eg '#CCATCGGTGGCCGTTTGCCCNNNnewDNA10'
+
+    ***Returns***
+
+    + list of Dash Components containing the layout of the page
+    '''
     guide = hash[:hash.find('new')]
     mms = hash[-1:]
     bulge_s = hash[-2:-1]
@@ -3643,14 +3760,14 @@ def guidePagev3(job_id, hash):
     final_list.append(
         html.P(
             [
-                        'List of Targets found for the selected guide. Select a row to view other possible configurations of the target, along with the corresponding samples list.', # 'Select a row to view the target IUPAC character scomposition. The rows highlighted in red indicates that the target was found only in the genome with variants.',
-                        dcc.Checklist(options = [{'label': 'Hide Reference Targets', 'value': 'hide-ref'}], id='hide-reference-targets', value = value_hide_reference, style = style_hide_reference),
-                        html.Div(
-                            [   
-                                html.P('Generating download link, Please wait...', id = 'download-link-sumbyguide'), 
-                                dcc.Interval(interval = 5*1000, id = 'interval-sumbyguide')
-                            ]
-                        )
+                'List of Targets found for the selected guide. Select a row to view other possible configurations of the target, along with the corresponding samples list.', # 'Select a row to view the target IUPAC character scomposition. The rows highlighted in red indicates that the target was found only in the genome with variants.',
+                dcc.Checklist(options = [{'label': 'Hide Reference Targets', 'value': 'hide-ref'}], id='hide-reference-targets', value = value_hide_reference, style = style_hide_reference),
+                html.Div(
+                    [   
+                        html.P('Generating download link, Please wait...', id = 'download-link-sumbyguide'), 
+                        dcc.Interval(interval = 5*1000, id = 'interval-sumbyguide')
+                    ]
+                )
             ]
         )
     )
@@ -3667,8 +3784,7 @@ def guidePagev3(job_id, hash):
     final_list.append(
         html.Div(job_id + '.' + bulge_t + '.' + bulge_s + '.' + mms + '.' + guide,style = {'display':'none'}, id = 'div-info-sumbyguide-targets')
     )
-    # print('qui guide before grep')
-    # print('esiste guide?', str(os.path.exists(guide_grep_result)))
+    
     if not os.path.exists(guide_grep_result):    #Example    job_id.X.0.4.guide.txt #NOTE HEADER NON SALVATO
         subprocess.call([put_header + 'LC_ALL=C fgrep ' + guide + ' ' + job_directory + job_id + file_to_grep + ' | LC_ALL=C fgrep ' + bulge_t + ' | awk \'$8==' + mms + ' && $9==' + bulge_s + '\'> ' + guide_grep_result], shell = True)
         subprocess.Popen(['zip ' + guide_grep_result.replace('.txt','.zip') + ' ' + guide_grep_result], shell = True)
@@ -3679,10 +3795,8 @@ def guidePagev3(job_id, hash):
             dash_table.DataTable(
                 id='table-subset-target', 
                 columns=cols, 
-                #data = subset_targets.to_dict('records'),
                 virtualization = True,
                 fixed_rows={ 'headers': True, 'data': 0 },
-                #fixed_columns = {'headers': True, 'data':1},
                 style_cell={'width': '150px'},
                 page_current=0,
                 page_size=PAGE_SIZE,
@@ -3704,27 +3818,12 @@ def guidePagev3(job_id, hash):
                 ],
                 css= [{ 'selector': 'td.cell--selected, td.focused', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;' }, { 'selector': 'td.cell--selected *, td.focused *', 'rule': 'background-color: rgba(0, 0, 255,0.15) !important;'}],
                 style_data_conditional = [
-                    # {
-                    #     'if': {
-                    #             'filter_query': '{Variant Unique} eq y',
-                    #             #'filter_query': '{Direction} eq +', 
-                    #             #'column_id' :'Bulge Type'
-                    #         },
-                    #         #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                    #         'background-color':'rgba(255, 0, 0,0.15)'#'rgb(255, 102, 102)'
-                            
-                    #     },
                     {
                         'if': {
                                 'filter_query': '{Variant Unique} eq F',
-                                #'filter_query': '{Direction} eq +', 
-                                #'column_id' :'Bulge Type'
                             },
-                            #'border-left': '5px solid rgba(255, 26, 26, 0.9)', 
-                            'background-color':'rgba(0, 0, 0,0.15)'#'rgb(255, 102, 102)'
-                            
+                            'background-color':'rgba(0, 0, 0,0.15)'
                         },
-
                 ]            
             ),
             id = 'div-result-table',
@@ -3752,11 +3851,22 @@ def guidePagev3(job_id, hash):
 )
 def update_table_subset(page_current, page_size, sort_by, filter, hide_reference, search, hash_guide):
     '''
-    La funzione ritorna uno split dei risultati in base ad un filtering o a un sort da parte dell'utente. Inoltre aggiorna i risultati
-    visualizzati quando il bottone next page / prev page è cliccato. (Codice preso dalla pagina dash datatable sul sorting con python)
-    Inoltre carica i file targets, o scores se presente, e lo trasforma in un dataframe, cambiando il nome delle colonne per farle corrispondere
-    all'id delle colonne della tabella nella pagina.
-    Se non ci sono targets ritorna un avviso di errore
+    Function that returns the data to be shown in the 'Show Targets' table of the Summary by Guide. 
+
+    ***Args***
+
+    + [**page_current**] **table-subset-target** (*page_current*): int of the current page to show
+    + [**page_size**] **table-subset-target** (*page_size*): int of the maximum number of row for each page
+    + [**sort_by**] **table-subset-target** (*sort_by*): list dictionaries of column IDs and sorting direction
+    + [**filter**] **table-subset-target** (*filter_query*): list dictionaries for the data filtering
+    + [**hide_reference**] **hide-reference-targets** (*value*): if the value is not None, then the Reference targets are removed from the shown data
+    + [**search**] **url** (*search*): string containing the job ID, eg '?job=QV99PN6XDL'
+    + [**hash_guide**] **url** (*hash*): string containing the informations about the selected 'Show Targets' row, eg '#CCATCGGTGGCCGTTTGCCCNNNnewDNA10'
+    
+    ***Returns***
+
+    + **table-subset-target** (*data*): dictionary of the data to be shown
+    
     '''
     job_id = search.split('=')[-1]
     job_directory = current_working_directory + 'Results/' + job_id + '/'
