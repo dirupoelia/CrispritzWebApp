@@ -178,7 +178,7 @@ with open (sys.argv[5]) as pam:
         pam_end = None
 
 do_scores = True
-if guide_len != 20:
+if guide_len != 20 or len(pam) !=3:
     with open('acfd.txt', 'w+') as result:
         result.write('NO SCORES')
         do_scores = False

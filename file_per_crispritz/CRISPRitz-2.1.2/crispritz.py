@@ -168,11 +168,11 @@ def searchTST():
 		else:
 			pam_begin = False
 		pam_guide = len(open(PAM).readline().split(" ")[0])
-
-		if (pam_guide != 23):
-			print("WARNING: The CFD score and the Doench score can be calculated only for guides with 20bp")
+		pam_at_beginning = int(open(PAM).readline().split(" ")[1])
+		if (pam_guide != 23 or pam_at_beginning < 0): #Also block scoring pam at beginning
+			print("WARNING: The CFD score and the Doench score can be calculated only for guides with 20bp and a 3bp PAM")
 			sys.exit()
-		pam_seq_check_ngg = open(PAM).readline().split(" ")[0].upper()
+		# pam_seq_check_ngg = open(PAM).readline().split(" ")[0].upper()
 		# if ("NGG" not in pam_seq_check_ngg):
 		# 	# print("WARNING: The model used for the CFD and Doench scores are based on the NGG PAM, the scores may not be valid for other PAMs")
 		# 	print("WARNING: The model used for the CFD and Doench scores are based on the NGG PAM")
@@ -262,10 +262,11 @@ def searchBruteForce():
 			pam_begin = False
 		 
 		pam_guide = len(open(filePAM).readline().split(" ")[0])
-		if (pam_guide != 23):
-			print("WARNING: The CFD score and the Doench score can be calculated only for guides with 20bp")
+		pam_at_beginning = int(open(filePAM).readline().split(" ")[1])
+		if (pam_guide != 23 or pam_at_beginning < 0): #Also block scoring pam at beginning
+			print("WARNING: The CFD score and the Doench score can be calculated only for guides with 20bp and a 3bp PAM")
 			sys.exit()
-		pam_seq_check_ngg = open(filePAM).readline().split(" ")[0].upper()
+		# pam_seq_check_ngg = open(filePAM).readline().split(" ")[0].upper()
 		# if ("NGG" not in pam_seq_check_ngg):
 		# 	# print("WARNING: The model used for the CFD and Doench scores are based on the NGG PAM, the scores may not be valid for other PAMs")
 		# 	print("WARNING: The model used for the CFD and Doench scores are based on the NGG PAM")
@@ -273,6 +274,29 @@ def searchBruteForce():
 		target_filename = os.path.realpath(result)
 		subprocess.run([corrected_origin_path+'Python_Scripts/Scores/scores.py', target_filename + '.targets.txt', idx_genome_fasta + "/", str(filePAM), str(fileGuide)])
 
+def scores():
+	if (len(sys.argv) < 6 or 'help' in sys.argv[1:]):
+		print("WARNING: Too few arguments to function annotate-results. Please provide:\n",
+			"\nEXAMPLE CALL: crispritz.py scores resultsFile.txt genomeDirectoryInFastaFormat\n",
+			"\n<resultsFile>: Targets file containing all genomic targets for the guides set",
+			"\n<pamFile>: Text file containing the PAM sequence (including a number of Ns equal to the guide length) and a space separated number indicating the length of the PAM sequence" ,
+			"\n<guidesFile>: Text file containing one or more guides (including a number of Ns equal to the length of the PAM sequence)", 
+			"\n<genomeDirectoryInFastaFormat>: Directory containing the genome in .fa or .fasta format, necessary to extract sequences for Doench Score Function",
+		)
+		sys.exit()
+	resultFile = os.path.realpath(sys.argv[2])
+	filePAM = os.path.realpath(sys.argv[3])
+	fileGuide = os.path.realpath(sys.argv[4])
+	genomeDir = os.path.realpath(sys.argv[5])+"/"
+	
+	pam_guide = len(open(filePAM).readline().split(" ")[0])
+	pam_at_beginning = int(open(filePAM).readline().split(" ")[1])
+
+	if (pam_guide != 23 or pam_at_beginning < 0):	#Also block scoring pam at beginning
+		print("WARNING: The CFD score and the Doench score can be calculated only for guides with 20bp and a 3bp PAM")
+		sys.exit()
+	# subprocess.run([corrected_origin_path+'Python_Scripts/Scores/scores.py', resultFile, genomeDir, str(filePAM), str(fileGuide)])
+	subprocess.run(['/mnt/b7f8995a-2c1c-45af-af8c-b6bf3c5fef99/crispritz/edirupo/CrispritzWebApp/file_per_crispritz/CRISPRitz-2.1.2/opt/crispritz/Python_Scripts/Scores/scores.py', resultFile, genomeDir, str(filePAM), str(fileGuide)])
 
 def annotateResults():
 	if (len(sys.argv) < 5 or 'help' in sys.argv[1:]):	#was 6
@@ -938,6 +962,7 @@ def callHelp():
 	"\ncrispritz add-variants FUNCTION TO ADD VARIANTS DATA TO A FASTA GENOME",
 	"\ncrispritz index-genome FUNCTION TO CREATE GENOME INDEX TO PERFORM FAST SEARCHES WITH BULGES",
 	"\ncrispritz search FUNCTION TO PERFORM SEARCHES ON A GENOME (INDEXED OR PLAIN FASTA)",
+	"\ncrispritz scores FUNCTION TO CALCULATE THE CFD SCORE FOR A LIST OF TARGETS",
 	"\ncrispritz annotate-results FUNCTION TO ADD GENOMIC INFORMATION TO TARGETS RESULTS",
 	"\ncrispritz generate-report FUNCTION TO GENERATE GRAPHICAL REPORT FOR A SPECIFIC GUIDE",
 	"\ncrispritz process-data FUNCTION TO ANALYZE RESULTS TO GENERATE VARIANT ANALYSIS AND SAMPLE CLASSIFICATION",
@@ -951,6 +976,8 @@ elif sys.argv[1] == "search" and ("-bDNA" in sys.argv[1:] or "-bRNA" in sys.argv
 	searchTST()
 elif sys.argv[1] == "search":
 	searchBruteForce()
+elif sys.argv[1] == "scores":
+	scores()
 elif sys.argv[1] == "add-variants":
 	genomeEnrichment()
 elif sys.argv[1] == "annotate-results":

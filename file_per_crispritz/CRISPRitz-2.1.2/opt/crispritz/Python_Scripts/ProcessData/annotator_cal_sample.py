@@ -88,7 +88,7 @@ def get_mm_pam_scores():
 
 
 def revcom(s):
-    basecomp = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'U': 'A'}
+    basecomp = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'U': 'A', '-':'-'}
     letters = list(s[::-1])
     try:
         letters = [basecomp[base] for base in letters]
@@ -180,7 +180,7 @@ with open (sys.argv[5]) as pam:
         pam_end = None
 
 do_scores = True
-if guide_len != 20:
+if guide_len != 20 or len(pam) !=3 or pam_at_beginning:
     with open(outputFile + '.scores.txt', 'w+') as result:
         result.write('NO SCORES')
         do_scores = False
@@ -490,15 +490,18 @@ for line in inResult:
                         totalDict[ann][int(x[mm_pos]) + int(x[bulge_pos])] += 1
                     
                     #Calculate scores
-                    if do_scores and  x[0] == 'X' and x[2][-2:] == 'GG':       #Calculate scores for reference targets
-                        cfd_score = calc_cfd(x[1], x[2].upper()[:-3], x[2].upper()[-2:], mm_scores, pam_scores)
+                    if do_scores:       #Calculate scores for reference targets
+                        if x[0] == 'DNA':
+                            cfd_score = calc_cfd(x[1][int(x[bulge_pos]):], x[2].upper()[int(x[bulge_pos]):-3], x[2].upper()[-2:], mm_scores, pam_scores)
+                        else:
+                            cfd_score = calc_cfd(x[1], x[2].upper()[:-3], x[2].upper()[-2:], mm_scores, pam_scores)
                         sum_cfd = sum_cfd + cfd_score
                         try:
                             guides_dict[x[1]] = guides_dict[x[1]] + cfd_score
                         except:
                             guides_dict[x[1]] = cfd_score
 
-                        if x[mm_pos] == '0':    #DOENCH
+                        if x[bulge_pos + 1] == '0':    #DOENCH
                             #estraggo sequenza
                             with open(outputFile + '.bedfile_tmp.bed', 'w+') as bedfile:
                                 remove_tmp_bedfile = True
@@ -993,54 +996,58 @@ for line in inResult:
             outFileSample.write('\t'.join(t) +'\n')
             
             #Calc scores for scomposed targets
-            if t[0] == 'X' and t[2][-2:] == 'GG':
-                cfd_score = calc_cfd(t[1], t[2].upper()[:-3], t[2].upper()[-2:], mm_scores, pam_scores)
-                sum_cfd = sum_cfd + cfd_score
-                try:
-                    guides_dict[t[1]] = guides_dict[t[1]] + cfd_score
-                except:
-                    guides_dict[t[1]] = cfd_score
-
-                if t[mm_pos] == '0':    #DOENCH
-                    #Total = 0 -> do Classification
-                    for samp in t[12].split(','):
-                        count_sample[guide_no_bulge][samp]['refposition'][1] += 1  #Add +1 at specific VAR onTarget
-                        count_sample[guide_no_bulge][samp]['refposition'][0] += 1   #Visited +1
-                    #DOENCH: estraggo sequenza
-                    with open(outputFile + '.bedfile_tmp.bed', 'w+') as bedfile:
-                        remove_tmp_bedfile = True
-                        if t[6] == '+':
-                            bedfile.write(t[3] + '\t' + str(int(t[4]) - 4 ) + '\t' + str(int(t[4]) + 23 + 3 ))
-                        else:
-                            bedfile.write(t[3] + '\t' + str(int(t[4]) - 3 ) + '\t' + str(int(t[4]) + 23 + 4 ))
-                        
-                    extr = subprocess.Popen(['bedtools getfasta -fi ' + refgenomedir + '/' + t[3] + add_enr + add_ext + ' -bed ' + outputFile + '.bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
-                    extr.wait()
-                    out, err = extr.communicate()
-                    out = out.decode('UTF-8')
-                    if t[6] == '+':
-                        sequence_doench = out.strip().split('\n')[-1].upper()
-                        # sequence_doench = sequence_doench[:4] + t[2] + sequence_doench[-3:]   #Uncomment to use sequence specific for sample
-                    else:
-                        sequence_doench = reverse_complement_table(out.strip().split('\n')[-1].upper())
-                        # sequence_doench = sequence_doench[:4] + t[2] + sequence_doench[-3:]   #Uncomment to use sequence specific for sample
-                    
-                    if t[1] not in targets_for_doench:
-                        targets_for_doench[t[1]] = {'ref': [], 'enr': []}
-                    doenchForIupac(sequence_doench, t[1], 'enr')  #Get all possible targets with iupac itertools for doench
-                else:
-                    decrease_ref_count.append(t[12]) #Save X and total not 0
+            if t[0] == 'DNA':
+                cfd_score = calc_cfd(t[1][int(t[bulge_pos]):], t[2].upper()[int(t[bulge_pos]):-3], t[2].upper()[-2:], mm_scores, pam_scores)
             else:
-                decrease_ref_count.append(t[12]) # Save DNA, RNA -> they surely have total not 0
-        if not tuple_var_ref and x[0] == 'X' and x[2][-2:] == 'GG':       #Calculate scores for reference targets
-            cfd_score = calc_cfd(x[1], x[2].upper()[:-3], x[2].upper()[-2:], mm_scores, pam_scores)
+                cfd_score = calc_cfd(t[1], t[2].upper()[:-3], t[2].upper()[-2:], mm_scores, pam_scores)
+            sum_cfd = sum_cfd + cfd_score
+            try:
+                guides_dict[t[1]] = guides_dict[t[1]] + cfd_score
+            except:
+                guides_dict[t[1]] = cfd_score
+
+            if t[bulge_pos + 1] == '0':    #DOENCH
+                #Total = 0 -> do Classification
+                for samp in t[12].split(','):
+                    count_sample[guide_no_bulge][samp]['refposition'][1] += 1  #Add +1 at specific VAR onTarget
+                    count_sample[guide_no_bulge][samp]['refposition'][0] += 1   #Visited +1
+                #DOENCH: estraggo sequenza
+                with open(outputFile + '.bedfile_tmp.bed', 'w+') as bedfile:
+                    remove_tmp_bedfile = True
+                    if t[6] == '+':
+                        bedfile.write(t[3] + '\t' + str(int(t[4]) - 4 ) + '\t' + str(int(t[4]) + 23 + 3 ))
+                    else:
+                        bedfile.write(t[3] + '\t' + str(int(t[4]) - 3 ) + '\t' + str(int(t[4]) + 23 + 4 ))
+                    
+                extr = subprocess.Popen(['bedtools getfasta -fi ' + refgenomedir + '/' + t[3] + add_enr + add_ext + ' -bed ' + outputFile + '.bedfile_tmp.bed'], shell = True, stdout=subprocess.PIPE)  #TODO insert option for .fasta
+                extr.wait()
+                out, err = extr.communicate()
+                out = out.decode('UTF-8')
+                if t[6] == '+':
+                    sequence_doench = out.strip().split('\n')[-1].upper()
+                    # sequence_doench = sequence_doench[:4] + t[2] + sequence_doench[-3:]   #Uncomment to use sequence specific for sample
+                else:
+                    sequence_doench = reverse_complement_table(out.strip().split('\n')[-1].upper())
+                    # sequence_doench = sequence_doench[:4] + t[2] + sequence_doench[-3:]   #Uncomment to use sequence specific for sample
+                
+                if t[1] not in targets_for_doench:
+                    targets_for_doench[t[1]] = {'ref': [], 'enr': []}
+                doenchForIupac(sequence_doench, t[1], 'enr')  #Get all possible targets with iupac itertools for doench
+            else:
+                decrease_ref_count.append(t[12]) #Save DNA, RNA, X with total != 0
+            
+        if not tuple_var_ref:       #Calculate scores for reference targets
+            if x[0] == 'DNA':
+                cfd_score = calc_cfd(x[1][int(x[bulge_pos]):], x[2].upper()[int(x[bulge_pos]):-3], x[2].upper()[-2:], mm_scores, pam_scores)
+            else:
+                cfd_score = calc_cfd(x[1], x[2].upper()[:-3], x[2].upper()[-2:], mm_scores, pam_scores)
             sum_cfd = sum_cfd + cfd_score
             try:
                 guides_dict[x[1]] = guides_dict[x[1]] + cfd_score
             except:
                 guides_dict[x[1]] = cfd_score
 
-            if x[mm_pos] == '0':    #DOENCH
+            if x[bulge_pos + 1] == '0':    #DOENCH
                 #estraggo sequenza
                 with open(outputFile + '.bedfile_tmp.bed', 'w+') as bedfile:
                     remove_tmp_bedfile = True
