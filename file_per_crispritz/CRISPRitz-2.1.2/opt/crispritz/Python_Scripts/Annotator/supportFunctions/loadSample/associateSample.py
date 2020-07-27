@@ -30,7 +30,9 @@ def loadSampleAssociation(id_sample_file):
     - SAMPLE -> GENDER
     '''
     if not isfile(id_sample_file):
-        print('Warning! Input file does not exists')
+        print('Warning! The sample ID file does not exists')
+        print('Exit..')
+        sys.exit() 
         return None, None
 
     sample_to_pop = dict()
@@ -51,6 +53,8 @@ def loadSampleAssociation(id_sample_file):
 
         if len(line) < 3:
             print('Warning! The input file is not correctly formatted. Please provide a .txt with a column with SAMPLE_ID, POPULATION_ID, SUPERPOPULATION_ID, GENDER (Optional)')
+            print('Exit...')
+            sys.exit()
             return None, None, None, None, None, None, None, None
         #Add info of first line
         sample_to_pop[line[0]] = line[1]

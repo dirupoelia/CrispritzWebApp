@@ -1,4 +1,4 @@
-name: base
+name: crisprme
 channels:
   - anaconda
   - conda-forge
@@ -53,7 +53,6 @@ dependencies:
   - jpeg=9c=h14c3975_1001
   - kiwisolver=1.2.0=py38hbf85e49_0
   - krb5=1.17.1=h2fd8d38_0
-  - ld_impl_linux-64=2.34=h53a641e_0
   - libblas=3.8.0=14_openblas
   - libcblas=3.8.0=14_openblas
   - libcurl=7.69.1=hf7181ac_0
@@ -148,5 +147,5 @@ dependencies:
     - pylint==2.5.0
     - toml==0.10.0
     - wrapt==1.12.1
-prefix: /home/elia/miniconda3
+prefix: /home/scancellieri/miniconda3
 

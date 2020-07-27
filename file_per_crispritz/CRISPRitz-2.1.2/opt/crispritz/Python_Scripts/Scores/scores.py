@@ -8,6 +8,12 @@
 #argv 2 is genome_directory (eg ../../Genomes/hg19/)
 #argv 3 is pam file -> to check if len is 23 and pam is NGG
 #argv 4 is guide file
+
+#Block scikit warnings
+import warnings 
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings('ignore',category=UserWarning)
+
 import time
 import pickle
 import re

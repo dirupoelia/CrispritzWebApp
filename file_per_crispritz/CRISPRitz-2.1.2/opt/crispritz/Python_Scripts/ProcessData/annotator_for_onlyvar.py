@@ -29,6 +29,12 @@ Added compatibility with dictionary chr_pos -> s1,s2;A,C/sNew;A,T
 #CACTGCAACCTCTGTCTCCCTGG        VAR
 #So check if decrease_ref_count is not empty to avoid this (in this case +1 will be added to samples for VAR part of target and +1 for all the
 # other samples for REF part)
+
+#Block scikit warnings
+import warnings 
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings('ignore',category=UserWarning)
+
 import sys
 import json
 import time
@@ -178,10 +184,13 @@ with open (sys.argv[5]) as pam:
         pam_begin = len_pam * (-1)
         pam_end = None
 
+outFileCFD = open(outputFile + '.targets.CFD.txt','w')# file with targets and the corresponding CFD score
+
 do_scores = True
 if guide_len != 20 or len(pam) !=3 or pam_at_beginning:
     with open(outputFile + '.scores.txt', 'w+') as result:
         result.write('NO SCORES')
+        outFileCFD.write('NO SCORES')
         do_scores = False
 
 iupac_code_set = {
@@ -302,6 +311,8 @@ if pam_at_beginning:
     sum_for_mms = len_pam
 
 outFileSample.write(header + '\n')
+if do_scores:
+    outFileCFD.write(header + '\tCFD\n')
 # outFileSampleAll.write(header + '\n')
 summary_samples = True
 
@@ -491,6 +502,7 @@ for line in inResult:
                             cfd_score = calc_cfd(x[1][int(x[bulge_pos]):], x[2].upper()[int(x[bulge_pos]):-3], x[2].upper()[-2:], mm_scores, pam_scores)
                         else:
                             cfd_score = calc_cfd(x[1], x[2].upper()[:-3], x[2].upper()[-2:], mm_scores, pam_scores)
+                        outFileCFD.write('\t'.join(x) + '\t' + str(cfd_score) + '\n')
                         sum_cfd = sum_cfd + cfd_score
                         try:
                             guides_dict[x[1]] = guides_dict[x[1]] + cfd_score
@@ -986,6 +998,7 @@ for line in inResult:
                 cfd_score = calc_cfd(t[1][int(t[bulge_pos]):], t[2].upper()[int(t[bulge_pos]):-3], t[2].upper()[-2:], mm_scores, pam_scores)
             else:
                 cfd_score = calc_cfd(t[1], t[2].upper()[:-3], t[2].upper()[-2:], mm_scores, pam_scores)
+            outFileCFD.write('\t'.join(t) + '\t' + str(cfd_score) + '\n')
             sum_cfd = sum_cfd + cfd_score
             try:
                 guides_dict[t[1]] = guides_dict[t[1]] + cfd_score
@@ -1027,6 +1040,7 @@ for line in inResult:
                 cfd_score = calc_cfd(x[1][int(x[bulge_pos]):], x[2].upper()[int(x[bulge_pos]):-3], x[2].upper()[-2:], mm_scores, pam_scores)
             else:
                 cfd_score = calc_cfd(x[1], x[2].upper()[:-3], x[2].upper()[-2:], mm_scores, pam_scores)
+            outFileCFD.write('\t'.join(x) + '\t' + str(cfd_score) + '\n')
             sum_cfd = sum_cfd + cfd_score
             try:
                 guides_dict[x[1]] = guides_dict[x[1]] + cfd_score
@@ -1180,45 +1194,46 @@ if summary_barplot_from_total:
 
 #SAVE SCORES#
 all_scores = []
-with open( outputFile + '.scores.txt', 'w+') as res, open(sys.argv[8], 'r') as guides:
-    man = multiprocessing.Manager()
-    shared_doench = man.list() #list containing max doech for each thread
-    guides = guides.read().strip().split('\n')
-    for g in guides:
-        guides_dict_doench[g] = 0
-        if g not in guides_dict:
-            guides_dict[g] = 0    
-        if g not in targets_for_doench:
+if do_scores:
+    with open( outputFile + '.scores.txt', 'w+') as res, open(sys.argv[8], 'r') as guides:
+        man = multiprocessing.Manager()
+        shared_doench = man.list() #list containing max doech for each thread
+        guides = guides.read().strip().split('\n')
+        for g in guides:
             guides_dict_doench[g] = 0
-        else:
-            if len (targets_for_doench[g]) > SIZE_DOENCH:
-                jobs = []
-                remaining_splits = (len(targets_for_doench[g])//SIZE_DOENCH) + 1
-                for i in range ((len(targets_for_doench[g])//SIZE_DOENCH) + 1):
-                    for thr in range (min(N_THR, remaining_splits)):
-                        p = multiprocessing.Process(target = doenchParallel, args=(np.asarray(targets_for_doench[g][i*N_THR*SIZE_DOENCH + thr*SIZE_DOENCH : min( i*N_THR*SIZE_DOENCH + (thr+1)*SIZE_DOENCH,len(targets_for_doench[g]))]), model, shared_doench,) )
-                        remaining_splits -= 1
-                        p.start()
-                        jobs.append(p)
-                    for i in jobs:
-                        i.join()
-                
-                guides_dict_doench[g] = max(shared_doench)
-                shared_doench =  man.list()
+            if g not in guides_dict:
+                guides_dict[g] = 0    
+            if g not in targets_for_doench:
+                guides_dict_doench[g] = 0
             else:
-                start_time = time.time()
-                doench_score =  azimuth.model_comparison.predict(np.asarray(targets_for_doench[g]), None, None, model= model, pam_audit=False)
-                doench_score = [np.around(i * 100) for i in doench_score]
-                guides_dict_doench[g] =  int(max(doench_score))
-        if guides_dict[g] == 0:     #NO CFD CALCULATED
-            all_scores.append([g, 0, str(guides_dict_doench[g]) ])
-        else:
-            all_scores.append([g, int(round((100/(100 + guides_dict[g]))*100)), str(guides_dict_doench[g]) ])
-    all_scores.sort(key = lambda x: x[1], reverse = True)
-    res.write('#crRNA\tCFD\tDoench 2016\n')
-    for guide_scored in all_scores:  
-        res.write('\t'.join([str(el) for el in guide_scored]) + '\n') 
-        # res.write(g + '\t' + str(guides_dict[g]) + '\t' + str(guides_dict_doench[g]) + '\n')
+                if len (targets_for_doench[g]) > SIZE_DOENCH:
+                    jobs = []
+                    remaining_splits = (len(targets_for_doench[g])//SIZE_DOENCH) + 1
+                    for i in range ((len(targets_for_doench[g])//SIZE_DOENCH) + 1):
+                        for thr in range (min(N_THR, remaining_splits)):
+                            p = multiprocessing.Process(target = doenchParallel, args=(np.asarray(targets_for_doench[g][i*N_THR*SIZE_DOENCH + thr*SIZE_DOENCH : min( i*N_THR*SIZE_DOENCH + (thr+1)*SIZE_DOENCH,len(targets_for_doench[g]))]), model, shared_doench,) )
+                            remaining_splits -= 1
+                            p.start()
+                            jobs.append(p)
+                        for i in jobs:
+                            i.join()
+                    
+                    guides_dict_doench[g] = max(shared_doench)
+                    shared_doench =  man.list()
+                else:
+                    start_time = time.time()
+                    doench_score =  azimuth.model_comparison.predict(np.asarray(targets_for_doench[g]), None, None, model= model, pam_audit=False)
+                    doench_score = [np.around(i * 100) for i in doench_score]
+                    guides_dict_doench[g] =  int(max(doench_score))
+            if guides_dict[g] == 0:     #NO CFD CALCULATED
+                all_scores.append([g, 0, str(guides_dict_doench[g]) ])
+            else:
+                all_scores.append([g, int(round((100/(100 + guides_dict[g]))*100)), str(guides_dict_doench[g]) ])
+        all_scores.sort(key = lambda x: x[1], reverse = True)
+        res.write('#crRNA\tCFD\tDoench 2016\n')
+        for guide_scored in all_scores:  
+            res.write('\t'.join([str(el) for el in guide_scored]) + '\n') 
+            # res.write(g + '\t' + str(guides_dict[g]) + '\t' + str(guides_dict_doench[g]) + '\n')
 
 #Save additional values from semicommon for general guide table
 with open(outputFile + '.addToGeneralTable.txt', 'w+') as add_file:

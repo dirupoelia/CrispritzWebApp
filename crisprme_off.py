@@ -2774,6 +2774,7 @@ def filterSampleTable( nPrev, nNext, filter_q, n, search, sel_cel, all_guides, c
     Filtering/changing page of the table in the Summary by Sample tab.
 
     ***Args***
+    
     + [**nPrev**] **prev-page-sample** (*n_clicks_timestamp*): int timestamp of last click on Previous Page button
     + [**nNext**] **next-page-sample** (*n_clicks_timestamp*): int timestamp of last click on Next Page button
     + [**filter_q**] **div-sample-filter-query** (*children*): string of the filter query
@@ -2978,6 +2979,7 @@ def filterPositionTable(nPrev, nNext, filter_q, n, search, sel_cel, all_guides, 
     Filtering/changing page of the table in the Summary by Position tab.
 
     ***Args***
+
     + [**nPrev**] **prev-page-position** (*n_clicks_timestamp*): int timestamp of last click on Previous Page button
     + [**nNext**] **next-page-position** (*n_clicks_timestamp*): int timestamp of last click on Next Page button
     + [**filter_q**] **div-position-filter-query** (*children*): string of the filter query

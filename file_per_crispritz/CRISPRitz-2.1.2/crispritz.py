@@ -27,7 +27,8 @@ def indexGenome():
 		"\n<name_genome>: Name of the genome to create",
 		"\n<genomeDirectory>: Directory containing a genome in .fa or .fasta format, need to be separated into single chromosome files.",
 		"\n<pamFile>: Text file containing the PAM (including a number of Ns equal to the guide length) and a space separated number indicating the length of the PAM sequence",
-		"\n-bMax <maxBulges_num>: Number of bulges allowed for the search phase\n")
+		"\n-bMax <maxBulges_num>: Number of bulges allowed for the search phase",
+		"\n-th <num_thread>: (Optional) Number of threads to use. Default uses half of the available threads")
 		sys.exit()
 
 	nameGenome = sys.argv[2]								# save name of the genome
@@ -52,10 +53,20 @@ def indexGenome():
 
 	print(TSTgenome, "Indexing generation:")
 
-	# variant
-	variant = 0
-	if "-var" in sys.argv[1:]:
-		variant = 1
+	# # variant
+	# variant = 0
+	# if "-var" in sys.argv[1:]:
+	# 	variant = 1
+	
+	# read number of threads
+	th = 0
+	if "-th" in sys.argv[1:]:
+		try:
+			th = (sys.argv).index("-th") + 1
+			th = int(sys.argv[th])
+		except:
+			print("ATTENTION! Check the thread option: -th <th_num> (th_num is an integer)")
+			sys.exit()
 
 	if os.path.isdir(dirTSTgenome):							# check if TSTgenome dir exists
 		shutil.rmtree(dirTSTgenome)							# remove old TSTgenome dir
@@ -66,7 +77,7 @@ def indexGenome():
 	start_time = time.time()
 	for f in listChrs:
 		print("Indexing:", f)
-		subprocess.run([corrected_origin_path+"buildTST",str(dirGenome)+"/"+str(f), str(dirPAM), str(variant), max_bulges])
+		subprocess.run([corrected_origin_path+"buildTST",str(dirGenome)+"/"+str(f), str(dirPAM), str(th), max_bulges])
 	print("Finish indexing")
 	print("Indexing runtime: %s seconds" % (time.time() - start_time))
 
@@ -82,7 +93,12 @@ def searchTST():
 	fileGuide = os.path.realpath(sys.argv[4])
 	nameResult = (sys.argv[5])  # name of result file
 	dirTSTgenome = os.path.realpath(sys.argv[2])+"/"
-	max_bulges = dirTSTgenome.split("/")[-2].split("_")[1]
+	try:
+		max_bulges = dirTSTgenome.split("/")[-2].split("_")[1]
+	except IndexError:
+		print('ERROR! The directory name must contain the PAM and the maximum available bulges, please create the Genome Index using crispritz')
+		sys.exit()
+
 	if not os.path.isdir(dirTSTgenome):				# check if TSTgenome dir exists
 		print("ATTENTION! You have to generate the index of \"" + nameGenome +
 		      "\" with \"" + PAM + "\", before the search using index!")
@@ -131,7 +147,7 @@ def searchTST():
 			th = (sys.argv).index("-th") + 1
 			th = int(sys.argv[th])
 		except:
-			print("ATTENTION! Check the mismatches option: -th <th_num> (th_num is an integer)")
+			print("ATTENTION! Check the thread option: -th <th_num> (th_num is an integer)")
 			sys.exit()
 
 	# results writing
@@ -146,6 +162,21 @@ def searchTST():
 		print("Please select an output")
 		sys.exit()
 
+	# Check '-scores' directory input
+	if "-scores" in sys.argv[1:]:
+		try:
+			idx_genome_fasta = (sys.argv).index("-scores") + 1
+			idx_genome_fasta = os.path.realpath(sys.argv[idx_genome_fasta])
+		except:
+			print("ERROR! Please select the directory containing the fasta files of the genome")
+			sys.exit()
+
+	# Check input correctness
+	file_correct_ext = [f for f in listdir(dirTSTgenome) if isfile(join(dirTSTgenome, f)) and not f.endswith('.bin')]	#Get files not ending with .bin
+	if len(file_correct_ext) != 0:		# Some files do not have .bin
+		print('ERROR! The directory contains files that are not compatible with the selected search type. Please ensure that the input directory contains only .bin files')
+		sys.exit()
+	
 	# run searchOnTST
 	print("Search START")
 	start_time = time.time()
@@ -154,19 +185,18 @@ def searchTST():
 	print("Search runtime: %s seconds" % (time.time() - start_time))
 	if "-scores" in sys.argv[1:]:
 
-		PAM = os.path.realpath(sys.argv[3])
 		try:
 			idx_genome_fasta = (sys.argv).index("-scores") + 1
 			idx_genome_fasta = os.path.realpath(sys.argv[idx_genome_fasta])
 		except:
-			print("Please select the directory containing the fasta files of the genome")
+			print("ERROR! Please select the directory containing the fasta files of the genome")
 			sys.exit()
 		
-		pam_len = int(open(PAM).readline().split(" ")[1])
-		if (pam_len < 0):
-			pam_begin = True
-		else:
-			pam_begin = False
+		# pam_len = int(open(PAM).readline().split(" ")[1])
+		# if (pam_len < 0):
+		# 	pam_begin = True
+		# else:
+		# 	pam_begin = False
 		pam_guide = len(open(PAM).readline().split(" ")[0])
 		pam_at_beginning = int(open(PAM).readline().split(" ")[1])
 		if (pam_guide != 23 or pam_at_beginning < 0): #Also block scoring pam at beginning
@@ -220,7 +250,7 @@ def searchBruteForce():
 			th = (sys.argv).index("-th") + 1
 			th = int(sys.argv[th])
 		except:
-			print("ATTENTION! Check the mismatches option: -th <th_num> (th_num is an integer)")
+			print("ATTENTION! Check the thread option: -th <th_num> (th_num is an integer)")
 			sys.exit()
 
 	# results writing
@@ -239,6 +269,22 @@ def searchBruteForce():
 	variant = 0
 	if "-var" in sys.argv[1:]:
 		variant = 1
+	
+	# Check '-scores' directory
+	if "-scores" in sys.argv[1:]:
+		try:
+			idx_genome_fasta = (sys.argv).index("-scores") + 1
+			idx_genome_fasta = os.path.realpath(sys.argv[idx_genome_fasta])
+		except:
+			print("ERROR! Please select the directory containing the fasta files of the genome")
+			sys.exit()
+
+	# Check input correctness
+	file_correct_ext = [f for f in listdir(genomeDir) if isfile(join(genomeDir, f)) and not (f.endswith('.fa') or f.endswith('.fasta') or f.endswith('.fai'))]
+	
+	if len(file_correct_ext) != 0:		#Some file other than .fa, .fasta or .fai are present in the directory
+		print('ERROR! The directory contains files that are not compatible with the selected search type. Please ensure that the input directory contains only .fa files (.fai files are accepted and automatically skipped from the search)')
+		sys.exit()
 
 	# run searchBruteForce
 	print("Search START")
@@ -252,14 +298,14 @@ def searchBruteForce():
 			idx_genome_fasta = (sys.argv).index("-scores") + 1
 			idx_genome_fasta = os.path.realpath(sys.argv[idx_genome_fasta])
 		except:
-			print("Please select the directory containing the fasta files of the genome")
+			print("ERROR! Please select the directory containing the fasta files of the genome")
 			sys.exit()
 		
-		pam_len = int(open(filePAM).readline().split(" ")[1])
-		if (pam_len < 0):
-			pam_begin = True
-		else:
-			pam_begin = False
+		# pam_len = int(open(filePAM).readline().split(" ")[1])
+		# if (pam_len < 0):
+		# 	pam_begin = True
+		# else:
+		# 	pam_begin = False
 		 
 		pam_guide = len(open(filePAM).readline().split(" ")[0])
 		pam_at_beginning = int(open(filePAM).readline().split(" ")[1])
@@ -295,8 +341,7 @@ def scores():
 	if (pam_guide != 23 or pam_at_beginning < 0):	#Also block scoring pam at beginning
 		print("WARNING: The CFD score and the Doench score can be calculated only for guides with 20bp and a 3bp PAM")
 		sys.exit()
-	# subprocess.run([corrected_origin_path+'Python_Scripts/Scores/scores.py', resultFile, genomeDir, str(filePAM), str(fileGuide)])
-	subprocess.run(['/mnt/b7f8995a-2c1c-45af-af8c-b6bf3c5fef99/crispritz/edirupo/CrispritzWebApp/file_per_crispritz/CRISPRitz-2.1.2/opt/crispritz/Python_Scripts/Scores/scores.py', resultFile, genomeDir, str(filePAM), str(fileGuide)])
+	subprocess.run([corrected_origin_path+'Python_Scripts/Scores/scores.py', resultFile, genomeDir, str(filePAM), str(fileGuide)])
 
 def annotateResults():
 	if (len(sys.argv) < 5 or 'help' in sys.argv[1:]):	#was 6
@@ -305,7 +350,7 @@ def annotateResults():
 		#"\n<profileFile>: Profile File containing all information grouped by guide",
 		"\n<resultsFile>: Targets file containing all genomic targets for the guides set",
 		"\n<annotationsFile>: Text file containing the annotations in .bed format", # -> Bed file containing annotation
-		"\n<outputFile>: Name of output file\n",
+		"\n<outputFile>: Name of output file",
 		"\n--change-ID <sampleIDfile> : (Optional) Change the samples, population and superpopulation IDs. DEFAULT: the default IDs are taken from the 1000 genome project (used for Human Genome hg19 and hg38)"
 		)
 		sys.exit()
@@ -761,6 +806,7 @@ def processData():
 		#Scores
 		subprocess.call([corrected_origin_path+'Python_Scripts/Scores/scores.py', result + '.top_1.txt', reference_genome_dir, pam, guides])
 		subprocess.call(['mv', result + '.top_1.txt.scores.txt', result + '.scores.txt'])
+		subprocess.call(['mv', result + '.top_1.txt.targets.CFD.txt', result + '.targets.CFD.txt'])
 		print('Step [2/5] - Top1 Extraction DONE: %.2f seconds' % round(time.time() - start_time,2))
 
 		#Annotation of REF file

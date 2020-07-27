@@ -8,6 +8,12 @@
 #argv 2 is genome_directory (eg ../../Genomes/hg19/)
 #argv 3 is pam file -> to check if len is 23 and pam is NGG
 #argv 4 is guide file
+
+#Block scikit warnings
+import warnings 
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings('ignore',category=UserWarning)
+
 import time
 import pickle
 import re
@@ -63,9 +69,12 @@ def get_mm_pam_scores():
 
 
 def revcom(s):
-  basecomp = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'U': 'A'}
+  basecomp = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'U': 'A', '-':'-'}
   letters = list(s[::-1])
-  letters = [basecomp[base] for base in letters]
+  try:
+    letters = [basecomp[base] for base in letters]
+  except:
+    return None
   return ''.join(letters)
 
 
@@ -73,25 +82,27 @@ def revcom(s):
 def calc_cfd(guide_seq, sg, pam, mm_scores, pam_scores):
     
     score = 1
-    dna_gp = 0
     sg = sg.replace('T', 'U')
     guide_seq = guide_seq.replace('T', 'U')
     s_list = list(sg)
     guide_seq_list = list(guide_seq)
-    for i, sl in enumerate(s_list):
-      
-      if guide_seq_list[i] == sl:
 
-          score *= 1
+    for i, sl in enumerate(s_list):
+      if guide_seq_list[i] == sl:
+        score *= 1
 
       else:
+        try:    #Catch exception if IUPAC character
           key = 'r' + guide_seq_list[i] + ':d' + revcom(sl) + ',' + str(i + 1)
+        except Exception as e:
+          score = 0
+          break
+        try:
           score *= mm_scores[key]
-          if '-' in guide_seq_list[i]:
-            dna_gp = dna_gp + 1
+        except Exception as e : #If '-' is in first position, i do not have the score for that position
+          pass
       
-    score *= pam_scores[pam]
-    
+    score *= pam_scores[pam]  
     return score
 
 tab = str.maketrans("ACTGRYSWMKHDBVactgryswmkhdbv", "TGACYRSWKMDHVBtgacyrswkmdhvb") 
@@ -106,14 +117,17 @@ guides_dict_doench = dict()
 targets_for_doench = dict()
 
 score_filename = sys.argv[1].strip().split('.targets.txt')[0] + '.scores.txt'
+targets_score_file = sys.argv[1].strip().split('.targets.txt')[0] + '.targets.CFD.txt'
 bedfile_tmp_name = sys.argv[1].strip().split('.targets.txt')[0] + '.bedfile_tmp.bed'
 remove_bedfile_tmp = False
 with open(sys.argv[3]) as pamfile:
   line = pamfile.readline().strip().split(' ')
-  if len(line[0]) != 23 or 'NGG' not in line[0]:
+  if len(line[0]) != 23:
     with open(score_filename, 'w+') as result:
       result.write('NO SCORES')
       exit()
+  if 'NGG' not in line[0]:
+    print('WARNING: The model used for the CFD and Doench scores are based on the NGG PAM, the scores may not be valid for other PAMs')
 
 N_THR = multiprocessing.cpu_count() // 2
 
@@ -163,9 +177,7 @@ if '.fasta' in chromosome_files[0]:
 with open( os.path.dirname(os.path.realpath(__file__)) + "/azimuth/saved_models/V3_model_nopos.pickle", 'rb') as f:
   model = pickle.load(f)
 max_doench = 0
-n_of_acceptable_cfd = 0
 sum_cfd = 0
-cfd_scores = []
 
 # NOTE uncomment for progress bas
 # process = subprocess.Popen(['wc', '-l', sys.argv[1]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -180,15 +192,13 @@ cfd_scores = []
 #     mod_tot_line = int(total_line/90)
 # lines_processed = 0
 
-
+bulge_pos = 8
 all_word = []
-with open (sys.argv[1]) as result:
-  
+with open (sys.argv[1]) as result, open(targets_score_file, 'w+') as save_targ_scor:
+  save_targ_scor.write(next(result).strip() + '\tCFD\n')  #Add header
   #Calc CDF score
   for target  in result:
     target = target.strip().split('\t')
-    if 'X' not in target[0]:
-      continue
     
     guide_seq = target[1]
     off = target[2].upper()
@@ -208,9 +218,11 @@ with open (sys.argv[1]) as result:
       #print("off. ", off)
       #print ("sg: ", sg)
       #print ("guide_seq: ", guide_seq)
-      
-      cfd_score = calc_cfd(guide_seq, sg, pam, mm_scores, pam_scores)
-      if (target[7] == '0'):    #TODO se cambio inserendo pos cluister, devo cambiareanche qui, da 6 a 7 (con colonna pos cluster)
+      if target[0] == 'DNA':
+        cfd_score = calc_cfd(guide_seq[int(target[bulge_pos]):], off[int(target[bulge_pos]):-3], pam, mm_scores, pam_scores)
+      else:
+        cfd_score = calc_cfd(guide_seq, sg, pam, mm_scores, pam_scores)
+      if (target[bulge_pos + 1] == '0'): 
         #estraggo sequenza
         with open(bedfile_tmp_name, 'w+') as bedfile:
           remove_bedfile_tmp = True
@@ -232,18 +244,18 @@ with open (sys.argv[1]) as result:
           targets_for_doench[target[1]] = []
         doenchForIupac(sequence_doench, target[1])  #Get all possible targets with iupac itertools for doench
 
+      save_targ_scor.write('\t'.join(target) + '\t' + str(cfd_score) + '\n')
       sum_cfd = sum_cfd + cfd_score
       try:
         guides_dict[target[1]] = guides_dict[target[1]] + cfd_score
       except:
         guides_dict[target[1]] = cfd_score
-      if cfd_score > 0.023:
-        n_of_acceptable_cfd = n_of_acceptable_cfd +1  
+
       
     else:
       if "N" in off:
         continue
-      if (target[7] == '0'):  #NOTE change from 6 to 7 if input file has cluster position column
+      if (target[bulge_pos + 1] == '0'): 
         with open(bedfile_tmp_name, 'w+') as bedfile:
           remove_bedfile_tmp = True
           if target[6] == '+':
@@ -291,14 +303,30 @@ with open (sys.argv[1]) as result:
 
         pam = no_iup_gap_srt[-2:]   
         sg = no_iup_gap_srt[:-3]
-        
-        cfd_score = calc_cfd(guide_seq, sg, pam, mm_scores, pam_scores)
+        if target[0] == 'DNA':
+          cfd_score = calc_cfd(guide_seq[int(target[bulge_pos]):], sg[int(target[bulge_pos]):], pam, mm_scores, pam_scores)
+        else:
+          cfd_score = calc_cfd(guide_seq, sg, pam, mm_scores, pam_scores)
         sum_cfd = sum_cfd + cfd_score
         try:
           guides_dict[target[1]] = guides_dict[target[1]] + cfd_score
         except:
           guides_dict[target[1]] = cfd_score
-    
+
+        #Recalculate mismatch value, only for pam at end with length 3 (eg NGG)
+        mm_new_t = 0
+        guide_no_pam = guide_seq[:-3]    
+        list_t = list(no_iup_gap_srt)
+        for position_t, char_t in enumerate(no_iup_gap_srt[:-3]): 
+            if char_t.upper() != guide_no_pam[position_t]:
+                mm_new_t += 1
+                if guide_no_pam[position_t] != '-':
+                    list_t[position_t] = char_t.lower()
+      
+        target[2] = ''.join(list_t)
+        target[bulge_pos - 1] = str(mm_new_t - int(target[bulge_pos]))
+        target[bulge_pos + 1] = str(mm_new_t) #total differences between targets and guide (mismatches + bulges)
+        save_targ_scor.write('\t'.join(target) + '\t' + str(cfd_score) + '\n')
     #NOTE decomment for progress bar
     # lines_processed +=1
     # if lines_processed % (mod_tot_line) == 0:
