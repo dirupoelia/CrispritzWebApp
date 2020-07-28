@@ -5,7 +5,7 @@ import subprocess					# run c++ executable
 import time
 import os							# instructions manage directories
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile, join, isdir
 import shutil						# remove directory and its content
 import sys							# input argv
 from subprocess import Popen, PIPE
@@ -18,6 +18,15 @@ conda_path="opt/crispritz/"
 #path corrected to use with conda
 corrected_origin_path = origin_path[:-3]+conda_path
 
+def checkExistance(f_path, element):
+	if element == 'f':		#check file
+		if not isfile(f_path):
+			print('ERROR! ' + f_path + ' is not a file.')
+			sys.exit()
+	else:	#check directory
+		if not isdir(f_path):
+			print('ERROR! ' + f_path + ' is not a directory.')
+			sys.exit()
 
 #ALL ACTIVE FUNCTIONS IN CRISPRITZ
 def indexGenome():
@@ -33,12 +42,23 @@ def indexGenome():
 
 	nameGenome = sys.argv[2]								# save name of the genome
 	dirGenome = os.path.realpath(sys.argv[3])
+	checkExistance(dirGenome, 'd')
 	dirPAM = os.path.realpath(sys.argv[4])
+	checkExistance(dirPAM, 'f')
 	filePAM = open(os.path.realpath(sys.argv[4]), "r")
 	listChrs = os.listdir(dirGenome)						# save list of chromosomes
 	
 	max_bulges = (sys.argv).index("-bMax") + 1
-	max_bulges = sys.argv[max_bulges]
+	try:
+		max_bulges = sys.argv[max_bulges]
+	except IndexError:
+		print('ERROR! No value provided for the -bMax option, please provide a number')
+		sys.exit()
+	try:
+		int(max_bulges)
+	except ValueError:
+		print('ERROR! The value for the -bMax option is invalid, please provide a number')
+		sys.exit()
 	# retrive PAM
 	PAM = filePAM.read()
 	PAM_size = int(PAM.split()[1])
@@ -99,6 +119,8 @@ def searchTST():
 		print('ERROR! The directory name must contain the PAM and the maximum available bulges, please create the Genome Index using crispritz')
 		sys.exit()
 
+	checkExistance(PAM, 'f')
+	checkExistance(fileGuide, 'f')
 	if not os.path.isdir(dirTSTgenome):				# check if TSTgenome dir exists
 		print("ATTENTION! You have to generate the index of \"" + nameGenome +
 		      "\" with \"" + PAM + "\", before the search using index!")
@@ -170,7 +192,7 @@ def searchTST():
 		except:
 			print("ERROR! Please select the directory containing the fasta files of the genome")
 			sys.exit()
-
+		checkExistance(idx_genome_fasta, 'd')
 	# Check input correctness
 	file_correct_ext = [f for f in listdir(dirTSTgenome) if isfile(join(dirTSTgenome, f)) and not f.endswith('.bin')]	#Get files not ending with .bin
 	if len(file_correct_ext) != 0:		# Some files do not have .bin
@@ -278,8 +300,13 @@ def searchBruteForce():
 		except:
 			print("ERROR! Please select the directory containing the fasta files of the genome")
 			sys.exit()
+		checkExistance(idx_genome_fasta, 'd')
 
 	# Check input correctness
+	checkExistance(genomeDir, 'd')
+	checkExistance(filePAM, 'f')
+	checkExistance(fileGuide, 'f')
+	
 	file_correct_ext = [f for f in listdir(genomeDir) if isfile(join(genomeDir, f)) and not (f.endswith('.fa') or f.endswith('.fasta') or f.endswith('.fai'))]
 	
 	if len(file_correct_ext) != 0:		#Some file other than .fa, .fasta or .fai are present in the directory
@@ -335,6 +362,11 @@ def scores():
 	fileGuide = os.path.realpath(sys.argv[4])
 	genomeDir = os.path.realpath(sys.argv[5])+"/"
 	
+	checkExistance(resultFile, 'f')
+	checkExistance(filePAM, 'f')
+	checkExistance(fileGuide, 'f')
+	checkExistance(genomeDir, 'd')
+
 	pam_guide = len(open(filePAM).readline().split(" ")[0])
 	pam_at_beginning = int(open(filePAM).readline().split(" ")[1])
 
@@ -361,6 +393,9 @@ def annotateResults():
 	annotationsFile = os.path.realpath(sys.argv[3])
 	outputFile = os.path.realpath(sys.argv[4])
 
+	checkExistance(resultsFile, 'f')
+	checkExistance(annotationsFile, 'f')
+
 	sampleIDfile = corrected_origin_path + 'Python_Scripts/ProcessData/samples_1000genomeproject.txt'
 	if "--change-ID" in sys.argv[1:]:
 		sampleIDfile = (sys.argv).index("--change-ID") + 1
@@ -369,7 +404,7 @@ def annotateResults():
 		except:
 			print('Warning! Missing sampleID file')
 			sys.exit()
-
+	checkExistance(sampleIDfile, 'f')
     #NOTE sys.argv[-1] can be either sampleIDfile or 'Step [x/y] - Annotation', and it's just needed for having an output of the state of the 
 	#analysis for the user
 	step = sys.argv[-1]
@@ -395,6 +430,8 @@ def genomeEnrichmentWithBedtools():
 	dirGenome = os.path.realpath(sys.argv[3])		#Chromosomes filename must be chrN
 	listChrs = os.listdir(dirVCFFiles)
 
+	checkExistance(dirVCFFiles, 'd')
+	checkExistance(dirGenome, 'd')
 	genomeName=dirGenome.split('/')
 	genomeName=genomeName[-1]
 
@@ -461,7 +498,8 @@ def genomeEnrichment():
 		sys.exit()
 	dirVCFFiles = os.path.realpath(sys.argv[2])
 	dirGenome = os.path.realpath(sys.argv[3])
-	
+	checkExistance(dirVCFFiles, 'd')
+	checkExistance(dirGenome, 'd')
 	listChrs = os.listdir(dirVCFFiles)
 	chr_with_vcf = set()
 	for vcf_chr in [f for f in listdir(dirVCFFiles) if isfile(join(dirVCFFiles, f))]:	#VCF file must contain '.chrN.' with N = number or letter of chr
@@ -551,6 +589,7 @@ def generateReport():
 		try:
 			mm = (sys.argv).index("-mm") + 1
 			mm = (sys.argv[mm])
+			int(mm)
 		except:
 			print("ATTENTION! Check the mismatches option: -mm <mm_num> (mm_num is a number)")
 			sys.exit()
@@ -559,16 +598,19 @@ def generateReport():
 	if "-extprofile" in sys.argv[1:]:
 		extProfileFile = (sys.argv).index("-extprofile") + 1
 		extProfileFile = os.path.realpath(sys.argv[extProfileFile])
+		checkExistance(extProfileFile, 'f')
 
 	countdir = 'no'
 	if '-annotation' in sys.argv[1:]:
 		countdir = (sys.argv).index("-annotation") + 1
 		countdir = os.path.realpath(sys.argv[countdir])
+		checkExistance(countdir, 'f')
 
 	summaryOne = "no"
 	if "-sumref" in sys.argv[1:]:
 		summaryOne = (sys.argv).index("-sumref") + 1
 		summaryOne = os.path.realpath(sys.argv[summaryOne])
+		checkExistance(summaryOne, 'f')
 	
 	summaryTwo = countdir
 
@@ -659,6 +701,7 @@ def processData():
 		if ref_result > last_target_pos:
 			last_target_pos = ref_result
 		ref_result = os.path.realpath(sys.argv[ref_result])
+		checkExistance(ref_result, 'f')
 	
 	var_result = "no"
 	if "-vartarget" in sys.argv[1:]:
@@ -666,30 +709,33 @@ def processData():
 		if var_result > last_target_pos:
 			last_target_pos = var_result
 		var_result = os.path.realpath(sys.argv[var_result])
+		checkExistance(var_result, 'f')
 	if last_target_pos == 0:
 		print("Warning! Please provide al least one target file (-reftarget or -vartarget options)")
 		sys.exit()
 
 	pam = 'no'
 	try:
-		pam = sys.argv[last_target_pos + 1]
+		pam = os.path.realpath(sys.argv[last_target_pos + 1])
 	except:
 		print('Warning! Missing pam file')
 		sys.exit()
+	checkExistance(pam, 'f')
 	
 	guides = 'no'
 	try:
-		guides = sys.argv[last_target_pos + 2]
+		guides = os.path.realpath(sys.argv[last_target_pos + 2])
 	except:
 		print('Warning! Missing guides file')
 		sys.exit()
-
+	checkExistance(guides, 'f')
 	annotationFile = 'no'
 	try:
-		annotationFile = sys.argv[last_target_pos + 3]
+		annotationFile = os.path.realpath(sys.argv[last_target_pos + 3])
 	except:
 		print('Warning! Missing annotation file')
 		sys.exit()
+	checkExistance(annotationFile, 'f')
 
 	result = ''
 	try:
@@ -706,6 +752,7 @@ def processData():
 		except:
 			print('Warning! Missing sampleID file')
 			sys.exit()
+		checkExistance(sampleIDfile, 'f')
 
 	samples = False
 	create_dict = False
@@ -715,6 +762,7 @@ def processData():
 			print('Warning! The sample analysis can only be performed when the -vartarget option is selected')
 		vcf_file_directory = (sys.argv).index("--sample-create") + 1
 		vcf_file_directory = os.path.realpath(sys.argv[vcf_file_directory])
+		checkExistance(vcf_file_directory, 'd')
 		samples = True
 		create_dict = True
 	
@@ -724,6 +772,7 @@ def processData():
 			print('Warning! The sample analysis can only be performed when the -vartarget option is selected')
 		dict_directory = (sys.argv).index("-sample") + 1
 		dict_directory = os.path.realpath(sys.argv[dict_directory])
+		checkExistance(dict_directory, 'd')
 		samples = True
 	
 	if var_result != 'no' and ("--sample-create" not in sys.argv[1:] and  "-sample" not in sys.argv[1:] ): 	#-varresult selected but no dictionary provided
@@ -739,6 +788,7 @@ def processData():
 		except:
 			print('Warning! Missing <genomeDir> value for option -refgenome')
 			sys.exit()
+		checkExistance(reference_genome_dir, 'd')
 	else:
 		print('Error! Missing -refgenome option')
 		sys.exit()
@@ -1004,7 +1054,7 @@ def graphicalInterface():
 def callHelp():
 
 	print("help:\n",
-	"\ncrispritz graphical-interface FUNCTION TO START LOCAL SERVER AND ACTIVATE USER GRAPHICAL INTERFACE"
+	# "\ncrispritz graphical-interface FUNCTION TO START LOCAL SERVER AND ACTIVATE USER GRAPHICAL INTERFACE"
 	"\ncrispritz add-variants FUNCTION TO ADD VARIANTS DATA TO A FASTA GENOME",
 	"\ncrispritz index-genome FUNCTION TO CREATE GENOME INDEX TO PERFORM FAST SEARCHES WITH BULGES",
 	"\ncrispritz search FUNCTION TO PERFORM SEARCHES ON A GENOME (INDEXED OR PLAIN FASTA)",
