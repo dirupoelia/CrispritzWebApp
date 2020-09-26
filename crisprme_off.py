@@ -613,9 +613,43 @@ def test_page():
     final_list.append(
         html.H3('Genomes')
     )
+
+    modal_add_new_genome = html.Div(
+        [
+            dbc.Modal(
+                [
+                    dbc.ModalHeader("WARNING! Missing inputs"),
+                    dbc.ModalBody('The following inputs are missing, please select values before submitting the job', id = 'warning-list-add-new-genome'),
+                    dbc.ModalFooter(
+                        dbc.Button("Close", id="close-add-new-genome" , className="modal-button")
+                    ),
+                ],
+                id="modal-add-new-genome",
+                centered=True
+            ),
+        ]
+    )
+    final_list.append(modal_add_new_genome)
     final_list.append(
         html.P('Select one of the two available Tabs and fill in the field to add a new Genome or to update and existing dictionary.')
     )
+
+    modal_update_dict = html.Div(
+        [
+            dbc.Modal(
+                [
+                    dbc.ModalHeader("WARNING! Missing inputs"),
+                    dbc.ModalBody('The following inputs are missing, please select values before submitting the job', id = 'warning-list-update-dict'),
+                    dbc.ModalFooter(
+                        dbc.Button("Close", id="close-update-dict" , className="modal-button")
+                    ),
+                ],
+                id="modal-update-dict",
+                centered=True
+            ),
+        ]
+    )
+    final_list.append(modal_update_dict)
 
     #Check if an already processing add new genome is currently active. If yes, set the button to be disabled
     already_processing = False
@@ -630,6 +664,14 @@ def test_page():
             status_label = 'Status: ' + status_general[1]
             status_value = int(status_general[0]) * 25
 
+    if isfile(current_working_directory + 'dictionaries/update_dizionari.txt' ):
+        already_processing = True
+        style_disabled = {'background-color':'darkgrey'}
+        with open(current_working_directory + 'dictionaries/update_dizionari.txt') as info_status:
+            status_general = next(info_status).strip().split(' ') #Get current step number [0] and step name [1] on accessing page for first time
+            status_label = 'Status: ' + status_general[1]
+            status_value = int(status_general[0]) * 25
+    
     new_genome_content = html.Div(
         [
             html.Br(),
@@ -642,7 +684,8 @@ def test_page():
                             dbc.Row(
                                 [
                                     dbc.Col(html.Button('Select Reference Genome Directory', id = 'button-select-refgenome')),
-                                    dbc.Col(html.P('Selected: None', id = 'selected-referencegenome'))
+                                    dbc.Col(html.P('Selected: None', id = 'selected-referencegenome')),
+                                    dbc.Col(html.P(id = 'full-path-refgen', hidden = True))
                                 ]
                             )  
                         ]
@@ -652,7 +695,8 @@ def test_page():
                             dbc.Row(
                                 [
                                     dbc.Col(html.Button('Select PAM File', id = 'button-select-pam')),
-                                    dbc.Col(html.P('Selected: None', id = 'selected-pamfile'))
+                                    dbc.Col(html.P('Selected: None', id = 'selected-pamfile')),
+                                    dbc.Col(html.P(id = 'full-path-pam', hidden = True))
                                 ]
                             )  
                         ]
@@ -668,7 +712,8 @@ def test_page():
                             dbc.Row(
                                 [
                                     dbc.Col(html.Button('Select Annotation File', id = 'button-select-annotation')), 
-                                    dbc.Col(html.P('Selected: None', id = 'selected-annotationfile'))
+                                    dbc.Col(html.P('Selected: None', id = 'selected-annotationfile')),
+                                    dbc.Col(html.P(id = 'full-path-annotation', hidden = True))
                                 ]
                             ),
                             
@@ -694,7 +739,8 @@ def test_page():
                             dbc.Row(
                                 [
                                     dbc.Col(html.Button('Select VCFs Directory', id = 'button-select-vcf')),
-                                    dbc.Col(html.P('Selected: None', id = 'selected-vcf'))
+                                    dbc.Col(html.P('Selected: None', id = 'selected-vcf')),
+                                    dbc.Col(html.P(id = 'full-path-vcf', hidden = True))
                                 ]
                             )  
                         ]
@@ -704,7 +750,8 @@ def test_page():
                             dbc.Row(
                                 [
                                     dbc.Col(html.Button('Select Samples ID File', id = 'button-select-sampleID')), 
-                                    dbc.Col(html.P('Selected: None', id = 'selected-sampleIDfile'))
+                                    dbc.Col(html.P('Selected: None', id = 'selected-sampleIDfile')),
+                                    dbc.Col(html.P(id = 'full-path-samples', hidden = True))
                                 ]
                             ),
                             
@@ -729,7 +776,10 @@ def test_page():
             dbc.Row(
                 [
                     dbc.Col(
-                        html.Button('Start add new genome', id = 'button-add-new-genome', disabled = already_processing, style = style_disabled)
+                        [
+                            html.Button('Start add new genome', id = 'button-check-add-new-genome', disabled = already_processing, style = style_disabled),
+                            html.Button('', id = 'button-add-new-genome', style = {'display':'none'})
+                        ]
                     ),
                     dbc.Col(
                         [
@@ -755,7 +805,87 @@ def test_page():
         ]
     )
 
-    update_dictionary_content = html.Div() #TODO finire con layout simile a quello per aggiungere nuovo genoma
+    update_dictionary_content = html.Div(
+        [
+            html.Br(),
+            html.P('Select a combination of dictionary and vcf folders'),
+            html.Br(),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        [
+                            dbc.Row(
+                                [
+                                    dbc.Col(html.Button('Select Dictionary Directory', id = 'button-select-dictionary')),
+                                    dbc.Col(html.P('Selected: None', id = 'selected-dictionary')),
+                                    dbc.Col(html.P(id = 'full-path-dictionary', hidden = True))
+                                ]
+                            )  
+                        ]
+                    ),
+                    dbc.Col(
+                        [
+                            dbc.Row(
+                                [
+                                    dbc.Col(html.Button('Select VCF directory', id = 'button-select-vcf-dict')),
+                                    dbc.Col(html.P('Selected: None', id = 'selected-vcf-dict')),
+                                    dbc.Col(html.P(id = 'full-path-vcf-dict', hidden = True))
+                                ]
+                            )  
+                        ]
+                    ),
+                    
+                ]
+            ),
+            html.Br(),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        [
+                            dbc.Row(
+                                [
+                                    dbc.Col(html.Button('Select Samples ID File', id = 'button-select-samples-dict')), 
+                                    dbc.Col(html.P('Selected: None', id = 'selected-samples-dict')),
+                                    dbc.Col(html.P(id = 'full-path-samples-dict', hidden = True))
+                                ]
+                            ),
+                            
+                        ]
+                    )
+                ]
+            ),
+            html.Hr(),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        #html.Button('Submit', id = 'check-job', style = {'background-color':'skyblue'}),
+                        #html.Button('', id = 'submit-job', style = {'display':'none'})
+                        [html.Button('Start update dictionaries', id = 'button-check-update-dict', disabled = already_processing, style = style_disabled),
+                        html.Button('', id = 'button-update-dict', style = {'display':'none'})] 
+                    ),
+                    dbc.Col(
+                        [
+                            dbc.Row(
+                                dbc.Col(
+                                    html.P(status_label, id = 'status-update-dict')
+                                )
+                            ),
+                            dbc.Row(
+                                dbc.Col(
+                                    html.Div(
+                                        [
+                                            dbc.Progress(value = status_value, id = 'progress-update-dict'),
+                                            dcc.Interval(interval = 30*1000,id='interval-update-dict')
+                                        ]
+                                    )
+                                )
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
 
     final_list.append(
         dbc.Tabs(
@@ -768,7 +898,8 @@ def test_page():
         )
     )
 
-    final_list.append(html.Div(id = 'div-targetoutput', style = {'display':'none'}))
+    final_list.append(html.Div(id = 'div-targetoutput-add-new-genome', style = {'display':'none'}))
+    final_list.append(html.Div(id = 'div-targetoutput-update-dict',  style = {'display':'none'}))
     return html.Div(final_list, style = {'margin':'1%'})
 # test_page = html.Div(final_list, style = {'margin':'1%'})
 
@@ -812,53 +943,272 @@ def openDialog(n, type_ask, start_dir = './'):
 
 #Callbacks for generating filebrowser for addition of new genome
 @app.callback(
-    Output('selected-referencegenome', 'children'),
+    [Output('selected-referencegenome', 'children'),
+    Output('full-path-refgen', 'children')],
     [Input('button-select-refgenome','n_clicks')]
 )
 def fileDialogRefGenome(n):
-    return 'Selected: ' + openDialog(n, 'D','Genomes')
+    dir_opened = openDialog(n, 'D','Genomes')
+    if len(dir_opened) > 0:     #TODO check, forse mettere if dir_opened != 'None'
+        return 'Selected: ' + dir_opened.split('/')[-1], dir_opened
+    else:
+        return 'Selected: None', 'None'
 
 @app.callback(
-    Output('selected-pamfile', 'children'),
+    [Output('selected-pamfile', 'children'),
+    Output('full-path-pam', 'children')],
     [Input('button-select-pam','n_clicks')]
 )
 def fileDialogPam(n):
-    return 'Selected: ' + openDialog(n, 'F') 
+    file_opened = openDialog(n, 'F')
+    if len(file_opened) > 0 and file_opened != "()":
+        return 'Selected: ' +  file_opened.split('/')[-1], file_opened
+    else:
+        return 'Selected: None', 'None'
 
 @app.callback(
-    Output('selected-annotationfile', 'children'),
+    [Output('selected-annotationfile', 'children'),
+    Output('full-path-annotation', 'children')],
     [Input('button-select-annotation','n_clicks')]
 )
 def fileDialogAnnotation(n):
-    return 'Selected: ' + openDialog(n, 'F','annotations') 
+    file_opened = openDialog(n, 'F','annotations')
+    if len(file_opened) > 0 and file_opened != "()":
+        return 'Selected: ' + file_opened.split('/')[-1], file_opened
+    else:
+        return 'Selected: None', 'None'
 
 @app.callback(
-    Output('selected-vcf', 'children'),
+    [Output('selected-vcf', 'children'),
+     Output('full-path-vcf', 'children')],
     [Input('button-select-vcf','n_clicks')]
 )
 def fileDialogVCF(n):
-    return 'Selected: ' + openDialog(n, 'D')
+    dir_opened = openDialog(n, 'D')
+    if len(dir_opened) > 0:
+        return 'Selected: ' + dir_opened.split('/')[-1], dir_opened
+    else:
+        return 'Selected: None', 'None'
 
 @app.callback(
-Output('selected-sampleIDfile', 'children'),
-[Input('button-select-sampleID','n_clicks')]
+    [Output('selected-vcf-dict', 'children'),
+     Output('full-path-vcf-dict', 'children')],
+    [Input('button-select-vcf-dict','n_clicks')]
+)
+def fileDialogVCF_dict(n):
+    dir_opened = openDialog(n, 'D')
+    if len(dir_opened) > 0:
+        return 'Selected: ' + dir_opened.split('/')[-1], dir_opened
+    else:
+        return 'Selected: None', 'None'
+
+@app.callback(
+    [Output('selected-sampleIDfile', 'children'),
+    Output('full-path-samples', 'children')],
+    [Input('button-select-sampleID','n_clicks')]
 )
 def fileDialogSamplesID(n):
-    return 'Selected: ' + openDialog(n, 'F','samplesID')  
+    file_opened = openDialog(n, 'F','samplesID')
+    if len(file_opened) > 0 and file_opened != "()":
+        return 'Selected: ' +  file_opened.split('/')[-1], file_opened
+    else:
+        return 'Selected: None', 'None'
+
+@app.callback(
+    [Output('selected-samples-dict', 'children'),
+    Output('full-path-samples-dict', 'children')],
+    [Input('button-select-samples-dict','n_clicks')]
+)
+def fileDialogSamplesID_dict(n):
+    file_opened = openDialog(n, 'F','samplesID')
+    if len(file_opened) > 0 and file_opened != "()":
+        return 'Selected: ' +  file_opened.split('/')[-1], file_opened
+    else:
+        return 'Selected: None', 'None'
+    
+@app.callback(
+    [Output('selected-dictionary', 'children'),
+    Output('full-path-dictionary', 'children')],
+    [Input('button-select-dictionary','n_clicks')]
+)
+def fileDialogDict(n):
+    dir_opened = openDialog(n, 'D','dictionaries')
+    if len(dir_opened) > 0 and dir_opened != "()":
+        return 'Selected: ' +  dir_opened.split('/')[-1], dir_opened
+    else:
+        return 'Selected: None', 'None'
+
+#Check input presence
+@app.callback(
+    [Output('button-add-new-genome', 'n_clicks'),
+    Output('modal-add-new-genome', 'is_open'),
+    Output('selected-referencegenome', 'className'),
+    Output('selected-pamfile', 'className'),
+    Output('selected-annotationfile', 'className'),
+    Output('input-max-bulges', 'className'),
+    Output('selected-vcf', 'className'),
+    Output('selected-samples', 'className'),
+    Output('input-enriched-name', 'classname'),
+    Output('warning-list-add-new-genome', 'children')],
+    [Input('button-check-add-new-genome','n_clicks'),
+    Input('close-add-new-genome','n_clicks')],
+    [State('full-path-refgen', 'children'),
+    State('full-path-pam', 'children'),
+    State('full-path-annotation', 'children'),
+    State('input-max-bulges', 'value'),
+    State('full-path-vcf', 'children'),
+    State('full-path-samples', 'children'),
+    State('input-enriched-name', 'value'),
+    State('tabs-new-genome-or-dictionary', 'active_tab'),
+    State("modal-add-new-genome", "is_open")]
+)
+def checkInputAddNewGenome(n, n_close, genome_selected, pam, annotation, n_bulges, vcf, samples, enrname, active_tab ,is_open):
+    
+    if n is None:
+        raise PreventUpdate
+    if is_open is None:
+        is_open = False
+    
+    classname_red = 'missing-input'
+    genome_update = None
+    pam_update = None
+    annotation_update = None
+    bulges_update = None
+    vcf_update = None
+    samples_update = None
+    enrname_update = None
+    update_style = False
+    miss_input_list = []
+    
+    if genome_selected is None or genome_selected == '' or genome_selected == "None":
+        genome_update = classname_red
+        update_style = True
+        miss_input_list.append('Genome')
+    if pam is None or pam == '' or pam == "None":
+        pam_update = classname_red
+        update_style = True
+        miss_input_list.append('PAM')
+    if annotation is None or annotation == '' or annotation == "None":
+        annotation_update = classname_red
+        update_style = True
+        miss_input_list.append('Annotation')
+    if n_bulges is None:
+        bulges_update = classname_red
+        update_style = True
+        miss_input_list.append("#Bulges")
+    elif n_bulges < 0 or n_bulges > 2:
+        bulges_update = classname_red
+        update_style = True
+        miss_input_list.append("#Bulges must be within 0 and 2")
+        
+    if (not (enrname is None or enrname == '' or enrname == "None") or not (samples is None or samples == '' or samples == "None")) and (vcf is None or str(vcf) == '' or vcf == "None"):
+        vcf_update = classname_red
+        update_style = True
+        miss_input_list.append('VCF')
+    if (not (enrname is None or enrname == '' or enrname == "None") or not(vcf is None or vcf == '' or vcf == "None")) and (samples is None or samples == '' or samples == "None"):
+        samples_update = classname_red
+        update_style = True
+        miss_input_list.append('SamplesID')
+    if (not (samples is None or samples == '' or samples == "None") or not(vcf is None or vcf == '' or vcf == "None")) and (enrname is None or enrname == '' or enrname == "None"):
+        enrname_update = classname_red
+        update_style = True
+        miss_input_list.append('Enriched Name')
+    elif enrname is not None:
+        for f in os.listdir(current_working_directory+"/Genomes/"):
+            if "+" in f:
+                genEnr = f.split("+")[1]
+                if genome_selected.split("/")[-1]+"_"+enrname == genEnr:
+                    enrname_update = classname_red
+                    update_style = True
+                    miss_input_list.append('Enriched Name is duplicated')
+    
+    miss_input = html.Div(
+        [
+            html.P('The following inputs are missing:'),
+            html.Ul([html.Li(x) for x in miss_input_list]),
+            html.P('Please fill in the values before submitting the job')
+        ]
+    )
+    
+    if not update_style:
+        return 1, False, genome_update, pam_update, annotation_update, bulges_update, vcf_update, samples_update, enrname_update, miss_input
+    return None, not is_open, genome_update, pam_update, annotation_update, bulges_update, vcf_update, samples_update, enrname_update, miss_input
+
+#Check input presence for updating dictionaries
+@app.callback(
+    [Output('button-update-dict', 'n_clicks'),
+    Output('modal-update-dict', 'is_open'),
+    Output('selected-dictionary', 'className'),
+    Output('selected-vcf-dict', 'className'),
+    Output('selected-samples-dict', 'className'),
+    Output('warning-list-update-dict', 'children')],
+    [Input('button-check-update-dict','n_clicks'),
+    Input('close-update-dict','n_clicks')],
+    [State('full-path-dictionary', 'children'),
+    State('full-path-vcf-dict', 'children'),
+    State('full-path-samples-dict', 'children'),
+    State('tabs-new-genome-or-dictionary', 'active_tab'),
+    State("modal-update-dict", "is_open")]
+)
+def checkInputUpdateDict(n, n_close, dictionary, vcf, samples, active_tab ,is_open):
+    
+    if n is None:
+        raise PreventUpdate
+    if is_open is None:
+        is_open = False
+    
+    classname_red = 'missing-input'
+    dict_update = None
+    vcf_update = None
+    samples_update = None
+    update_style = False
+    miss_input_list = []
+    
+    if dictionary is None or dictionary == '' or dictionary == "None":
+        dict_update = classname_red
+        update_style = True
+        miss_input_list.append('Dictionary Directory')
+    if vcf is None or vcf == '' or vcf == "None":
+        vcf_update = classname_red
+        update_style = True
+        miss_input_list.append('VCF Directory')
+    if samples is None or samples == '' or samples == "None":
+        samples_update = classname_red
+        update_style = True
+        miss_input_list.append('Samples ID File')
+    
+    miss_input = html.Div(
+        [
+            html.P('The following inputs are missing:'),
+            html.Ul([html.Li(x) for x in miss_input_list]),
+            html.P('Please fill in the values before submitting the job')
+        ]
+    )
+    
+    if not update_style:
+        return 1, False, dict_update, vcf_update, samples_update, miss_input
+    return None, not is_open, dict_update, vcf_update, samples_update, miss_input
 
 #Callback creazione nuovo genoma
 @app.callback(
-    Output('div-targetoutput','children'),
-    [Input('button-add-new-genome', 'n_clicks')]
+    Output('div-targetoutput-add-new-genome','children'),
+    [Input('button-add-new-genome', 'n_clicks')],
+    [State('full-path-refgen', 'children'),
+    State('full-path-pam', 'children'),
+    State('full-path-annotation', 'children'),
+    State('input-max-bulges', 'value'),
+    State('full-path-vcf', 'children'),
+    State('full-path-samples', 'children'),
+    State('input-enriched-name', 'value')]
 )
-def startAddNewGenome(n):
+def startAddNewGenome(n, refgen, pam, annotation, bMax, vcf, samples, enrname):
     if n is None:
         raise PreventUpdate
     #TODO: prende gli state dei valori selezionati dall'utente e controlla se sono stati tutti selezionati, altrimenti fa comparire un 
     #avviso che manca qualcosa (cfr. funzione checkInput, ma basta solo avere l'elenco dei campi da compilare)
     #...
     #...
-
+    
     #input corretti
     #Faccio un subprocess.Popen facendo partire lo script per generare il nuovo genoma
     #Lo script.sh crea un file nella cartella Genomes chiamato 'status_creation_nomegenoma.txt' dove nomegenoma è ref o enr in base alla
@@ -866,7 +1216,8 @@ def startAddNewGenome(n):
     #In questo script faccio echo dei vari step in cui sono in questo momento con l'analisi, in modo poi da leggere questo file e con un interval
     #dire all'utente a che punto siamo
     print('Button clicked')
-    subprocess.Popen([app_main_directory + 'PostProcess/aggiunta_genoma_test_script.sh', current_working_directory])
+    subprocess.Popen(["python3" , app_main_directory + 'PostProcess/add_genome.py', current_working_directory, app_main_directory, refgen, pam, annotation, str(bMax), vcf, samples, enrname])
+    
     return ''
 
 #Callback per aggiornare la barra progresso
@@ -898,6 +1249,55 @@ def updateStatusCreateNewGenome(n, n_button):
                 return 100, 'Status: Done', False, {}
         return str(int(a[0]) * 25), 'Status: ' + a[1], True,  {'background-color':'darkgrey'}
     return 0 , 'Status: No Job Submitted', False, {}
+
+
+@app.callback(
+    Output('div-targetoutput-update-dict','children'),
+    [Input('button-update-dict', 'n_clicks')],
+    [State('full-path-dictionary', 'children'),
+    State('full-path-vcf-dict', 'children'),
+    State('full-path-samples-dict', 'children')]
+)
+def startUpdateDict(n, dictionary, vcf, samples):
+    if n is None:
+        raise PreventUpdate
+
+    print("Dict clicked")
+    subprocess.Popen(["python3" , app_main_directory + 'PostProcess/update_dict.py', current_working_directory, dictionary, vcf, samples])
+    return ''
+
+@app.callback(
+    [Output('progress-update-dict', 'value'),
+    Output('status-update-dict','children'),
+    Output('button-check-update-dict', 'disabled'),
+    Output('button-check-update-dict', 'style')],
+    [Input('interval-update-dict','n_intervals'),
+    Input('button-check-update-dict','n_clicks')]
+)
+def updateUpdateDict(n, n_button):   
+    if n is None and n_button is None:
+        raise PreventUpdate
+    
+
+    context = dash.callback_context.triggered[0]['prop_id'].split('.')[0] #id of input that triggered callback
+    if context == 'button-check-update-dict':
+        return 0, 'Status: Update-Dictionaries', True,  {'background-color':'darkgrey'}
+    #TODO questa funzione legge il file creato dalla funzione startAddNewGenome e in base allo step in cui siamo (Copia file, indicizzazione, enrichment etc)
+    #ritorna in output una valore della barra (eg +25 per ogni step fatto) e lo step a cui siamo (eg Status: Enrichment Genome)
+    
+    #controlla se esiste il file aggiunta nuovo genoma, e aggiorna la barra e mette il bottone a Disabled = True
+    if isfile(current_working_directory + 'dictionaries/update_dizionari.txt'):
+        with open(current_working_directory + 'dictionaries/update_dizionari.txt') as info_status:
+            a = next(info_status).strip().split(' ') #Get current step number [0] and step name [1]
+            if 'Done' == a[1]:
+                subprocess.run(['rm', current_working_directory + 'dictionaries/update_dizionari.txt'])
+                return 100, 'Status: Done', False, {}
+        return str(int(a[0]) * 25), 'Status: ' + a[1], True,  {'background-color':'darkgrey'}
+    return 0 , 'Status: No Job Submitted', False, {}
+
+
+
+
 #################################################
 #Fade in/out email
 @app.callback(
@@ -2344,7 +2744,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
 
     ***Args***
 
-    + [**n_**] **btn_** (*n_clicks_timestam*): string of the timestamp of the last time the button was pressed.
+    + [**n_**] **btn_** (*n_clicks_timestam*): (_ = 0-9) string of the timestamp of the last time the button was pressed.
     + [**superpopulation**] **dropdown-superpopulation-sample** (*value*): string of the selected superpopulation
     + [**population**] **dropdown-population-sample** (*value*): string of the selected population
     + [**sample**] **dropdown-sample** (*value*): string of the selected sample
@@ -2362,7 +2762,7 @@ def updateImagesTabs(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, superpopulation, po
     + The function sort all the timestamps of the buttons (can be up to 10 buttons, one for each mms value) and select the one that was clicked last.
     Since it is not possible in the current Dash version to create callbacks of components that are not available in the app.layout, but the buttons
     are created dynamically (we do not know how many mms the user selects), we create 10 buttons and show only the ones corresponding to the number
-    of selected mms, the others are hidden using `{'display':'none'}`. In this way we can create this callback even when we do not know how may mms
+    of selected mms, the others are hidden using `{'display':'none'}`. In this way we can create this callback even when we do not know how many mms
     the user will set.
     + If the image for a specific sample/pop/superpop is not available, the function calls `crispritz.py generate-report` in order to create the image 
     + The corresponding image is then loaded from the `assets/Img/jobID` directory, in order to be also available to be opened in a new tab (by
