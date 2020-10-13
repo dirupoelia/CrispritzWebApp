@@ -147,5 +147,3 @@ dependencies:
     - pylint==2.5.0
     - toml==0.10.0
     - wrapt==1.12.1
-prefix: /home/scancellieri/miniconda3
-

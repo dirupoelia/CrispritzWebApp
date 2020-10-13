@@ -119,7 +119,7 @@ VALID_CHARS = {'a', 'A', 't', 'T', 'c', 'C','g', 'G',
             "h" ,
             "v"
             }
-URL = 'http://157.27.85.10:8050'       #Change for online version
+URL = 'http://127.0.0.1:8050'       #Change for online version
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
@@ -417,9 +417,9 @@ def indexPage():
                                 className = 'flex-div-pam'
                             ),
                             html.Br(),
-                            html.Button("Add New Genome", id = 'add-genome', style = {'margin-right':'5px', 'display':DISPLAY_OFFLINE}),
+                            html.A(html.Button('Add New Genome', id = 'add-genome', style = {'margin-right':'5px', 'display':DISPLAY_OFFLINE} ), href = URL + '/test-page' ,target = '_blank', style = {'text-decoration':'none', 'color':'#555', 'display':DISPLAY_OFFLINE} ),
                             html.Div('', id = 'genome-job', style = {'display':'none'}),
-                            html.Button("Update dictionary", id = 'update-dict', style = {'margin-left':'5px', 'display':DISPLAY_OFFLINE}),
+                            html.A(html.Button('Update Dictionary', id = 'update-dict', style = {'margin-left':'5px', 'display':DISPLAY_OFFLINE}), href = URL + '/test-page' ,target = '_blank', style = {'text-decoration':'none', 'color':'#555', 'display':DISPLAY_OFFLINE}),
                             html.Div('', id = 'dict-job', style = {'display':'none'}),
                             html.Div(
                                 [
@@ -675,7 +675,7 @@ def test_page():
     new_genome_content = html.Div(
         [
             html.Br(),
-            html.P('1) Select a Reference Genome'),
+            html.P('1) Add a new Reference Genome'),
             html.Br(),
             dbc.Row(
                 [
@@ -683,20 +683,29 @@ def test_page():
                         [
                             dbc.Row(
                                 [
+                                    dbc.Col(
+                                        [
+                                            html.P('Selected: None', id = 'selected-referencegenome'),
+                                            html.P(id = 'full-path-refgen', hidden = True)
+                                        ]
+                                    ),
                                     dbc.Col(html.Button('Select Reference Genome Directory', id = 'button-select-refgenome')),
-                                    dbc.Col(html.P('Selected: None', id = 'selected-referencegenome')),
-                                    dbc.Col(html.P(id = 'full-path-refgen', hidden = True))
                                 ]
                             )  
                         ]
                     ),
+                    html.Div(style={'border-left': 'thick solid #ff0000'}),
                     dbc.Col(
                         [
                             dbc.Row(
                                 [
+                                    dbc.Col(
+                                        [
+                                            html.P('Selected: None', id = 'selected-pamfile'),
+                                            html.P(id = 'full-path-pam', hidden = True)
+                                        ]
+                                    ),
                                     dbc.Col(html.Button('Select PAM File', id = 'button-select-pam')),
-                                    dbc.Col(html.P('Selected: None', id = 'selected-pamfile')),
-                                    dbc.Col(html.P(id = 'full-path-pam', hidden = True))
                                 ]
                             )  
                         ]
@@ -711,9 +720,13 @@ def test_page():
                         [
                             dbc.Row(
                                 [
+                                    dbc.Col(
+                                        [
+                                            html.P('Selected: None', id = 'selected-annotationfile'),
+                                            html.P(id = 'full-path-annotation', hidden = True)
+                                        ]
+                                    ),
                                     dbc.Col(html.Button('Select Annotation File', id = 'button-select-annotation')), 
-                                    dbc.Col(html.P('Selected: None', id = 'selected-annotationfile')),
-                                    dbc.Col(html.P(id = 'full-path-annotation', hidden = True))
                                 ]
                             ),
                             
@@ -937,7 +950,7 @@ def openDialog(n, type_ask, start_dir = './'):
     else:
         selected = filedialog.askopenfilename(initialdir = current_working_directory + start_dir)
     root.destroy()
-    if selected == '' or selected == '()':
+    if not selected:
         selected = 'None'
     return str(selected)
 
@@ -1215,8 +1228,7 @@ def startAddNewGenome(n, refgen, pam, annotation, bMax, vcf, samples, enrname):
     #selezione dell'utente
     #In questo script faccio echo dei vari step in cui sono in questo momento con l'analisi, in modo poi da leggere questo file e con un interval
     #dire all'utente a che punto siamo
-    print('Button clicked')
-    subprocess.Popen(["python3" , app_main_directory + 'PostProcess/add_genome.py', current_working_directory, app_main_directory, refgen, pam, annotation, str(bMax), vcf, samples, enrname])
+    subprocess.Popen(["python3" , app_main_directory + 'PostProcess/add_genome.py', current_working_directory, app_main_directory, refgen, pam, annotation, str(bMax), str(vcf), str(samples), str(enrname)])
     
     return ''
 
@@ -1224,10 +1236,10 @@ def startAddNewGenome(n, refgen, pam, annotation, bMax, vcf, samples, enrname):
 @app.callback(
     [Output('progress-add-new-genome', 'value'),
     Output('status-add-new-genome','children'),
-    Output('button-add-new-genome', 'disabled'),
-    Output('button-add-new-genome', 'style')],
+    Output('button-check-add-new-genome', 'disabled'),
+    Output('button-check-add-new-genome', 'style')],
     [Input('interval-add-new-genome','n_intervals'),
-    Input('button-add-new-genome','n_clicks')]
+    Input('button-check-add-new-genome','n_clicks')]
 )
 def updateStatusCreateNewGenome(n, n_button):   
     if n is None and n_button is None:
@@ -1235,7 +1247,7 @@ def updateStatusCreateNewGenome(n, n_button):
     
 
     context = dash.callback_context.triggered[0]['prop_id'].split('.')[0] #id of input that triggered callback
-    if context == 'button-add-new-genome':
+    if context == 'button-check-add-new-genome':
         return 0, 'Status: Copy Genome', True,  {'background-color':'darkgrey'}
     #TODO questa funzione legge il file creato dalla funzione startAddNewGenome e in base allo step in cui siamo (Copia file, indicizzazione, enrichment etc)
     #ritorna in output una valore della barra (eg +25 per ogni step fatto) e lo step a cui siamo (eg Status: Enrichment Genome)
@@ -5731,6 +5743,7 @@ def add_genome(nAdd):
     """
     Bottone per avviare la GUI in Tkinter per l'aggiunta di genomi offline
     """
+    raise PreventUpdate
     from GUI import ChooseFiles as cf
     if nAdd is None:
         raise PreventUpdate
@@ -5746,6 +5759,7 @@ def update_dict(nUpd):
     """
     Bottone per avviare la GUI in Tkinter per l'aggiornamento di dizionari
     """
+    raise PreventUpdate
     from GUI import UpdateDict as ud
     if nUpd is None:
         raise PreventUpdate
