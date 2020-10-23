@@ -119,7 +119,7 @@ VALID_CHARS = {'a', 'A', 't', 'T', 'c', 'C','g', 'G',
             "h" ,
             "v"
             }
-URL = 'http://127.0.0.1:8050'       #Change for online version
+URL = 'http://127.0.0.1:8080'       #Change for online version
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
@@ -417,9 +417,9 @@ def indexPage():
                                 className = 'flex-div-pam'
                             ),
                             html.Br(),
-                            html.A(html.Button('Add New Genome', id = 'add-genome', style = {'margin-right':'5px', 'display':DISPLAY_OFFLINE} ), href = URL + '/test-page' ,target = '_blank', style = {'text-decoration':'none', 'color':'#555', 'display':DISPLAY_OFFLINE} ),
+                            html.A(html.Button('Add New Genome', id = 'add-genome', style = {'margin-right':'5px', 'display':DISPLAY_OFFLINE} ), href = URL + '/genome-dictionary-management' ,target = '_blank', style = {'text-decoration':'none', 'color':'#555', 'display':DISPLAY_OFFLINE} ),
                             html.Div('', id = 'genome-job', style = {'display':'none'}),
-                            html.A(html.Button('Update Dictionary', id = 'update-dict', style = {'margin-left':'5px', 'display':DISPLAY_OFFLINE}), href = URL + '/test-page' ,target = '_blank', style = {'text-decoration':'none', 'color':'#555', 'display':DISPLAY_OFFLINE}),
+                            html.A(html.Button('Update Dictionary', id = 'update-dict', style = {'margin-left':'5px', 'display':DISPLAY_OFFLINE}), href = URL + '/genome-dictionary-management' ,target = '_blank', style = {'text-decoration':'none', 'color':'#555', 'display':DISPLAY_OFFLINE}),
                             html.Div('', id = 'dict-job', style = {'display':'none'}),
                             html.Div(
                                 [
@@ -605,13 +605,19 @@ final_list.append(html.P('', id = 'done'))
 final_list.append(dcc.Interval(id = 'load-page-check', interval=3*1000))
 load_page = html.Div(final_list, style = {'margin':'1%'})
 
+#Return the Add new Genome and Update Dictionary Page, go to /genome-dictionary-management
+def genomeAndDictionaryManagement():
+    '''
+    Creates the layout of the Add new Genome and Update Dictionary page ('/genome-dictionary-management'). 
 
-#Test page, go to /test-page to see 
-def test_page():
+    ***Returns***
+
+    + **final_list** (*list*): list of html, dcc and dbc components for the layout.
+    '''
     final_list = []
     final_list.append(html.Div(id='test-div-for-button'))
     final_list.append(
-        html.H3('Genomes')
+        html.H3('Genomes and Dictionaries Management')
     )
 
     modal_add_new_genome = html.Div(
@@ -631,7 +637,7 @@ def test_page():
     )
     final_list.append(modal_add_new_genome)
     final_list.append(
-        html.P('Select one of the two available Tabs and fill in the field to add a new Genome or to update and existing dictionary.')
+        html.P('Select one of the two available Tabs and fill in the fields to add a new Genome or to update and existing sample dictionary.')
     )
 
     modal_update_dict = html.Div(
@@ -694,7 +700,7 @@ def test_page():
                             )  
                         ]
                     ),
-                    html.Div(style={'border-left': 'thick solid #ff0000'}),
+                    html.Div(style={'border-left': '1px solid #dee2e6'}),
                     dbc.Col(
                         [
                             dbc.Row(
@@ -732,10 +738,13 @@ def test_page():
                             
                         ]
                     ),
+                    html.Div(style={'border-left': '1px solid #dee2e6'}),
                     dbc.Col(
                             dbc.Row(
                                 [
-                                    dbc.Col(dcc.Input(placeholder = 'Select number of max Bulges', type = 'number', min = 0, id = 'input-max-bulges'))
+                                    dbc.Col(html.P('Select number of max Bulges')),
+                                    dbc.Col(dcc.Input(type = 'number', min = 0, id = 'input-max-bulges'))
+                                
                                 ]
                             )
                         )
@@ -751,23 +760,31 @@ def test_page():
                         [
                             dbc.Row(
                                 [
+                                    dbc.Col(
+                                        [
+                                            html.P('Selected: None', id = 'selected-vcf'),
+                                            html.P(id = 'full-path-vcf', hidden = True)
+                                        ]
+                                    ),
                                     dbc.Col(html.Button('Select VCFs Directory', id = 'button-select-vcf')),
-                                    dbc.Col(html.P('Selected: None', id = 'selected-vcf')),
-                                    dbc.Col(html.P(id = 'full-path-vcf', hidden = True))
                                 ]
                             )  
                         ]
                     ),
+                    html.Div(style={'border-left': '1px solid #dee2e6'}),
                     dbc.Col(
                         [
                             dbc.Row(
                                 [
+                                    dbc.Col(
+                                        [
+                                            html.P('Selected: None', id = 'selected-sampleIDfile'),
+                                            html.P(id = 'full-path-samples', hidden = True)                                    
+                                        ]
+                                    ),
                                     dbc.Col(html.Button('Select Samples ID File', id = 'button-select-sampleID')), 
-                                    dbc.Col(html.P('Selected: None', id = 'selected-sampleIDfile')),
-                                    dbc.Col(html.P(id = 'full-path-samples', hidden = True))
                                 ]
                             ),
-                            
                         ]
                     )
                 ]
@@ -776,13 +793,22 @@ def test_page():
             dbc.Row(
                 [
                     dbc.Col(
-                        dbc.Row(
-                            [
-                                dbc.Col(html.P('Enriched Genome Name')),
-                                dbc.Col(dcc.Input(placeholder = 'Example: 1000genomeproject', id = 'input-enriched-name'))
-                            ]
-                        )
-                    )
+                        [
+                            dbc.Row(
+                                [
+                                    dbc.Col(
+                                        [
+                                            html.P('Enriched Genome Name'),
+                                            # html.P(dcc.Input(placeholder = '', id = 'input-enriched-name'))
+                                        ]
+                                    ),
+                                    dbc.Col(dcc.Input(placeholder = 'Example: 1000genomeproject', id = 'input-enriched-name'))
+                                ]
+                            )
+                        ]
+                    ),
+                    html.Div(style={'border-left': '1px solid #dee2e6'}),
+                    dbc.Col()
                 ]
             ),
             html.Hr(),
@@ -806,7 +832,7 @@ def test_page():
                                     html.Div(
                                         [
                                             dbc.Progress(value = status_value, id = 'progress-add-new-genome'),
-                                            dcc.Interval(interval = 30*1000,id='interval-add-new-genome')
+                                            dcc.Interval(interval = 10*1000,id='interval-add-new-genome')
                                         ]
                                     )
                                 )
@@ -821,7 +847,7 @@ def test_page():
     update_dictionary_content = html.Div(
         [
             html.Br(),
-            html.P('Select a combination of dictionary and vcf folders'),
+            html.P('1) Select a combination of samples dictionary and vcf folders'),
             html.Br(),
             dbc.Row(
                 [
@@ -829,25 +855,33 @@ def test_page():
                         [
                             dbc.Row(
                                 [
-                                    dbc.Col(html.Button('Select Dictionary Directory', id = 'button-select-dictionary')),
-                                    dbc.Col(html.P('Selected: None', id = 'selected-dictionary')),
-                                    dbc.Col(html.P(id = 'full-path-dictionary', hidden = True))
+                                    dbc.Col(
+                                        [
+                                            html.P('Selected: None', id = 'selected-dictionary'),
+                                            html.P(id = 'full-path-dictionary', hidden = True)
+                                        ]
+                                    ),
+                                    dbc.Col(html.Button('Select Sample Dictionary Directory', id = 'button-select-dictionary'))
                                 ]
                             )  
                         ]
                     ),
+                    html.Div(style={'border-left': '1px solid #dee2e6'}),
                     dbc.Col(
                         [
                             dbc.Row(
                                 [
-                                    dbc.Col(html.Button('Select VCF directory', id = 'button-select-vcf-dict')),
-                                    dbc.Col(html.P('Selected: None', id = 'selected-vcf-dict')),
-                                    dbc.Col(html.P(id = 'full-path-vcf-dict', hidden = True))
+                                    dbc.Col(
+                                        [
+                                            html.P('Selected: None', id = 'selected-vcf-dict'),
+                                            html.P(id = 'full-path-vcf-dict', hidden = True)
+                                        ]
+                                    ),
+                                    dbc.Col(html.Button('Select Samples VCF directory', id = 'button-select-vcf-dict'))
                                 ]
                             )  
                         ]
-                    ),
-                    
+                    )
                 ]
             ),
             html.Br(),
@@ -857,14 +891,20 @@ def test_page():
                         [
                             dbc.Row(
                                 [
-                                    dbc.Col(html.Button('Select Samples ID File', id = 'button-select-samples-dict')), 
-                                    dbc.Col(html.P('Selected: None', id = 'selected-samples-dict')),
-                                    dbc.Col(html.P(id = 'full-path-samples-dict', hidden = True))
+                                    dbc.Col(
+                                        [
+                                            html.P('Selected: None', id = 'selected-samples-dict'),
+                                            html.P(id = 'full-path-samples-dict', hidden = True)
+                                        ]
+                                    ),
+                                    dbc.Col(html.Button('Select Samples ID File', id = 'button-select-samples-dict'))
                                 ]
                             ),
                             
                         ]
-                    )
+                    ),
+                    html.Div(style={'border-left': '1px solid #dee2e6'}),
+                    dbc.Col()
                 ]
             ),
             html.Hr(),
@@ -904,7 +944,7 @@ def test_page():
         dbc.Tabs(
             [
                 dbc.Tab(new_genome_content, label='Add New Genome', tab_id= 'add-genome-tab'),
-                dbc.Tab(update_dictionary_content, label='Update Dictionary', tab_id = 'update-dictionary')
+                dbc.Tab(update_dictionary_content, label='Update Sample Dictionary', tab_id = 'update-dictionary')
             ],
             active_tab='add-genome-tab',
             id = 'tabs-new-genome-or-dictionary'
@@ -915,6 +955,10 @@ def test_page():
     final_list.append(html.Div(id = 'div-targetoutput-update-dict',  style = {'display':'none'}))
     return html.Div(final_list, style = {'margin':'1%'})
 # test_page = html.Div(final_list, style = {'margin':'1%'})
+
+def test_page():
+    final_list = []
+    return html.Div(final_list, style = {'margin':'1%'})
 
 #TEST PAGE 2
 final_list = []
@@ -1274,7 +1318,6 @@ def startUpdateDict(n, dictionary, vcf, samples):
     if n is None:
         raise PreventUpdate
 
-    print("Dict clicked")
     subprocess.Popen(["python3" , app_main_directory + 'PostProcess/update_dict.py', current_working_directory, dictionary, vcf, samples])
     return ''
 
@@ -2002,6 +2045,8 @@ def changePage( href, path, search, hash_guide):
         if '-Pos-' in hash_guide:
             return clusterPage(job_id, hash_guide.split('#')[1]), URL + '/load' + search
         return resultPage(job_id), URL + '/load' + search
+    if path == '/genome-dictionary-management':
+        return genomeAndDictionaryManagement(), URL + '/load' + search
     if path == '/test-page':
         return test_page(), URL + '/load' + search
     if path == '/test-page2':
@@ -5822,7 +5867,7 @@ def change_annotation(nChg, rows, selected_row, selected_new_ann, selected_type)
 
 if __name__ == '__main__':
     #app.run_server(debug=True)
-    app.run_server(host='0.0.0.0', debug=True, port=8050)
+    app.run_server(host='0.0.0.0', debug=True, port=8080)
     #app.run_server(host='0.0.0.0',  port=8080) #NOTE to not reload the page when creating new images in graphical report
     cache.clear()       #delete cache when server is closed
 

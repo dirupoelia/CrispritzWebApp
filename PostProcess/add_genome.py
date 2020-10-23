@@ -65,8 +65,14 @@ with open (PAMFile) as pam:
 
 #Get list of pam in pam directory
 onlypam = [f for f in os.listdir(fileDir + 'pam') if isfile(join(fileDir + 'pam', f))]  
+removePamFile = False
 for p in onlypam:
     if pam in p:
+        removePamFile = True
+        #Copy pam file into pam/tmpPam.txt
+        with open (fileDir+"/pam/tmpPam.txt", "w") as pam_file:
+            pam_file.write(pam+" "+str(len_pam))
+        PAMFile = 'tmpPam.txt'
         break
 else:   #The input pam is not available in the 'pam' folder
     with open (fileDir+"/pam/"+os.path.basename(PAMFile), "w") as pam_file:
@@ -124,6 +130,9 @@ if is_vcf_given:
         os.system("python creazione_dizionari.py "+VCFDir+"/"+item+" "+
                   fileDir+"/dictionaries/"+cleanName+"_ref+"+cleanName+
                   "_"+enrichedName+"/"+item)
+
+if removePamFile:
+    os.remove(fileDir + '/pam/' + PAMFile)  
         
 with open(fileDir+"Genomes/aggiunta_nuovo_genoma.txt", 'w') as log:
     log.write("4 Done")

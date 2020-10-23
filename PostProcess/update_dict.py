@@ -71,7 +71,7 @@ for i, VCFFile in enumerate(os.listdir(VCFDir)):
 
 for oldDict, VCFFile in dict_vcf:
     print("Updating "+oldDict)
-    #updateDictionary(oldDicts+"/"+oldDict, VCFDir+"/"+VCFFile)
+    updateDictionary(oldDicts+"/"+oldDict, VCFDir+"/"+VCFFile)
     # os.system("python change_dict.py "+oldDicts+"/"+oldDict+" "+VCFDir+"/"+VCFFile)
 
 
